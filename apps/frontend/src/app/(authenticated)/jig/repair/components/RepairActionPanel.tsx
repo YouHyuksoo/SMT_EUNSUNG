@@ -15,6 +15,7 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { CheckCircle2, PlusCircle, Wrench } from 'lucide-react';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import PopupSearchField from '@/components/shared/PopupSearchField';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import type { JigRepairRow } from '../columns';
@@ -95,7 +96,8 @@ export default function RepairActionPanel({ selected, onChanged }: Props) {
             <PlusCircle className="h-5 w-5 text-primary" />
             <span className="text-sm font-semibold text-text">수리신청 접수</span>
           </div>
-          <Input placeholder="지그코드" value={jigCode} className="w-40"
+          <PopupSearchField popupId="jig-search" returnKey="jigCode"
+            placeholder="지그코드" value={jigCode} className="w-40"
             onChange={(e) => setJigCode(e.target.value)} />
           <Input placeholder="지그LOT (스캔 가능)" value={jigLotNo} className="w-52"
             onChange={(e) => setJigLotNo(e.target.value)}

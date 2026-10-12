@@ -14,6 +14,7 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Save, X } from 'lucide-react';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -133,8 +134,8 @@ export default function Qc4mFormPanel({ mode, initialForm, onClose, onSaved }: P
       <div className="flex-1 space-y-3 overflow-auto p-4">
         <label className="block text-sm">
           <span className="text-text-muted">모델명</span>
-          <Input value={form.modelName} disabled={locked}
-            onChange={(e) => set('modelName', e.target.value)} />
+          <ModelSearchField value={form.modelName} disabled={locked} className="w-full"
+            onChange={(v) => set('modelName', v)} />
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">

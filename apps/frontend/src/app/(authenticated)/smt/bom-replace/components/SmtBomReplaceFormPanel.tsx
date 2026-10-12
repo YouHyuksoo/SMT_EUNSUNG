@@ -18,6 +18,7 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Save, X } from 'lucide-react';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import { SmtMachineSelect, SmtModelSelect, SmtPcbItemSelect } from '../../components/SmtSelects';
@@ -187,8 +188,8 @@ export default function SmtBomReplaceFormPanel({ mode, initialForm, onClose, onS
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">라인코드 *</span>
-            <Input value={form.lineCode} disabled={edit}
-              onChange={(e) => set('lineCode', e.target.value)} />
+            <ProdLineSelect value={form.lineCode} disabled={edit} fullWidth
+              onChange={(v) => set('lineCode', v)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">위치코드 *</span>

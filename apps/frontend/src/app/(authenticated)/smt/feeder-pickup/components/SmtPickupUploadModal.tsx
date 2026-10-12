@@ -19,6 +19,7 @@ import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import { Upload } from 'lucide-react';
 import { Button, Input, Modal } from '@/components/ui';
+import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import api from '@/services/api';
 import { SmtModelSelect } from '../../components/SmtSelects';
 
@@ -121,7 +122,7 @@ export default function SmtPickupUploadModal({ defaultLineCode, onClose, onDone 
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">라인코드 *</span>
-            <Input value={lineCode} onChange={(e) => setLineCode(e.target.value)} />
+            <ProdLineSelect value={lineCode} onChange={setLineCode} fullWidth />
           </label>
         </div>
         <label className="block text-sm">

@@ -14,6 +14,7 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Save, X } from 'lucide-react';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import UseYnSelect from '@/components/shared/UseYnSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -118,8 +119,8 @@ export default function SmtLineFormPanel({ mode, initialForm, onClose, onSaved }
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">라인코드 *</span>
-            <Input value={form.lineCode} disabled={edit}
-              onChange={(e) => set('lineCode', e.target.value)} />
+            <ProdLineSelect value={form.lineCode} disabled={edit} fullWidth
+              onChange={(v) => set('lineCode', v)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">설비코드 *</span>
@@ -144,8 +145,8 @@ export default function SmtLineFormPanel({ mode, initialForm, onClose, onSaved }
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">라인구분</span>
-            <Input value={form.lineDivision}
-              onChange={(e) => set('lineDivision', e.target.value)} />
+            <ComCodeSelect groupCode="LINE DIVISION" includeAll={false} fullWidth
+              value={form.lineDivision} onChange={(v) => set('lineDivision', v)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">설비그룹</span>

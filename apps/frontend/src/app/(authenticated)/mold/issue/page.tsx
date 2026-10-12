@@ -19,6 +19,7 @@ import { Ban, PackageMinus, Search, Send } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import EquipSelect from '@/components/shared/EquipSelect';
 import LineSelect from '@/components/shared/LineSelect';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import SupplierSelect from '@/components/shared/SupplierSelect';
@@ -222,8 +223,8 @@ export default function MoldIssuePage() {
         </label>
         <label className="text-xs text-text-muted">
           설비코드
-          <Input value={machineCode} className="w-36"
-            onChange={(e) => setMachineCode(e.target.value)} />
+          <EquipSelect value={machineCode} className="w-36" placeholder="선택"
+            onChange={setMachineCode} />
         </label>
         <Button size="sm" onClick={onSubmit} disabled={disabled || busy}>
           <PackageMinus className="mr-1 h-4 w-4" />출고

@@ -18,6 +18,7 @@ import toast from 'react-hot-toast';
 import { Save, X } from 'lucide-react';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateFilter from '@/components/shared/DateFilter';
+import EquipSelect from '@/components/shared/EquipSelect';
 import LineSelect from '@/components/shared/LineSelect';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import { Button, Input } from '@/components/ui';
@@ -171,8 +172,8 @@ export default function JigMasterFormPanel({ mode, initialForm, onClose, onSaved
           <LineSelect label="라인" value={form.lineCode} onChange={(v) => set('lineCode', v)} />
           <ProcessSelect label="공정" value={form.workstageCode}
             onChange={(v) => set('workstageCode', v)} />
-          <Input label="설비코드" value={form.machineCode}
-            onChange={(e) => set('machineCode', e.target.value)} />
+          <EquipSelect label="설비코드" value={form.machineCode} placeholder="선택"
+            onChange={(v) => set('machineCode', v)} />
           <PartSearchField label="품목코드" value={form.itemCode}
             onChange={(e) => set('itemCode', e.target.value)} />
           <Input label="지그모델명" value={form.jigModelName}

@@ -14,6 +14,8 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Ban, PackagePlus } from 'lucide-react';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import EquipSelect from '@/components/shared/EquipSelect';
+import PopupSearchField from '@/components/shared/PopupSearchField';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -81,7 +83,8 @@ export default function IssueActionPanel({ selected, onChanged }: Props) {
           <PackagePlus className="h-5 w-5 text-primary" />
           <span className="text-sm font-semibold text-text">출고 등록</span>
         </div>
-        <Input placeholder="지그코드" value={jigCode} className="w-36"
+        <PopupSearchField popupId="jig-search" returnKey="jigCode"
+          placeholder="지그코드" value={jigCode} className="w-36"
           onChange={(e) => setJigCode(e.target.value)} />
         <Input placeholder="지그LOT (스캔 가능)" value={jigLotNo} className="w-48"
           onChange={(e) => setJigLotNo(e.target.value)}
@@ -92,8 +95,8 @@ export default function IssueActionPanel({ selected, onChanged }: Props) {
           value={issueAccount} onChange={setIssueAccount} className="w-44" />
         <ProcessSelect labelPrefix="공정" value={workstageCode}
           onChange={setWorkstageCode} className="w-44" />
-        <Input placeholder="설비코드" value={machineCode} className="w-36"
-          onChange={(e) => setMachineCode(e.target.value)} />
+        <EquipSelect placeholder="설비코드" value={machineCode} className="w-36"
+          onChange={setMachineCode} />
         <Button size="sm" onClick={create} disabled={busy}>
           <PackagePlus className="mr-1 h-4 w-4" />출고
         </Button>

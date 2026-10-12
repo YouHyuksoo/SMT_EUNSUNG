@@ -188,7 +188,8 @@ export default function MoldMasterFormPanel({ mode, initialForm, onClose, onSave
         </label>
         <label className="block text-sm">
           <span className="text-text-muted">단위</span>
-          <Input value={form.moldUom} onChange={(e) => set('moldUom', e.target.value)} />
+          <ComCodeSelect groupCode="MOLD UOM" includeAll={false} placeholder="선택"
+            value={form.moldUom} onChange={(v) => set('moldUom', v)} />
         </label>
         <label className="block text-sm">
           <span className="text-text-muted">도면번호</span>

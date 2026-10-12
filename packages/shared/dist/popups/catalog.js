@@ -73,6 +73,28 @@ exports.POPUP_CATALOG = [
             "SUPPLIER_CODE <> '*' 제외 조건 포함. 금형 공급처 팝업은 업종 조건이 달라 별도 엔트리다.",
     },
     {
+        id: 'jig-search',
+        pbWindows: ['w_mcn_jig_popup'],
+        kind: 'search-select',
+        status: 'ready',
+        title: '지그검색',
+        query: 'jig-search',
+        returnColumns: ['jigCode', 'jigName', 'jigLotNo'],
+        filters: [
+            { key: 'jigCode', label: '지그코드', type: 'text', autoFocus: true },
+            { key: 'supplierCode', label: '제작처', type: 'text' },
+        ],
+        columns: [
+            { key: 'jigCode', label: '지그코드', width: 160 },
+            { key: 'jigLotNo', label: '지그LOT', width: 160 },
+            { key: 'jigName', label: '지그명', width: 220 },
+            { key: 'supplierCode', label: '제작처', width: 130 },
+            { key: 'nationCode', label: '국가', width: 70 },
+        ],
+        note: "PB d_mcn_jig_popup — IMCN_JIG, ARG_JIG_CODE·ARG_SUPPLIER_CODE(NVL(SUPPLIER_CODE,'*')) LIKE, JIG_CODE <> '*'. " +
+            '연결: 지그 출고·수리 접수 패널과 수리신청 등록의 지그코드 칸.',
+    },
+    {
         id: 'customer-search',
         pbWindows: ['w_com_customer_popup'],
         kind: 'search-select',

@@ -17,6 +17,7 @@ import { ClipboardCheck, ScanLine, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import EquipSelect from '@/components/shared/EquipSelect';
 import LineSelect from '@/components/shared/LineSelect';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProcessSelect from '@/components/shared/ProcessSelect';
@@ -179,8 +180,8 @@ export default function WqcPage() {
           </label>
           <label className="text-xs text-text-muted">
             설비코드
-            <Input value={machineCode} className="w-32"
-              onChange={(e) => setMachineCode(e.target.value)} />
+            <EquipSelect value={machineCode} className="w-32" placeholder="선택"
+              onChange={setMachineCode} />
           </label>
           <label className="text-xs text-text-muted">
             비고

@@ -26,6 +26,14 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ className = '', label, error, options, value, onChange, fullWidth = false, placeholder, disabled, required, id, ...props }, ref) => {
     const effectivePlaceholder = placeholder || label || '전체';
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
+    // 저장된 값이 목록에 없으면(사용 중지된 코드, 옛 데이터, 목록 로딩 전) 그 값을 그대로 옵션으로 붙인다.
+    // 없으면 브라우저가 첫 옵션(안내문)을 보여 줘 값이 빈 것처럼 보인다.
+    const strValue = value === undefined || value === null ? '' : String(value);
+    const shownOptions = strValue !== '' && !options.some(o => String(o.value) === strValue)
+      ? [...options, { value: strValue, label: strValue }]
+      : options;
+    // 폭을 채우지 않는 셀렉트는 감싸는 칸도 박스 폭에 맞춘다. 칸이 줄 전체면 화살표가 박스 밖 오른쪽 끝에 뜬다.
+    const fill = fullWidth || /(^|\s)w-full(\s|$)/.test(className);
 
     return (
       <div className={fullWidth ? 'w-full' : ''}>
@@ -36,7 +44,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           </label>
         )}
 
-        <div className="relative">
+        <div className={fill ? 'relative' : 'relative inline-block max-w-full align-top'}>
           <select
             ref={ref}
             id={inputId}
@@ -57,10 +65,10 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             `}
             {...props}
           >
-            {!options.some(o => o.value === "") && (
+            {!shownOptions.some(o => o.value === "") && (
               <option value="" disabled>{effectivePlaceholder}</option>
             )}
-            {options.map((option, idx) => (
+            {shownOptions.map((option, idx) => (
               <option key={`${option.value}-${idx}`} value={option.value}>{option.label}</option>
             ))}
           </select>

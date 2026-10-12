@@ -21,6 +21,7 @@ import { Button, Input, Select, Modal, ConfirmModal } from "@/components/ui";
 import { EquipBomItem, BomItemType, BOM_ITEM_TYPE_COLORS } from "../types";
 import api from "@/services/api";
 import { QtyInput } from "@/components/shared";
+import PartSearchField from "@/components/shared/PartSearchField";
 
 interface ItemFormState {
   itemCode: string;
@@ -258,7 +259,7 @@ export default function EquipBomPanel({ equipCode, equipName, onClose }: EquipBo
           <div>
             <h3 className="text-xs font-semibold text-text-muted mb-2">{t("master.equip.sectionBasic", "기본정보")}</h3>
             <div className="grid grid-cols-2 gap-3">
-              <Input label={t("master.equip.itemCode", "품목코드")} value={itemForm.itemCode} onChange={(e) => setItemForm({ ...itemForm, itemCode: e.target.value })} fullWidth disabled={!!editingItem} />
+              <PartSearchField label={t("master.equip.itemCode", "품목코드")} value={itemForm.itemCode} onChange={(e) => setItemForm({ ...itemForm, itemCode: e.target.value })} fullWidth disabled={!!editingItem} />
               <Input label={t("master.equip.itemName", "품목명")} value={itemForm.itemName} onChange={(e) => setItemForm({ ...itemForm, itemName: e.target.value })} fullWidth />
               <Select label={t("master.equip.itemType", "유형")} options={[{ value: "PART", label: bomItemTypeLabels.PART }, { value: "CONSUMABLE", label: bomItemTypeLabels.CONSUMABLE }]} value={itemForm.itemType} onChange={(v) => setItemForm({ ...itemForm, itemType: v as BomItemType })} fullWidth />
               <Input label={t("master.equip.unit", "단위")} value={itemForm.unit} onChange={(e) => setItemForm({ ...itemForm, unit: e.target.value })} fullWidth />

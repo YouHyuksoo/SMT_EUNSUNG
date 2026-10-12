@@ -18,6 +18,8 @@ import { Edit2, Plus, Search, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '@/components/ui/Modal';
 import { Button, Card, CardContent, Input } from '@/components/ui';
+import Select from '@/components/ui/Select';
+import { useSupplierOptions } from '@/hooks/useMasterOptions';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import ModelSearchModal from '@/components/shared/ModelSearchModal';
@@ -79,6 +81,7 @@ export default function RunCardPage() {
   const [rows, setRows] = useState<RunCard[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<EditForm | null>(null);
+  const { options: supplierOptions, isLoading: supplierLoading } = useSupplierOptions();
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<RunCard | null>(null);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
@@ -362,7 +365,9 @@ export default function RunCardPage() {
                 <Input value={form.markingNo} onChange={(e) => set('markingNo', e.target.value)} />
               </Field>
               <Field label="PCB 공급상">
-                <Input value={form.pcbSupplierCode} onChange={(e) => set('pcbSupplierCode', e.target.value)} />
+                <Select value={form.pcbSupplierCode} onChange={(v) => set('pcbSupplierCode', v)} fullWidth
+                  disabled={supplierLoading}
+                  options={[{ value: '', label: 'PCB 공급상 없음' }, ...supplierOptions]} />
               </Field>
 
               <Field label="대표모델명">

@@ -17,6 +17,7 @@ import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import type { MoldPriceRow } from '../../types';
+import MoldCodeField from '../../components/MoldCodeField';
 
 export interface PriceForm {
   moldCode: string;
@@ -122,8 +123,9 @@ export default function PriceFormPanel({ mode, initialForm, onClose, onSaved }: 
       <div className="flex-1 space-y-3 overflow-auto p-4">
         <label className="block text-sm">
           <span className="text-text-muted">S-PARTS 코드</span>
-          <Input value={form.moldCode} disabled={locked}
-            onChange={(e) => set('moldCode', e.target.value)} />
+          <MoldCodeField popupId="mold-search" returnKey="moldCode" label="S-PARTS 코드"
+            className="" value={form.moldCode} disabled={locked}
+            onChange={(v) => set('moldCode', v)} />
         </label>
         <label className="block text-sm">
           <span className="text-text-muted">공급처</span>
@@ -183,8 +185,8 @@ export default function PriceFormPanel({ mode, initialForm, onClose, onSaved }: 
         </label>
         <label className="block text-sm">
           <span className="text-text-muted">변경사유</span>
-          <Input value={form.priceChangeReason}
-            onChange={(e) => set('priceChangeReason', e.target.value)} />
+          <ComCodeSelect groupCode="PRICE CHANGE REASON" includeAll={false} placeholder="선택"
+            value={form.priceChangeReason} onChange={(v) => set('priceChangeReason', v)} />
         </label>
       </div>
 

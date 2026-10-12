@@ -26,13 +26,14 @@ import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { ChevronDown, ChevronRight, Save, X } from 'lucide-react';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
-import CustomerSelect from '@/components/shared/CustomerSelect';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import type { ModelItem } from '@/components/shared/ModelSearchModal';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import UseYnSelect from '@/components/shared/UseYnSelect';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, Select } from '@/components/ui';
+import { useComCodeOptions } from '@/hooks/useComCode';
+import { useCustomerOptions } from '@/hooks/useMasterOptions';
 import api from '@/services/api';
 import type { PlanRow } from '../planning-types';
 import { SLOT_INDEXES } from '../planning-types';
@@ -130,7 +131,7 @@ function FieldLabel({ text, required, tip }: { text: string; required?: boolean;
 /** 자동으로 채우는 칸 — 값은 보이고 고칠 수 없다. */
 function AutoField({ value, placeholder }: { value: string; placeholder?: string }) {
   return (
-    <Input value={value} readOnly tabIndex={-1} placeholder={placeholder}
+    <Input fullWidth value={value} readOnly tabIndex={-1} placeholder={placeholder}
       className="cursor-default bg-background" />
   );
 }
@@ -180,6 +181,8 @@ interface Props {
   onSaved: () => void;
 }
 
+const NONE_OPTION = { value: '', label: '선택 안 함' };
+
 const optional = (value: string) => (value.trim() === '' ? undefined : value.trim());
 const optionalNum = (value: string) => (value.trim() === '' ? undefined : Number(value));
 
@@ -191,6 +194,12 @@ export default function PlanFormPanel({
   const [slotsOpen, setSlotsOpen] = useState(false);
   const edit = mode === 'edit';
   const isMi = variant === 'mi';
+
+  // 계획상태·고객은 비워 둘 수 있다 (MI 기존 계획은 계획상태가 비어 있다). 폼이라 '전체' 대신 '선택 안 함'.
+  const planStatusBase = useComCodeOptions('PLAN STATUS', false);
+  const { options: customerBase } = useCustomerOptions();
+  const planStatusOptions = useMemo(() => [NONE_OPTION, ...planStatusBase], [planStatusBase]);
+  const customerOptions = useMemo(() => [NONE_OPTION, ...customerBase], [customerBase]);
 
   const set = <K extends keyof PlanForm>(key: K, value: PlanForm[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -325,7 +334,7 @@ export default function PlanFormPanel({
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">계획일 *</span>
-            <Input type="date" value={form.planDate} disabled={edit}
+            <Input fullWidth type="date" value={form.planDate} disabled={edit}
               onChange={(e) => set('planDate', e.target.value)} />
           </label>
           <div className="block text-sm">
@@ -336,7 +345,7 @@ export default function PlanFormPanel({
 
         <label className="block text-sm">
           <span className="text-text-muted">라인 *</span>
-          <ProdLineSelect value={form.lineCode} onChange={(v) => set('lineCode', v)} />
+          <ProdLineSelect fullWidth placeholder="라인 선택" value={form.lineCode} onChange={(v) => set('lineCode', v)} />
         </label>
 
         {/* label 로 감싸지 않는다 — 모달 안 클릭이 label 을 거쳐 버튼을 다시 누르게 된다 */}
@@ -363,7 +372,7 @@ export default function PlanFormPanel({
           <div className="grid grid-cols-2 gap-3">
             <label className="block text-sm">
               <span className="text-text-muted">공정코드 *</span>
-              <ProcessSelect value={form.workstageCode} placeholder="공정 선택"
+              <ProcessSelect fullWidth value={form.workstageCode} placeholder="공정 선택"
                 onChange={(v) => set('workstageCode', v)} />
             </label>
             <div className="block text-sm">
@@ -384,17 +393,17 @@ export default function PlanFormPanel({
               </div>
               <label className="block text-sm">
                 <FieldLabel text="PCB 면" required tip={TIP.pcbItem} />
-                <ComCodeSelect groupCode="PCB ITEM" includeAll={false}
+                <ComCodeSelect groupCode="PCB ITEM" includeAll={false} fullWidth
                   value={form.pcbItem} onChange={(v) => set('pcbItem', v)} />
               </label>
               <div className="block text-sm">
                 <FieldLabel text="생산유형" required tip={TIP.productionType} />
-                <ComCodeSelect groupCode="PRODUCTION TYPE" includeAll={false} disabled
+                <ComCodeSelect groupCode="PRODUCTION TYPE" includeAll={false} fullWidth disabled
                   value={form.productionType} />
               </div>
               <div className="block text-sm">
                 <FieldLabel text="교대" tip={TIP.shiftCode} />
-                <ComCodeSelect groupCode="SHIFT CODE" includeAll={false} disabled
+                <ComCodeSelect groupCode="SHIFT CODE" includeAll={false} fullWidth disabled
                   value={form.shiftCode} />
               </div>
               <div className="col-span-2 block text-sm">
@@ -408,22 +417,22 @@ export default function PlanFormPanel({
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">계획수량 *</span>
-            <Input type="number" value={form.planQty}
+            <Input fullWidth type="number" value={form.planQty}
               onChange={(e) => set('planQty', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">우선순위{isMi ? ' *' : ''}</span>
-            <Input type="number" value={form.planPriority}
+            <Input fullWidth type="number" value={form.planPriority}
               onChange={(e) => set('planPriority', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">설비능력 수량</span>
-            <Input type="number" value={form.planCapaQty}
+            <Input fullWidth type="number" value={form.planCapaQty}
               onChange={(e) => set('planCapaQty', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">기종교체(분)</span>
-            <Input type="number" value={form.mcTime}
+            <Input fullWidth type="number" value={form.mcTime}
               onChange={(e) => set('mcTime', e.target.value)} />
           </label>
         </div>
@@ -438,34 +447,34 @@ export default function PlanFormPanel({
         <div className="grid grid-cols-3 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">D1</span>
-            <Input type="number" value={form.planQtyD1}
+            <Input fullWidth type="number" value={form.planQtyD1}
               onChange={(e) => set('planQtyD1', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">D2</span>
-            <Input type="number" value={form.planQtyD2}
+            <Input fullWidth type="number" value={form.planQtyD2}
               onChange={(e) => set('planQtyD2', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">D3</span>
-            <Input type="number" value={form.planQtyD3}
+            <Input fullWidth type="number" value={form.planQtyD3}
               onChange={(e) => set('planQtyD3', e.target.value)} />
           </label>
         </div>
 
         <label className="block text-sm">
           <span className="text-text-muted">계획상태</span>
-          <ComCodeSelect groupCode="PLAN STATUS" includeAll
+          <Select fullWidth options={planStatusOptions}
             value={form.planStatus} onChange={(v) => set('planStatus', v)} />
         </label>
         <label className="block text-sm">
           <span className="text-text-muted">고객</span>
-          <CustomerSelect includeAll value={form.customerCode}
+          <Select fullWidth options={customerOptions} value={form.customerCode}
             onChange={(v) => set('customerCode', v)} />
         </label>
         <label className="block text-sm">
           <span className="text-text-muted">LOT 분할</span>
-          <UseYnSelect includeAll={false} value={form.lotDivideYn}
+          <UseYnSelect includeAll={false} fullWidth value={form.lotDivideYn}
             onChange={(v) => set('lotDivideYn', v)} />
         </label>
 
@@ -487,9 +496,9 @@ export default function PlanFormPanel({
               {SLOT_INDEXES.map((slot) => (
                 <div key={slot} className="grid grid-cols-[3rem_6rem_1fr] items-center gap-2">
                   <span className="text-xs text-text-muted">{slot}칸</span>
-                  <Input type="number" value={form.slots[`planTime${slot}`]}
+                  <Input fullWidth type="number" value={form.slots[`planTime${slot}`]}
                     onChange={(e) => setSlot(`planTime${slot}`, e.target.value)} />
-                  <Input placeholder="메모" value={form.slots[`time${slot}Desc`]}
+                  <Input fullWidth placeholder="메모" value={form.slots[`time${slot}Desc`]}
                     onChange={(e) => setSlot(`time${slot}Desc`, e.target.value)} />
                 </div>
               ))}
@@ -499,7 +508,7 @@ export default function PlanFormPanel({
 
         <label className="block text-sm">
           <span className="text-text-muted">비고</span>
-          <Input value={form.comments} onChange={(e) => set('comments', e.target.value)} />
+          <Input fullWidth value={form.comments} onChange={(e) => set('comments', e.target.value)} />
         </label>
       </div>
 

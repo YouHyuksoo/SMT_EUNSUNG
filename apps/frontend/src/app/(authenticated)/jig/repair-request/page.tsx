@@ -16,8 +16,11 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { AlertTriangle, Search, Wrench } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
-import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import PopupSearchField from '@/components/shared/PopupSearchField';
+import { Button, Card, CardContent, ConfirmModal, Input, Select } from '@/components/ui';
+import { useComCodeOptions } from '@/hooks/useComCode';
 import api from '@/services/api';
 import {
   TruncationNotice,
@@ -49,6 +52,7 @@ export default function JigRepairRequestPage() {
   const [repairReasonCode, setRepairReasonCode] = useState('');
   const [repairRequestDate, setRepairRequestDate] = useState(today());
   const [repairVendorCode, setRepairVendorCode] = useState('');
+  const repairVendorOptions = useComCodeOptions('REPAIR VENDOR CODE', false);
   const [comments, setComments] = useState('');
   const [editing, setEditing] = useState<JigRepairRequestRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<JigRepairRequestRow | null>(null);
@@ -185,21 +189,24 @@ export default function JigRepairRequestPage() {
           <span className="flex items-center gap-1 text-sm font-semibold text-text">
             <Wrench className="h-4 w-4" />{editing ? `신청 수정 (${editing.repairSequence})` : '수리 신청'}
           </span>
-          <Input aria-label="지그코드" placeholder="지그코드" value={jigCode}
+          <PopupSearchField popupId="jig-search" returnKey="jigCode"
+            aria-label="지그코드" placeholder="지그코드" value={jigCode}
             className="w-40"
             onChange={(e) => setJigCode(e.target.value)} />
           <Input aria-label="지그 롯트" placeholder="지그 롯트 (선택)" value={jigLotNo}
             className="w-40"
             onChange={(e) => setJigLotNo(e.target.value)} />
-          <Input aria-label="수리사유" placeholder="수리사유 코드" value={repairReasonCode}
+          <ComCodeSelect groupCode="REPAIR REASON CODE" includeAll={false}
+            aria-label="수리사유" placeholder="수리사유 코드" value={repairReasonCode}
             className="w-36"
-            onChange={(e) => setRepairReasonCode(e.target.value)} />
+            onChange={setRepairReasonCode} />
           <Input aria-label="신청일" type="date" value={repairRequestDate}
             className="w-44"
             onChange={(e) => setRepairRequestDate(e.target.value)} />
-          <Input aria-label="수리업체" placeholder="수리업체 (선택)" value={repairVendorCode}
+          <Select aria-label="수리업체" placeholder="수리업체 (선택)" value={repairVendorCode}
+            options={[{ value: '', label: '선택 안 함' }, ...repairVendorOptions]}
             className="w-36"
-            onChange={(e) => setRepairVendorCode(e.target.value)} />
+            onChange={setRepairVendorCode} />
           <Input aria-label="신청내용" placeholder="신청내용" value={comments}
             className="w-56"
             onChange={(e) => setComments(e.target.value)} />

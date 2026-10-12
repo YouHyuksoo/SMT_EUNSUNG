@@ -14,6 +14,7 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Save, X } from 'lucide-react';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -152,7 +153,8 @@ export default function IqcHistoryFormPanel({ mode, initialForm, onClose, onSave
       <div className="flex-1 space-y-3 overflow-auto p-4">
         <label className="block text-sm">
           <span className="text-text-muted">모델명</span>
-          <Input value={form.modelName} onChange={(e) => set('modelName', e.target.value)} />
+          <ModelSearchField value={form.modelName} className="w-full"
+            onChange={(v) => set('modelName', v)} />
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
@@ -177,7 +179,8 @@ export default function IqcHistoryFormPanel({ mode, initialForm, onClose, onSave
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">결함코드</span>
-            <Input value={form.defectCode} onChange={(e) => set('defectCode', e.target.value)} />
+            <ComCodeSelect groupCode="BAD REASON CODE" includeAll={false} placeholder="선택"
+              value={form.defectCode} onChange={(v) => set('defectCode', v)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">판정</span>
