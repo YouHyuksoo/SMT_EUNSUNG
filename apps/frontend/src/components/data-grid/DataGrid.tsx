@@ -216,6 +216,7 @@ function DataGrid<T>({
   // cell 을 따로 주지 않은 컬럼의 기본 표시. 서버가 Date 를 그대로 내려 UTC ISO 가 찍히던 것을
   // 공용 포맷(YYYY-MM-DD / YYYY-MM-DD HH:mm:ss)으로 통일한다. 날짜가 아닌 값은 기존과 같다.
   const defaultColumn = useMemo<Partial<ColumnDef<T, unknown>>>(() => ({
+    minSize: 40,
     cell: ({ renderValue }) => {
       const value = renderValue();
       if (typeof value === 'string' || value instanceof Date) return formatDisplayDate(value);
@@ -245,6 +246,9 @@ function DataGrid<T>({
   });
 
   const activeFilterCount = columnFilters.length;
+  // 폭을 한 번이라도 조절하면(리사이즈 시작 때 모든 컬럼 폭을 잡아 둔다) 고정 레이아웃으로 바꾼다.
+  // 자동 레이아웃은 줄바꿈 없는 내용보다 좁게 줄일 수 없어 폭을 줄여도 그대로였다.
+  const isSized = Object.keys(columnSizing).length > 0;
 
   const handleExport = useCallback(async (format: ExportFormat) => {
     setIsExporting(true);
@@ -302,15 +306,23 @@ function DataGrid<T>({
     e.dataTransfer.setData('text/plain', columnId);
   }, [enableColumnReordering]);
 
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLElement>, columnId: string) => {
-    if (!enableColumnReordering || !draggedColumnRef.current) return;
+  /** 화면에 보이는 순서(좌측 고정 → 일반 → 우측 고정)의 컬럼 id */
+  const getVisualOrder = useCallback(() => table.getVisibleLeafColumns().map((col) => col.id), [table]);
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLElement>, columnId: string, pinned: boolean) => {
+    // 고정 컬럼 위에는 놓지 못한다 (고정 컬럼 순서는 고정 상태가 정한다)
+    if (!enableColumnReordering || !draggedColumnRef.current || pinned) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    if (columnId === draggedColumnRef.current || dropTargetElRef.current === e.currentTarget) return;
+    if (columnId === draggedColumnRef.current) { clearDropTarget(); return; }
+    // 오른쪽으로 옮기면 놓은 컬럼 뒤에, 왼쪽으로 옮기면 앞에 들어간다 — 표시도 그 쪽 경계에 그린다
+    const order = getVisualOrder();
+    const side = order.indexOf(draggedColumnRef.current) < order.indexOf(columnId) ? 'after' : 'before';
+    if (dropTargetElRef.current === e.currentTarget && e.currentTarget.dataset.dropTarget === side) return;
     clearDropTarget();
     dropTargetElRef.current = e.currentTarget;
-    e.currentTarget.dataset.dropTarget = 'true';
-  }, [enableColumnReordering, clearDropTarget]);
+    e.currentTarget.dataset.dropTarget = side;
+  }, [enableColumnReordering, clearDropTarget, getVisualOrder]);
 
   const handleDragLeave = useCallback((e: React.DragEvent<HTMLElement>) => {
     // 헤더 안 자식 요소로 옮겨 갈 때도 dragleave 가 오므로, 헤더 밖으로 나갈 때만 강조를 끈다
@@ -329,9 +341,8 @@ function DataGrid<T>({
     const draggedColumn = draggedColumnRef.current;
     if (!enableColumnReordering || !draggedColumn) return;
     e.preventDefault();
-    const currentOrder = columnOrder.length > 0
-      ? columnOrder
-      : table.getAllLeafColumns().map((col) => col.id);
+    // 저장된 순서에는 나중에 생긴 컬럼이 빠져 있을 수 있어 화면 순서를 기준으로 옮긴다
+    const currentOrder = getVisualOrder();
     const draggedIndex = currentOrder.indexOf(draggedColumn);
     const targetIndex = currentOrder.indexOf(targetColumnId);
     if (draggedIndex !== -1 && targetIndex !== -1 && draggedIndex !== targetIndex) {
@@ -341,7 +352,7 @@ function DataGrid<T>({
       setColumnOrder(newOrder);
     }
     handleDragEnd();
-  }, [enableColumnReordering, columnOrder, table, handleDragEnd]);
+  }, [enableColumnReordering, getVisualOrder, handleDragEnd]);
 
   // 정렬 아이콘
   const SortIcon = ({ isSorted }: { isSorted: false | 'asc' | 'desc' }) => {
@@ -512,7 +523,9 @@ function DataGrid<T>({
           )}
         <table
           className="font-data text-xs"
-          style={{ minWidth: fillWidth ? '100%' : undefined, width: 'max-content' }}
+          style={isSized
+            ? { tableLayout: 'fixed', width: table.getTotalSize() }
+            : { minWidth: fillWidth ? '100%' : undefined, width: 'max-content' }}
         >
           {/* Header */}
           <thead className="bg-background sticky top-0 z-10">
@@ -531,22 +544,24 @@ function DataGrid<T>({
                       className={`
                         group/resize relative px-3 py-2 font-semibold text-text
                         border-b border-r border-border last:border-r-0
-                        whitespace-nowrap
-                        transition-all duration-150
+                        whitespace-nowrap ${isSized ? 'overflow-hidden text-ellipsis' : ''}
+                        transition-colors duration-150
                         ${getAlignmentClass(headerAlign)}
                         data-[dragging=true]:opacity-50 data-[dragging=true]:bg-primary/10
-                        data-[drop-target=true]:bg-primary/20 data-[drop-target=true]:border-l-2 data-[drop-target=true]:border-l-primary
+                        data-[drop-target]:bg-primary/20
+                        data-[drop-target=before]:border-l-2 data-[drop-target=before]:border-l-primary
+                        data-[drop-target=after]:border-r-2 data-[drop-target=after]:border-r-primary
                         ${pinned ? 'bg-slate-200 dark:bg-slate-800' : 'bg-slate-200 dark:bg-slate-800'}
                       `}
                       style={{
-                        width: columnSizing[header.id] ? header.getSize() : 'auto',
-                        minWidth: header.column.columnDef.minSize ?? 50,
+                        width: isSized ? header.getSize() : 'auto',
+                        minWidth: isSized ? undefined : header.column.columnDef.minSize ?? 50,
                         ...pinnedWidthStyle(pinned, header.getSize()),
                         ...getPinnedStyle(pinned, header.column.getStart('left'), header.column.getAfter('right'), isLastLeftPinned, isFirstRightPinned, 12),
                       }}
                       draggable={canDrag}
                       onDragStart={(e) => canDrag && handleDragStart(e, header.id)}
-                      onDragOver={(e) => handleDragOver(e, header.id)}
+                      onDragOver={(e) => handleDragOver(e, header.id, !!pinned)}
                       onDragEnd={handleDragEnd}
                       onDrop={(e) => handleDrop(e, header.id)}
                       onDragLeave={handleDragLeave}
@@ -652,10 +667,10 @@ function DataGrid<T>({
                     return (
                       <td
                         key={cell.id}
-                        className={`px-3 py-2 whitespace-nowrap text-inherit ${getAlignmentClass(cellAlign)} ${pinnedBg} ${pinned ? 'overflow-hidden text-ellipsis' : ''} ${showColumnBorder ? 'border-r border-border last:border-r-0' : ''}`}
+                        className={`px-3 py-2 whitespace-nowrap text-inherit ${getAlignmentClass(cellAlign)} ${pinnedBg} ${pinned || isSized ? 'overflow-hidden text-ellipsis' : ''} ${showColumnBorder ? 'border-r border-border last:border-r-0' : ''}`}
                         style={{
-                          width: columnSizing[cell.column.id] ? cell.column.getSize() : 'auto',
-                          minWidth: cell.column.columnDef.minSize ?? 50,
+                          width: isSized ? cell.column.getSize() : 'auto',
+                          minWidth: isSized ? undefined : cell.column.columnDef.minSize ?? 50,
                           ...pinnedWidthStyle(pinned, cell.column.getSize()),
                           ...getPinnedStyle(pinned, cell.column.getStart('left'), cell.column.getAfter('right'), isLastLeftPinned, isFirstRightPinned, 11),
                         }}
