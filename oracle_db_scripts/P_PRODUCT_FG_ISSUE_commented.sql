@@ -6,6 +6,7 @@ CREATE OR REPLACE PROCEDURE "P_PRODUCT_FG_ISSUE" ( p_barcode       varchar2,
    * 수정이력:
    *   2017-08-07 - 지성솔루션컨설팅 - 최초 작성
    *   2026-07-02 - AI(Codex)       - 한글 주석 자동 추가
+   *   2026-10-13 - 은성MES          - 출하취소 일자를 원출하일보다 앞서지 않게, 원출하는 최근 순번으로 찾는다
    * ================================================================
    * [AI 분석] 기능 설명:
    *   제품, 재고, 입출고 또는 팔레트 관련 업무 데이터를 등록/갱신한다.
@@ -540,8 +541,8 @@ begin
           into lvl_count  , lvd_issue_date, lvl_issue_seq, lvs_barcode, lvl_issue_qty
           from ip_product_fg_issue x 
          where x.barcode            = p_barcode 
-           and x.issue_date = ( 
-                                  select max(y.issue_date) 
+           and x.issue_sequence = (   -- 같은 출하일자 행이 여럿일 수 있어 최근 순번으로 찾는다
+                                  select max(y.issue_sequence) 
                                     from ip_product_fg_issue y 
                                    where y.barcode = p_barcode 
                                )  ; 
@@ -617,7 +618,7 @@ begin
               organization_id, 
               issue_type 
        ) 
-       select sysdate,
+       select greatest(sysdate, lvd_issue_date),   -- 미래일자 출하를 먼저 취소해도 출하일보다 앞서지 않게
               seq_fg_issue_seq.nextval, 
               
               barcode,
