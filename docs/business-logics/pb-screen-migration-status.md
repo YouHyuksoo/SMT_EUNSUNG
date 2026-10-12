@@ -4,7 +4,7 @@ sources:
   - apps/frontend/scripts/data/pb-screen-inventory.json
   - apps/frontend/scripts/data/pb-screen-exclusions.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: e72c84ab
+verifiedCommit: e34e3c3e
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -24,7 +24,7 @@ verifiedCommit: e72c84ab
 | 미착수 | 44 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 174개 / 웹 신규 29개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 174개 / 웹 신규 28개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -304,7 +304,7 @@ verifiedCommit: e72c84ab
 | 344 | └ SMT PICKUP 리포트 | `w_smt_pickup_rate_rpt` | srw | 완료 | `RPT_PICKUP_RATE` | `/report/pickup-rate` |
 | 346 | └ 생산계획리포트 | `w_pln_master_plan_rpt` | srw | 완료 | `RPT_MASTER_PLAN` | `/report/master-plan` |
 | 347 | └ 런카드리포트 | `w_product_run_card_rpt` | srw | 완료 | `RPT_RUN_CARD` | `/report/run-card` |
-| 348 | └ 제품 판매실적 | `w_prd_product_fg_issue_rpt` | srw | 완료 | `RPT_FG_ISSUE` | `/report/fg-issue` |
+| 348 | └ 제품 판매실적 | `w_prd_product_fg_issue_rpt` | srw | 완료 | `PRD_FG_ISSUE_QUERY` | `/product/fg-issue-query` |
 | 350 | └ 공정재공조회 | `w_product_workstage_stock_rpt` | srw | 완료 | `RPT_WORKSTAGE_STOCK` | `/report/workstage-stock` |
 | 352 | └ 공정매거진조회 | `w_product_workstage_magazine_stock_rpt` | srw | 완료 | `RPT_MAGAZINE_STOCK` | `/report/magazine-stock` |
 | 354 | └ S-PARTS입고리포트 | `w_mcn_mold_receipt_rpt` | srw | 완료 | `RPT_MOLD_RECEIPT` | `/report/mold-receipt` |

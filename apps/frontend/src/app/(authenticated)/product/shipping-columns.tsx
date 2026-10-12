@@ -280,6 +280,20 @@ export interface FgIssueRow {
   actualDate: string | null;
 }
 
+/**
+ * 제품출하조회 일자 × 모델 원자료 한 줄.
+ * 열 집합(일자)이 기간에 따라 달라지므로 서버가 목록을 주고 **피벗은 화면에서 한다.**
+ */
+export interface FgIssueCrosstabRow {
+  issueDate: string;
+  modelName: string | null;
+  modelSuffix: string | null;
+  customerCode: string | null;
+  locationCode: string | null;
+  /** 순출하수량 (출하 + / 취소 −) */
+  qty: number | null;
+}
+
 /** 제품출하조회 합계 한 줄 — 기준(거래처·품목·일자)에 따라 앞쪽 키 컬럼만 다르다. */
 export interface FgIssueSummaryRow {
   customerCode?: string | null;

@@ -516,7 +516,6 @@
     "report.pickupRate": "SMT Pickup Report",
     "report.masterPlan": "Production Plan Report",
     "report.runCard": "Run Card Report",
-    "report.fgIssue": "FG Sales Actual",
     "report.workstageStock": "Workstage Stock Query",
     "report.magazineStock": "Workstage Magazine Query",
     "report.materialBarcodeSlip": "Material Barcode Slip Report",

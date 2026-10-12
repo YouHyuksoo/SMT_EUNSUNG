@@ -516,7 +516,6 @@
     "report.pickupRate": "SMT PICKUP 리포트",
     "report.masterPlan": "생산계획리포트",
     "report.runCard": "런카드리포트",
-    "report.fgIssue": "제품 판매실적",
     "report.workstageStock": "공정재공조회",
     "report.magazineStock": "공정매거진조회",
     "report.materialBarcodeSlip": "자재전표바코드리포트",

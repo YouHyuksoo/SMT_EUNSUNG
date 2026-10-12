@@ -10,8 +10,6 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
 import type {
   CarrierBarcodeRow,
-  FgIssueDetailRow,
-  FgIssueSummaryRow,
   ItemMasterRow,
   LineBarcodeRow,
   MachineOperationRow,
@@ -390,80 +388,6 @@ export function runCardSummaryColumns(withQty: boolean): ColumnDef<RunCardSummar
   }
   return cols;
 }
-
-// ───────────────────────────────── 348 제품 판매실적
-
-export const fgIssueDetailColumns: ColumnDef<FgIssueDetailRow>[] = [
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'issueDate', header: '출하시각', size: 160, cell: (c) => ts(c.getValue()) },
-  { accessorKey: 'barcode', header: '제품 바코드', size: 170 },
-  { accessorKey: 'modelName', header: '모델', size: 150 },
-  { accessorKey: 'modelSuffix', header: '모델 SFX', size: 100 },
-  {
-    accessorKey: 'qty',
-    header: '수량 (부호)',
-    size: 110,
-    meta: right,
-    cell: (c) => {
-      const n = Number(c.getValue() ?? 0);
-      return n < 0
-        ? <span className="font-semibold text-red-500">{num(c.getValue())}</span>
-        : num(c.getValue());
-    },
-  },
-  { accessorKey: 'issuePrice', header: '단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
-  {
-    accessorKey: 'txnDeficit',
-    header: '구분',
-    size: 100,
-    meta: center,
-    // 3 출고 · 4 출고취소 (현재 데이터에 쓰이는 두 값 — 실측)
-    cell: (c) => {
-      const v = String(c.getValue() ?? '');
-      if (v === '3') return '출고';
-      if (v === '4') return <span className="text-red-500">출고취소</span>;
-      return v;
-    },
-  },
-  {
-    id: 'customerName',
-    header: '고객',
-    size: 160,
-    accessorFn: (r) => codeWithName(r.customerCode, r.customerName),
-  },
-  { accessorKey: 'locationCode', header: '위치', size: 110 },
-  { accessorKey: 'packType', header: '포장', size: 90 },
-  { accessorKey: 'palletNo', header: '파렛트', size: 110 },
-  { accessorKey: 'palletDate', header: '파렛트시각', size: 160, cell: (c) => ts(c.getValue()) },
-  { accessorKey: 'shipNo', header: '출하번호', size: 120 },
-  { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
-  { accessorKey: 'mfs', header: 'MFS', size: 110 },
-  { accessorKey: 'actualDate', header: '실적일', size: 110 },
-  { accessorKey: 'shiftCode', header: '교대', size: 80, meta: center },
-  { accessorKey: 'enterBy', header: '등록자', size: 90 },
-];
-
-export const fgIssueSummaryColumns: ColumnDef<FgIssueSummaryRow>[] = [
-  { accessorKey: 'modelName', header: '모델', size: 160 },
-  { accessorKey: 'modelSuffix', header: '모델 SFX', size: 100 },
-  {
-    id: 'customerName',
-    header: '고객',
-    size: 180,
-    accessorFn: (r) => codeWithName(r.customerCode, r.customerName),
-  },
-  { accessorKey: 'locationCode', header: '위치', size: 110 },
-  { accessorKey: 'issueCount', header: '출하 건수', size: 110, meta: right, cell: (c) => num(c.getValue()) },
-  {
-    accessorKey: 'qty',
-    header: '수량 (취소 차감)',
-    size: 140,
-    meta: right,
-    cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
-  },
-  { accessorKey: 'issuePrice', header: '단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
-];
 
 // ───────────────────────────────── 350 공정재공 · 352 공정매거진
 

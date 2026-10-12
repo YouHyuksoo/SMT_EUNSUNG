@@ -6,14 +6,16 @@
  *
  * 초보자 가이드:
  * 1. **출하 입력은 제품출하관리(`/product/fg-issue`) 화면에서 한다.** 이 화면은 조회만 한다.
- * 2. **탭이 네 개다** — 출하 이력(박스 한 건씩) · 거래처별 · 품목별 · 일자별 합계.
- *    합계는 서버에서 묶어 오므로 이력이 행 제한에 걸려도 합계는 정확하다.
+ * 2. **탭이 다섯 개다** — 출하 이력(박스 한 건씩) · 거래처별 · 품목별 · 일자별 합계 ·
+ *    일자 × 모델 크로스탭. 합계는 서버에서 묶어 오므로 이력이 행 제한에 걸려도 합계는 정확하다.
+ *    크로스탭은 서버가 (일자, 모델, 수량) 목록을 주고 피벗은 화면에서 돌린다 — 열(일자)이
+ *    기간에 따라 달라진다.
  * 3. **수량 부호**: 출하(3)는 +, 출하취소(4)는 −. 순출하수량 = 출하수량 − 취소수량.
  * 4. **일자는 출하일시(`ISSUE_DATE`)의 날짜다.** 조회 기간도 같은 컬럼으로 거른다.
  * 5. **기본 기간이 7일이다.** 출하 이력은 기간 컬럼에 인덱스가 없어 한 달이면 수 초가 걸린다.
  *    합계 탭은 한 달도 빠르다.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Search } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -28,16 +30,20 @@ import {
   TruncationNotice,
   useTruncation,
 } from '../../report/components/TruncationNotice';
+import { CrosstabGrid, type CrosstabSpec } from '../../report/components/CrosstabGrid';
 import {
   fgIssueColumns,
   fgIssueCustomerSummaryColumns,
   fgIssueDateSummaryColumns,
   fgIssueItemSummaryColumns,
 } from '../shipping-columns';
-import type { FgIssueRow, FgIssueSummaryRow } from '../shipping-columns';
+import type { FgIssueCrosstabRow, FgIssueRow, FgIssueSummaryRow } from '../shipping-columns';
 
 type SummaryKey = 'customer' | 'item' | 'date';
-type TabKey = 'history' | SummaryKey;
+type TabKey = 'history' | SummaryKey | 'crosstab';
+
+const isSummaryTab = (tab: TabKey): tab is SummaryKey =>
+  tab === 'customer' || tab === 'item' || tab === 'date';
 
 /** 합계 탭 정의 — 백엔드 `groupBy` 값과 키를 맞춘다. */
 const SUMMARY_TABS: Record<
@@ -72,6 +78,7 @@ export default function FgIssueQueryPage() {
     item: [],
     date: [],
   });
+  const [crosstab, setCrosstab] = useState<FgIssueCrosstabRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const { truncated, rowLimit, mark } = useTruncation();
@@ -89,6 +96,10 @@ export default function FgIssueQueryPage() {
       if (tab === 'history') {
         const r = await api.get('/product/fg/issues', { params });
         setRows(r.data?.data ?? []);
+        mark(r);
+      } else if (tab === 'crosstab') {
+        const r = await api.get('/product/fg/issues/crosstab', { params });
+        setCrosstab(r.data?.data ?? []);
         mark(r);
       } else {
         const r = await api.get('/product/fg/issues/summary', {
@@ -110,10 +121,27 @@ export default function FgIssueQueryPage() {
 
   useEffect(() => { void search(); }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const crosstabSpec = useMemo<CrosstabSpec<FgIssueCrosstabRow>>(() => ({
+    rowKey: (r) => [r.modelName, r.modelSuffix, r.customerCode, r.locationCode].join('|'),
+    rowLabels: [
+      { header: '모델', value: (r) => r.modelName ?? '', width: 140 },
+      { header: '모델 SFX', value: (r) => r.modelSuffix ?? '' },
+      { header: '고객', value: (r) => r.customerCode ?? '' },
+      { header: '위치', value: (r) => r.locationCode ?? '' },
+    ],
+    colKey: (r) => r.issueDate,
+    // 'YYYY-MM-DD' 에서 월/일만 보여준다 — 열이 30개면 연도가 자리만 차지한다.
+    colHeader: (k) => k.slice(5),
+    value: (r) => Number(r.qty ?? 0),
+  }), []);
+
   const headline = (() => {
     if (!searched) return '조회하세요';
     if (tab === 'history') {
       return `${rows.length.toLocaleString()}건 · 순출하 ${sumOf(rows, (r) => r.qty).toLocaleString()}`;
+    }
+    if (tab === 'crosstab') {
+      return `순출하 ${sumOf(crosstab, (r) => r.qty).toLocaleString()}`;
     }
     const list = summary[tab];
     return `${list.length.toLocaleString()}행 · 출하 ${sumOf(list, (r) => r.issueQty).toLocaleString()}`
@@ -126,7 +154,7 @@ export default function FgIssueQueryPage() {
       <header>
         <h1 className="text-xl font-bold text-text">제품출하조회</h1>
         <p className="mt-1 text-sm text-text-muted">
-          제품출하 이력과 거래처별 · 품목별 · 일자별 합계 · {headline}
+          제품출하 이력과 거래처별 · 품목별 · 일자별 합계, 일자 × 모델 · {headline}
         </p>
       </header>
 
@@ -138,6 +166,7 @@ export default function FgIssueQueryPage() {
             label: SUMMARY_TABS[key].label,
             count: summary[key].length,
           })),
+          { key: 'crosstab' as TabKey, label: '일자 × 모델', count: crosstab.length },
         ]}
         active={tab}
         onChange={setTab}
@@ -184,7 +213,15 @@ export default function FgIssueQueryPage() {
               defaultPinnedColumns={{ left: ['barcode'] }}
               emptyMessage={searched ? '이 기간에 출하 내역이 없습니다.' : '조회하세요.'}
             />
-          ) : (
+          ) : tab === 'crosstab' ? (
+            <CrosstabGrid
+              rows={crosstab}
+              spec={crosstabSpec}
+              isLoading={loading}
+              exportFileName="제품출하_일자별모델"
+              emptyMessage={searched ? '이 기간에 출하가 없습니다.' : '조회하세요.'}
+            />
+          ) : isSummaryTab(tab) && (
             <DataGrid
               key={tab}
               data={summary[tab]}

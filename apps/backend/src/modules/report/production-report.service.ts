@@ -4,7 +4,6 @@
  *              344 w_smt_pickup_rate_rpt                      SMT PICKUP 리포트
  *              346 w_pln_master_plan_rpt                       생산계획리포트
  *              347 w_product_run_card_rpt                      런카드리포트
- *              348 w_prd_product_fg_issue_rpt                  제품 판매실적
  *              350 w_product_workstage_stock_rpt               공정재공조회
  *              352 w_product_workstage_magazine_stock_rpt      공정매거진조회
  *
@@ -12,25 +11,15 @@
  * 1. **리포트에는 키가 없다.** 추적·조회는 제조번호·PID·Run No 로 한 건을 찾는데
  *    리포트는 GROUP BY 집계다. 그래서 `checkTrackingFilter` 를 쓸 수 없고
  *    **구동 원장의 날짜 인덱스를 타도록 기간을 필수로 받는다** (DTO 에서 강제).
- *    실측 규모: 픽업 97만행 · 판매실적 57만행 · 런카드 3.9만행.
+ *    실측 규모: 픽업 97만행 · 런카드 3.9만행.
  * 2. **344 픽업은 '미스 금액' 이 핵심이다.** (미스 + 인식오류) × 구매단가 다.
  *    PB 는 단가 하한 조건을 둬서 비싼 자재의 미스만 골라 봤다 — 그 조건을 유지한다.
  * 3. **346 은 r01~r10 열 열 개가 시간대다.** 생산 대분류(MI/SMD 계획)에서 쓴 것과
  *    같은 고정 슬롯 구조라 그 형태를 그대로 따른다. 크로스탭이 아니다
  *    (DataWindow processing=0, 즉 일반 표다 — 실측).
- * 4. **348 은 세 갈래다.** 상세 · 모델별 합계 · 일자×모델 크로스탭.
- *    세 가지를 실측으로 바로잡았다 —
- *      (a) 컬럼은 PRODUCT_LOCATION_CODE 가 아니라 **LOCATION_CODE** 다.
- *      (b) **수량에 부호가 붙는다**: `QTY * DECODE(TXN_DEFICIT, 3, 1, -1)`.
- *          3 출고는 +, 4 출고취소는 − 다 (코드표 실측, 현재 데이터는 3/4 만 쓴다:
- *          565,073 / 3,825건). 이 부호를 빼면 취소분이 판매실적에 더해진다.
- *      (c) 단가는 컬럼이 아니라 **DB 함수**다 —
- *          F_GET_SAL_LAST_PRICE_CFM(고객, 품목, 'T', 출하일, 조직). VALID 실측.
- *    크로스탭은 SQL 이 `(일자, 모델, 수량)` 3컬럼 목록을 돌려주고 **피벗은 화면에서
- *    한다** (PB 도 DataWindow 표현 계층에서 돌렸다 — processing=4).
- * 5. **350 은 대상이 0행이다** (IP_PRODUCT_WORKSTAGE_INV 실측 0건).
+ * 4. **350 은 대상이 0행이다** (IP_PRODUCT_WORKSTAGE_INV 실측 0건).
  *    화면은 동작하지만 볼 것이 없다 — 은성이 아직 공정재공을 쌓지 않는다.
- * 6. **352 의 불량·폐기 갈래는 기간이 필수다.** 그 둘은 입출고 원장
+ * 5. **352 의 불량·폐기 갈래는 기간이 필수다.** 그 둘은 입출고 원장
  *    (IP_PRODUCT_RUN_CARD_IO)을 집계하고 구동 조건이 RECEIPT_DATE 뿐이다.
  *    공정재공 갈래는 스냅샷(IP_PRODUCT_RUN_CARD_INV, 819행)이라 기간이 없다.
  */
@@ -39,7 +28,6 @@ import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import {
-  FgIssueReportQueryDto,
   MagazineStockQueryDto,
   MasterPlanReportQueryDto,
   PickupRateQueryDto,
@@ -306,122 +294,6 @@ export class ProductionReportService {
       namedBinds(this.runCardBinds(query, organizationId)),
     )) as Row[];
     return { data: rows, total: rows.length, withQty: Boolean(query.withQty) };
-  }
-
-  // ───────────────────────────────── 348 제품 판매실적
-
-  private fgIssueWhere(withBarcode: boolean) {
-    return `f.ISSUE_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
-          AND f.ISSUE_DATE <  TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
-          AND NVL(f.MODEL_NAME, '*') LIKE :modelName ESCAPE '\\'
-          AND f.ORGANIZATION_ID = :organizationId`
-      + (withBarcode ? `\n          AND NVL(f.BARCODE, '*') LIKE :barcode ESCAPE '\\'` : '');
-  }
-
-  /** 출하 상세 — 제품 한 장씩 */
-  async findFgIssueDetail(query: FgIssueReportQueryDto, organizationId: number) {
-    const rows = (await this.dataSource.query(
-      `SELECT TO_CHAR(f.ISSUE_DATE, 'YYYY-MM-DD HH24:MI:SS') AS "issueDate",
-              f.ISSUE_SEQUENCE                          AS "issueSequence",
-              f.BARCODE                                 AS "barcode",
-              f.MODEL_NAME                              AS "modelName",
-              f.MODEL_SUFFIX                            AS "modelSuffix",
-              f.ITEM_CODE                               AS "itemCode",
-              -- 출고는 +, 출고취소는 − (PB DECODE(TXN_DEFICIT,3,1,-1) 그대로).
-              f.QTY * DECODE(f.TXN_DEFICIT, 3, 1, -1)   AS "qty",
-              f.QTY                                     AS "rawQty",
-              F_GET_SAL_LAST_PRICE_CFM(f.CUSTOMER_CODE, f.ITEM_CODE, 'T',
-                                       f.ISSUE_DATE, f.ORGANIZATION_ID) AS "issuePrice",
-              f.PACK_TYPE                               AS "packType",
-              f.TXN_DEFICIT                             AS "txnDeficit",
-              f.CUSTOMER_CODE                           AS "customerCode",
-              c.CUSTOMER_NAME                           AS "customerName",
-              f.LOCATION_CODE                           AS "locationCode",
-              f.LINE_CODE                               AS "lineCode",
-              f.WORKSTAGE_CODE                          AS "workstageCode",
-              f.MFS                                     AS "mfs",
-              f.PALLET_NO                               AS "palletNo",
-              TO_CHAR(f.PALLET_DATE, 'YYYY-MM-DD HH24:MI:SS') AS "palletDate",
-              f.SHIP_NO                                 AS "shipNo",
-              TO_CHAR(f.ACTUAL_DATE, 'YYYY-MM-DD')      AS "actualDate",
-              f.SHIFT_CODE                              AS "shiftCode",
-              f.WORK_TIME_ZONE                          AS "workTimeZone",
-              f.ENTER_BY                                AS "enterBy",
-              TO_CHAR(f.ENTER_DATE, 'YYYY-MM-DD HH24:MI:SS') AS "enterDate"
-         FROM IP_PRODUCT_FG_ISSUE f
-         LEFT JOIN ICOM_CUSTOMER c ON c.CUSTOMER_CODE = f.CUSTOMER_CODE
-        WHERE ${this.fgIssueWhere(true)}
-        ORDER BY f.ISSUE_DATE DESC, f.ISSUE_SEQUENCE
-        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      namedBinds({
-        dateFrom: query.dateFrom,
-        dateTo: query.dateTo,
-        modelName: likePrefix(query.modelName),
-        barcode: likePrefix(query.barcode),
-        organizationId,
-      }),
-    )) as Row[];
-    return limited(rows);
-  }
-
-  /** 출하 합계 — 모델·고객·위치별 */
-  async findFgIssueSummary(query: FgIssueReportQueryDto, organizationId: number) {
-    const rows = (await this.dataSource.query(
-      `SELECT f.MODEL_NAME                              AS "modelName",
-              f.MODEL_SUFFIX                            AS "modelSuffix",
-              f.CUSTOMER_CODE                           AS "customerCode",
-              c.CUSTOMER_NAME                           AS "customerName",
-              f.LOCATION_CODE                           AS "locationCode",
-              COUNT(*)                                  AS "issueCount",
-              SUM(NVL(f.QTY, 0) * DECODE(f.TXN_DEFICIT, 3, 1, -1)) AS "qty",
-              MAX(F_GET_SAL_LAST_PRICE_CFM(f.CUSTOMER_CODE, f.ITEM_CODE, 'T',
-                                           f.ISSUE_DATE, f.ORGANIZATION_ID)) AS "issuePrice"
-         FROM IP_PRODUCT_FG_ISSUE f
-         LEFT JOIN ICOM_CUSTOMER c ON c.CUSTOMER_CODE = f.CUSTOMER_CODE
-        WHERE ${this.fgIssueWhere(false)}
-        GROUP BY f.MODEL_NAME, f.MODEL_SUFFIX, f.CUSTOMER_CODE, c.CUSTOMER_NAME,
-                 f.LOCATION_CODE
-        ORDER BY f.MODEL_NAME, f.CUSTOMER_CODE
-        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      namedBinds({
-        dateFrom: query.dateFrom,
-        dateTo: query.dateTo,
-        modelName: likePrefix(query.modelName),
-        organizationId,
-      }),
-    )) as Row[];
-    return limited(rows);
-  }
-
-  /**
-   * 출하 크로스탭 원자료 — 일자 × 모델 수량.
-   *
-   * SQL 은 `(일자, 모델, 고객, 수량)` 목록을 돌려주고 **피벗은 화면에서 한다.**
-   * PB 도 DataWindow 크로스탭(processing=4)으로 표현 계층에서 돌렸다 — 열 집합이
-   * 데이터에 따라 달라지므로 서버가 고정 컬럼을 만들 수 없다.
-   */
-  async findFgIssueCrosstab(query: FgIssueReportQueryDto, organizationId: number) {
-    const rows = (await this.dataSource.query(
-      `SELECT TO_CHAR(TRUNC(f.ISSUE_DATE), 'YYYY-MM-DD') AS "issueDate",
-              f.MODEL_NAME                              AS "modelName",
-              f.MODEL_SUFFIX                            AS "modelSuffix",
-              f.CUSTOMER_CODE                           AS "customerCode",
-              f.LOCATION_CODE                           AS "locationCode",
-              SUM(NVL(f.QTY, 0) * DECODE(f.TXN_DEFICIT, 3, 1, -1)) AS "qty"
-         FROM IP_PRODUCT_FG_ISSUE f
-        WHERE ${this.fgIssueWhere(false)}
-        GROUP BY TRUNC(f.ISSUE_DATE), f.MODEL_NAME, f.MODEL_SUFFIX,
-                 f.CUSTOMER_CODE, f.LOCATION_CODE
-        ORDER BY 1, 2
-        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      namedBinds({
-        dateFrom: query.dateFrom,
-        dateTo: query.dateTo,
-        modelName: likePrefix(query.modelName),
-        organizationId,
-      }),
-    )) as Row[];
-    return limited(rows);
   }
 
   // ───────────────────────────────── 350 공정재공조회

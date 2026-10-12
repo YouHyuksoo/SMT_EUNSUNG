@@ -157,7 +157,6 @@ const KNOWN_LEAF_CODES: ReadonlySet<string> = new Set<string>([
   'RPT_PICKUP_RATE',
   'RPT_MASTER_PLAN',
   'RPT_RUN_CARD',
-  'RPT_FG_ISSUE',
   'RPT_WORKSTAGE_STOCK',
   'RPT_MAGAZINE_STOCK',
   'RPT_MOLD_RECEIPT',

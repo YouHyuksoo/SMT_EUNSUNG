@@ -244,6 +244,43 @@ export class ProductFgService {
   }
 
   /**
+   * 제품출하조회 일자 × 모델 원자료 — (일자, 모델, 고객, 위치, 순출하수량) 목록.
+   *
+   * 열(일자) 집합이 기간에 따라 달라지므로 피벗은 화면에서 돌린다. 조건·부호는 이력·합계와
+   * 같아서 세 탭의 수량이 서로 맞는다.
+   */
+  async findIssueCrosstab(query: FgIssueQueryDto, organizationId: number) {
+    const rows = (await this.dataSource.query(
+      `SELECT TO_CHAR(TRUNC(i.ISSUE_DATE), 'YYYY-MM-DD') AS "issueDate",
+              i.MODEL_NAME                              AS "modelName",
+              i.MODEL_SUFFIX                            AS "modelSuffix",
+              i.CUSTOMER_CODE                           AS "customerCode",
+              i.LOCATION_CODE                           AS "locationCode",
+              SUM(i.QTY * DECODE(i.TXN_DEFICIT, '3', 1, -1)) AS "qty"
+         FROM IP_PRODUCT_FG_ISSUE i
+        WHERE i.ISSUE_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
+          AND i.ISSUE_DATE <  TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
+          AND i.MODEL_NAME LIKE :modelName
+          AND i.BARCODE LIKE :barcode
+          AND NVL(i.CUSTOMER_CODE, '*') LIKE :customerCode
+          AND i.ORGANIZATION_ID = :organizationId
+        GROUP BY TRUNC(i.ISSUE_DATE), i.MODEL_NAME, i.MODEL_SUFFIX,
+                 i.CUSTOMER_CODE, i.LOCATION_CODE
+        ORDER BY 1, 2
+        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
+      namedBinds({
+        dateFrom: query.dateFrom,
+        dateTo: query.dateTo,
+        modelName: this.like(query.modelName),
+        barcode: this.like(query.barcode),
+        customerCode: this.exactOrAll(query.customerCode),
+        organizationId,
+      }),
+    )) as Row[];
+    return limited(rows);
+  }
+
+  /**
    * 출하할 수 있는 재고 (PB `d_prd_product_fg_issue_able_lst`).
    *
    * PB 고정조건 두 가지를 그대로 둔다 — 파렛트에 실리지 않은 것(`PALLET_FLAG='N'`)과

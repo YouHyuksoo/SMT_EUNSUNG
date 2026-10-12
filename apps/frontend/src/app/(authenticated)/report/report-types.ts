@@ -223,67 +223,6 @@ export interface RunCardSummaryRow {
   outputQty: number | null;
 }
 
-/**
- * 348 출하 상세 한 줄.
- *
- * `qty` 에는 **부호가 붙어 있다** — 출고는 +, 출고취소는 − (PB 와 같은 규칙).
- * `rawQty` 는 부호 없는 원값이다. 단가는 컬럼이 아니라 DB 함수가 계산한다.
- */
-export interface FgIssueDetailRow {
-  issueDate: string | null;
-  issueSequence: number | null;
-  barcode: string | null;
-  modelName: string | null;
-  modelSuffix: string | null;
-  itemCode: string | null;
-  /** 부호 적용 수량 (출고 + / 출고취소 −) */
-  qty: number | null;
-  /** 부호 없는 원값 */
-  rawQty: number | null;
-  issuePrice: number | null;
-  packType: string | null;
-  txnDeficit: string | null;
-  customerCode: string | null;
-  customerName: string | null;
-  locationCode: string | null;
-  lineCode: string | null;
-  workstageCode: string | null;
-  mfs: string | null;
-  palletNo: string | null;
-  palletDate: string | null;
-  shipNo: string | null;
-  actualDate: string | null;
-  shiftCode: string | null;
-  workTimeZone: string | null;
-  enterBy: string | null;
-  enterDate: string | null;
-}
-
-/** 348 출하 합계 한 줄 */
-export interface FgIssueSummaryRow {
-  modelName: string | null;
-  modelSuffix: string | null;
-  customerCode: string | null;
-  customerName: string | null;
-  locationCode: string | null;
-  issueCount: number | null;
-  qty: number | null;
-  issuePrice: number | null;
-}
-
-/**
- * 348 크로스탭 원자료 한 줄.
- * 열 집합(일자)이 데이터에 따라 달라지므로 서버가 목록을 주고 **피벗은 화면에서 한다.**
- */
-export interface FgIssueCrosstabRow {
-  issueDate: string;
-  modelName: string | null;
-  modelSuffix: string | null;
-  customerCode: string | null;
-  locationCode: string | null;
-  qty: number | null;
-}
-
 /** 350 공정재공 한 줄. 이 표는 현재 0행이다. */
 export interface WorkstageStockRow {
   modelName: string | null;

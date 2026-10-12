@@ -141,7 +141,8 @@
     "/outsourcing/vendor",
     "/workflow",
     "/oee/entry",
-    "/inventory-query/barcode-check"
+    "/inventory-query/barcode-check",
+    "/report/fg-issue"
   ],
   "forbiddenCodes": [
     "OEE_DRILLDOWN",
@@ -260,7 +261,8 @@
     "INV_MAT_PHYSICAL_INV_HISTORY",
     "OEE_ENTRY",
     "INV_BARCODE_CHECK",
-    "OUTSOURCING"
+    "OUTSOURCING",
+    "RPT_FG_ISSUE"
   ],
   "deletedRouteDirs": [
     "apps/frontend/src/app/(authenticated)/oee/dashboard/drilldown",
@@ -308,7 +310,8 @@
     "apps/frontend/src/app/(authenticated)/oee/entry",
     "apps/frontend/src/config/workflowConfig.ts",
     "apps/frontend/src/config/workflowMap.ts",
-    "apps/frontend/src/app/(authenticated)/inventory-query/barcode-check"
+    "apps/frontend/src/app/(authenticated)/inventory-query/barcode-check",
+    "apps/frontend/src/app/(authenticated)/report/fg-issue"
   ],
   "deletedRegistryFiles": [
     "apps/frontend/src/components/layout/page-registries/oee__dashboard__drilldown.generated.ts",
@@ -420,7 +423,8 @@
     "apps/frontend/src/components/layout/page-registries/inventory__material-physical-inv-history.generated.ts",
     "apps/frontend/src/components/layout/page-registries/inventory__transaction.generated.ts",
     "apps/frontend/src/components/layout/page-registries/oee__entry.generated.ts",
-    "apps/frontend/src/components/layout/page-registries/inventory-query__barcode-check.generated.ts"
+    "apps/frontend/src/components/layout/page-registries/inventory-query__barcode-check.generated.ts",
+    "apps/frontend/src/components/layout/page-registries/report__fg-issue.generated.ts"
   ],
   "expectedTopLevelMenuCodes": [
     "MONITORING",

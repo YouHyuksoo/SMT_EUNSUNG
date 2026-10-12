@@ -199,6 +199,18 @@ export class ProductFgController {
     return paged(await this.service.findIssueSummary(query, organizationId));
   }
 
+  @Get('issues/crosstab')
+  @ApiOperation({
+    summary: '제품출하조회 일자 × 모델 원자료 (일자·모델·고객·위치별 순출하수량).'
+      + ' 열 집합이 기간에 따라 달라지므로 피벗은 화면에서 한다.',
+  })
+  async issueCrosstab(
+    @Query() query: FgIssueQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findIssueCrosstab(query, organizationId));
+  }
+
   @Get('issuable')
   @ApiOperation({
     summary: '307 출하할 수 있는 제품재고. PB 고정조건(파렛트 미적재 · 제품창고 P01)을'

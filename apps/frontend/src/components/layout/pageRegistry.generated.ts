@@ -737,11 +737,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/report/fg-issue": {
-      const mod = await import("./page-registries/report__fg-issue.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/report/four-m": {
       const mod = await import("./page-registries/report__four-m.generated");
       component = mod.getPageComponent();

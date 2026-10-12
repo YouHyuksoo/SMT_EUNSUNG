@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: e72c84ab
+verifiedCommit: e34e3c3e
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: e72c84ab
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 204 | 174 | 29 | 1 |
+| 203 | 174 | 28 | 1 |
 
 ## 전체 연결표
 
@@ -132,7 +132,7 @@ verifiedCommit: e72c84ab
 | 제품재고관리 | 제품입고관리(PID) | `PRD_FG_RECEIPT` | `/product/fg-receipt` | PB 연결 | `w_prd_product_fg_receipt` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품입고관리(모델단위) | `PRD_FG_MODEL_RECEIPT` | `/product/fg-model-receipt` | PB 연결 | `w_prd_product_fg_4_model_receipt` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품출하관리 | `PRD_FG_ISSUE` | `/product/fg-issue` | PB 연결 | `w_prd_product_fg_issue` | PB 메뉴 인벤토리 |
-| 제품재고관리 | 제품출하조회 | `PRD_FG_ISSUE_QUERY` | `/product/fg-issue-query` | 웹 신규 |  | PB 대응 없음 |
+| 제품재고관리 | 제품출하조회 | `PRD_FG_ISSUE_QUERY` | `/product/fg-issue-query` | PB 연결 | `w_prd_product_fg_issue_rpt` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품출고관리(모델단위) | `PRD_FG_MODEL_ISSUE` | `/product/fg-model-issue` | PB 연결 | `w_prd_product_fg_4_model_issue` | PB 메뉴 인벤토리 |
 | 재고마감 | 재고마감일자설정 | `SYS_INV_CLOSE_DATE` | `/system/inventory-close-date` | PB 연결 | `w_system_inventory_close_date_setup` | PB 메뉴 인벤토리 |
 | 재고마감 | 자재재고마감 | `INV_CLOSE` | `/inventory-query/inventory-close` | PB 연결 | `w_mat_inventory_close_report` | PB 메뉴 인벤토리 |
@@ -173,7 +173,6 @@ verifiedCommit: e72c84ab
 | 정보조회 | SMT PICKUP 리포트 | `RPT_PICKUP_RATE` | `/report/pickup-rate` | PB 연결 | `w_smt_pickup_rate_rpt` | PB 메뉴 인벤토리 |
 | 정보조회 | 생산계획리포트 | `RPT_MASTER_PLAN` | `/report/master-plan` | PB 연결 | `w_pln_master_plan_rpt` | PB 메뉴 인벤토리 |
 | 정보조회 | 런카드리포트 | `RPT_RUN_CARD` | `/report/run-card` | PB 연결 | `w_product_run_card_rpt` | PB 메뉴 인벤토리 |
-| 정보조회 | 제품 판매실적 | `RPT_FG_ISSUE` | `/report/fg-issue` | PB 연결 | `w_prd_product_fg_issue_rpt` | PB 메뉴 인벤토리 |
 | 정보조회 | 공정재공조회 | `RPT_WORKSTAGE_STOCK` | `/report/workstage-stock` | PB 연결 | `w_product_workstage_stock_rpt` | PB 메뉴 인벤토리 |
 | 정보조회 | 공정매거진조회 | `RPT_MAGAZINE_STOCK` | `/report/magazine-stock` | PB 연결 | `w_product_workstage_magazine_stock_rpt` | PB 메뉴 인벤토리 |
 | 정보조회 | S-PARTS입고리포트 | `RPT_MOLD_RECEIPT` | `/report/mold-receipt` | PB 연결 | `w_mcn_mold_receipt_rpt` | PB 메뉴 인벤토리 |
