@@ -644,14 +644,6 @@
       "retryDesc": "Connection failed. Please check your network and try again.",
       "retry": "Retry"
     },
-    "branding": {
-      "title": "은성전장 MES",
-      "subtitle": "Manufacturing Execution System",
-      "description": "Real-time production management solution",
-      "feature1": "Real-time Monitoring",
-      "feature2": "Quality Tracking",
-      "feature3": "Data Analytics"
-    },
     "noPermission": "Access Denied",
     "noPermissionDesc": "You do not have permission to access this page. Please contact your administrator.",
     "goHome": "Go to Dashboard",

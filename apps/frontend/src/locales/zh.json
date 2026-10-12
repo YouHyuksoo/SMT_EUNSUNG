@@ -644,14 +644,6 @@
       "retryDesc": "连接失败。请检查网络状态后重试。",
       "retry": "重试"
     },
-    "branding": {
-      "title": "은성전장 MES",
-      "subtitle": "Manufacturing Execution System",
-      "description": "生产现场实时管理解决方案",
-      "feature1": "实时监控",
-      "feature2": "质量追溯",
-      "feature3": "数据分析"
-    },
     "noPermission": "无访问权限",
     "noPermissionDesc": "您没有访问此页面的权限。请联系管理员。",
     "goHome": "前往仪表盘",

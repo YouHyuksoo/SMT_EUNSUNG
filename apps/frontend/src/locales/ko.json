@@ -644,14 +644,6 @@
       "retryDesc": "연결에 실패했습니다. 네트워크 상태를 확인 후 다시 시도해 주세요.",
       "retry": "다시 시도"
     },
-    "branding": {
-      "title": "은성전장 MES",
-      "subtitle": "Manufacturing Execution System",
-      "description": "생산 현장의 실시간 관리 솔루션",
-      "feature1": "실시간 모니터링",
-      "feature2": "품질 추적",
-      "feature3": "데이터 분석"
-    },
     "noPermission": "접근 권한이 없습니다",
     "noPermissionDesc": "이 페이지에 대한 접근 권한이 없습니다. 관리자에게 문의하세요.",
     "goHome": "대시보드로 이동",

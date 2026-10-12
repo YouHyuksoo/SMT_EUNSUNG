@@ -644,14 +644,6 @@
       "retryDesc": "Kết nối thất bại. Vui lòng kiểm tra mạng và thử lại.",
       "retry": "Thử lại"
     },
-    "branding": {
-      "title": "은성전장 MES",
-      "subtitle": "Manufacturing Execution System",
-      "description": "Giải pháp quản lý sản xuất thời gian thực",
-      "feature1": "Giám sát thời gian thực",
-      "feature2": "Truy vết chất lượng",
-      "feature3": "Phân tích dữ liệu"
-    },
     "noPermission": "Không có quyền truy cập",
     "noPermissionDesc": "Bạn không có quyền truy cập trang này. Vui lòng liên hệ quản trị viên.",
     "goHome": "Đi đến bảng điều khiển",
