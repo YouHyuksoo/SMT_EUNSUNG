@@ -333,6 +333,138 @@ describe('BomService', () => {
       expect(result.rows[0].message).toContain('유효종료일');
       expect(mockBomRepo.find).not.toHaveBeenCalled();
     });
+
+    it('should read excel date serials and date strings as real dates', async () => {
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.aoa_to_sheet([
+        ['상위품목코드', '하위품목코드', '소요량', '유효시작일', '유효종료일'],
+        ['P01', 'C01', 1, 44337, 73050],
+        ['P01', 'C02', 1, '2021/5/21', '20991231'],
+        ['P01', 'C03', 1, '2021.05.21', '73050'],
+        ['P01', 'C04', 1, '2021-13-01', '2099-12-31'],
+      ]);
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'BOM');
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+      mockBomRepo.find.mockResolvedValue([]);
+
+      const result = await target.previewUpload(buffer, 1);
+
+      expect(result.rows.slice(0, 3).map((r) => [r.validFrom, r.validTo])).toEqual([
+        ['2021-05-21', '2099-12-31'],
+        ['2021-05-21', '2099-12-31'],
+        ['2021-05-21', '2099-12-31'],
+      ]);
+      expect(result.rows[3].status).toBe('error');
+      expect(result.rows[3].validFrom).toBeNull();
+    });
+  });
+
+  describe('BOM 주인(ITEM_CODE)·필수 코드값', () => {
+    const buildUpload = (rows: [string, string][]) => {
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet([
+        ['상위품목코드', '하위품목코드', '소요량', '유효시작일', '유효종료일'],
+        ...rows.map(([p, c]) => [p, c, 1, '2026-10-12', '9999-12-31']),
+      ]);
+      XLSX.utils.book_append_sheet(wb, ws, 'BOM');
+      return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+    };
+
+    it('create: 처음 만드는 상위품목은 화면의 최상위 제품을 주인으로, T/T/* 를 넣는다', async () => {
+      const dto = { parentItemCode: 'S01', childItemCode: 'C01', qtyPer: 1, validFrom: '2026-10-12', validTo: '9999-12-31', topItemCode: 'TOP1' } as any;
+      mockBomRepo.find.mockResolvedValue([]);
+      mockBomRepo.query.mockResolvedValue([]);
+      mockBomRepo.create.mockImplementation((v) => v as BomMaster);
+      mockBomRepo.save.mockResolvedValue({} as BomMaster);
+      mockBomRepo.findOne.mockResolvedValue({ ...dto } as BomMaster);
+      mockPartRepo.find.mockResolvedValue([]);
+
+      await target.create(dto, 1, 'U1');
+
+      expect(mockBomRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+        itemCode: 'TOP1', itemType: 'T', lineType: 'T', processCode: '*', createdBy: 'U1',
+      }));
+    });
+
+    it('create: 상위품목에 이미 하위 행이 있으면 그 행들의 주인을 따른다', async () => {
+      const dto = { parentItemCode: 'S01', childItemCode: 'C09', qtyPer: 1, validFrom: '2026-10-12', validTo: '9999-12-31', topItemCode: 'TOP1', processCode: 'P10' } as any;
+      mockBomRepo.find.mockResolvedValue([]);
+      mockBomRepo.query.mockResolvedValue([{ parentItemCode: 'S01', ownerItemCode: 'W01', cnt: 5 }]);
+      mockBomRepo.create.mockImplementation((v) => v as BomMaster);
+      mockBomRepo.save.mockResolvedValue({} as BomMaster);
+      mockBomRepo.findOne.mockResolvedValue({ ...dto } as BomMaster);
+      mockPartRepo.find.mockResolvedValue([]);
+
+      await target.create(dto, 1);
+
+      expect(mockBomRepo.create).toHaveBeenCalledWith(expect.objectContaining({ itemCode: 'W01', processCode: 'P10' }));
+    });
+
+    it('upload: 행마다 파일 안 자기 계통의 최상위 상위품목이 주인, DB 에 하위가 있는 반제품은 기존 주인을 따른다', async () => {
+      // T01 → S01 → C01, T01 → N01 → C02, X01 → Y01. S01 은 DB 에 이미 하위 행이 있고 주인은 W01.
+      const buffer = buildUpload([['T01', 'S01'], ['S01', 'C01'], ['T01', 'N01'], ['N01', 'C02'], ['X01', 'Y01']]);
+      const codes = ['T01', 'S01', 'C01', 'N01', 'C02', 'X01', 'Y01'];
+      mockPartRepo.find.mockResolvedValue(codes.map((itemCode) => ({ itemCode }) as ItemMaster));
+      mockBomRepo.find.mockResolvedValue([]);
+      mockBomRepo.query.mockResolvedValue([{ parentItemCode: 'S01', ownerItemCode: 'W01', cnt: 3 }]);
+      mockBomRepo.create.mockImplementation((v) => v as BomMaster);
+      mockBomRepo.save.mockResolvedValue({} as BomMaster);
+
+      const result = await target.uploadFromExcel(buffer, 1, 'U1');
+
+      expect(result.inserted).toBe(5);
+      const owners = mockBomRepo.create.mock.calls.map(([v]) => [(v as BomMaster).parentItemCode, (v as BomMaster).childItemCode, (v as BomMaster).itemCode]);
+      expect(owners).toEqual([
+        ['T01', 'S01', 'T01'],
+        ['S01', 'C01', 'W01'],
+        ['T01', 'N01', 'T01'],
+        ['N01', 'C02', 'T01'],
+        ['X01', 'Y01', 'X01'],
+      ]);
+      expect(mockBomRepo.create).toHaveBeenCalledWith(expect.objectContaining({ itemType: 'T', lineType: 'T', processCode: '*' }));
+    });
+  });
+
+  describe('findUsage', () => {
+    it('위로 거슬러 올라간 최상위 제품을 돌려주고, 부모가 없으면 상위품목 자신을 돌려준다', async () => {
+      mockBomRepo.query.mockResolvedValueOnce([{ itemCode: 'T02' }, { itemCode: 'T01' }]);
+      mockPartRepo.find.mockResolvedValue([{ itemCode: 'T01', itemName: 'TOP 1', itemNo: 'N-1' } as ItemMaster]);
+
+      const shared = await target.findUsage('S01', 1);
+
+      const [sql, params] = mockBomRepo.query.mock.calls[0] as [string, unknown[]];
+      expect(sql).toMatch(/CONNECT BY NOCYCLE PRIOR b\.PARENT_ITEM_CODE = b\.CHILD_ITEM_CODE/);
+      expect(params).toEqual(['S01', 1, 1]);
+      expect(shared.topItems.map((t) => t.itemCode)).toEqual(['T01', 'T02']);
+      expect(shared.topItems[0].itemName).toBe('TOP 1');
+
+      mockBomRepo.query.mockResolvedValueOnce([]);
+      const alone = await target.findUsage('T09', 1);
+      expect(alone.topItems.map((t) => t.itemCode)).toEqual(['T09']);
+    });
+  });
+
+  describe('exportToExcel', () => {
+    it('should export every level of the selected parent, not only direct children', async () => {
+      mockBomRepo.query.mockResolvedValue([
+        { id: 'P01::S01::2021-01-01', lvl: 1, parentItemCode: 'P01', childItemCode: 'S01', qtyPer: 1, seq: 1, itemNo: 'S-01', itemName: 'SUB', unit: 'EA', validFrom: '2021-01-01', validTo: '2099-12-31' },
+        { id: 'S01::R01::2021-01-01', lvl: 2, parentItemCode: 'S01', childItemCode: 'R01', qtyPer: 2, seq: 1, itemNo: 'R-01', itemName: 'RAW', unit: 'EA', validFrom: '2021-01-01', validTo: '2099-12-31' },
+        { id: 'R01::X01::2021-01-01', lvl: 3, parentItemCode: 'R01', childItemCode: 'X01', qtyPer: 3, seq: 1, itemNo: 'X-01', itemName: 'RAW3', unit: 'EA', validFrom: '2021-01-01', validTo: '2099-12-31' },
+      ]);
+
+      const buffer = await target.exportToExcel('P01', 1, '2026-10-12');
+
+      const [sql, params] = mockBomRepo.query.mock.calls[0] as [string, unknown[]];
+      expect(sql).toMatch(/CONNECT BY/);
+      expect(params).toContain('2026-10-12');
+      const wb = XLSX.read(buffer, { type: 'buffer' });
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[wb.SheetNames[0]]);
+      expect(rows.map((r) => [r['레벨'], r['상위품목코드'], r['하위품목코드']])).toEqual([
+        [1, 'P01', 'S01'],
+        [2, 'S01', 'R01'],
+        [3, 'R01', 'X01'],
+      ]);
+    });
   });
 
   // ─── findByParentId ───
@@ -453,6 +585,23 @@ describe('BomService', () => {
       // WHERE + CONNECT BY 각각의 ORGANIZATION_ID 바인드 + parentItemCode = 3
       expect(params).toEqual(expect.arrayContaining([1, 'P01']));
       expect(params.length).toBe(3);
+    });
+
+    it('should attach children to each occurrence when the same semi-product appears twice in one tree', async () => {
+      // P01 → A01 → S01 → R01, P01 → B01 → S01 → R01 (S01 은 한 트리에 두 번 나온다)
+      const row = (lvl: number, parent: string, child: string) => ({
+        id: `${parent}::${child}::2021-01-01`, lvl, parentItemCode: parent, childItemCode: child, itemCode: child, qtyPer: 1, seq: 1,
+      });
+      mockBomRepo.query.mockResolvedValue([
+        row(1, 'P01', 'A01'), row(2, 'A01', 'S01'), row(3, 'S01', 'R01'),
+        row(1, 'P01', 'B01'), row(2, 'B01', 'S01'), row(3, 'S01', 'R01'),
+      ]);
+
+      const tree = await target.findHierarchy('P01', 10);
+
+      expect(tree.map((n) => n.childItemCode)).toEqual(['A01', 'B01']);
+      expect(tree[0].children[0].children.map((n) => n.childItemCode)).toEqual(['R01']);
+      expect(tree[1].children[0].children.map((n) => n.childItemCode)).toEqual(['R01']);
     });
   });
 });

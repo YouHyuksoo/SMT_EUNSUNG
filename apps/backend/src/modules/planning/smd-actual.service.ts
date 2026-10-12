@@ -17,8 +17,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
-import { SmdActualKeyDto, SmdActualQueryDto, SmdActualUpdateDto } from './smd-actual.dto';
+import {
+  SmdActualKeyDto,
+  SmdActualQueryDto,
+  SmdActualUpdateDto,
+  SmdShiftActualQueryDto,
+  SmdShiftManualDeleteDto,
+  SmdShiftManualSaveDto,
+} from './smd-actual.dto';
 import { like } from './plan-shared';
+import {
+  computeShiftActual,
+  DAY_TIME_DIVISIONS,
+  NIGHT_TIME_DIVISIONS,
+  sqlInList,
+} from './smd-shift-actual';
+import type { SmdShiftSlot } from '../../entities/smd-shift-manual.entity';
 import { affectedRows } from '../../common/utils/affected-rows.util';
 import { namedBinds } from '../../common/utils/named-binds.util';
 
@@ -142,6 +156,191 @@ export class SmdActualService {
       const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) throw new NotFoundException('생산실적을 찾을 수 없습니다.');
       return { changed: affected };
+    });
+  }
+
+  /**
+   * 계획별 주야 실적 — 반제품생산계획 한 건당 한 줄.
+   * 자동 실적은 조회 시점의 센서 실적을 계획일·라인·모델·서픽스·PCB 면으로 맞춰 더한다
+   * (계획 화면이 쓰는 IP_ASSEMBLY_ACTUAL_TIME_V 와 같은 조인 키). 뷰는 표 전체를 접으므로
+   * 쓰지 않고, 기간 안의 센서 행만 먼저 접는다. 주간/야간 구분은 smd-shift-actual.ts 참고.
+   * 같은 날·라인·모델·서픽스·PCB 면 계획이 여러 건이면 자동 실적이 각 계획에 똑같이 붙는다 —
+   * samePlanCount 로 알려 주고 수기로 나눠 넣게 한다.
+   */
+  async findShiftActual(query: SmdShiftActualQueryDto, organizationId: number) {
+    const rows = (await this.dataSource.query(
+      `WITH s AS (
+         SELECT a.RECEIPT_DATE, a.LINE_CODE, a.MODEL_NAME, a.MODEL_SUFFIX, a.PCB_ITEM,
+                SUM(CASE WHEN a.TIME_DIVISION IN (${sqlInList(DAY_TIME_DIVISIONS)})
+                         THEN NVL(a.PRODUCT_ACTUAL_QTY, 0) ELSE 0 END) AS DAY_QTY,
+                SUM(CASE WHEN a.TIME_DIVISION IN (${sqlInList(NIGHT_TIME_DIVISIONS)})
+                         THEN NVL(a.PRODUCT_ACTUAL_QTY, 0) ELSE 0 END) AS NIGHT_QTY,
+                MAX(a.LAST_RECEIPT_DATE) AS LAST_RECEIPT_DATE
+           FROM IP_PRODUCT_SENSOR_ACTUAL_TIME a
+          WHERE a.ORGANIZATION_ID = :organizationId
+            AND a.RECEIPT_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
+            AND a.RECEIPT_DATE < TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
+          GROUP BY a.RECEIPT_DATE, a.LINE_CODE, a.MODEL_NAME, a.MODEL_SUFFIX, a.PCB_ITEM
+       )
+       SELECT TO_CHAR(p.PLAN_DATE, 'YYYY-MM-DD') AS "planDate",
+              p.PLAN_SEQUENCE AS "planSequence",
+              p.LINE_CODE AS "lineCode", pl.LINE_NAME AS "lineName",
+              p.MODEL_NAME AS "modelName", p.MODEL_SUFFIX AS "modelSuffix",
+              p.PCB_ITEM AS "pcbItem", pcb.CODE_MEAN_KOR AS "pcbItemName",
+              p.ITEM_CODE AS "itemCode", p.WORK_ORDER_NO AS "workOrderNo",
+              p.PLAN_STATUS AS "planStatus", ps.CODE_MEAN_KOR AS "planStatusName",
+              p.CONFIRM_YN AS "confirmYn",
+              p.PLAN_QTY AS "planQty",
+              NVL(s.DAY_QTY, 0) AS "dayAutoQty",
+              NVL(s.NIGHT_QTY, 0) AS "nightAutoQty",
+              dm.MANUAL_QTY AS "dayManualQty",
+              nm.MANUAL_QTY AS "nightManualQty",
+              NVL(dm.LAST_MODIFY_BY, dm.ENTER_BY) AS "dayManualBy",
+              TO_CHAR(NVL(dm.LAST_MODIFY_DATE, dm.ENTER_DATE), 'YYYY-MM-DD HH24:MI') AS "dayManualDate",
+              NVL(nm.LAST_MODIFY_BY, nm.ENTER_BY) AS "nightManualBy",
+              TO_CHAR(NVL(nm.LAST_MODIFY_DATE, nm.ENTER_DATE), 'YYYY-MM-DD HH24:MI') AS "nightManualDate",
+              TO_CHAR(s.LAST_RECEIPT_DATE, 'YYYY-MM-DD HH24:MI') AS "lastReceiptDate",
+              COUNT(*) OVER (PARTITION BY p.PLAN_DATE, p.LINE_CODE, p.MODEL_NAME,
+                                          p.MODEL_SUFFIX, p.PCB_ITEM) AS "samePlanCount"
+         FROM IP_PRODUCT_SMD_PLAN p
+         LEFT JOIN IP_PRODUCT_LINE pl
+                ON pl.LINE_CODE = p.LINE_CODE
+               AND pl.ORGANIZATION_ID = p.ORGANIZATION_ID
+         LEFT JOIN ISYS_BASECODE pcb
+                ON pcb.CODE_TYPE = 'PCB ITEM' AND pcb.CODE_NAME = p.PCB_ITEM
+         LEFT JOIN ISYS_BASECODE ps
+                ON ps.CODE_TYPE = 'PLAN STATUS' AND ps.CODE_NAME = p.PLAN_STATUS
+         LEFT JOIN s
+                ON s.RECEIPT_DATE = p.PLAN_DATE
+               AND s.LINE_CODE = p.LINE_CODE
+               AND s.MODEL_NAME = p.MODEL_NAME
+               AND s.MODEL_SUFFIX = p.MODEL_SUFFIX
+               AND s.PCB_ITEM = p.PCB_ITEM
+         LEFT JOIN IP_PRODUCT_SMD_SHIFT_MANUAL dm
+                ON dm.PLAN_DATE = p.PLAN_DATE
+               AND dm.PLAN_SEQUENCE = p.PLAN_SEQUENCE
+               AND dm.ORGANIZATION_ID = p.ORGANIZATION_ID
+               AND dm.SHIFT_SLOT = 'DAY'
+         LEFT JOIN IP_PRODUCT_SMD_SHIFT_MANUAL nm
+                ON nm.PLAN_DATE = p.PLAN_DATE
+               AND nm.PLAN_SEQUENCE = p.PLAN_SEQUENCE
+               AND nm.ORGANIZATION_ID = p.ORGANIZATION_ID
+               AND nm.SHIFT_SLOT = 'NIGHT'
+        WHERE p.ORGANIZATION_ID = :organizationId
+          AND p.PLAN_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
+          AND p.PLAN_DATE < TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
+          AND NVL(p.LINE_CODE, '*') LIKE :lineCode
+          AND NVL(p.MODEL_NAME, '*') LIKE :modelName
+        ORDER BY p.PLAN_DATE, p.LINE_CODE, p.PLAN_PRIORITY, p.PLAN_SEQUENCE`,
+      namedBinds({
+        organizationId,
+        dateFrom: query.dateFrom,
+        dateTo: query.dateTo,
+        lineCode: like(query.lineCode),
+        modelName: like(query.modelName),
+      }),
+    )) as Row[];
+
+    const data = rows.map((row) => ({
+      ...row,
+      ...computeShiftActual({
+        planQty: row.planQty as number | null,
+        dayAutoQty: row.dayAutoQty as number | null,
+        nightAutoQty: row.nightAutoQty as number | null,
+        dayManualQty: row.dayManualQty as number | null,
+        nightManualQty: row.nightManualQty as number | null,
+      }),
+    }));
+    return { data, total: data.length };
+  }
+
+  /**
+   * 수기실적 저장 — 주간·야간을 한 번에 반영한다.
+   * 값이 있으면 MERGE(입력자는 처음 값을 두고 수정자만 바꾼다), 비어 있으면 그 근무조 행을 지운다.
+   */
+  async saveShiftManual(dto: SmdShiftManualSaveDto, organizationId: number, userId: string) {
+    return this.tx.run(async (qr) => {
+      const keyBinds = {
+        planDate: dto.planDate,
+        planSequence: dto.planSequence,
+        organizationId,
+      };
+      const exists = (await qr.query(
+        `SELECT COUNT(*) AS CNT FROM IP_PRODUCT_SMD_PLAN
+          WHERE PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')
+            AND PLAN_SEQUENCE = :planSequence
+            AND ORGANIZATION_ID = :organizationId`,
+        namedBinds(keyBinds),
+      )) as Array<{ CNT: number }>;
+      if (Number(exists?.[0]?.CNT ?? 0) === 0) {
+        throw new NotFoundException(
+          `반제품생산계획을 찾을 수 없습니다: ${dto.planDate} / 순번 ${dto.planSequence}`,
+        );
+      }
+
+      const slots: Array<[SmdShiftSlot, number | null | undefined]> = [
+        ['DAY', dto.dayManualQty],
+        ['NIGHT', dto.nightManualQty],
+      ];
+      const result: Record<string, 'saved' | 'cleared'> = {};
+      for (const [shiftSlot, qty] of slots) {
+        if (qty === null || qty === undefined) {
+          await qr.query(
+            `DELETE FROM IP_PRODUCT_SMD_SHIFT_MANUAL
+              WHERE PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')
+                AND PLAN_SEQUENCE = :planSequence
+                AND ORGANIZATION_ID = :organizationId
+                AND SHIFT_SLOT = :shiftSlot`,
+            namedBinds({ ...keyBinds, shiftSlot }),
+          );
+          result[shiftSlot] = 'cleared';
+          continue;
+        }
+        await qr.query(
+          `MERGE INTO IP_PRODUCT_SMD_SHIFT_MANUAL t
+           USING (SELECT TO_DATE(:planDate, 'YYYY-MM-DD') AS PLAN_DATE,
+                         :planSequence AS PLAN_SEQUENCE,
+                         :organizationId AS ORGANIZATION_ID,
+                         :shiftSlot AS SHIFT_SLOT
+                    FROM DUAL) k
+              ON (t.PLAN_DATE = k.PLAN_DATE
+                  AND t.PLAN_SEQUENCE = k.PLAN_SEQUENCE
+                  AND t.ORGANIZATION_ID = k.ORGANIZATION_ID
+                  AND t.SHIFT_SLOT = k.SHIFT_SLOT)
+            WHEN MATCHED THEN UPDATE
+                 SET t.MANUAL_QTY = :manualQty,
+                     t.LAST_MODIFY_BY = :userId,
+                     t.LAST_MODIFY_DATE = SYSDATE
+            WHEN NOT MATCHED THEN INSERT
+                 (PLAN_DATE, PLAN_SEQUENCE, ORGANIZATION_ID, SHIFT_SLOT, MANUAL_QTY,
+                  ENTER_BY, ENTER_DATE)
+                 VALUES (k.PLAN_DATE, k.PLAN_SEQUENCE, k.ORGANIZATION_ID, k.SHIFT_SLOT,
+                         :manualQty, :userId, SYSDATE)`,
+          namedBinds({ ...keyBinds, shiftSlot, manualQty: qty, userId }),
+        );
+        result[shiftSlot] = 'saved';
+      }
+      return { day: result.DAY, night: result.NIGHT };
+    });
+  }
+
+  /** 수기실적 삭제 — 지우면 그 근무조는 자동 집계로 돌아간다. */
+  async removeShiftManual(dto: SmdShiftManualDeleteDto, organizationId: number) {
+    return this.tx.run(async (qr) => {
+      const result = await qr.query(
+        `DELETE FROM IP_PRODUCT_SMD_SHIFT_MANUAL
+          WHERE PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')
+            AND PLAN_SEQUENCE = :planSequence
+            AND ORGANIZATION_ID = :organizationId
+            AND SHIFT_SLOT LIKE :shiftSlot`,
+        namedBinds({
+          planDate: dto.planDate,
+          planSequence: dto.planSequence,
+          organizationId,
+          shiftSlot: dto.shiftSlot ?? '%',
+        }),
+      );
+      return { deleted: Number(affectedRows(result) ?? 0) };
     });
   }
 

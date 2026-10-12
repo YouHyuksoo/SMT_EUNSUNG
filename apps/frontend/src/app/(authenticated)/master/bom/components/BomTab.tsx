@@ -29,7 +29,9 @@ const partTypeConfig: Record<string, { icon: typeof Package; color: string; bg: 
 
 const levelColors = ["bg-emerald-500", "bg-blue-500", "bg-amber-500", "bg-purple-500", "bg-pink-500"];
 
-type RawBomTreeItem = Omit<BomTreeItem, "bomKey" | "children"> & {
+type UsageTopItem = { itemCode: string; itemNo: string | null; itemName: string | null };
+
+type RawBomTreeItem =Omit<BomTreeItem, "bomKey" | "children"> & {
   id?: string;
   bomKey?: string;
   children?: RawBomTreeItem[];
@@ -62,6 +64,7 @@ export default function BomTab({ selectedParent, onViewRouting, onSelectItem, se
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBom, setEditingBom] = useState<BomTreeItem | null>(null);
   const [deletingBom, setDeletingBom] = useState<BomTreeItem | null>(null);
+  const [deleteUsage, setDeleteUsage] = useState<{ loading: boolean; topItems: UsageTopItem[]; failed?: boolean } | null>(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<BomTreeItem | null>(null);
 
@@ -124,14 +127,27 @@ export default function BomTab({ selectedParent, onViewRouting, onSelectItem, se
 
   const handleEdit = useCallback((item: BomTreeItem) => { setEditingBom(item); setIsModalOpen(true); }, []);
 
+  // 삭제 전: 이 행을 함께 쓰는 최상위 제품 BOM 목록 (BOM 행은 상위품목별로 한 번만 저장돼 공유된다)
+  useEffect(() => {
+    const parentCode = deletingBom?.parentItemCode;
+    if (!parentCode) { setDeleteUsage(null); return; }
+    let cancelled = false;
+    setDeleteUsage({ loading: true, topItems: [] });
+    api.get("/master/boms/usage", { params: { parentItemCode: parentCode } })
+      .then((res) => { if (!cancelled) setDeleteUsage({ loading: false, topItems: res.data?.data?.topItems ?? [] }); })
+      .catch(() => { if (!cancelled) setDeleteUsage({ loading: false, topItems: [], failed: true }); });
+    return () => { cancelled = true; };
+  }, [deletingBom]);
+
   const handleDelete = useCallback(async () => {
     if (!deletingBom) return;
+    if (deleteUsage?.loading) return;
     try {
       await api.delete(`/master/boms/${getBomKey(deletingBom)}`);
       setDeletingBom(null);
       fetchBomTree();
     } catch { /* API 에러는 인터셉터에서 처리 */ }
-  }, [deletingBom, fetchBomTree]);
+  }, [deletingBom, deleteUsage, fetchBomTree]);
 
   const handleViewRouting = useCallback((item: BomTreeItem, breadcrumb: string) => {
     onViewRouting?.({ itemCode: item.childItemCode || item.itemCode, itemName: item.itemName, itemType: item.itemType, breadcrumb });
@@ -140,6 +156,8 @@ export default function BomTab({ selectedParent, onViewRouting, onSelectItem, se
   const handleExport = useCallback(async () => {
     const params = new URLSearchParams();
     if (selectedParent) params.set("parentItemCode", selectedParent.itemCode);
+    // 화면 트리와 같은 기준일로 전체 레벨을 내보낸다 (펼침 상태와 무관)
+    if (effectiveDate) params.set("effectiveDate", effectiveDate);
     const res = await api.get(`/master/boms/export?${params}`, { responseType: "blob" });
     const url = URL.createObjectURL(res.data);
     const a = document.createElement("a");
@@ -147,7 +165,7 @@ export default function BomTab({ selectedParent, onViewRouting, onSelectItem, se
     a.download = `BOM_${selectedParent?.itemCode || "ALL"}_${getTodayLocal()}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [selectedParent]);
+  }, [selectedParent, effectiveDate]);
 
   if (!selectedParent) {
     return <div className="flex items-center justify-center h-64 text-text-muted">{t("master.bom.selectParentPrompt")}</div>;
@@ -194,7 +212,7 @@ export default function BomTab({ selectedParent, onViewRouting, onSelectItem, se
               <th className="px-2 py-2 text-center font-semibold text-text border-b border-r border-border w-14 whitespace-nowrap">{t("master.bom.side", "사이드")}</th>
               <th className="px-2 py-2 text-center font-semibold text-text border-b border-r border-border w-24 whitespace-nowrap">{t("master.bom.validFrom")}</th>
               <th className="px-2 py-2 text-center font-semibold text-text border-b border-r border-border w-24 whitespace-nowrap">{t("master.bom.validTo")}</th>
-              <th className="px-2 py-2 text-center font-semibold text-text border-b border-border w-20 whitespace-nowrap">{t("common.actions")}</th>
+              <th className="sticky right-0 z-10 bg-background px-2 py-2 text-center font-semibold text-text border-b border-l border-border w-20 whitespace-nowrap">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -225,16 +243,60 @@ export default function BomTab({ selectedParent, onViewRouting, onSelectItem, se
       <BomFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={fetchBomTree}
         editingItem={editingBom}
         parentItemCode={editingBom ? selectedParent.itemCode : (selectedNode && !selectedNode.isRoot ? (selectedNode.childItemCode || selectedNode.itemCode) : selectedParent.itemCode)}
-        parentItemCodeDisplay={editingBom ? selectedParent.itemCode : (selectedNode && !selectedNode.isRoot ? (selectedNode.itemNo || selectedNode.childItemCode || selectedNode.itemCode) : selectedParent.itemCode)} />
+        parentItemCodeDisplay={editingBom ? selectedParent.itemCode : (selectedNode && !selectedNode.isRoot ? (selectedNode.itemNo || selectedNode.childItemCode || selectedNode.itemCode) : selectedParent.itemCode)}
+        topItemCode={selectedParent.itemCode} />
 
       <ConfirmModal isOpen={!!deletingBom} onClose={() => setDeletingBom(null)} onConfirm={handleDelete}
-        title={t("common.delete")} message={t("master.bom.deleteConfirm")} variant="danger" />
+        title={t("common.delete")} variant="danger" isLoading={!!deleteUsage?.loading}
+        message={<DeleteImpactMessage t={t} item={deletingBom} usage={deleteUsage} currentTop={selectedParent.itemCode} />} />
 
       <BomUploadModal
         isOpen={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
         onComplete={() => fetchBomTree()}
       />
+    </div>
+  );
+}
+
+/** 삭제 확인창 본문 — 이 행을 함께 쓰는 최상위 제품 BOM 을 보여준다 */
+function DeleteImpactMessage({ t, item, usage, currentTop }: {
+  t: ReturnType<typeof useTranslation>["t"];
+  item: BomTreeItem | null;
+  usage: { loading: boolean; topItems: UsageTopItem[]; failed?: boolean } | null;
+  currentTop: string;
+}) {
+  if (!item) return null;
+  const parentCode = item.parentItemCode ?? "";
+  const childLabel = item.itemNo || item.childItemCode || item.itemCode;
+  const others = (usage?.topItems ?? []).filter((top) => top.itemCode !== currentTop);
+  return (
+    <div className="space-y-2 text-sm">
+      <p>{t("master.bom.deleteConfirm")}</p>
+      <p className="text-text-muted">
+        {t("master.bom.deleteRowTarget", { parent: parentCode, child: childLabel, defaultValue: "삭제 대상: 상위품목 {{parent}} 아래 {{child}}" })}
+      </p>
+      {!usage || usage.loading ? (
+        <p className="text-text-muted">{t("master.bom.deleteUsageLoading", "이 행을 함께 쓰는 BOM을 확인하는 중입니다.")}</p>
+      ) : usage.failed ? (
+        <p className="text-red-600 dark:text-red-400">{t("master.bom.deleteUsageFailed", "함께 쓰는 BOM을 확인하지 못했습니다. 삭제하면 이 상위품목을 쓰는 모든 BOM에서 빠집니다.")}</p>
+      ) : others.length === 0 ? (
+        <p className="text-text-muted">{t("master.bom.deleteUsageOnlyHere", "이 행은 지금 보고 있는 BOM에만 있습니다.")}</p>
+      ) : (
+        <div className="space-y-1">
+          <p className="font-medium text-red-600 dark:text-red-400">
+            {t("master.bom.deleteUsageShared", { parent: parentCode, count: others.length, defaultValue: "상위품목 {{parent}}의 BOM 행은 한 번만 저장돼 있어, 지금 보고 있는 BOM 외에 아래 최상위 제품 {{count}}개 BOM에서도 함께 빠집니다." })}
+          </p>
+          <ul className="max-h-48 overflow-y-auto rounded border border-border divide-y divide-border font-data text-xs">
+            {others.map((top) => (
+              <li key={top.itemCode} className="flex gap-2 px-2 py-1">
+                <span className="font-mono shrink-0">{top.itemNo || top.itemCode}</span>
+                <span className="truncate text-text-muted" title={top.itemName ?? ""}>{top.itemName ?? "-"}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
@@ -311,7 +373,10 @@ function BomTreeRows({
               <td className={`px-2 py-1.5 border-r border-border text-center whitespace-nowrap ${isSelected ? "text-white/80" : "text-text-muted"}`}>{item.side || "-"}</td>
               <td className="px-2 py-1.5 border-r border-border text-center font-mono whitespace-nowrap">{validFrom}</td>
               <td className="px-2 py-1.5 border-r border-border text-center font-mono whitespace-nowrap">{validTo}</td>
-              <td className="px-2 py-1.5 text-center whitespace-nowrap">
+              {/* 가로 스크롤과 관계없이 보이도록 오른쪽 고정. 고정 칸은 행 배경을 받지 않아 같은 색을 직접 준다 */}
+              <td className={`sticky right-0 z-[1] px-2 py-1.5 text-center whitespace-nowrap border-l border-border ${
+                isSelected ? "bg-primary" : idx % 2 === 0 ? "bg-surface" : "bg-background"
+              }`}>
                 <div className="flex justify-center gap-1">
                   <button onClick={(event) => { event.stopPropagation(); onViewRouting(item, itemBreadcrumb); }} className="p-1 hover:bg-surface rounded" title={t("master.bom.goRoutingManagement")}>
                     <GitBranch className="w-3.5 h-3.5 text-purple-500" />

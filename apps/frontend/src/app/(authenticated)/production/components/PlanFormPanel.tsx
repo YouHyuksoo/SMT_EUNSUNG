@@ -6,10 +6,17 @@
  *
  * 초보자 가이드:
  * 1. **키는 계획일 + 계획순번이다.** 수정 모드에서 둘 다 잠긴다.
- *    등록 시 순번을 비우면 서버가 그 날짜의 최대순번 + 1 을 매긴다.
+ *    계획순번은 등록할 때 서버가 시퀀스(SEQ_PLAN_DATE_SEQUENCE)에서 받는다 — 입력칸이 없다.
  * 2. **NOT NULL 이 두 테이블에서 다르다.** MI 는 공정코드가 필수이고,
  *    SMD 는 품목코드·작업지시번호·PCB면·마스터모델·생산유형이 필수다.
  *    서버도 막지만 폼에서 먼저 막아 왕복을 줄인다.
+ * 5. **작업자가 고르는 것은 라인·품목코드·PCB 면(SMD)·공정(MI)·계획수량이다.**
+ *    품목코드는 모델마스터(IP_PRODUCT_MODEL_MASTER)의 한 행을 고르는 것이라
+ *    모델명·서픽스·마스터 모델명이 그 행에서 함께 채워진다 (오기재 방지, 읽기 전용).
+ *    품목코드 하나에 모델이 둘인 경우가 있어(10건) 코드 직접 입력은 받지 않는다.
+ * 6. **작업지시번호·MFS 그룹번호는 저장할 때 서버가 만든다** (WO+등록일+순번 / 라인그룹+순번).
+ *    SMD 의 생산유형 P(양산)·교대 A·계획상태 W(대기), 두 화면의 우선순위 1·상위품목 '*' 는
+ *    기존 계획 데이터가 (거의) 모두 이 값이라 등록 기본값으로 넣는다.
  * 3. **시간대 10칸은 접어 둔다.** 수량 칸과 메모 칸이 각각 10개라 펼치면
  *    폼이 길어진다. 합계를 옆에 보여 주므로 계획수량과 맞는지 바로 보인다.
  * 4. **롯트카드번호(MFS)는 폼에 없다.** 롯트카드 쪽이 쓰는 값이라 계획 화면에서
@@ -20,13 +27,15 @@ import toast from 'react-hot-toast';
 import { ChevronDown, ChevronRight, Save, X } from 'lucide-react';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import CustomerSelect from '@/components/shared/CustomerSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
+import type { ModelItem } from '@/components/shared/ModelSearchModal';
+import ProcessSelect from '@/components/shared/ProcessSelect';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import UseYnSelect from '@/components/shared/UseYnSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import type { PlanRow } from '../planning-types';
 import { SLOT_INDEXES } from '../planning-types';
-import PartSearchField from '@/components/shared/PartSearchField';
 
 export interface PlanForm {
   planDate: string;
@@ -70,16 +79,61 @@ const emptySlots = (): Record<string, string> => {
   return out;
 };
 
+/**
+ * 등록 기본값. 자동 채움 값의 근거는 기존 계획 데이터(최근 180일)다 —
+ * SMD: 서픽스 '*'·상위품목 '*'·우선순위 1·계획상태 W·교대 A(3219/3220)·생산유형 P 가 전부,
+ * MI: 서픽스 '*'·상위품목 '*'·우선순위 1 이 전부 (계획상태·마스터모델은 비어 있다).
+ */
 export const emptyPlanForm = (variant: 'mi' | 'smd'): PlanForm => ({
   planDate: today(), planSequence: '', lineCode: '', modelName: '', modelSuffix: '*',
-  masterModelName: '', parentItemCode: '', itemCode: '', workOrderNo: '',
-  workstageCode: variant === 'mi' ? '*' : '', pcbItem: variant === 'smd' ? 'T' : '',
-  planQty: '0', planPriority: '1', planCapaQty: '', mcTime: '',
+  masterModelName: '', parentItemCode: '*', itemCode: '', workOrderNo: '',
+  workstageCode: '', pcbItem: variant === 'smd' ? 'T' : '',
+  planQty: '', planPriority: '1', planCapaQty: '', mcTime: '',
   planQtyD1: '', planQtyD2: '', planQtyD3: '',
-  planStatus: '', customerCode: '', lotDivideYn: 'N',
-  shiftCode: '', productionType: variant === 'smd' ? 'A' : '', mfsGroupNo: '',
+  planStatus: variant === 'smd' ? 'W' : '', customerCode: '', lotDivideYn: 'N',
+  shiftCode: variant === 'smd' ? 'A' : '', productionType: variant === 'smd' ? 'P' : '',
+  mfsGroupNo: '',
   comments: '', slots: emptySlots(),
 });
+
+/** 낯선 항목 설명 — 라벨에 마우스를 올리면 뜬다 (data-tooltip). */
+const TIP = {
+  planSequence: '저장할 때 자동으로 붙는 번호입니다. 제품·반제품 계획이 같은 번호 체계를 씁니다.',
+  itemCode: '모델마스터에서 고릅니다. 고르면 모델명·서픽스·마스터 모델명이 함께 채워집니다.',
+  modelName: '고른 품목코드의 모델마스터 모델명입니다.',
+  modelSuffixSmd: "모델의 사양 구분값입니다. 모델마스터 값을 가져오며 지금은 모든 모델이 '*'(구분 없음)입니다.\n"
+    + '반제품 실적은 모델명·서픽스·PCB 면이 같은 계획에 붙습니다.',
+  modelSuffixMi: "모델의 사양 구분값입니다. 모델마스터 값을 가져오며 지금은 모든 모델이 '*'(구분 없음)입니다.",
+  masterModelName: '모델마스터에 등록된 대표 모델명입니다. 이 계획으로 롯트카드를 만들 때 함께 옮겨 적습니다.',
+  workOrderNo: "계획 한 건의 작업지시번호입니다. 저장할 때 'WO' + 등록일(YYMMDD) + 계획순번으로 붙습니다.\n"
+    + '예) 2026-10-12 등록, 순번 221262 → WO261012221262',
+  pcbItem: 'T 는 1차면(Top), B 는 2차면(Bottom)입니다. 반제품 실적은 같은 면의 계획에 붙습니다.',
+  productionType: 'P 양산 · S 샘플 · D 개발. 등록하는 계획은 양산(P)으로 저장합니다.',
+  shiftCode: '롯트카드를 만들 때 롯트카드의 교대로 옮겨 적습니다. 등록하는 계획은 1교대(A)로 저장합니다.',
+  mfsGroupNo: '이 계획으로 만드는 롯트카드에 그대로 옮겨 적는 묶음번호입니다.\n'
+    + '저장할 때 라인그룹(예: SMD) + 계획순번으로 붙습니다. 예) SMD221262',
+  parentItemCode: "등록하는 계획은 '*'(없음)로 저장합니다.",
+} as const;
+
+/** 라벨. tip 이 있으면 마우스를 올렸을 때 설명이 뜬다. */
+function FieldLabel({ text, required, tip }: { text: string; required?: boolean; tip?: string }) {
+  return (
+    <span
+      className={`text-text-muted ${tip ? 'cursor-help underline decoration-dotted underline-offset-2' : ''}`}
+      data-tooltip={tip}
+    >
+      {text}{required ? ' *' : ''}
+    </span>
+  );
+}
+
+/** 자동으로 채우는 칸 — 값은 보이고 고칠 수 없다. */
+function AutoField({ value, placeholder }: { value: string; placeholder?: string }) {
+  return (
+    <Input value={value} readOnly tabIndex={-1} placeholder={placeholder}
+      className="cursor-default bg-background" />
+  );
+}
 
 export const toPlanForm = (row: PlanRow): PlanForm => {
   const slots: Record<string, string> = {};
@@ -143,6 +197,17 @@ export default function PlanFormPanel({
   const setSlot = (key: string, value: string) =>
     setForm((prev) => ({ ...prev, slots: { ...prev.slots, [key]: value } }));
 
+  /** 품목코드(모델마스터 한 행)를 고르면 모델명·서픽스·마스터 모델명을 그 행 값으로 채운다. */
+  const pickModel = (model: ModelItem | null) =>
+    setForm((prev) => ({
+      ...prev,
+      itemCode: model?.itemCode ?? '',
+      modelName: model?.modelName ?? '',
+      modelSuffix: model ? model.modelSuffix || '*' : '*',
+      // MI 계획은 마스터 모델명을 쓰지 않는다 (기존 데이터 전부 비어 있음)
+      masterModelName: isMi ? prev.masterModelName : model?.masterModelName ?? '',
+    }));
+
   /** 시간대 합. 계획수량과 맞는지 바로 보이게 옆에 적는다. */
   const slotSum = useMemo(
     () => SLOT_INDEXES.reduce(
@@ -154,23 +219,33 @@ export default function PlanFormPanel({
 
   const save = useCallback(async () => {
     const required: Array<[string, string]> = [
-      ['계획일', form.planDate], ['라인코드', form.lineCode],
-      ['모델명', form.modelName], ['서픽스', form.modelSuffix],
+      ['계획일', form.planDate], ['라인', form.lineCode], ['품목코드', form.itemCode],
     ];
     // MI 는 우선순위가 NOT NULL 이다 (SMD 는 비워도 된다). 실측 확인.
     if (isMi) {
       required.push(['공정코드', form.workstageCode], ['우선순위', form.planPriority]);
     }
     else {
-      required.push(
-        ['품목코드', form.itemCode], ['작업지시번호', form.workOrderNo],
-        ['PCB 면', form.pcbItem], ['마스터 모델명', form.masterModelName],
-        ['생산유형', form.productionType],
-      );
+      required.push(['PCB 면', form.pcbItem]);
     }
+    required.push(['계획수량', form.planQty]);
     const missing = required.find(([, v]) => v.trim() === '');
     if (missing) {
       toast.error(`${missing[0]}은(는) 필수입니다.`);
+      return;
+    }
+    // 품목코드로 채워지는 칸. 비어 있으면 모델마스터 값이 빠진 것이다.
+    const autoFilled: Array<[string, string]> = [
+      ['모델명', form.modelName], ['서픽스', form.modelSuffix],
+    ];
+    if (!isMi) {
+      autoFilled.push(['마스터 모델명', form.masterModelName], ['생산유형', form.productionType]);
+      // 작업지시번호는 등록 때 서버가 만든다. 수정 때는 기존 값이 있어야 한다.
+      if (edit) autoFilled.push(['작업지시번호', form.workOrderNo]);
+    }
+    const missingAuto = autoFilled.find(([, v]) => v.trim() === '');
+    if (missingAuto) {
+      toast.error(`${missingAuto[0]}이(가) 비어 있습니다. 모델마스터에서 품목코드를 다시 고르세요.`);
       return;
     }
 
@@ -182,7 +257,8 @@ export default function PlanFormPanel({
     }
     const body = {
       planDate: form.planDate,
-      planSequence: edit ? Number(form.planSequence) : optionalNum(form.planSequence),
+      // 등록 때는 보내지 않는다 — 서버가 시퀀스에서 받는다.
+      planSequence: edit ? Number(form.planSequence) : undefined,
       lineCode: form.lineCode.trim(),
       modelName: form.modelName.trim(),
       modelSuffix: form.modelSuffix.trim(),
@@ -209,9 +285,16 @@ export default function PlanFormPanel({
       ...slotBody,
     };
     try {
-      if (edit) await api.put(path, body);
-      else await api.post(path, body);
-      toast.success(edit ? '수정되었습니다.' : '등록되었습니다.');
+      if (edit) {
+        await api.put(path, body);
+        toast.success('수정되었습니다.');
+      } else {
+        const response = await api.post(path, body);
+        const saved = response.data?.data;
+        toast.success(saved?.workOrderNo
+          ? `등록되었습니다 — 순번 ${saved.planSequence} · 작업지시 ${saved.workOrderNo}`
+          : '등록되었습니다.');
+      }
       onSaved();
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -230,7 +313,7 @@ export default function PlanFormPanel({
           <div className="text-xs text-text-muted">
             {edit
               ? `${form.planDate} / 순번 ${form.planSequence} · 키는 바꿀 수 없습니다`
-              : '순번을 비우면 그 날짜의 마지막 다음 번호가 붙습니다'}
+              : '품목코드를 고르면 모델 정보가 채워집니다. 순번·작업지시번호는 저장할 때 붙습니다'}
           </div>
         </div>
         <button type="button" onClick={onClose} aria-label="닫기">
@@ -245,11 +328,10 @@ export default function PlanFormPanel({
             <Input type="date" value={form.planDate} disabled={edit}
               onChange={(e) => set('planDate', e.target.value)} />
           </label>
-          <label className="block text-sm">
-            <span className="text-text-muted">계획순번</span>
-            <Input type="number" value={form.planSequence} disabled={edit}
-              onChange={(e) => set('planSequence', e.target.value)} />
-          </label>
+          <div className="block text-sm">
+            <FieldLabel text="계획순번" tip={TIP.planSequence} />
+            <AutoField value={form.planSequence} placeholder="저장 시 자동" />
+          </div>
         </div>
 
         <label className="block text-sm">
@@ -257,63 +339,68 @@ export default function PlanFormPanel({
           <ProdLineSelect value={form.lineCode} onChange={(v) => set('lineCode', v)} />
         </label>
 
+        {/* label 로 감싸지 않는다 — 모달 안 클릭이 label 을 거쳐 버튼을 다시 누르게 된다 */}
+        <div className="block text-sm">
+          <FieldLabel text="품목코드" required tip={TIP.itemCode} />
+          <ModelSearchField valueKey="itemCode" value={form.itemCode} className="w-full"
+            placeholder="품목코드 조회" aria-label="품목코드 조회"
+            onChange={(_value, model) => pickModel(model)} />
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
-          <label className="block text-sm">
-            <span className="text-text-muted">모델명 *</span>
-            <Input value={form.modelName} onChange={(e) => set('modelName', e.target.value)} />
-          </label>
-          <label className="block text-sm">
-            <span className="text-text-muted">서픽스 *</span>
-            <Input value={form.modelSuffix}
-              onChange={(e) => set('modelSuffix', e.target.value)} />
-          </label>
+          <div className="block text-sm">
+            <FieldLabel text="모델명" required tip={TIP.modelName} />
+            <AutoField value={form.modelName} placeholder="품목코드를 고르세요" />
+          </div>
+          <div className="block text-sm">
+            <FieldLabel text="서픽스" required
+              tip={isMi ? TIP.modelSuffixMi : TIP.modelSuffixSmd} />
+            <AutoField value={form.modelSuffix} />
+          </div>
         </div>
 
         {isMi ? (
-          <label className="block text-sm">
-            <span className="text-text-muted">공정코드 *</span>
-            <Input value={form.workstageCode}
-              onChange={(e) => set('workstageCode', e.target.value)} />
-          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block text-sm">
+              <span className="text-text-muted">공정코드 *</span>
+              <ProcessSelect value={form.workstageCode} placeholder="공정 선택"
+                onChange={(v) => set('workstageCode', v)} />
+            </label>
+            <div className="block text-sm">
+              <FieldLabel text="작업지시번호" tip={TIP.workOrderNo} />
+              <AutoField value={form.workOrderNo} placeholder="저장 시 자동" />
+            </div>
+          </div>
         ) : (
           <>
-            <label className="block text-sm">
-              <span className="text-text-muted">마스터 모델명 *</span>
-              <Input value={form.masterModelName}
-                onChange={(e) => set('masterModelName', e.target.value)} />
-            </label>
+            <div className="block text-sm">
+              <FieldLabel text="마스터 모델명" required tip={TIP.masterModelName} />
+              <AutoField value={form.masterModelName} placeholder="품목코드를 고르세요" />
+            </div>
             <div className="grid grid-cols-2 gap-3">
+              <div className="block text-sm">
+                <FieldLabel text="작업지시번호" required tip={TIP.workOrderNo} />
+                <AutoField value={form.workOrderNo} placeholder="저장 시 자동" />
+              </div>
               <label className="block text-sm">
-                <span className="text-text-muted">품목코드 *</span>
-                <PartSearchField value={form.itemCode}
-                  onChange={(e) => set('itemCode', e.target.value)} />
-              </label>
-              <label className="block text-sm">
-                <span className="text-text-muted">작업지시번호 *</span>
-                <Input value={form.workOrderNo}
-                  onChange={(e) => set('workOrderNo', e.target.value)} />
-              </label>
-              <label className="block text-sm">
-                <span className="text-text-muted">PCB 면 *</span>
+                <FieldLabel text="PCB 면" required tip={TIP.pcbItem} />
                 <ComCodeSelect groupCode="PCB ITEM" includeAll={false}
                   value={form.pcbItem} onChange={(v) => set('pcbItem', v)} />
               </label>
-              <label className="block text-sm">
-                <span className="text-text-muted">생산유형 *</span>
-                <ComCodeSelect groupCode="PRODUCTION TYPE" includeAll={false}
-                  value={form.productionType}
-                  onChange={(v) => set('productionType', v)} />
-              </label>
-              <label className="block text-sm">
-                <span className="text-text-muted">교대</span>
-                <ComCodeSelect groupCode="SHIFT CODE" includeAll
-                  value={form.shiftCode} onChange={(v) => set('shiftCode', v)} />
-              </label>
-              <label className="block text-sm">
-                <span className="text-text-muted">MFS 그룹번호</span>
-                <Input value={form.mfsGroupNo}
-                  onChange={(e) => set('mfsGroupNo', e.target.value)} />
-              </label>
+              <div className="block text-sm">
+                <FieldLabel text="생산유형" required tip={TIP.productionType} />
+                <ComCodeSelect groupCode="PRODUCTION TYPE" includeAll={false} disabled
+                  value={form.productionType} />
+              </div>
+              <div className="block text-sm">
+                <FieldLabel text="교대" tip={TIP.shiftCode} />
+                <ComCodeSelect groupCode="SHIFT CODE" includeAll={false} disabled
+                  value={form.shiftCode} />
+              </div>
+              <div className="col-span-2 block text-sm">
+                <FieldLabel text="MFS 그룹번호" tip={TIP.mfsGroupNo} />
+                <AutoField value={form.mfsGroupNo} placeholder="저장 시 자동" />
+              </div>
             </div>
           </>
         )}
@@ -342,11 +429,10 @@ export default function PlanFormPanel({
         </div>
 
         {isMi && (
-          <label className="block text-sm">
-            <span className="text-text-muted">상위 품목코드</span>
-            <PartSearchField value={form.parentItemCode}
-              onChange={(e) => set('parentItemCode', e.target.value)} />
-          </label>
+          <div className="block text-sm">
+            <FieldLabel text="상위 품목코드" tip={TIP.parentItemCode} />
+            <AutoField value={form.parentItemCode} />
+          </div>
         )}
 
         <div className="grid grid-cols-3 gap-3">

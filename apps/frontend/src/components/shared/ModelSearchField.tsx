@@ -8,6 +8,7 @@
  * 사용 예:
  *   <ModelSearchField value={modelName} onChange={setModelName} className="w-44" />
  *   <ModelSearchField value={partNo} valueKey="partNo" onChange={setPartNo} />
+ *   <ModelSearchField value={itemCode} valueKey="itemCode" onChange={(v, m) => fill(v, m)} />
  *   <ModelSearchField value={modelName} onChange={(v) => { setModelName(v); search(v); }} />
  */
 
@@ -22,8 +23,8 @@ export interface ModelSearchFieldProps {
   value: string;
   /** 선택·해제 시 호출. 해제하면 value="" / model=null */
   onChange: (value: string, model: ModelItem | null) => void;
-  /** 돌려줄 값: 모델명(기본) 또는 모델코드(PART_NO) */
-  valueKey?: "modelName" | "partNo";
+  /** 돌려줄 값: 모델명(기본)·모델코드(PART_NO)·품목코드(ITEM_CODE). 품목코드면 모달에 품목코드 열이 붙는다 */
+  valueKey?: "modelName" | "partNo" | "itemCode";
   placeholder?: string;
   label?: string;
   required?: boolean;
@@ -87,6 +88,7 @@ export default function ModelSearchField({
       <ModelSearchModal
         isOpen={open}
         onClose={() => setOpen(false)}
+        showItemCode={valueKey === "itemCode"}
         onSelect={(model) => {
           onChange(model[valueKey], model);
           setOpen(false);

@@ -486,6 +486,7 @@
     "production.runCard": "工单管理",
     "production.masterPlan": "产品生产计划",
     "production.smdPlan": "半成品生产计划",
+    "production.smdPlanBoard": "半成品生产计划看板",
     "production.smdActual": "半成品生产实绩管理",
     "production.runCardPid": "批次卡-PID映射管理",
     "production.pcbResult": "按期间生产实绩查询",

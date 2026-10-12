@@ -22,6 +22,9 @@ export interface ModelItem {
   modelName: string; // 모델명
   modelSpec: string; // 규격
   customerName: string; // 고객명
+  itemCode: string; // 품목코드
+  masterModelName: string; // 마스터 모델명
+  modelSuffix: string; // 서픽스
 }
 
 interface ModelSearchModalProps {
@@ -29,6 +32,8 @@ interface ModelSearchModalProps {
   onClose: () => void;
   onSelect: (model: ModelItem) => void;
   modalSize?: "xl" | "2xl";
+  /** 품목코드 열을 맨 앞에 보이고 검색 대상에 넣는다 (품목코드로 모델을 고르는 화면용) */
+  showItemCode?: boolean;
 }
 
 interface ApiModelRow {
@@ -36,9 +41,14 @@ interface ApiModelRow {
   modelName: string | null;
   modelSpec: string | null;
   customerName: string | null;
+  itemCode?: string | null;
+  masterModelName?: string | null;
+  modelSuffix?: string | null;
 }
 
-export default function ModelSearchModal({ isOpen, onClose, onSelect, modalSize = "2xl" }: ModelSearchModalProps) {
+export default function ModelSearchModal({
+  isOpen, onClose, onSelect, modalSize = "2xl", showItemCode = false,
+}: ModelSearchModalProps) {
   const [keyword, setKeyword] = useState("");
   const [data, setData] = useState<ModelItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -53,6 +63,9 @@ export default function ModelSearchModal({ isOpen, onClose, onSelect, modalSize 
         modelName: r.modelName ?? "",
         modelSpec: r.modelSpec ?? "",
         customerName: r.customerName ?? "",
+        itemCode: r.itemCode ?? "",
+        masterModelName: r.masterModelName ?? "",
+        modelSuffix: r.modelSuffix ?? "",
       })));
     } catch {
       setData([]);
@@ -71,8 +84,10 @@ export default function ModelSearchModal({ isOpen, onClose, onSelect, modalSize 
   const filtered = useMemo(() => {
     const q = keyword.trim().toLowerCase();
     if (!q) return data;
-    return data.filter((m) => `${m.partNo} ${m.modelName} ${m.customerName}`.toLowerCase().includes(q));
-  }, [data, keyword]);
+    return data.filter((m) =>
+      `${m.partNo} ${m.modelName} ${m.customerName}${showItemCode ? ` ${m.itemCode}` : ""}`
+        .toLowerCase().includes(q));
+  }, [data, keyword, showItemCode]);
 
   const handleRowClick = useCallback((row: ModelItem) => {
     onSelect(row);
@@ -80,17 +95,20 @@ export default function ModelSearchModal({ isOpen, onClose, onSelect, modalSize 
   }, [onSelect, onClose]);
 
   const columns = useMemo<ColumnDef<ModelItem, unknown>[]>(() => [
+    ...(showItemCode
+      ? [{ accessorKey: "itemCode", header: "품목코드", size: 160 } as ColumnDef<ModelItem, unknown>]
+      : []),
     { accessorKey: "partNo", header: "모델코드", size: 160 },
     { accessorKey: "modelName", header: "모델명", size: 220 },
     { accessorKey: "modelSpec", header: "규격", size: 200 },
     { accessorKey: "customerName", header: "고객명", size: 140 },
-  ], []);
+  ], [showItemCode]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="모델 검색" size={modalSize}>
       <div className="flex items-end gap-2 mb-3">
         <Input
-          placeholder="모델코드·모델명·고객명 검색"
+          placeholder={showItemCode ? "품목코드·모델코드·모델명·고객명 검색" : "모델코드·모델명·고객명 검색"}
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           leftIcon={<Search className="w-4 h-4" />}

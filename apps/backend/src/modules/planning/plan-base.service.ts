@@ -16,9 +16,17 @@
  *    이 서비스는 MFS 를 화면에서 받지 않는다 (롯트카드 쪽이 쓰는 값이다).
  * 4. **실적은 뷰에서 좌측 외부조인으로 붙인다.** 계획일·라인·모델(·공정)로 맞춘다.
  *    내부조인으로 바꾸면 실적이 아직 없는 계획이 목록에서 사라진다.
+ * 5. **계획순번은 날짜별 번호가 아니라 시퀀스 SEQ_PLAN_DATE_SEQUENCE 다.**
+ *    MI·SMD 두 테이블이 같은 시퀀스를 나눠 쓴다 (실측: 221262 SMD, 221263 MI …).
+ *    날짜별 MAX+1 로 매기면 시퀀스가 나중에 같은 번호를 내줘 키가 부딪히고,
+ *    순번으로 만드는 작업지시번호·MFS 그룹번호도 겹친다.
+ * 6. **작업지시번호·MFS 그룹번호는 등록 때 서버가 만든다** (비워 보낸 경우).
+ *    실측 180일: 작업지시번호 = 'WO'||등록일 YYMMDD||순번 (SMD 1563/1563, MI 2174/2175),
+ *    SMD MFS 그룹번호 = 라인그룹||순번 (1561/1563, 나머지 2건은 라인 '%' 라 그룹이 비어 순번만).
  */
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { PRODUCTION_TEAM_DIVISIONS } from '@smt/shared';
+import { DataSource, QueryRunner } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
 import { PlanConfirmDto, PlanKeyDto, PlanQueryDto, PlanUpsertDto } from './plan.dto';
 import {
@@ -45,6 +53,11 @@ export interface PlanTableConfig {
   /** 공정코드 조회조건을 쓰는가 (MI 만 해당) */
   joinWorkstage: boolean;
   /**
+   * 등록 시 MFS_GROUP_NO 를 비워 보내면 `라인그룹(IP_PRODUCT_LINE.LINE_CODE_GROUP) || 계획순번` 으로 채우는가.
+   * SMD 만 해당한다 (MI 테이블에는 MFS_GROUP_NO 가 없다).
+   */
+  mfsGroupByLine: boolean;
+  /**
    * 실적 뷰 조인 조건 [계획 컬럼, 뷰 컬럼]. PB 데이터윈도 조인을 그대로 옮긴다.
    * 두 뷰는 날짜 컬럼 이름부터 다르다 (IP_PRODUCT_ACTUAL_TIME_V.ACTUAL_DATE / IP_ASSEMBLY_ACTUAL_TIME_V.RECEIPT_DATE).
    */
@@ -61,6 +74,7 @@ export const PLAN_TABLES: Record<'mi' | 'smd', PlanTableConfig> = {
     // 실측으로 확인했다 (없이 INSERT 하면 ORA-01400).
     required: [['workstageCode', '공정코드'], ['planPriority', '계획 우선순위']],
     joinWorkstage: true,
+    mfsGroupByLine: false,
     // d_pln_mi_master_plan_lst_tree: MODEL_SUFFIX 조인은 PB 에서도 주석 처리돼 있다.
     actualJoin: [
       ['PLAN_DATE', 'ACTUAL_DATE'],
@@ -86,6 +100,7 @@ export const PLAN_TABLES: Record<'mi' | 'smd', PlanTableConfig> = {
       ['productionType', '생산유형'],
     ],
     joinWorkstage: false,
+    mfsGroupByLine: true,
     // d_pln_smd_master_plan_lst_tree: 날짜는 RECEIPT_DATE, 서픽스·PCB 면까지 맞춘다.
     actualJoin: [
       ['PLAN_DATE', 'RECEIPT_DATE'],
@@ -120,6 +135,9 @@ const COMMON_COLUMNS: Array<[column: string, field: keyof PlanUpsertDto]> = [
   ['COMMENTS', 'comments'],
 ];
 
+/** 등록 때 비어 있으면 서버가 채우는 필드 (fillGenerated). */
+const GENERATED_ON_CREATE: ReadonlyArray<keyof PlanUpsertDto> = ['workOrderNo', 'mfsGroupNo'];
+
 type Row = Record<string, unknown>;
 
 @Injectable()
@@ -132,6 +150,14 @@ export class PlanBaseService {
   /** 목록 — PB d_pln_mi_master_plan_lst_tree / d_pln_smd_master_plan_lst_tree. */
   async find(cfg: PlanTableConfig, query: PlanQueryDto, organizationId: number) {
     const hasWorkstage = cfg.joinWorkstage;
+    // 생산팀: 그 팀 라인구분의 라인만. 공용·수리 라인은 팀을 고르면 빠진다.
+    const teamDivisions = query.team ? PRODUCTION_TEAM_DIVISIONS[query.team] : [];
+    const teamBinds = Object.fromEntries(teamDivisions.map((d, i) => [`teamDiv${i}`, d]));
+    const teamFilter = teamDivisions.length > 0
+      ? `AND p.LINE_CODE IN (SELECT tl.LINE_CODE FROM IP_PRODUCT_LINE tl
+                                WHERE tl.ORGANIZATION_ID = p.ORGANIZATION_ID
+                                  AND tl.LINE_DIVISION IN (${Object.keys(teamBinds).map((k) => `:${k}`).join(', ')}))`
+      : '';
     const extraSelect = cfg.extraColumns
       .map(([column, field]) => `p.${column} AS "${String(field)}"`)
       .join(', ');
@@ -189,6 +215,7 @@ export class PlanBaseService {
           AND NVL(p.MODEL_NAME, '*') LIKE :modelName
           AND NVL(p.PLAN_STATUS, '*') LIKE :planStatus
           ${hasWorkstage ? 'AND NVL(p.WORKSTAGE_CODE, \'*\') LIKE :workstageCode' : ''}
+          ${teamFilter}
         ORDER BY p.PLAN_DATE, p.LINE_CODE, p.PLAN_PRIORITY, p.PLAN_SEQUENCE`,
       namedBinds({
         organizationId,
@@ -198,6 +225,7 @@ export class PlanBaseService {
         modelName: like(query.modelName),
         planStatus: like(query.planStatus),
         ...(hasWorkstage ? { workstageCode: like(query.workstageCode) } : {}),
+        ...teamBinds,
       }),
     )) as Row[];
     return { data: rows, total: rows.length };
@@ -212,9 +240,17 @@ export class PlanBaseService {
     ];
   }
 
-  /** NOT NULL 인데 비어 있는 것을 폼 대신 한 번 더 막는다. */
-  private assertRequired(cfg: PlanTableConfig, dto: PlanUpsertDto) {
+  /**
+   * NOT NULL 인데 비어 있는 것을 폼 대신 한 번 더 막는다.
+   * `skip` 은 등록 때 서버가 채우는 필드다 (채번 전 사전 검사용).
+   */
+  private assertRequired(
+    cfg: PlanTableConfig,
+    dto: PlanUpsertDto,
+    skip: ReadonlyArray<keyof PlanUpsertDto> = [],
+  ) {
     const missing = cfg.required.filter(([field]) => {
+      if (skip.includes(field)) return false;
       const value = dto[field];
       return value === undefined || value === null || String(value).trim() === '';
     });
@@ -231,18 +267,19 @@ export class PlanBaseService {
     organizationId: number,
     userId: string,
   ) {
-    this.assertRequired(cfg, dto);
+    // 채번 전에 사용자가 넣는 필수값부터 막는다 — 시퀀스는 롤백돼도 되돌아가지 않는다.
+    this.assertRequired(cfg, dto, GENERATED_ON_CREATE);
     return this.tx.run(async (qr) => {
-      // 순번을 안 주면 그 날짜의 최대순번 + 1. 같은 트랜잭션 안에서 읽고 넣는다.
+      // 순번을 안 주면 시퀀스 SEQ_PLAN_DATE_SEQUENCE 에서 받는다 (가이드 5번).
       let sequence = dto.planSequence;
       if (sequence === undefined || sequence === null) {
         const rows = (await qr.query(
-          `SELECT NVL(MAX(PLAN_SEQUENCE), 0) + 1 AS NEXT_SEQ FROM ${cfg.table}
-            WHERE PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')
-              AND ORGANIZATION_ID = :organizationId`,
-          namedBinds({ planDate: dto.planDate, organizationId }),
+          `SELECT SEQ_PLAN_DATE_SEQUENCE.NEXTVAL AS NEXT_SEQ FROM DUAL`,
         )) as Array<{ NEXT_SEQ: number }>;
-        sequence = Number(rows?.[0]?.NEXT_SEQ ?? 1);
+        sequence = Number(rows?.[0]?.NEXT_SEQ);
+        if (!Number.isFinite(sequence)) {
+          throw new ConflictException('계획순번 채번에 실패했습니다 (SEQ_PLAN_DATE_SEQUENCE).');
+        }
       } else {
         const dup = (await qr.query(
           `SELECT COUNT(*) AS CNT FROM ${cfg.table}
@@ -262,6 +299,9 @@ export class PlanBaseService {
         }
       }
 
+      const filled = await this.fillGenerated(qr, cfg, dto, sequence, organizationId);
+      this.assertRequired(cfg, filled);
+
       const columns = ['PLAN_DATE', 'PLAN_SEQUENCE', 'ORGANIZATION_ID', 'MFS'];
       const values = [
         `TO_DATE(:planDate, 'YYYY-MM-DD')`,
@@ -271,7 +311,7 @@ export class PlanBaseService {
         `'*'`,
       ];
       const binds: Record<string, unknown> = {
-        planDate: dto.planDate,
+        planDate: filled.planDate,
         planSequence: sequence,
         organizationId,
         userId,
@@ -279,7 +319,7 @@ export class PlanBaseService {
       for (const [column, field] of this.editableColumns(cfg)) {
         columns.push(column);
         values.push(`:${field}`);
-        binds[field] = Object.fromEntries(Object.entries(dto))[field] ?? null;
+        binds[field] = Object.fromEntries(Object.entries(filled))[field] ?? null;
       }
       columns.push('ENTER_BY', 'ENTER_DATE', 'LAST_MODIFY_BY', 'LAST_MODIFY_DATE');
       values.push(':userId', 'SYSDATE', ':userId', 'SYSDATE');
@@ -288,8 +328,47 @@ export class PlanBaseService {
         `INSERT INTO ${cfg.table} (${columns.join(', ')}) VALUES (${values.join(', ')})`,
         namedBinds(binds),
       );
-      return { planDate: dto.planDate, planSequence: sequence };
+      return {
+        planDate: filled.planDate,
+        planSequence: sequence,
+        workOrderNo: filled.workOrderNo ?? null,
+        mfsGroupNo: filled.mfsGroupNo ?? null,
+      };
     });
+  }
+
+  /**
+   * 등록 때 서버가 채우는 값 — 비어 있을 때만 채운다 (가이드 6번).
+   * - 작업지시번호: 'WO' || 등록일(YYMMDD) || 계획순번. 계획일이 아니라 등록일이다.
+   * - MFS 그룹번호(SMD): 라인그룹(IP_PRODUCT_LINE.LINE_CODE_GROUP) || 계획순번.
+   */
+  private async fillGenerated(
+    qr: QueryRunner,
+    cfg: PlanTableConfig,
+    dto: PlanUpsertDto,
+    sequence: number,
+    organizationId: number,
+  ): Promise<PlanUpsertDto> {
+    const blank = (value?: string) => value === undefined || value === null || value.trim() === '';
+    const needWorkOrder = blank(dto.workOrderNo);
+    const needMfsGroup = cfg.mfsGroupByLine && blank(dto.mfsGroupNo);
+    if (!needWorkOrder && !needMfsGroup) return dto;
+
+    const rows = (await qr.query(
+      `SELECT TO_CHAR(SYSDATE, 'YYMMDD') AS YMD,
+              (SELECT MAX(LINE_CODE_GROUP) FROM IP_PRODUCT_LINE
+                WHERE LINE_CODE = :lineCode
+                  AND ORGANIZATION_ID = :organizationId) AS LINE_GROUP
+         FROM DUAL`,
+      namedBinds({ lineCode: dto.lineCode, organizationId }),
+    )) as Array<{ YMD: string; LINE_GROUP: string | null }>;
+    const ymd = rows?.[0]?.YMD ?? '';
+    const lineGroup = rows?.[0]?.LINE_GROUP ?? '';
+    return {
+      ...dto,
+      ...(needWorkOrder ? { workOrderNo: `WO${ymd}${sequence}` } : {}),
+      ...(needMfsGroup ? { mfsGroupNo: `${lineGroup}${sequence}` } : {}),
+    };
   }
 
   async update(
@@ -374,6 +453,20 @@ export class PlanBaseService {
           organizationId,
         }),
       );
+      // 반제품 계획의 주야 수기실적은 계획 키에 매달려 있어 계획과 함께 지운다.
+      if (cfg.table === 'IP_PRODUCT_SMD_PLAN') {
+        await qr.query(
+          `DELETE FROM IP_PRODUCT_SMD_SHIFT_MANUAL
+            WHERE PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')
+              AND PLAN_SEQUENCE = :planSequence
+              AND ORGANIZATION_ID = :organizationId`,
+          namedBinds({
+            planDate: key.planDate,
+            planSequence: key.planSequence,
+            organizationId,
+          }),
+        );
+      }
       return { deleted: Number(affectedRows(result) ?? 0) };
     });
   }

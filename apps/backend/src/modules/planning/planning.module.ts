@@ -9,6 +9,7 @@
  *   롯트카드-PID 매핑관리    w_pln_product_pcb_kitting_scan_master  → KittingController
  *   기간별 생산실적 조회     w_pln_product_pcb_result_query         → ResultController
  *   생산일보 리포트          w_pln_product_pcb_result_report        → ResultController
+ *   반제품생산계획 현황판     (웹 신규)                               → SmdPlanBoardController
  *
  * 롯트카드관리(w_product_run_card_duckil)는 기존 run-card 모듈에 이미 있다.
  * 이 배치에서는 강제삭제(연쇄) 경로만 그쪽에 더했다.
@@ -26,6 +27,8 @@ import { ResultService } from './result.service';
 import { SmdActualController } from './smd-actual.controller';
 import { SmdActualService } from './smd-actual.service';
 import { SmdPlanController } from './smd-plan.controller';
+import { SmdPlanBoardController } from './smd-plan-board.controller';
+import { SmdPlanBoardService } from './smd-plan-board.service';
 
 @Module({
   controllers: [
@@ -34,7 +37,8 @@ import { SmdPlanController } from './smd-plan.controller';
     SmdActualController,
     KittingController,
     ResultController,
+    SmdPlanBoardController,
   ],
-  providers: [PlanBaseService, SmdActualService, KittingService, ResultService],
+  providers: [PlanBaseService, SmdActualService, KittingService, ResultService, SmdPlanBoardService],
 })
 export class PlanningModule {}

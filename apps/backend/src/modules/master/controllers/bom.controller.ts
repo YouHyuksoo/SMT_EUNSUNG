@@ -10,19 +10,16 @@
   Post,
   Put,
   Query,
-  Req,
   Res,
   UploadedFile,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import { memoryStorage } from 'multer';
-import { OrganizationId } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId, UserId } from '../../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { AuthenticatedRequest, JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { BomQueryDto, CreateBomDto, UpdateBomDto } from '../dto/bom.dto';
 import { BomService } from '../services/bom.service';
 
@@ -47,12 +44,14 @@ export class BomController {
   @Get('export')
   @ApiOperation({ summary: 'Export BOM to Excel' })
   @ApiQuery({ name: 'parentItemCode', required: false })
+  @ApiQuery({ name: 'effectiveDate', required: false })
   async exportToExcel(
     @Query('parentItemCode') parentItemCode: string | undefined,
+    @Query('effectiveDate') effectiveDate: string | undefined,
     @OrganizationId() organizationId: number,
     @Res() res: Response,
   ) {
-    const buffer = await this.bomService.exportToExcel(parentItemCode, organizationId);
+    const buffer = await this.bomService.exportToExcel(parentItemCode, organizationId, effectiveDate);
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const filename = parentItemCode
       ? `BOM_${parentItemCode}_${dateStr}.xlsx`
@@ -118,15 +117,26 @@ export class BomController {
   async uploadFromExcel(
     @UploadedFile() file: Express.Multer.File,
     @OrganizationId() organizationId: number,
-    @Req() req: AuthenticatedRequest,
+    @UserId() userId: string | undefined,
   ) {
     if (!file) throw new BadRequestException('File is required');
-    const userId = req.user.id;
     const result = await this.bomService.uploadFromExcel(file.buffer, organizationId, userId);
     return ResponseUtil.success(
       result,
       `Inserted: ${result.inserted}, Skipped: ${result.skipped}, Errors: ${result.errors.length}`,
     );
+  }
+
+  @Get('usage')
+  @ApiOperation({ summary: 'BOM 행을 함께 쓰는 최상위 제품 목록 (삭제 전 영향 확인)' })
+  @ApiQuery({ name: 'parentItemCode', required: true })
+  async findUsage(
+    @Query('parentItemCode') parentItemCode: string,
+    @OrganizationId() organizationId?: number,
+  ) {
+    if (!parentItemCode) throw new BadRequestException('parentItemCode is required');
+    const data = await this.bomService.findUsage(parentItemCode, organizationId);
+    return ResponseUtil.success(data);
   }
 
   @Get('hierarchy/:parentItemCode')
@@ -179,8 +189,9 @@ export class BomController {
   async create(
     @Body() dto: CreateBomDto,
     @OrganizationId() organizationId: number,
+    @UserId() userId: string | undefined,
   ) {
-    const data = await this.bomService.create(dto, organizationId);
+    const data = await this.bomService.create(dto, organizationId, userId);
     return ResponseUtil.success(data, 'BOM created');
   }
 

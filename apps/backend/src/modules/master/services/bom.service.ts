@@ -36,6 +36,8 @@ export interface BomPreviewRow {
   revision: string;
   status: 'new' | 'duplicate_db' | 'duplicate_file' | 'error';
   message?: string;
+  /** 업로드 시 넣을 BOM 주인(ID_ENG_BOM.ITEM_CODE) */
+  ownerItemCode?: string;
 }
 
 /** 업로드 미리보기 결과 */
@@ -320,6 +322,13 @@ export class BomService {
    * LEVEL: 계층 깊이
    */
   async findHierarchy(parentItemCode: string, depth: number = 3, effectiveDate?: string, organizationId?: number) {
+    const rawResults = await this.queryHierarchyRows(parentItemCode, depth, effectiveDate, organizationId);
+    // 평면 데이터를 트리 구조로 변환
+    return this.buildTreeFromFlatData(rawResults);
+  }
+
+  /** CONNECT BY 평면 행(전개 순서 그대로) — 트리 조회와 엑셀 내보내기가 같은 경로를 쓴다 */
+  private async queryHierarchyRows(parentItemCode: string, depth: number, effectiveDate?: string, organizationId?: number) {
     const safeDepth = Math.min(Math.max(Math.floor(Number(depth) || 3), 1), 10);
     const params: (string | number)[] = [];
     // 바인드는 SQL 등장 순서대로 push (oracledb positional). 각 절마다 별도 바인드.
@@ -371,6 +380,7 @@ export class BomService {
         TO_CHAR(b.DATESET, 'YYYY-MM-DD') AS "validFrom",
         TO_CHAR(b.DATEEND, 'YYYY-MM-DD') AS "validTo",
         'Y'                AS "useYn",
+        b.LOCATION_INFO    AS "remark",
         p.ITEM_CODE        AS "itemCode",
         p.ITEM_NAME        AS "itemName",
         p.PART_NO          AS "itemNo",
@@ -392,20 +402,20 @@ export class BomService {
       ORDER SIBLINGS BY b.SORT_SEQUENCE ASC
     `;
 
-    const rawResults = await this.bomRepository.query<BomTreeFlatRow[]>(query, params);
-    
-    // 평면 데이터를 트리 구조로 변환
-    return this.buildTreeFromFlatData(rawResults);
+    return this.bomRepository.query<BomTreeFlatRow[]>(query, params);
   }
 
-  /** 평면 데이터를 트리 구조로 변환 (childItemCode 기준 부모 매칭) */
+  /**
+   * 평면 데이터를 트리 구조로 변환.
+   * CONNECT BY 결과는 전개 순서(부모 바로 뒤에 자식)로 오므로 LEVEL 스택으로 부모를 잡는다.
+   * 품목코드로 부모를 찾으면 같은 반제품이 한 트리에 두 번 나올 때 자식이 마지막 것에만 붙는다.
+   */
   private buildTreeFromFlatData(rows: BomTreeFlatRow[]): BomTreeNode[] {
     const roots: BomTreeNode[] = [];
-    // childItemCode → node 매핑 (부모 찾을 때 사용)
-    const childMap = new Map<string, BomTreeNode>();
+    const stack: BomTreeNode[] = [];
 
-    const nodes = rows.map((row) => {
-      const node = {
+    for (const row of rows) {
+      const node: BomTreeNode = {
         id: row.id,
         level: Number(row.lvl),
         parentItemCode: row.parentItemCode,
@@ -426,18 +436,15 @@ export class BomService {
         useYn: row.useYn ?? 'Y',
         children: [],
       };
-      childMap.set(node.childItemCode, node);
-      return node;
-    });
-
-    // 부모-자식 관계 설정: parentItemCode로 부모 노드의 childItemCode를 매칭
-    for (const node of nodes) {
-      const parent = childMap.get(node.parentItemCode);
-      if (parent) {
+      // 바로 위 레벨의 마지막 행이 부모다. 품목이 안 맞으면(WHERE 절로 부모 행이 빠진 경우) 최상위로 둔다.
+      const parent = node.level > 1 ? stack[node.level - 2] : undefined;
+      if (parent && parent.childItemCode === node.parentItemCode) {
         parent.children.push(node);
       } else {
         roots.push(node);
       }
+      stack[node.level - 1] = node;
+      stack.length = node.level;
     }
 
     return roots;
@@ -465,6 +472,39 @@ export class BomService {
   }
 
   /**
+   * 엑셀 셀 값을 YYYY-MM-DD로 변환 (실패 시 null).
+   * 날짜 서식 셀은 sheet_to_json 이 일련번호(예: 44337 = 2021-05-21)로 넘기므로 숫자를 먼저 날짜로 바꾼다.
+   * 문자열은 2021-05-21 · 2021/5/21 · 2021.05.21 · 20210521 · 숫자만 있는 일련번호를 받는다.
+   */
+  private excelDateOnly(value: unknown): string | null {
+    const ymd = (y: number, m: number, d: number): string | null => {
+      if (y < 1900 || y > 9999 || m < 1 || m > 12 || d < 1) return null;
+      const dt = new Date(y, m - 1, d);
+      if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    };
+    const fromSerial = (n: number): string | null => {
+      if (!Number.isFinite(n) || n < 1) return null;
+      const p = XLSX.SSF.parse_date_code(n);
+      return p ? ymd(p.y, p.m, p.d) : null;
+    };
+
+    if (value === null || value === undefined || value === '') return null;
+    if (typeof value === 'number') return fromSerial(value);
+    if (value instanceof Date) {
+      if (isNaN(value.getTime())) return null;
+      return ymd(value.getFullYear(), value.getMonth() + 1, value.getDate());
+    }
+    const s = String(value).trim();
+    if (!s) return null;
+    if (/^\d{8}$/.test(s)) return ymd(Number(s.slice(0, 4)), Number(s.slice(4, 6)), Number(s.slice(6, 8)));
+    if (/^\d+(\.\d+)?$/.test(s)) return fromSerial(Number(s));
+    const m = /^(\d{4})[-./](\d{1,2})[-./](\d{1,2})(?:[ T].*)?$/.exec(s);
+    if (m) return ymd(Number(m[1]), Number(m[2]), Number(m[3]));
+    return null;
+  }
+
+  /**
    * 날짜형 값을 로컬(서버 KST) 자정 Date로 변환 — PK VALID_FROM 조회/저장 값 단일 경로.
    * new Date('YYYY-MM-DD')는 UTC 자정(KST 09:00)이라 DB의 자정 값과 어긋난다.
    */
@@ -475,7 +515,104 @@ export class BomService {
     return new Date(y, m - 1, d);
   }
 
-  async create(dto: CreateBomDto, organizationId?: number) {
+  /**
+   * 신규 BOM 행의 필수 코드값 — 기존 엑셀 등록과 같은 값(운영 데이터 전부 T/T/*).
+   * ITEM_TYPE·LINE_TYPE·WORKSTAGE_CODE 는 NOT NULL 이고 DB 기본값이 없다.
+   */
+  private newRowCodes(processCode?: string | null): Pick<BomMaster, 'itemType' | 'lineType' | 'processCode'> {
+    return { itemType: 'T', lineType: 'T', processCode: processCode?.trim() || '*' };
+  }
+
+  /**
+   * 상위품목별 기존 BOM 주인(ITEM_CODE). 같은 상위품목의 하위 행 중 가장 많이 쓰인 주인을 돌려준다(동률이면 코드순 앞).
+   * 하위 행이 없는 상위품목은 결과에 없다.
+   */
+  private async findExistingOwners(parentCodes: string[], organizationId?: number): Promise<Map<string, string>> {
+    const owners = new Map<string, string>();
+    const codes = [...new Set(parentCodes.filter(Boolean))];
+    for (let i = 0; i < codes.length; i += 500) {
+      const chunk = codes.slice(i, i + 500);
+      const params: unknown[] = [...chunk];
+      const inList = chunk.map((_, idx) => `:${idx + 1}`).join(', ');
+      let tenant = '';
+      if (organizationId != null) { params.push(organizationId); tenant = `AND ORGANIZATION_ID = :${params.length}`; }
+      const rows = await this.bomRepository.query<{ parentItemCode: string; ownerItemCode: string; cnt: number | string }[]>(
+        `SELECT PARENT_ITEM_CODE AS "parentItemCode", ITEM_CODE AS "ownerItemCode", COUNT(*) AS "cnt"
+           FROM ID_ENG_BOM
+          WHERE PARENT_ITEM_CODE IN (${inList}) AND ITEM_CODE IS NOT NULL ${tenant}
+          GROUP BY PARENT_ITEM_CODE, ITEM_CODE
+          ORDER BY PARENT_ITEM_CODE, COUNT(*) DESC, ITEM_CODE`,
+        params,
+      );
+      for (const r of rows) {
+        if (!owners.has(r.parentItemCode)) owners.set(r.parentItemCode, r.ownerItemCode);
+      }
+    }
+    return owners;
+  }
+
+  /**
+   * 업로드 파일의 상위품목별 BOM 주인.
+   * 상위품목에서 시작해 파일 안의 부모를 따라 올라가며, 처음 만나는 "DB 에 이미 하위 행이 있는 품목"의 주인을 쓴다.
+   * 끝까지 없으면 파일 안의 최상위 상위품목(다른 행의 하위로 나오지 않는 품목)이 주인이다.
+   * 한 품목이 파일 안에서 여러 부모 아래 나오면 파일에서 먼저 나온 부모를 따른다.
+   */
+  private async resolveUploadOwners(pairs: { parent: string; child: string }[], organizationId?: number): Promise<Map<string, string>> {
+    const fileParentOf = new Map<string, string>();
+    for (const { parent, child } of pairs) {
+      if (parent && child && parent !== child && !fileParentOf.has(child)) fileParentOf.set(child, parent);
+    }
+    const chains = new Map<string, string[]>();
+    for (const { parent } of pairs) {
+      if (!parent || chains.has(parent)) continue;
+      const chain = [parent];
+      const seen = new Set(chain);
+      let cur = fileParentOf.get(parent);
+      while (cur && !seen.has(cur)) { chain.push(cur); seen.add(cur); cur = fileParentOf.get(cur); }
+      chains.set(parent, chain);
+    }
+    const dbOwners = await this.findExistingOwners([...new Set([...chains.values()].flat())], organizationId);
+    const result = new Map<string, string>();
+    for (const [parent, chain] of chains) {
+      const withOwner = chain.find((code) => dbOwners.has(code));
+      result.set(parent, withOwner ? dbOwners.get(withOwner)! : chain[chain.length - 1]);
+    }
+    return result;
+  }
+
+  /**
+   * 이 BOM 행(상위→하위)을 함께 쓰는 최상위 제품 목록.
+   * 상위품목에서 위로 거슬러 올라가 더 위 부모가 없는 품목을 모은다('*' 루트 행은 부모로 보지 않는다).
+   * 상위품목 자신이 최상위면 그 품목 하나다.
+   */
+  async findUsage(parentItemCode: string, organizationId?: number) {
+    const params: unknown[] = [];
+    const bind = (v: unknown): number => { params.push(v); return params.length; };
+    // 바인드는 SQL 등장 순서대로 push (oracledb positional)
+    const startIdx = bind(parentItemCode);
+    const tenantStart = organizationId != null ? `AND b.ORGANIZATION_ID = :${bind(organizationId)}` : '';
+    const tenantConnect = organizationId != null ? `AND b.ORGANIZATION_ID = :${bind(organizationId)}` : '';
+    const rows = await this.bomRepository.query<{ itemCode: string }[]>(
+      `SELECT DISTINCT b.PARENT_ITEM_CODE AS "itemCode"
+         FROM ID_ENG_BOM b
+        WHERE CONNECT_BY_ISLEAF = 1
+        START WITH b.CHILD_ITEM_CODE = :${startIdx} AND b.PARENT_ITEM_CODE <> '*' ${tenantStart}
+        CONNECT BY NOCYCLE PRIOR b.PARENT_ITEM_CODE = b.CHILD_ITEM_CODE AND b.PARENT_ITEM_CODE <> '*' ${tenantConnect}`,
+      params,
+    );
+    const topCodes = rows.length > 0 ? rows.map((r) => r.itemCode) : [parentItemCode];
+    const parts = await this.partRepository.find({
+      where: { itemCode: In(topCodes), ...(organizationId != null ? { organizationId } : {}) },
+      select: ['itemCode', 'itemName', 'itemNo'],
+    });
+    const partMap = new Map(parts.map((p) => [p.itemCode, p]));
+    const topItems = topCodes
+      .map((code) => ({ itemCode: code, itemNo: partMap.get(code)?.itemNo ?? null, itemName: partMap.get(code)?.itemName ?? null }))
+      .sort((a, b) => a.itemCode.localeCompare(b.itemCode));
+    return { parentItemCode, topItems, count: topItems.length };
+  }
+
+  async create(dto: CreateBomDto, organizationId?: number, userId?: string) {
     if (dto.parentItemCode === dto.childItemCode) {
       throw new ConflictException('상위 품목과 하위 품목이 같을 수 없습니다.');
     }
@@ -497,6 +634,11 @@ export class BomService {
       throw new ConflictException('동일 상위·하위 품목에 같은 적용일자의 BOM이 이미 존재합니다.');
     }
 
+    // BOM 주인(ITEM_CODE): 상위품목에 이미 하위 행이 있으면 그 행들의 주인을 따른다(같은 부모의 형제가 함께 전개되도록).
+    // 처음 만드는 상위품목이면 화면에서 보고 있는 최상위 제품, 그것도 없으면 상위품목 자신.
+    const existingOwner = (await this.findExistingOwners([dto.parentItemCode], organizationId)).get(dto.parentItemCode);
+    const ownerItemCode = existingOwner ?? (dto.topItemCode?.trim() || dto.parentItemCode);
+
     const bom = this.bomRepository.create({
       parentItemCode: dto.parentItemCode,
       childItemCode: dto.childItemCode,
@@ -504,14 +646,17 @@ export class BomService {
       seq: dto.seq ?? 0,
       revision: dto.revision ?? 'A',
       bomGrp: dto.bomGrp,
-      processCode: dto.processCode,
+      ...this.newRowCodes(dto.processCode),
+      itemCode: ownerItemCode,
       side: dto.side,
       ecoNo: dto.ecoNo,
       validFrom: this.keyDate(validFromYmd)!,
-      validTo: dto.validTo ? new Date(dto.validTo) : undefined,
+      validTo: this.keyDate(dto.validTo) ?? undefined,
       remark: dto.remark,
       useYn: dto.useYn ?? 'Y',
       organizationId,
+      createdBy: userId ?? null,
+      updatedBy: userId ?? null,
     });
 
     await this.bomRepository.save(bom);
@@ -527,7 +672,7 @@ export class BomService {
     if (dto.processCode !== undefined) updateData.processCode = dto.processCode;
     if (dto.side !== undefined) updateData.lineType = dto.side;
     if (dto.revision !== undefined) updateData.revision = dto.revision;
-    if (dto.validTo !== undefined) updateData.validTo = dto.validTo ? new Date(dto.validTo) : null;
+    if (dto.validTo !== undefined) updateData.validTo = this.keyDate(dto.validTo);
     if (dto.remark !== undefined) updateData.remark = dto.remark;
 
     // 적용일자는 PK — 변경 시 동일 모+자에 같은 적용일자가 이미 있으면 중복
@@ -576,20 +721,43 @@ export class BomService {
   }
 
   /** BOM 데이터를 Excel(xlsx) 파일로 내보내기 */
-  async exportToExcel(parentItemCode?: string, organizationId?: number): Promise<Buffer> {
+  async exportToExcel(parentItemCode?: string, organizationId?: number, effectiveDate?: string): Promise<Buffer> {
+    if (parentItemCode) return this.exportTreeToExcel(parentItemCode, organizationId, effectiveDate);
+
     const where: FindOptionsWhere<BomMaster> = {};
-    if (parentItemCode) where.parentItemCode = parentItemCode;
     if (organizationId != null) where.organizationId = organizationId;
 
     const bomList = await this.bomRepository.find({ where, order: { parentItemCode: 'ASC', seq: 'ASC' } });
     const headers = ['상위품목코드', '하위품목코드', '소요량', '리비전', '순서', 'BOM그룹', '공정코드', '사이드', 'ECO번호', '유효시작일', '유효종료일', '비고'];
     const fmtDate = (d: Date | null) => this.toDateOnly(d) ?? '';
     const rows = bomList.length > 0
-      ? bomList.map((b) => [b.parentItemCode, b.childItemCode, b.qtyPer, b.revision, b.seq, b.bomGrp ?? '', b.processCode ?? '', b.side ?? '', b.ecoNo ?? '', fmtDate(b.validFrom), fmtDate(b.validTo), b.remark ?? ''])
+      ? bomList.map((b) => [b.parentItemCode, b.childItemCode, b.qtyPer, b.revision, b.seq, b.bomGrp ?? '', b.processCode ?? '', b.lineType ?? '', b.ecoNo ?? '', fmtDate(b.validFrom), fmtDate(b.validTo), b.remark ?? ''])
       : [Array(headers.length).fill('')];
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
     ws['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 14 }, { wch: 14 }, { wch: 30 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'BOM');
+    return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+  }
+
+  /**
+   * 선택한 모품목의 BOM 을 화면 트리와 같은 경로(CONNECT BY, 10레벨)로 전부 펼쳐 내보낸다.
+   * 업로드 양식의 열 이름(상위품목코드·하위품목코드·소요량…)을 그대로 쓰고 레벨·품번·품명·단위 열을 덧붙인다.
+   */
+  private async exportTreeToExcel(parentItemCode: string, organizationId?: number, effectiveDate?: string): Promise<Buffer> {
+    const flat = await this.queryHierarchyRows(parentItemCode, 10, effectiveDate, organizationId);
+    const headers = ['레벨', '상위품목코드', '하위품목코드', '하위품번', '하위품명', '단위', '소요량', '리비전', '순서', '공정코드', '사이드', '유효시작일', '유효종료일', '비고'];
+    const rows = flat.length > 0
+      ? flat.map((r) => [
+          Number(r.lvl), r.parentItemCode, r.childItemCode, r.itemNo ?? '', r.itemName ?? '', r.unit ?? '',
+          Number(r.qtyPer), r.revision ?? '', Number(r.seq), r.processCode ?? '', r.side ?? '',
+          r.validFrom ?? '', r.validTo ?? '', r.remark ?? '',
+        ])
+      : [Array(headers.length).fill('')];
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    ws['!cols'] = [{ wch: 6 }, { wch: 18 }, { wch: 18 }, { wch: 20 }, { wch: 32 }, { wch: 6 }, { wch: 10 }, { wch: 8 }, { wch: 8 }, { wch: 10 }, { wch: 8 }, { wch: 12 }, { wch: 12 }, { wch: 30 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'BOM');
     return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
@@ -610,7 +778,7 @@ export class BomService {
     const wb = XLSX.read(buffer, { type: 'buffer' });
     const jsonRows = XLSX.utils.sheet_to_json<BomExcelRow>(wb.Sheets[wb.SheetNames[0]], { defval: '' });
     const str = (v: unknown) => String(v ?? '').trim();
-    const fmtDate = (v: unknown): string | null => this.toDateOnly(v);
+    const fmtDate = (v: unknown): string | null => this.excelDateOnly(v);
 
     const rows: BomPreviewRow[] = [];
     const fileKeySet = new Set<string>();
@@ -631,7 +799,7 @@ export class BomService {
         continue;
       }
       if (!validFrom || !validTo) {
-        rows.push({ row: rowNum, parentItemCode: parentCode, childItemCode: childCode, validFrom, validTo, qtyPer: qtyRaw === '' || qtyRaw === null || isNaN(Number(qtyRaw)) ? null : Number(qtyRaw), revision, status: 'error', message: '유효시작일, 유효종료일 필수' });
+        rows.push({ row: rowNum, parentItemCode: parentCode, childItemCode: childCode, validFrom, validTo, qtyPer: qtyRaw === '' || qtyRaw === null || isNaN(Number(qtyRaw)) ? null : Number(qtyRaw), revision, status: 'error', message: '유효시작일·유효종료일이 비었거나 날짜가 아님' });
         continue;
       }
       if (qtyRaw === '' || qtyRaw === null || isNaN(Number(qtyRaw))) {
@@ -649,7 +817,7 @@ export class BomService {
         continue;
       }
       fileKeySet.add(fileKey);
-      dbKeys.push({ parentItemCode: parentCode, childItemCode: childCode, validFrom: validFrom ? new Date(validFrom) : null });
+      dbKeys.push({ parentItemCode: parentCode, childItemCode: childCode, validFrom: this.keyDate(validFrom) });
       rows.push({ row: rowNum, parentItemCode: parentCode, childItemCode: childCode, validFrom, validTo, qtyPer: Number(qtyRaw), revision, status: 'new' });
     }
 
@@ -674,6 +842,13 @@ export class BomService {
           row.message = 'DB에 동일 모·자·적용일자 존재';
         }
       }
+    }
+
+    // 업로드 때 들어갈 BOM 주인을 미리 보여준다 (uploadFromExcel 과 같은 규칙)
+    const okRows = rows.filter((r) => r.status !== 'error');
+    if (okRows.length > 0) {
+      const owners = await this.resolveUploadOwners(okRows.map((r) => ({ parent: r.parentItemCode, child: r.childItemCode })), organizationId);
+      for (const r of okRows) r.ownerItemCode = owners.get(r.parentItemCode) ?? r.parentItemCode;
     }
 
     const duplicateCount = rows.filter((r) => r.status === 'duplicate_db' || r.status === 'duplicate_file').length;
@@ -708,14 +883,18 @@ export class BomService {
     const pairList = jsonRows
       .map((r) => ({ p: String(r['상위품목코드'] ?? '').trim(), c: String(r['하위품목코드'] ?? '').trim() }))
       .filter((pk) => pk.p && pk.c);
-    const existBoms = await this.bomRepository.find({
-      where: pairList.map((pk) => ({
-        parentItemCode: pk.p,
-        childItemCode: pk.c,
-        ...(organizationId != null ? { organizationId } : {}),
-      })),
-      select: ['parentItemCode', 'childItemCode', 'validFrom'],
-    });
+    const existBoms = pairList.length > 0
+      ? await this.bomRepository.find({
+          where: pairList.map((pk) => ({
+            parentItemCode: pk.p,
+            childItemCode: pk.c,
+            ...(organizationId != null ? { organizationId } : {}),
+          })),
+          select: ['parentItemCode', 'childItemCode', 'validFrom'],
+        })
+      : [];
+    // BOM 주인(ITEM_CODE): 행마다 파일 안 자기 계통의 최상위 상위품목 (resolveUploadOwners 규칙)
+    const ownerByParent = await this.resolveUploadOwners(pairList.map((pk) => ({ parent: pk.p, child: pk.c })), organizationId);
     const existValidSet = new Set(existBoms.map((b) => `${b.parentItemCode}::${b.childItemCode}::${this.toDateOnly(b.validFrom) ?? ''}`));
 
     /* 3) 행별 검증 및 INSERT */
@@ -730,12 +909,12 @@ export class BomService {
       const childCode = str(row['하위품목코드']);
       const qtyRaw = row['소요량'];
       const revision = str(row['리비전']) || 'A';
-      const validFrom = this.toDateOnly(row['유효시작일']);
-      const validTo = this.toDateOnly(row['유효종료일']);
+      const validFrom = this.excelDateOnly(row['유효시작일']);
+      const validTo = this.excelDateOnly(row['유효종료일']);
 
       if (!parentCode || !childCode) { result.errors.push({ row: rowNum, message: '상위품목코드, 하위품목코드는 필수입니다.' }); continue; }
       if (qtyRaw === '' || qtyRaw === null || qtyRaw === undefined || isNaN(Number(qtyRaw))) { result.errors.push({ row: rowNum, message: '소요량이 누락되었거나 숫자가 아닙니다.' }); continue; }
-      if (!validFrom || !validTo) { result.errors.push({ row: rowNum, message: '유효시작일, 유효종료일은 필수입니다. (YYYY-MM-DD)' }); continue; }
+      if (!validFrom || !validTo) { result.errors.push({ row: rowNum, message: '유효시작일·유효종료일이 비었거나 날짜가 아닙니다. (예: 2026-10-12)' }); continue; }
       if (parentCode === childCode) { result.errors.push({ row: rowNum, message: '상위 품목과 하위 품목이 같을 수 없습니다.' }); continue; }
       if (!validCodes.has(parentCode)) { result.errors.push({ row: rowNum, message: `상위품목코드 [${parentCode}]가 품목마스터에 없습니다.` }); continue; }
       if (!validCodes.has(childCode)) { result.errors.push({ row: rowNum, message: `하위품목코드 [${childCode}]가 품목마스터에 없습니다.` }); continue; }
@@ -748,10 +927,12 @@ export class BomService {
         const bom = this.bomRepository.create({
           parentItemCode: parentCode, childItemCode: childCode, revision,
           qtyPer: Number(qtyRaw), seq: Number(row['순서'] ?? 0) || 0,
-          bomGrp: str(row['BOM그룹']) || null, processCode: str(row['공정코드']) || null,
+          bomGrp: str(row['BOM그룹']) || null,
+          ...this.newRowCodes(str(row['공정코드'])),
+          itemCode: ownerByParent.get(parentCode) ?? parentCode,
           side: str(row['사이드']) || null, ecoNo: str(row['ECO번호']) || null,
           validFrom: this.keyDate(validFrom)!,
-          validTo: new Date(validTo),
+          validTo: this.keyDate(validTo)!,
           remark: str(row['비고']) || null, useYn: 'Y',
           organizationId,
           createdBy: userId ?? null, updatedBy: userId ?? null,

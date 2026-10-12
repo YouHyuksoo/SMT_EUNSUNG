@@ -352,6 +352,22 @@ export const LINE_DIVISION_LABELS: Record<LineDivisionValue, string> = {
 /** 라벨이 'SMT'인 라인구분 코드 — 후공정 화면 라인 조회조건에서 제외할 때 쓴다 */
 export const SMT_LINE_DIVISIONS: readonly LineDivisionValue[] = ['D', 'SMT'];
 
+/**
+ * 생산팀 — 라인구분(LINE_DIVISION)으로 나눈다 (현업 결정).
+ * 1팀 = D(SMT), 2팀 = W(가공공정)·T(검사라인)·L(조립라인).
+ * 공용(ETC)·수리(REPAIR)는 어느 팀에도 넣지 않는다 — 팀 '전체' 일 때만 보인다.
+ */
+export const PRODUCTION_TEAM_VALUES = ['TEAM1', 'TEAM2'] as const;
+export type ProductionTeamValue = typeof PRODUCTION_TEAM_VALUES[number];
+export const PRODUCTION_TEAM_LABELS: Record<ProductionTeamValue, string> = {
+  TEAM1: '생산 1팀(SMT)',
+  TEAM2: '생산 2팀(조립·ICT 등)',
+};
+export const PRODUCTION_TEAM_DIVISIONS: Record<ProductionTeamValue, readonly LineDivisionValue[]> = {
+  TEAM1: ['D'],
+  TEAM2: ['W', 'T', 'L'],
+};
+
 /** 라인제품구분 (IP_PRODUCT_LINE.LINE_PRODUCT_DIVISION) */
 export const LINE_PRODUCT_DIVISION_VALUES = ['FIXED', 'ONESELF', 'SALE', 'SUBLET'] as const;
 export type LineProductDivisionValue = typeof LINE_PRODUCT_DIVISION_VALUES[number];

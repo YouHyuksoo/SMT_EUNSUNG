@@ -577,6 +577,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/production/smd-plan-board": {
+      const mod = await import("./page-registries/production__smd-plan-board.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/purchase/arrival": {
       const mod = await import("./page-registries/purchase__arrival.generated");
       component = mod.getPageComponent();

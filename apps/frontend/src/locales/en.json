@@ -486,6 +486,7 @@
     "production.runCard": "Work Order Management",
     "production.masterPlan": "Product Production Plan",
     "production.smdPlan": "Assembly Production Plan",
+    "production.smdPlanBoard": "Assembly Plan Board",
     "production.smdActual": "Assembly Production Result",
     "production.runCardPid": "Run Card-PID Mapping",
     "production.pcbResult": "Production Result by Period",

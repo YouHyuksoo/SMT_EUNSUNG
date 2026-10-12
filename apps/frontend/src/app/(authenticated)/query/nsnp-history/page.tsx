@@ -5,8 +5,8 @@
  * @description NSNP 처리이력조회 — PB w_pln_product_nsnp_history_query 이식
  *
  * 초보자 가이드:
- * 1. **위쪽은 라인 상태, 아래쪽은 이력이다.** 라인마다 NSNP 가 잠겼는지, 설비를
- *    쓰는지(사용/미사용)를 보고 아래에서 발생 이력을 본다.
+ * 1. **왼쪽은 라인 상태, 오른쪽은 이력이다.** 제어 버튼과 이력 조회 조건은 위에 있다.
+ *    라인마다 NSNP 가 잠겼는지, 설비를 쓰는지(사용/미사용)를 보고 오른쪽에서 발생 이력을 본다.
  * 2. **이력은 두 원장을 합친 것이다.** NSNP 감지 이력과 라인 ON/OFF 이력이다.
  *    라인이 꺼져 있던 구간을 함께 봐야 '왜 안 잡혔나' 를 판단할 수 있다.
  *    '원장' 열이 어느 쪽에서 온 기록인지 알려준다 — PB 는 구분할 방법이 없었다.
@@ -167,29 +167,7 @@ export default function NsnpHistoryPage() {
         </p>
       </header>
 
-      <Card className="h-56 shrink-0 overflow-hidden" padding="none">
-        <CardContent className="flex h-full flex-col gap-2 p-3">
-          <b className="text-sm text-text">라인 상태</b>
-          <div className="min-h-0 flex-1">
-            <DataGrid
-              data={lines}
-              columns={nsnpLineColumns}
-              isLoading={linesLoading}
-              pageSize={50}
-              emptyMessage="모니터링 대상 라인이 없습니다."
-              onRowClick={(row) => setSelected(row as NsnpLineRow)}
-              rowClassName={(row) => {
-                const r = row as NsnpLineRow;
-                if (r.lineCode === selected?.lineCode) return 'bg-primary/10';
-                return r.nsnpStatus && r.nsnpStatus !== 'N' ? 'bg-red-500/5' : '';
-              }}
-              getRowId={(row) => (row as NsnpLineRow).lineCode}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card padding="none">
+      <Card className="shrink-0" padding="none">
         <CardContent className="flex flex-wrap items-center gap-2 p-3">
           <b className="text-sm text-text">NSNP 제어</b>
           <Button size="sm" variant="secondary" disabled={!selected || busy}
@@ -217,7 +195,7 @@ export default function NsnpHistoryPage() {
         </CardContent>
       </Card>
 
-      <Card padding="none">
+      <Card className="shrink-0" padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <Input aria-label="모델명" placeholder="모델명" value={modelName} className="w-44"
             onChange={(e) => setModelName(e.target.value)} />
@@ -235,22 +213,49 @@ export default function NsnpHistoryPage() {
 
       <TruncationNotice truncated={truncated} rowLimit={rowLimit} />
 
-      <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
-        <CardContent className="h-full p-3">
-          <DataGrid
-            data={history}
-            columns={nsnpHistoryColumns}
-            isLoading={loading}
-            pageSize={100}
-            enableColumnFilter
-            enableExport
-            exportFileName="NSNP이력"
-            emptyMessage={searched ? '이 기간에 NSNP·라인 ON/OFF 이력이 없습니다.' : '조회하세요.'}
-            rowClassName={(row) =>
-              (row as NsnpHistoryRow).sourceKind === 'LINE_ONOFF' ? 'bg-surface/50' : ''}
-          />
-        </CardContent>
-      </Card>
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+        <Card className="min-h-[16rem] overflow-hidden" padding="none">
+          <CardContent className="flex h-full flex-col gap-2 p-3">
+            <b className="text-sm text-text">라인 상태</b>
+            <div className="min-h-0 flex-1">
+              <DataGrid
+                data={lines}
+                columns={nsnpLineColumns}
+                isLoading={linesLoading}
+                pageSize={50}
+                emptyMessage="모니터링 대상 라인이 없습니다."
+                onRowClick={(row) => setSelected(row as NsnpLineRow)}
+                rowClassName={(row) => {
+                  const r = row as NsnpLineRow;
+                  if (r.lineCode === selected?.lineCode) return 'bg-primary/10';
+                  return r.nsnpStatus && r.nsnpStatus !== 'N' ? 'bg-red-500/5' : '';
+                }}
+                getRowId={(row) => (row as NsnpLineRow).lineCode}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="min-h-[16rem] overflow-hidden" padding="none">
+          <CardContent className="flex h-full flex-col gap-2 p-3">
+            <b className="text-sm text-text">NSNP·라인 ON/OFF 이력</b>
+            <div className="min-h-0 flex-1">
+              <DataGrid
+                data={history}
+                columns={nsnpHistoryColumns}
+                isLoading={loading}
+                pageSize={100}
+                enableColumnFilter
+                enableExport
+                exportFileName="NSNP이력"
+                emptyMessage={searched ? '이 기간에 NSNP·라인 ON/OFF 이력이 없습니다.' : '조회하세요.'}
+                rowClassName={(row) =>
+                  (row as NsnpHistoryRow).sourceKind === 'LINE_ONOFF' ? 'bg-surface/50' : ''}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <ConfirmModal
         isOpen={nsnpOpen !== null}

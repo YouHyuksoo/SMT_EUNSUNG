@@ -78,6 +78,12 @@ export class CreateBomDto {
   @IsOptional()
   @IsString()
   useYn?: string;
+
+  @ApiPropertyOptional({ description: '화면에서 보고 있는 최상위 제품 — 신규 상위품목의 BOM 주인(ITEM_CODE)으로 쓴다' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  topItemCode?: string;
 }
 
 export class UpdateBomDto extends PartialType(CreateBomDto) {}

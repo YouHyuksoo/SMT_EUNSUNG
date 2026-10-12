@@ -63,6 +63,13 @@ export class JigMasterUpsertDto {
   @IsOptional() @IsDateString() lastInspectDate?: string;
   @IsOptional() @IsDateString() issueDate?: string;
   @IsOptional() @IsDateString() destroyDate?: string;
+
+  /**
+   * 수정 전 키. 수정에서 지그코드·지그LOT 을 바꿀 때 원래 행을 찾는 데 쓴다.
+   * 비어 있거나 jigCode/jigLotNo 와 같으면 키는 그대로 두고 나머지 칸만 고친다.
+   */
+  @IsOptional() @IsString() @Length(1, 100) originalJigCode?: string;
+  @IsOptional() @IsString() @Length(1, 100) originalJigLotNo?: string;
 }
 
 /** 적용모델 목록 조회 */

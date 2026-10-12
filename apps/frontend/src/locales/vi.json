@@ -486,6 +486,7 @@
     "production.runCard": "Quản lý lệnh sản xuất",
     "production.masterPlan": "Kế hoạch sản xuất sản phẩm",
     "production.smdPlan": "Kế hoạch sản xuất bán thành phẩm",
+    "production.smdPlanBoard": "Bảng kế hoạch sản xuất bán thành phẩm",
     "production.smdActual": "Quản lý kết quả sản xuất bán thành phẩm",
     "production.runCardPid": "Quản lý ánh xạ Lot card-PID",
     "production.pcbResult": "Tra cứu kết quả sản xuất theo kỳ",

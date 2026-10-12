@@ -7,6 +7,7 @@
  * SHIFT_CODE·PRODUCTION_TYPE·MFS_GROUP_NO 뿐이라 그 셋만 선택 항목으로 둔다.
  */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PRODUCTION_TEAM_VALUES, type ProductionTeamValue } from '@smt/shared';
 import { Type } from 'class-transformer';
 import {
   IsIn,
@@ -45,6 +46,13 @@ export class PlanQueryDto {
   @ApiPropertyOptional({ description: '계획상태 (ISYS_BASECODE PLAN STATUS)' })
   @IsOptional() @IsString() @Length(0, 1)
   planStatus?: string;
+
+  @ApiPropertyOptional({
+    description: '생산팀 (TEAM1=라인구분 D / TEAM2=W·T·L). 비우면 전체',
+    enum: PRODUCTION_TEAM_VALUES,
+  })
+  @IsOptional() @IsIn(PRODUCTION_TEAM_VALUES)
+  team?: ProductionTeamValue;
 }
 
 /** 키 — PLAN_DATE + PLAN_SEQUENCE + ORGANIZATION_ID. */
@@ -92,7 +100,7 @@ export class PlanUpsertDto extends PlanTimeFields {
   planDate!: string;
 
   @ApiPropertyOptional({
-    description: '계획순번 (키). 등록 시 비우면 그 날짜의 최대순번 + 1 을 서버가 매긴다.',
+    description: '계획순번 (키). 등록 시 비우면 서버가 시퀀스 SEQ_PLAN_DATE_SEQUENCE 에서 매긴다.',
   })
   @IsOptional() @Type(() => Number) @IsInt() @Min(0)
   planSequence?: number;
@@ -125,7 +133,7 @@ export class PlanUpsertDto extends PlanTimeFields {
   @IsOptional() @IsString() @Length(0, 30)
   parentItemCode?: string;
 
-  @ApiPropertyOptional({ description: '작업지시번호' })
+  @ApiPropertyOptional({ description: '작업지시번호. 등록 시 비우면 서버가 WO+등록일(YYMMDD)+계획순번 으로 만든다.' })
   @IsOptional() @IsString() @Length(0, 30)
   workOrderNo?: string;
 
@@ -181,7 +189,7 @@ export class PlanUpsertDto extends PlanTimeFields {
   @IsOptional() @IsString() @Length(0, 1)
   productionType?: string;
 
-  @ApiPropertyOptional({ description: 'MFS 그룹번호 (SMD 전용)' })
+  @ApiPropertyOptional({ description: 'MFS 그룹번호 (SMD 전용). 등록 시 비우면 서버가 라인그룹+계획순번 으로 만든다.' })
   @IsOptional() @IsString() @Length(0, 20)
   mfsGroupNo?: string;
 
