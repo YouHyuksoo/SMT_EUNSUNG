@@ -134,7 +134,7 @@ export default function WipClosePage() {
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" variant="secondary" data-tooltip={TIP.preview}
             onClick={() => load()} disabled={loading}>
-            <Calculator className="mr-1 h-4 w-4" />계산
+            <Calculator className="mr-1 h-4 w-4" />미리보기
           </Button>
           <Button size="sm" data-tooltip={status?.reason ?? TIP.close}
             disabled={busy || loading || !status?.canClose} onClick={() => setPending('close')}>
