@@ -42,12 +42,6 @@ const today = () => new Date().toISOString().slice(0, 10);
 /** 정상출고(N)를 고를 수 있는 출고계정. 그 밖의 계정은 기타출고(E)다. */
 const NORMAL_ISSUE_ACCOUNTS = ['M001', 'M002'];
 
-const daysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-};
-
 /** 재고 한 줄을 고르는 키 — 같은 품목도 창고·롯트가 다르면 다른 줄이다. */
 const stockKey = (row: IssueInventoryRow) =>
   `${row.locationCode ?? ''}|${row.materialMfs ?? ''}|${row.lineType ?? ''}`;
@@ -59,7 +53,8 @@ export default function EtcIssuePage() {
   // 출고이력 조회
   const [itemCode, setItemCode] = useState('');
   const [materialMfs, setMaterialMfs] = useState('');
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  // 출고가 하루 2천 건이 넘어 7일이면 1만 건 상한에 걸린다 — 기본은 오늘 하루.
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [histLineCode, setHistLineCode] = useState('');
   const [histInvoiceNo, setHistInvoiceNo] = useState('');
