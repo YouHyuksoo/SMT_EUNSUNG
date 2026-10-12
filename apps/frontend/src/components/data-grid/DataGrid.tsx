@@ -169,8 +169,9 @@ function DataGrid<T>({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
-  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const draggedColumnRef = useRef<string | null>(null);
+  const draggedElRef = useRef<HTMLElement | null>(null);
+  const dropTargetElRef = useRef<HTMLElement | null>(null);
   const [showFilterRow, setShowFilterRow] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSql, setShowSql] = useState(false);
@@ -285,26 +286,47 @@ function DataGrid<T>({
   };
 
   // 드래그 앤 드롭 핸들러
-  const handleDragStart = useCallback((e: React.DragEvent, columnId: string) => {
+  // 끄는 동안의 표시(끌리는 헤더 흐림, 놓을 자리 강조)는 헤더 DOM 의 data 속성만 바꾼다.
+  // 상태로 두면 dragover 마다 표 전체가 다시 그려져 컬럼·행이 많은 화면이 멈춘다.
+  const clearDropTarget = useCallback(() => {
+    if (dropTargetElRef.current) delete dropTargetElRef.current.dataset.dropTarget;
+    dropTargetElRef.current = null;
+  }, []);
+
+  const handleDragStart = useCallback((e: React.DragEvent<HTMLElement>, columnId: string) => {
     if (!enableColumnReordering) return;
-    setDraggedColumn(columnId);
+    draggedColumnRef.current = columnId;
+    draggedElRef.current = e.currentTarget;
+    e.currentTarget.dataset.dragging = 'true';
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', columnId);
   }, [enableColumnReordering]);
 
-  const handleDragOver = useCallback((e: React.DragEvent, columnId: string) => {
-    if (!enableColumnReordering || !draggedColumn) return;
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLElement>, columnId: string) => {
+    if (!enableColumnReordering || !draggedColumnRef.current) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    if (columnId !== draggedColumn) setDropTarget(columnId);
-  }, [enableColumnReordering, draggedColumn]);
+    if (columnId === draggedColumnRef.current || dropTargetElRef.current === e.currentTarget) return;
+    clearDropTarget();
+    dropTargetElRef.current = e.currentTarget;
+    e.currentTarget.dataset.dropTarget = 'true';
+  }, [enableColumnReordering, clearDropTarget]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLElement>) => {
+    // 헤더 안 자식 요소로 옮겨 갈 때도 dragleave 가 오므로, 헤더 밖으로 나갈 때만 강조를 끈다
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+    if (dropTargetElRef.current === e.currentTarget) clearDropTarget();
+  }, [clearDropTarget]);
 
   const handleDragEnd = useCallback(() => {
-    setDraggedColumn(null);
-    setDropTarget(null);
-  }, []);
+    if (draggedElRef.current) delete draggedElRef.current.dataset.dragging;
+    draggedElRef.current = null;
+    draggedColumnRef.current = null;
+    clearDropTarget();
+  }, [clearDropTarget]);
 
   const handleDrop = useCallback((e: React.DragEvent, targetColumnId: string) => {
+    const draggedColumn = draggedColumnRef.current;
     if (!enableColumnReordering || !draggedColumn) return;
     e.preventDefault();
     const currentOrder = columnOrder.length > 0
@@ -318,9 +340,8 @@ function DataGrid<T>({
       newOrder.splice(targetIndex, 0, draggedColumn);
       setColumnOrder(newOrder);
     }
-    setDraggedColumn(null);
-    setDropTarget(null);
-  }, [enableColumnReordering, draggedColumn, columnOrder, table]);
+    handleDragEnd();
+  }, [enableColumnReordering, columnOrder, table, handleDragEnd]);
 
   // 정렬 아이콘
   const SortIcon = ({ isSorted }: { isSorted: false | 'asc' | 'desc' }) => {
@@ -498,8 +519,6 @@ function DataGrid<T>({
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const isDragging = draggedColumn === header.id;
-                  const isDropTarget = dropTarget === header.id;
                   const headerAlign = getHeaderAlignment(header);
                   const pinned = header.column.getIsPinned();
                   const isLastLeftPinned = pinned === 'left' && header.column.getIsLastColumn('left');
@@ -515,8 +534,8 @@ function DataGrid<T>({
                         whitespace-nowrap
                         transition-all duration-150
                         ${getAlignmentClass(headerAlign)}
-                        ${isDragging ? 'opacity-50 bg-primary/10' : ''}
-                        ${isDropTarget ? 'bg-primary/20 border-l-2 border-l-primary' : ''}
+                        data-[dragging=true]:opacity-50 data-[dragging=true]:bg-primary/10
+                        data-[drop-target=true]:bg-primary/20 data-[drop-target=true]:border-l-2 data-[drop-target=true]:border-l-primary
                         ${pinned ? 'bg-slate-200 dark:bg-slate-800' : 'bg-slate-200 dark:bg-slate-800'}
                       `}
                       style={{
@@ -530,7 +549,7 @@ function DataGrid<T>({
                       onDragOver={(e) => handleDragOver(e, header.id)}
                       onDragEnd={handleDragEnd}
                       onDrop={(e) => handleDrop(e, header.id)}
-                      onDragLeave={() => setDropTarget(null)}
+                      onDragLeave={handleDragLeave}
                     >
                       {header.isPlaceholder ? null : (
                         <div className={`flex items-center gap-1 ${headerAlign === 'right' ? 'justify-end' : headerAlign === 'center' ? 'justify-center' : 'justify-start'}`}>
