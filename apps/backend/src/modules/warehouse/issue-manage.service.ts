@@ -49,12 +49,12 @@ const SEQUENCES = {
 } as const;
 
 /**
- * 출고구분은 출고계정이 정한다 — M001·M002 는 정상출고 'N', 그 밖은 기타출고 'E'.
- * (재생출고 'R' 은 재생 재고에서만 나오는데 그 표가 0행이라 쓰지 않는다.)
+ * 출고구분 — 출고계정이 M001·M002 이고 '정상출고' 체크가 켜져 있으면 정상출고 'N',
+ * 그 밖은 기타출고 'E'. (재생출고 'R' 은 재생 재고에서만 나오는데 그 표가 0행이라 쓰지 않는다.)
  */
 const NORMAL_ISSUE_ACCOUNTS = ['M001', 'M002'];
-const issueTypeOf = (issueAccount: string) =>
-  (NORMAL_ISSUE_ACCOUNTS.includes(issueAccount) ? 'N' : 'E');
+const issueTypeOf = (issueAccount: string, normalIssue = true) =>
+  (normalIssue && NORMAL_ISSUE_ACCOUNTS.includes(issueAccount) ? 'N' : 'E');
 
 const FIXED = {
   issueStatus: 'N',
@@ -285,7 +285,7 @@ export class IssueManageService {
           inventoryType: dto.inventoryType ?? null,
           issueQty,
           issuePrice: Number(dto.issuePrice ?? 0),
-          issueType: issueTypeOf(dto.issueAccount),
+          issueType: issueTypeOf(dto.issueAccount, dto.normalIssue ?? true),
           issueAccount: dto.issueAccount,
           invoiceNo,
           comments: dto.comments ?? null,

@@ -848,10 +848,18 @@ export class EtcIssueCreateDto {
   issuePrice?: number;
 
   @ApiProperty({
-    description: '출고계정 (공통코드 ISSUE ACCOUNT, 필수). M001·M002 는 정상출고(N), 그 밖은 기타출고(E).',
+    description: '출고계정 (공통코드 ISSUE ACCOUNT, 필수).',
   })
   @IsString() @Length(1, 20)
   issueAccount!: string;
+
+  @ApiPropertyOptional({
+    description: '정상출고 체크. 출고계정이 M001·M002 이고 켜져 있으면 정상출고(N),'
+      + ' 그 밖은 기타출고(E). 비우면 켜진 것으로 본다.',
+  })
+  @IsOptional() @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  normalIssue?: boolean;
 
   @ApiPropertyOptional({ description: '전표번호. 비우면 시퀀스로 채번한다.' })
   @IsOptional() @IsString() @Length(0, 60)
