@@ -128,7 +128,7 @@ export default function WorkerPage() {
                     leftIcon={<Search className="w-4 h-4" />}
                   />
                   <div className="w-28 flex-shrink-0">
-                    <ComCodeSelect groupCode="USE_YN" value={useYnFilter} onChange={setUseYnFilter} labelPrefix={t("common.useYn", "사용여부")} fullWidth />
+                    <ComCodeSelect groupCode="USE YN" value={useYnFilter} onChange={setUseYnFilter} labelPrefix={t("common.useYn", "사용여부")} fullWidth />
                   </div>
                 </div>
               }

@@ -229,7 +229,7 @@ export default function DayEditModal({
             {t("master.workCalendar.dayType")}
           </label>
           <ComCodeSelect
-            groupCode="WORK_DAY_TYPE"
+            groupCode="WORK DAY TYPE"
             includeAll={false}
             value={dayType}
             onChange={(v) => setDayType(v as WorkDayType)}
@@ -243,7 +243,7 @@ export default function DayEditModal({
               {t("master.workCalendar.offReason")}
             </label>
             <ComCodeSelect
-              groupCode="DAY_OFF_TYPE"
+              groupCode="DAY OFF TYPE"
               includeAll={false}
               value={offReason}
               onChange={setOffReason}
