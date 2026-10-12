@@ -8,9 +8,11 @@ import {
   Check,
   CheckCircle2,
   CircleHelp,
+  Expand,
   LockKeyhole,
   Loader2,
   Minus,
+  Minimize2,
   PauseCircle,
   PlayCircle,
   RefreshCw,
@@ -189,7 +191,6 @@ export default function OeeMultiEntryPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const viewMode = resolveOeeViewMode(searchParams.get('view'));
-  const isCompactFullView = viewMode === 'full';
   const user = useAuthStore((state) => state.user);
   const [online, setOnline] = useState(true);
   const [lastCommunicationAt, setLastCommunicationAt] = useState<number | null>(null);
@@ -314,7 +315,7 @@ export default function OeeMultiEntryPage() {
             const response = await api.get('/oee/multi-entry/status', {
               params: {
                 processCode: resource.processCode,
-                lineCode: resource.resourceCode,
+                lineCode: resource.lineCode,
               },
               suppressErrorModal: true,
             });
@@ -929,7 +930,7 @@ export default function OeeMultiEntryPage() {
       return;
     }
 
-    const lineCodes = selectedResources.map((resource) => resource.resourceCode);
+    const lineCodes = selectedResources.map((resource) => resource.lineCode);
     if (new Set(lineCodes).size !== lineCodes.length) {
       toast.error(t('oeeMultiEntry.duplicateLineSelection'));
       return;
@@ -945,7 +946,7 @@ export default function OeeMultiEntryPage() {
           await refreshStatuses();
           return;
         }
-        endItems.push(...openEvents.map((event) => ({ lineCode: resource.resourceCode, dtSeq: event.dtSeq })));
+        endItems.push(...openEvents.map((event) => ({ lineCode: resource.lineCode, dtSeq: event.dtSeq })));
       }
       if (new Set(endItems.map((item) => item.dtSeq)).size !== endItems.length) {
         toast.error(t('oeeMultiEntry.statusChanged'));
@@ -1153,8 +1154,8 @@ export default function OeeMultiEntryPage() {
     setStatusByResource((current) => {
       const next = { ...current };
       for (const resource of resources) {
-        if (resource.processCode !== pending.processCode || !pending.lineCodes.includes(resource.resourceCode)) continue;
-        const snapshot = latestPendingStatuses[resource.resourceCode];
+        if (resource.processCode !== pending.processCode || !pending.lineCodes.includes(resource.lineCode)) continue;
+        const snapshot = latestPendingStatuses[resource.lineCode];
         if (!snapshot?.status || snapshot.error) continue;
         next[resourceIdentity(resource)] = { loading: false, status: snapshot.status, error: null };
       }
@@ -1246,9 +1247,9 @@ export default function OeeMultiEntryPage() {
 
   return (
     <div className="oee-multi-entry-board flex h-full min-h-0 flex-col overflow-hidden bg-[#07111d] text-slate-100">
-      <div className={`mx-auto flex min-h-0 w-full max-w-[1680px] flex-1 flex-col ${isCompactFullView ? 'gap-2 overflow-hidden p-2' : 'gap-3 overflow-y-auto p-3 sm:p-4 lg:p-5'}`}>
+      <div className="mx-auto flex min-h-0 w-full max-w-[1680px] flex-1 flex-col gap-2 overflow-hidden p-2">
         <header className="oee-multi-entry-header shrink-0 rounded-2xl border border-slate-700/80 bg-[#0d1a2a] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.24)] sm:p-4">
-          <div className="oee-multi-entry-header-row flex min-w-0 flex-col gap-3 lg:grid lg:grid-cols-[minmax(10.5rem,1fr)_minmax(6.75rem,0.68fr)_minmax(8rem,0.82fr)_minmax(11rem,1.05fr)_3.5rem] lg:items-stretch lg:gap-1">
+          <div className="oee-multi-entry-header-row flex min-w-0 flex-col gap-3 lg:grid lg:grid-cols-[minmax(10.5rem,1fr)_minmax(6.75rem,0.68fr)_minmax(8rem,0.82fr)_minmax(11rem,1.05fr)_max-content] lg:items-stretch lg:gap-1">
             <div className="flex min-w-0 items-center gap-2">
               <div className="oee-header-optional-icon shrink-0 rounded-xl border border-cyan-400/30 bg-cyan-400/10 p-2 text-cyan-300">
                 <PauseCircle className="h-8 w-8" aria-hidden="true" />
@@ -1345,35 +1346,24 @@ export default function OeeMultiEntryPage() {
               )}
             </div>
 
-            <div
+            <button
               data-testid="oee-multi-view-switch"
-              className="flex min-h-[48px] min-w-[48px] shrink-0 items-stretch rounded-xl border border-slate-700 bg-[#101f31] p-1"
-              role="group"
-              aria-label={t('oeeMultiEntry.viewMode')}
+              type="button"
+              onClick={() => switchView(viewMode === 'normal' ? 'full' : 'normal')}
+              disabled={submitting || contextLocked}
+              aria-label={viewMode === 'normal' ? t('oeeMultiEntry.viewFull') : t('oeeMultiEntry.viewNormal')}
+              className="inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-600 px-3 text-sm font-bold text-slate-100 transition hover:border-cyan-300 hover:bg-cyan-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:opacity-45"
             >
-              <span className="sr-only">{t('oeeMultiEntry.viewMode')}</span>
-              <button
-                type="button"
-                onClick={() => switchView(viewMode === 'normal' ? 'full' : 'normal')}
-                disabled={submitting || contextLocked}
-                aria-label={viewMode === 'normal' ? t('oeeMultiEntry.viewFull') : t('oeeMultiEntry.viewNormal')}
-                className="flex min-h-[44px] min-w-[44px] flex-1 cursor-pointer flex-col items-center justify-center rounded-lg px-1 text-[11px] font-black leading-tight text-slate-100 transition hover:bg-cyan-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:opacity-45"
-              >
-                {viewMode === 'normal' ? (
-                  <>
-                    <span>{t('oeeMultiEntry.viewFullLine1')}</span>
-                    <span>{t('oeeMultiEntry.viewFullLine2')}</span>
-                  </>
-                ) : t('oeeMultiEntry.viewNormal')}
-              </button>
-            </div>
+              {viewMode === 'normal' ? <Expand className="h-5 w-5 shrink-0" aria-hidden="true" /> : <Minimize2 className="h-5 w-5 shrink-0" aria-hidden="true" />}
+              <span className="whitespace-nowrap">{viewMode === 'normal' ? t('oeeMultiEntry.viewFull') : t('oeeMultiEntry.viewNormal')}</span>
+            </button>
           </div>
 
           {workerError && <p id="oee-multi-worker-error" className="mt-2 text-sm font-semibold text-red-300">{workerError}</p>}
         </header>
 
-        <div className={`grid min-h-0 min-w-0 ${isCompactFullView ? 'flex-1 grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-2' : 'shrink-0 grid-cols-1 gap-3 lg:flex-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]'}`}>
-          <section className={`flex ${isCompactFullView ? 'min-h-0' : 'min-h-[560px]'} min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-700/80 bg-[#0d1a2a] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.2)] sm:p-4`} aria-labelledby="oee-multi-selection-title">
+        <div className="grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-2">
+          <section className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-700/80 bg-[#0d1a2a] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.2)] sm:p-4" aria-labelledby="oee-multi-selection-title">
             <div className="flex shrink-0 flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
               <div>
                 <p className="font-mono text-xs font-bold uppercase tracking-[0.24em] text-cyan-300">01 / SELECT</p>
@@ -1552,15 +1542,15 @@ export default function OeeMultiEntryPage() {
                                     disabled={contextLocked || (availability.disabled && !selected)}
                                     aria-disabled={contextLocked || (availability.disabled && !selected)}
                                     aria-pressed={selected}
-                                    aria-label={`${resource.resourceCode}, ${resource.resourceName}, ${resource.resourceType}, ${availability.label}${availability.disabledReason ? `, ${availability.disabledReason}` : ''}`}
+                                    aria-label={`${resource.lineCode}, ${resource.lineName}, ${resource.resourceType}, ${availability.label}${availability.disabledReason ? `, ${availability.disabledReason}` : ''}`}
                                     title={availability.disabledReason}
                                     className={`min-h-[56px] min-w-0 cursor-pointer rounded-lg border p-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111d] ${
                                       selected ? 'border-cyan-300 bg-cyan-400/15 ring-2 ring-cyan-300/30' : 'border-slate-700 bg-[#0d1a2a] hover:border-cyan-300/70 hover:bg-cyan-300/5'
                                     } disabled:cursor-not-allowed disabled:opacity-70`}
                                   >
                                     <div data-testid="oee-multi-resource-card-identity" className="flex min-w-0 items-center gap-2">
-                                      <span className="shrink-0 truncate font-mono text-sm font-black text-white">{resource.resourceCode}</span>
-                                      <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-300">{resource.resourceName}</span>
+                                      <span className="shrink-0 truncate font-mono text-sm font-black text-white">{resource.lineCode}</span>
+                                      <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-300">{resource.lineName}</span>
                                       <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${selected ? 'border-cyan-200 bg-cyan-300/20 text-cyan-100' : 'border-slate-600 text-transparent'}`} aria-hidden="true">
                                         {selected ? <Check className="h-4 w-4" /> : null}
                                       </span>
@@ -1588,11 +1578,11 @@ export default function OeeMultiEntryPage() {
             </div>
           </section>
 
-          <section className={`flex ${isCompactFullView ? 'min-h-0' : 'min-h-[560px]'} min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-700/80 bg-[#0d1a2a] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.2)] sm:p-4`} aria-labelledby="oee-multi-command-title">
-            <div className="flex shrink-0 items-start justify-between gap-3">
+          <section data-testid="oee-multi-command-panel" className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-[#f4f7f8] p-3 text-slate-900 shadow-[0_12px_32px_rgba(0,0,0,0.2)] sm:p-4" aria-labelledby="oee-multi-command-title">
+            <div className="flex shrink-0 items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
               <div>
-                <p className="font-mono text-xs font-bold uppercase tracking-[0.24em] text-amber-300">02 / COMMAND</p>
-                <h2 id="oee-multi-command-title" className="mt-1 text-lg font-black text-white">{t('oeeMultiEntry.commandTitle')}</h2>
+                <p className="font-mono text-xs font-bold uppercase tracking-[0.24em] text-teal-700">02 / COMMAND</p>
+                <h2 id="oee-multi-command-title" className="mt-1 text-lg font-black text-slate-950">{t('oeeMultiEntry.commandTitle')}</h2>
               </div>
               {mode === 'START' ? (
                 <button
@@ -1600,7 +1590,7 @@ export default function OeeMultiEntryPage() {
                   type="button"
                   onClick={() => void submitBatch()}
                   disabled={!canSubmit}
-                  className="inline-flex min-h-[64px] shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-400 px-5 text-base font-black text-slate-950 shadow-lg shadow-emerald-400/20 transition hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-45"
+                  className="inline-flex min-h-[64px] shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-base font-black text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none"
                 >
                   {submitting && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
                   <PlayCircle className="h-5 w-5" aria-hidden="true" />
@@ -1612,7 +1602,7 @@ export default function OeeMultiEntryPage() {
                   type="button"
                   onClick={() => void submitBatch()}
                   disabled={!canSubmit}
-                  className="inline-flex min-h-[64px] shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-400 px-5 text-base font-black text-slate-950 shadow-lg shadow-red-400/20 transition hover:bg-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200 disabled:cursor-not-allowed disabled:opacity-45"
+                  className="inline-flex min-h-[64px] shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-600 px-5 text-base font-black text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none"
                 >
                   {submitting && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
                   <Square className="h-5 w-5" fill="currentColor" aria-hidden="true" />
@@ -1622,9 +1612,9 @@ export default function OeeMultiEntryPage() {
             </div>
 
             {pendingStorageError && (
-              <div data-testid="oee-multi-storage-error" role="alert" aria-live="assertive" className="mt-3 shrink-0 rounded-xl border border-red-300/50 bg-red-400/10 p-3 text-red-100">
+              <div data-testid="oee-multi-storage-error" role="alert" aria-live="assertive" className="mt-3 shrink-0 rounded-xl border border-red-200 bg-red-50 p-3 text-red-800">
                 <div className="flex items-start gap-3">
-                  <LockKeyhole className="mt-0.5 h-5 w-5 shrink-0 text-red-200" aria-hidden="true" />
+                  <LockKeyhole className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
                   <div className="min-w-0">
                     <p className="font-bold">{pendingStorageError}</p>
                   </div>
@@ -1633,13 +1623,13 @@ export default function OeeMultiEntryPage() {
             )}
 
             {pendingSubmission && (
-              <div data-testid="oee-multi-pending-lock" role="status" aria-live="polite" className="mt-3 shrink-0 rounded-xl border border-amber-300/50 bg-amber-300/10 p-3 text-amber-100">
+              <div data-testid="oee-multi-pending-lock" role="status" aria-live="polite" className="mt-3 shrink-0 rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900">
                 <div className="flex flex-col gap-2">
                   <div className="flex items-start gap-3">
                     <LockKeyhole className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
                     <div className="min-w-0">
                       <p className="font-bold">{t('oeeMultiEntry.pendingSubmissionLock')}</p>
-                      <p className="mt-1 text-xs text-amber-100/80">{t('oeeMultiEntry.noAutomaticUnlock')}</p>
+                      <p className="mt-1 text-xs text-amber-700">{t('oeeMultiEntry.noAutomaticUnlock')}</p>
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-wrap justify-end gap-2">
@@ -1648,7 +1638,7 @@ export default function OeeMultiEntryPage() {
                       type="button"
                       onClick={() => void requeryPendingStatus()}
                       disabled={pendingStatusLoading || !online}
-                      className="inline-flex min-h-[44px] shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-amber-200 px-3 text-xs font-black text-amber-50 transition hover:bg-amber-200/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex min-h-[44px] shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 text-xs font-black text-amber-800 transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {pendingStatusLoading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
                       <RefreshCw className="h-4 w-4" aria-hidden="true" />
@@ -1659,7 +1649,7 @@ export default function OeeMultiEntryPage() {
                       type="button"
                       onClick={confirmPendingSubmission}
                       disabled={!canConfirmPending}
-                      className="inline-flex min-h-[44px] shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-emerald-200 px-3 text-xs font-black text-emerald-50 transition hover:bg-emerald-200/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex min-h-[44px] shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-emerald-300 bg-white px-3 text-xs font-black text-emerald-700 transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                       {t('oeeMultiEntry.confirmPendingSubmission')}
@@ -1668,7 +1658,7 @@ export default function OeeMultiEntryPage() {
                 </div>
                 <div className="mt-2 grid gap-1 pl-8">
                   {Object.entries(pendingStatusByLine).map(([lineCode, result]) => (
-                    <div key={lineCode} className="flex min-w-0 items-center justify-between gap-2 text-xs text-amber-100/80">
+                    <div key={lineCode} className="flex min-w-0 items-center justify-between gap-2 text-xs text-amber-700">
                       <span className="font-mono font-bold">{lineCode}</span>
                       <span className="truncate text-right">{result.error ?? (result.status?.state === 'DOWNTIME' ? t('oeeMultiEntry.downtime') : result.status ? t('oeeMultiEntry.running') : t('oeeMultiEntry.statusUnknown'))}</span>
                     </div>
@@ -1677,22 +1667,22 @@ export default function OeeMultiEntryPage() {
               </div>
             )}
 
-            <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border border-slate-700 bg-[#07111d] p-3 text-center">
-              <div><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">{t('oeeMultiEntry.selectedLineCount')}</span><strong className="block text-2xl text-white">{selectedResources.length}</strong><small className="block text-[11px] text-slate-500">{t('oeeMultiEntry.visible')}: {visibleSelectedCount}{mode === 'END' ? ` · ${t('oeeMultiEntry.openEventCount', { count: selectedOpenEventCount })}` : ''}</small></div>
-              <div><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">{t('oeeMultiEntry.readyLineCount')}</span><strong className="block text-2xl text-cyan-200">{selectedEligibleCount}</strong><small className="block text-[11px] text-slate-500">{t('oeeMultiEntry.visible')}: {visibleSelectedEligibleCount}</small></div>
-              <div><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">{t('oeeMultiEntry.resultRowCount')}</span><strong className="block text-2xl text-cyan-200">{batchOutcome?.events?.length ?? 0}</strong><small className="block text-[11px] text-slate-500">{batchOutcome ? t('oeeMultiEntry.responseReceived') : t('oeeMultiEntry.awaitingResults')}</small></div>
+            <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm">
+              <div><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">{t('oeeMultiEntry.selectedLineCount')}</span><strong className="block text-2xl text-slate-950">{selectedResources.length}</strong><small className="block text-[11px] text-slate-500">{t('oeeMultiEntry.visible')}: {visibleSelectedCount}{mode === 'END' ? ` · ${t('oeeMultiEntry.openEventCount', { count: selectedOpenEventCount })}` : ''}</small></div>
+              <div><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">{t('oeeMultiEntry.readyLineCount')}</span><strong className="block text-2xl text-teal-700">{selectedEligibleCount}</strong><small className="block text-[11px] text-slate-500">{t('oeeMultiEntry.visible')}: {visibleSelectedEligibleCount}</small></div>
+              <div><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">{t('oeeMultiEntry.resultRowCount')}</span><strong className="block text-2xl text-teal-700">{batchOutcome?.events?.length ?? 0}</strong><small className="block text-[11px] text-slate-500">{batchOutcome ? t('oeeMultiEntry.responseReceived') : t('oeeMultiEntry.awaitingResults')}</small></div>
             </div>
 
             {selectedResources.length > 0 && (
-              <fieldset disabled={contextLocked} className={`mt-3 min-w-0 rounded-xl p-3 ${mode === 'START' ? 'border border-emerald-400/30 bg-emerald-400/5' : 'border border-red-400/30 bg-red-400/5'}`}>
-                <legend className={`px-1 text-sm font-black ${mode === 'START' ? 'text-emerald-100' : 'text-red-100'}`}>
+              <fieldset disabled={contextLocked} className={`mt-3 min-w-0 rounded-xl bg-white p-3 shadow-sm ${mode === 'START' ? 'border border-emerald-200' : 'border border-red-200'}`}>
+                <legend className={`px-1 text-sm font-black ${mode === 'START' ? 'text-emerald-700' : 'text-red-700'}`}>
                   {mode === 'START' ? t('oeeMultiEntry.commonStartFields') : t('oeeMultiEntry.endReasonFields')}
                 </legend>
-                <p className="mt-1 text-xs text-slate-400">{mode === 'START' ? t('oeeMultiEntry.commonStartHint') : t('oeeMultiEntry.endReasonHint')}</p>
-                <p className="mt-3 text-sm font-bold text-slate-200">
+                <p className="mt-1 text-xs text-slate-500">{mode === 'START' ? t('oeeMultiEntry.commonStartHint') : t('oeeMultiEntry.endReasonHint')}</p>
+                <p className="mt-3 text-sm font-bold text-slate-700">
                   {t('oeeMultiEntry.reason')}
                   {mode === 'START' || (endReasonNeedsSelection && !endReasonOverrideCode)
-                    ? <span className="font-normal text-slate-400">({mode === 'START' ? t('oeeMultiEntry.optional') : t('oeeMultiEntry.required')})</span>
+                    ? <span className="font-normal text-slate-500">({mode === 'START' ? t('oeeMultiEntry.optional') : t('oeeMultiEntry.required')})</span>
                     : null}
                 </p>
                 {mode === 'START' && reasonCode ? (
@@ -1702,13 +1692,13 @@ export default function OeeMultiEntryPage() {
                     onClick={openReasonEditor}
                     disabled={contextLocked}
                     aria-label={`${t('oeeMultiEntry.reason')}: ${selectedReason?.reasonName ?? reasonCode}, ${selectedReasonTypeLabel} · ${selectedReason?.reasonCode ?? reasonCode}; ${t('oeeMultiEntry.optional')}; ${t('common.change')}`}
-                    className="mt-3 flex min-h-[48px] w-full min-w-0 cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-600 bg-[#07111d] px-3 py-2 text-left transition hover:border-cyan-300/70 hover:bg-cyan-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="mt-3 flex min-h-[48px] w-full min-w-0 cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-left transition hover:border-teal-400 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-bold text-emerald-100">{selectedReason?.reasonName ?? reasonCode}</span>
-                      <span className="mt-0.5 block truncate text-xs text-slate-400">{selectedReasonTypeLabel} · {selectedReason?.reasonCode ?? reasonCode}</span>
+                      <span className="block truncate text-sm font-bold text-emerald-700">{selectedReason?.reasonName ?? reasonCode}</span>
+                      <span className="mt-0.5 block truncate text-xs text-slate-500">{selectedReasonTypeLabel} · {selectedReason?.reasonCode ?? reasonCode}</span>
                     </span>
-                    <span className="shrink-0 text-xs font-bold text-slate-100">{t('common.change')}</span>
+                    <span className="shrink-0 text-xs font-bold text-teal-700">{t('common.change')}</span>
                   </button>
                 ) : mode === 'START' ? (
                   <button
@@ -1718,7 +1708,7 @@ export default function OeeMultiEntryPage() {
                     disabled={contextLocked}
                     aria-haspopup="dialog"
                     aria-expanded={reasonEditorOpen}
-                    className="mt-3 inline-flex min-h-[48px] w-full cursor-pointer items-center justify-between rounded-lg border border-dashed border-cyan-300/60 bg-[#07111d] px-3 text-left text-sm font-bold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="mt-3 inline-flex min-h-[48px] w-full cursor-pointer items-center justify-between rounded-lg border border-dashed border-teal-400 bg-white px-3 text-left text-sm font-bold text-teal-700 transition hover:border-teal-500 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <span>{t('oeeMultiEntry.reasonSelect')}</span>
                     <span aria-hidden="true" className="text-lg leading-none">+</span>
@@ -1727,23 +1717,23 @@ export default function OeeMultiEntryPage() {
                   <div
                     data-testid="oee-multi-end-reason-summary"
                     aria-label={endReasonStatusLabel}
-                    className="mt-3 flex min-h-[48px] w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-slate-600 bg-[#07111d] px-3 py-2 text-left"
+                    className="mt-3 flex min-h-[48px] w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-left"
                   >
                     <div className="min-w-0 flex-1">
                       {endDisplayedReasonCode ? (
                         <>
-                          <span className="block truncate text-sm font-bold text-emerald-100">
+                          <span className="block truncate text-sm font-bold text-emerald-700">
                             {selectedReason?.reasonName ?? t('oeeMultiEntry.reasonMetadataUnavailable')}
                           </span>
-                          <span className="mt-0.5 block truncate text-xs text-slate-400">
+                          <span className="mt-0.5 block truncate text-xs text-slate-500">
                             {selectedReason ? `${selectedReasonTypeLabel} · ${endDisplayedReasonCode}` : endDisplayedReasonCode}
                           </span>
                         </>
                       ) : (
-                        <span className="block truncate text-sm font-bold text-red-100">{endReasonStatusLabel}</span>
+                        <span className="block truncate text-sm font-bold text-red-700">{endReasonStatusLabel}</span>
                       )}
                       {endReasonNeedsSelection && !endReasonOverrideCode && (
-                        <span className="mt-0.5 block text-xs font-normal text-red-200">({t('oeeMultiEntry.required')})</span>
+                        <span className="mt-0.5 block text-xs font-normal text-red-600">({t('oeeMultiEntry.required')})</span>
                       )}
                     </div>
                     <button
@@ -1753,7 +1743,7 @@ export default function OeeMultiEntryPage() {
                       disabled={contextLocked}
                       aria-haspopup="dialog"
                       aria-expanded={reasonEditorOpen}
-                      className="inline-flex min-h-[44px] shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-600 px-3 text-xs font-bold text-slate-100 transition hover:border-cyan-300 hover:bg-cyan-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex min-h-[44px] shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-teal-400 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {endReasonSummary.state === 'allMissing' && !endReasonOverrideCode
                         ? t('oeeMultiEntry.reasonSelect')
@@ -1761,42 +1751,42 @@ export default function OeeMultiEntryPage() {
                     </button>
                   </div>
                 )}
-                 {mode === 'START' && (
-                   <label className="mt-3 block text-sm font-bold text-slate-200">
-                     {t('oeeMultiEntry.memo')} <span className="font-normal text-slate-400">({t('oeeMultiEntry.optional')})</span>
-                     <textarea
-                       value={memo}
-                       onChange={(event) => {
-                         setMemo(event.target.value);
-                         clearBatchOutcome();
-                       }}
-                       maxLength={500}
-                       rows={2}
-                       className="mt-1 min-h-[64px] w-full resize-none rounded-lg border border-slate-600 bg-[#07111d] px-3 py-2 text-base font-medium text-white outline-none focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/30 disabled:opacity-50"
-                       placeholder={t('oeeMultiEntry.memoPlaceholder')}
-                     />
-                      <span className="mt-1 block text-right text-xs text-slate-400">{utf8ByteLength(memo)} / 500 B</span>
-                   </label>
-                 )}
+                {mode === 'START' && (
+                  <label className="mt-3 block text-sm font-bold text-slate-700">
+                    {t('oeeMultiEntry.memo')} <span className="font-normal text-slate-500">({t('oeeMultiEntry.optional')})</span>
+                    <textarea
+                      value={memo}
+                      onChange={(event) => {
+                        setMemo(event.target.value);
+                        clearBatchOutcome();
+                      }}
+                      maxLength={500}
+                      rows={2}
+                      className="mt-1 min-h-[64px] w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-base font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 disabled:bg-slate-100 disabled:opacity-50"
+                      placeholder={t('oeeMultiEntry.memoPlaceholder')}
+                    />
+                    <span className="mt-1 block text-right text-xs text-slate-500">{utf8ByteLength(memo)} / 500 B</span>
+                  </label>
+                )}
               </fieldset>
             )}
 
             {mode === 'END' && selectedResources.length > 0 && (
-              <div className="mt-3 rounded-xl border border-red-400/30 bg-red-400/5 p-3">
-                <p className="text-sm font-black text-red-100">{t('oeeMultiEntry.endSelectionTitle')}</p>
-                <p className="mt-1 text-xs text-slate-400">{t('oeeMultiEntry.endSelectionHint')} · {t('oeeMultiEntry.openEventCount', { count: selectedOpenEventCount })}</p>
+              <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3">
+                <p className="text-sm font-black text-red-800">{t('oeeMultiEntry.endSelectionTitle')}</p>
+                <p className="mt-1 text-xs text-red-700">{t('oeeMultiEntry.endSelectionHint')} · {t('oeeMultiEntry.openEventCount', { count: selectedOpenEventCount })}</p>
                 <div className="mt-3 grid gap-2">
                   {selectedResources.map((resource) => {
                     const openEvents = statusByResource[resourceIdentity(resource)]?.status?.openEvents ?? [];
                     return (
-                      <div key={resourceIdentity(resource)} className="rounded-lg border border-slate-700 bg-[#07111d] px-3 py-2 text-sm">
+                      <div key={resourceIdentity(resource)} className="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm">
                         <div className="flex min-h-[32px] items-center justify-between gap-3">
-                          <span className="min-w-0 truncate font-mono font-bold text-white">{resource.resourceCode}</span>
-                          <span className="shrink-0 text-right text-xs text-slate-400">{t('oeeMultiEntry.openEventCount', { count: openEvents.length })}</span>
+                          <span className="min-w-0 truncate font-mono font-bold text-slate-900">{resource.lineCode}</span>
+                          <span className="shrink-0 text-right text-xs text-slate-500">{t('oeeMultiEntry.openEventCount', { count: openEvents.length })}</span>
                         </div>
                         <div className="mt-1 grid gap-1 pl-2">
                           {openEvents.map((event) => (
-                            <span key={`${event.lineCode}-${event.dtSeq}`} className="font-mono text-xs text-slate-400">DT #{event.dtSeq}</span>
+                            <span key={`${event.lineCode}-${event.dtSeq}`} className="font-mono text-xs text-slate-500">DT #{event.dtSeq}</span>
                           ))}
                         </div>
                       </div>
@@ -1807,21 +1797,21 @@ export default function OeeMultiEntryPage() {
             )}
 
             {selectedResources.length === 0 && (
-              <div className="mt-3 flex min-h-[180px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-700 bg-[#07111d] p-5 text-center text-slate-400">
+              <div className="mt-3 flex min-h-[180px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-white p-5 text-center text-slate-500 shadow-sm">
                 <CircleHelp className="h-9 w-9" aria-hidden="true" />
                 <p className="font-semibold">{t('oeeMultiEntry.selectAtLeastOne')}</p>
               </div>
             )}
 
-            {submitting && <div role="status" aria-live="polite" className="mt-3 flex min-h-[64px] items-center gap-3 rounded-xl border border-cyan-300/40 bg-cyan-300/10 px-4 text-sm font-bold text-cyan-100"><LockKeyhole className="h-5 w-5 shrink-0" aria-hidden="true" />{t('oeeMultiEntry.contextLocked')}</div>}
+            {submitting && <div role="status" aria-live="polite" className="mt-3 flex min-h-[64px] items-center gap-3 rounded-xl border border-teal-200 bg-teal-50 px-4 text-sm font-bold text-teal-800"><LockKeyhole className="h-5 w-5 shrink-0" aria-hidden="true" />{t('oeeMultiEntry.contextLocked')}</div>}
 
-            <div className="mt-3 min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-700 bg-[#07111d] p-3" aria-live="polite">
+            <div className="mt-3 min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-sm" aria-live="polite">
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-wider text-slate-200">{t('oeeMultiEntry.resultsTitle')}</h3>
-                  <p className="mt-1 text-xs text-slate-400">{batchOutcome ? t(`oeeMultiEntry.${batchOutcome.state}`) : t('oeeMultiEntry.awaitingResults')}</p>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-slate-800">{t('oeeMultiEntry.resultsTitle')}</h3>
+                  <p className="mt-1 text-xs text-slate-500">{batchOutcome ? t(`oeeMultiEntry.${batchOutcome.state}`) : t('oeeMultiEntry.awaitingResults')}</p>
                 </div>
-                {selectedProcessList.length > 0 && <span className="font-mono text-xs font-bold text-cyan-300">{selectedProcessList[0]} · {mode}</span>}
+                {selectedProcessList.length > 0 && <span className="font-mono text-xs font-bold text-teal-700">{selectedProcessList[0]} · {mode}</span>}
               </div>
               <div className="mt-3 grid gap-2">
                 {batchOutcome ? (
@@ -1831,24 +1821,24 @@ export default function OeeMultiEntryPage() {
                     return (
                       <article
                         data-testid="oee-multi-batch-result"
-                        className={`rounded-lg border p-3 ${isFailure ? 'border-amber-300/40 bg-amber-300/5' : 'border-emerald-400/30 bg-emerald-400/5'}`}
+                        className={`rounded-lg border p-3 ${isFailure ? 'border-amber-200 bg-amber-50' : 'border-emerald-200 bg-emerald-50'}`}
                         aria-label={t(`oeeMultiEntry.${batchOutcome.state}`)}
                       >
                         <div className="flex items-start gap-3">
-                          <OutcomeIcon className={`mt-0.5 h-6 w-6 shrink-0 ${isFailure ? 'text-amber-200' : 'text-emerald-300'}`} aria-hidden="true" />
+                          <OutcomeIcon className={`mt-0.5 h-6 w-6 shrink-0 ${isFailure ? 'text-amber-600' : 'text-emerald-600'}`} aria-hidden="true" />
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                              <span className="font-mono font-black text-white">{batchOutcome.processCode}</span>
-                              <span className="text-sm font-black text-slate-200">{t(`oeeMultiEntry.${batchOutcome.state}`)}</span>
+                              <span className="font-mono font-black text-slate-950">{batchOutcome.processCode}</span>
+                              <span className="text-sm font-black text-slate-800">{t(`oeeMultiEntry.${batchOutcome.state}`)}</span>
                             </div>
-                            <p className="mt-1 text-xs text-slate-400">{batchOutcome.message}</p>
+                            <p className="mt-1 text-xs text-slate-600">{batchOutcome.message}</p>
                             <p className="mt-1 text-xs text-slate-500">{t('oeeMultiEntry.batchTargetCount', { count: batchOutcome.lineCodes.length, itemCount: batchOutcome.targetItemCount })}</p>
                             {batchOutcome.events && (
                               <div className="mt-2 grid gap-1">
                                 {batchOutcome.events.map((event) => (
-                                  <div key={`${event.lineCode}-${event.dtSeq}`} className="flex items-center justify-between gap-2 rounded-md border border-slate-700 bg-[#07111d] px-2 py-1.5 text-xs">
-                                    <span className="font-mono font-bold text-slate-200">{event.lineCode}</span>
-                                    <span className="font-mono text-slate-400">DT #{event.dtSeq}</span>
+                                  <div key={`${event.lineCode}-${event.dtSeq}`} className="flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs">
+                                    <span className="font-mono font-bold text-slate-800">{event.lineCode}</span>
+                                    <span className="font-mono text-slate-500">DT #{event.dtSeq}</span>
                                   </div>
                                 ))}
                               </div>
@@ -1878,19 +1868,19 @@ export default function OeeMultiEntryPage() {
       >
         <div data-testid="oee-multi-reason-picker" className="max-h-[70vh] min-w-0 overflow-y-auto">
           {reasonsLoading && (
-            <p className="flex min-h-[44px] items-center gap-2 text-sm text-slate-400">
-              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+            <p className="flex min-h-[44px] items-center gap-2 text-sm text-slate-500">
+              <Loader2 className="h-5 w-5 animate-spin text-teal-600" aria-hidden="true" />
               {t('oeeMultiEntry.reasonsLoading')}
             </p>
           )}
           {reasonsError && (
-            <div className="rounded-lg border border-red-400/40 bg-red-400/10 p-3 text-sm text-red-200">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
               <p>{reasonsError}</p>
               <button
                 type="button"
                 onClick={retryReasons}
                 disabled={contextLocked}
-                className="mt-2 inline-flex min-h-[64px] cursor-pointer items-center gap-2 rounded-lg border border-cyan-300 px-4 font-bold text-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-2 inline-flex min-h-[64px] cursor-pointer items-center gap-2 rounded-lg border border-teal-400 bg-white px-4 font-bold text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <RefreshCw className="h-4 w-4" aria-hidden="true" />
                 {t('oeeMultiEntry.retry')}
@@ -1898,7 +1888,7 @@ export default function OeeMultiEntryPage() {
             </div>
           )}
           {!reasonsLoading && !reasonsError && reasons.length === 0 && (
-            <p className="text-sm text-red-200">{t('oeeMultiEntry.noReasons')}</p>
+            <p className="text-sm text-red-700">{t('oeeMultiEntry.noReasons')}</p>
           )}
           {!reasonsLoading && !reasonsError && reasons.length > 0 && (
             <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
@@ -1911,14 +1901,14 @@ export default function OeeMultiEntryPage() {
                     key={reasonType}
                     data-testid="oee-multi-reason-group"
                     data-reason-type={reasonType}
-                    className="min-w-0 rounded-lg border border-slate-700/80 bg-[#101f31] p-2"
+                    className="min-w-0 rounded-lg border border-slate-200 bg-slate-50 p-2"
                     aria-labelledby={`oee-multi-reason-group-${reasonType}`}
                   >
                     <div className="flex min-w-0 items-center justify-between gap-2">
-                      <h3 id={`oee-multi-reason-group-${reasonType}`} className="truncate text-xs font-black uppercase tracking-wide text-slate-200">
+                      <h3 id={`oee-multi-reason-group-${reasonType}`} className="truncate text-xs font-black uppercase tracking-wide text-slate-700">
                         {reasonTypeLabel}
                       </h3>
-                      <span className="shrink-0 rounded-full bg-slate-700 px-2 py-0.5 font-mono text-[11px] font-bold text-cyan-200">
+                      <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 font-mono text-[11px] font-bold text-teal-700">
                         {groupedReasons.length}
                       </span>
                     </div>
@@ -1932,7 +1922,7 @@ export default function OeeMultiEntryPage() {
                               data-testid="oee-multi-reason-placeholder"
                               aria-hidden="true"
                               aria-disabled="true"
-                              className="pointer-events-none min-h-[44px] min-w-0 rounded-lg border border-slate-700/50 bg-[#07111d]/50 px-2.5 py-1.5 opacity-50"
+                              className="pointer-events-none min-h-[44px] min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 opacity-50"
                             />
                           );
                         }
@@ -1955,10 +1945,10 @@ export default function OeeMultiEntryPage() {
                             }}
                             aria-pressed={pickerReasonCode === reason.reasonCode}
                             aria-label={`${reasonTypeLabel}: ${reason.reasonName}, ${reason.reasonCode}`}
-                            className={`flex min-h-[44px] min-w-0 cursor-pointer flex-col justify-center rounded-lg border px-2.5 py-1.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 ${pickerReasonCode === reason.reasonCode ? 'border-cyan-300 bg-cyan-400/20 text-white' : 'border-slate-600 bg-[#07111d] text-slate-300 hover:border-cyan-300/70'}`}
+                            className={`flex min-h-[44px] min-w-0 cursor-pointer flex-col justify-center rounded-lg border px-2.5 py-1.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 ${pickerReasonCode === reason.reasonCode ? 'border-teal-500 bg-teal-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-teal-400 hover:bg-teal-50'}`}
                           >
                             <span className="block min-w-0 truncate text-xs font-bold">{reason.reasonName}</span>
-                            <span className="mt-0.5 block min-w-0 truncate font-mono text-[11px] text-slate-400">{reasonTypeLabel} · {reason.reasonCode}</span>
+                            <span className={`mt-0.5 block min-w-0 truncate font-mono text-[11px] ${pickerReasonCode === reason.reasonCode ? 'text-teal-50' : 'text-slate-500'}`}>{reasonTypeLabel} · {reason.reasonCode}</span>
                           </button>
                         );
                       })}

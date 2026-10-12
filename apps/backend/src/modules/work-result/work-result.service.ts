@@ -53,12 +53,19 @@ export class WorkResultService {
     keyword?: string,
     organizationId?: number,
     machineCode?: string,
+    lineCodes?: string[],
   ) {
     const organization = this.requireOrganization(organizationId);
     const params: unknown[] = [organization, fromDate, toDate];
     let where = `r.ORGANIZATION_ID = :1
       AND r.RUN_DATE >= TO_DATE(:2,'YYYY-MM-DD') AND r.RUN_DATE < TO_DATE(:3,'YYYY-MM-DD') + 1`;
-    if (lineCode) {
+    if (lineCodes?.length) {
+      const placeholders = lineCodes.map(
+        (_, index) => `:${params.length + index + 1}`,
+      );
+      params.push(...lineCodes);
+      where += ` AND r.LINE_CODE IN (${placeholders.join(', ')})`;
+    } else if (lineCode) {
       params.push(lineCode);
       where += ` AND r.LINE_CODE = :${params.length}`;
     }
@@ -100,7 +107,7 @@ export class WorkResultService {
         FROM IP_PRODUCT_RUN_CARD r
         WHERE ${where}
         ORDER BY r.RUN_DATE DESC, r.RUN_NO
-      ) WHERE ROWNUM <= 500`,
+       ) WHERE ROWNUM <= 101`,
       params,
     );
   }

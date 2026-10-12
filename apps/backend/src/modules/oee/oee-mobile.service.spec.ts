@@ -1,53 +1,48 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { FindOperator, IsNull, Not, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import { EquipDowntimeReason } from '../../entities/equip-downtime-reason.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { OeeDowntimeEvent } from '../../entities/oee-downtime-event.entity';
-import { OeeResource } from '../../entities/oee-resource.entity';
-import { ProdLineMaster } from '../../entities/prod-line-master.entity';
 import { WorktimeRange } from '../../entities/worktime-range.entity';
 import { MockLoggerService } from '@test/mock-logger.service';
 import { OeeMobileService } from './oee-mobile.service';
 
 describe('OeeMobileService', () => {
   let target: OeeMobileService;
-  let lineRepository: DeepMocked<Repository<ProdLineMaster>>;
-  let resourceRepository: DeepMocked<Repository<OeeResource>>;
+  let dataSource: DeepMocked<DataSource>;
   let userRepository: DeepMocked<Repository<IsysUser>>;
   let reasonRepository: DeepMocked<Repository<EquipDowntimeReason>>;
   let eventRepository: DeepMocked<Repository<OeeDowntimeEvent>>;
   let worktimeRepository: DeepMocked<Repository<WorktimeRange>>;
 
   beforeEach(async () => {
-    lineRepository = createMock<Repository<ProdLineMaster>>();
-    resourceRepository = createMock<Repository<OeeResource>>();
+    dataSource = createMock<DataSource>();
     userRepository = createMock<Repository<IsysUser>>();
     reasonRepository = createMock<Repository<EquipDowntimeReason>>();
     eventRepository = createMock<Repository<OeeDowntimeEvent>>();
     worktimeRepository = createMock<Repository<WorktimeRange>>();
     eventRepository.findOne.mockResolvedValue(null);
     eventRepository.find.mockResolvedValue([]);
-    resourceRepository.find.mockResolvedValue([
+    dataSource.query.mockResolvedValue([
       {
-        resourceId: 1,
-        organizationId: 7,
         processCode: 'SMT',
         resourceType: 'LINE',
-        refCode: '01',
-        resourceName: 'Configured resource',
-        useYn: 'Y',
+        lineCode: '01',
+        lineName: 'Configured resource',
+        parentLineCode: '01',
+        activeYn: 'Y',
+        mesDisplayYn: 'Y',
         sortOrder: 1,
-      } as OeeResource,
+      },
     ]);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OeeMobileService,
-        { provide: getRepositoryToken(ProdLineMaster), useValue: lineRepository },
-        { provide: getRepositoryToken(OeeResource), useValue: resourceRepository },
+        { provide: getDataSourceToken(), useValue: dataSource },
         { provide: getRepositoryToken(IsysUser), useValue: userRepository },
         { provide: getRepositoryToken(EquipDowntimeReason), useValue: reasonRepository },
         { provide: getRepositoryToken(OeeDowntimeEvent), useValue: eventRepository },
@@ -64,157 +59,94 @@ describe('OeeMobileService', () => {
     jest.clearAllMocks();
   });
 
-  it('lists active OEE resources with canonical same-organization line names', async () => {
-    resourceRepository.find.mockResolvedValue([
+  it('lists view rows with named binds and retains inactive/non-display resources', async () => {
+    dataSource.query.mockResolvedValue([
       {
-        resourceId: 2,
-        organizationId: 7,
-        processCode: 'SMT',
-        resourceType: 'CELL',
-        refCode: '02',
-        resourceName: 'Stale OEE cell name',
-        useYn: 'Y',
-        sortOrder: 10,
-      } as OeeResource,
-      {
-        resourceId: 1,
-        organizationId: 7,
         processCode: 'SMT',
         resourceType: 'LINE',
-        refCode: '01',
-        resourceName: 'Stale OEE line name',
-        useYn: 'Y',
-        sortOrder: 10,
-      } as OeeResource,
-      {
-        resourceId: 3,
-        organizationId: 7,
-        processCode: 'SMT',
-        resourceType: 'LINE',
-        refCode: '03',
-        resourceName: 'Inactive resource',
-        useYn: 'N',
-        sortOrder: 1,
-      } as OeeResource,
-      {
-        resourceId: 4,
-        organizationId: 8,
-        processCode: 'SMT',
-        resourceType: 'LINE',
-        refCode: '04',
-        resourceName: 'Other organization',
-        useYn: 'Y',
-        sortOrder: 1,
-      } as OeeResource,
-      {
-        resourceId: 5,
-        organizationId: 7,
-        processCode: 'SMT',
-        resourceType: 'MACHINE',
-        refCode: '05',
-        resourceName: 'Unsupported type',
-        useYn: 'Y',
-        sortOrder: 1,
-      } as OeeResource,
-      {
-        resourceId: 6,
-        organizationId: 7,
-        processCode: 'SMT',
-        resourceType: 'CELL',
-        refCode: null,
-        resourceName: 'Missing reference',
-        useYn: 'Y',
-        sortOrder: 1,
-      } as OeeResource,
-    ]);
-    lineRepository.find.mockResolvedValue([
-      {
-        lineCode: '02',
-        lineName: 'Canonical cell line',
-        parentLineCode: '01',
-        organizationId: 7,
-      } as ProdLineMaster,
-      {
         lineCode: '01',
         lineName: 'Canonical line',
         parentLineCode: '01',
-        organizationId: 7,
-      } as ProdLineMaster,
+        activeYn: 'Y',
+        mesDisplayYn: 'Y',
+        sortOrder: 1,
+      },
+      {
+        processCode: 'SMT',
+        resourceType: 'CELL',
+        lineCode: '02',
+        lineName: 'Inactive hidden cell',
+        parentLineCode: ' 01 ',
+        activeYn: 'N',
+        mesDisplayYn: 'N',
+        sortOrder: 2,
+      },
     ]);
 
     const result = await target.listResources('SMT', 7, 'EUNSUNG', '1');
-    const resourceOptions = resourceRepository.find.mock.calls[0][0] as {
-      where: Record<string, unknown>;
-      order: Record<string, string>;
-    };
-    expect(resourceOptions.where).toEqual({
-      organizationId: 7,
-      processCode: 'SMT',
-      resourceType: expect.any(Object),
-      useYn: 'Y',
-      refCode: expect.any(Object),
-    });
-    const resourceTypeFilter = resourceOptions.where.resourceType as FindOperator<string>;
-    expect(resourceTypeFilter.type).toBe('in');
-    expect(resourceTypeFilter.value).toEqual(['LINE', 'CELL']);
-    const refCodeFilter = resourceOptions.where.refCode as FindOperator<string>;
-    expect(refCodeFilter.type).toBe('not');
-    expect(refCodeFilter.value).toBeUndefined();
-    expect(resourceOptions.order).toEqual({ sortOrder: 'ASC', refCode: 'ASC' });
-    const lineOptions = lineRepository.find.mock.calls[0][0] as {
-      where: Record<string, unknown>;
-    };
-    expect(lineOptions.where.organizationId).toBe(7);
-    expect((lineOptions.where.lineCode as FindOperator<string>).type).toBe('in');
-    expect((lineOptions.where.lineCode as FindOperator<string>).value).toEqual(['02', '01']);
+    const [sql, parameters] = dataSource.query.mock.calls[0] as [string, unknown];
+    expect(sql).toContain('FROM V_OEE_PRODUCT_LINE v');
+    expect(sql).toContain('v.ACTIVE_YN AS "activeYn"');
+    expect(sql).toContain('v.MES_DISPLAY_YN AS "mesDisplayYn"');
+    expect(sql).toContain('v.SORT_ORDER AS "sortOrder"');
+    expect(sql).toContain('ORDER BY v.SORT_ORDER ASC NULLS LAST, v.LINE_CODE ASC');
+    expect(sql).not.toMatch(/OEE_RESOURCE/i);
+    expect(parameters).toEqual({ organizationId: 7, processCode: 'SMT' });
     expect(result).toEqual([
       {
-        resourceId: 1,
         processCode: 'SMT',
         resourceType: 'LINE',
-        resourceCode: '01',
-        resourceName: 'Canonical line',
+        lineCode: '01',
+        lineName: 'Canonical line',
         parentLineCode: '01',
+        activeYn: 'Y',
+        mesDisplayYn: 'Y',
+        sortOrder: 1,
       },
       {
-        resourceId: 2,
         processCode: 'SMT',
         resourceType: 'CELL',
-        resourceCode: '02',
-        resourceName: 'Canonical cell line',
+        lineCode: '02',
+        lineName: 'Inactive hidden cell',
         parentLineCode: '01',
+        activeYn: 'N',
+        mesDisplayYn: 'N',
+        sortOrder: 2,
       },
     ]);
   });
 
-  it('lists only configured assembly resources instead of a fixed line range', async () => {
-    resourceRepository.find.mockResolvedValue([
+  it('queries assembly rows from the common view without legacy resource fields', async () => {
+    dataSource.query.mockResolvedValue([
       {
-        resourceId: 20,
-        organizationId: 7,
         processCode: 'ASSY',
         resourceType: 'CELL',
-        refCode: '20',
-        resourceName: 'Wave 2라인',
-        useYn: 'Y',
+        lineCode: '20',
+        lineName: 'Wave 2라인',
+        parentLineCode: null,
+        activeYn: 'Y',
+        mesDisplayYn: 'Y',
         sortOrder: 2,
-      } as OeeResource,
-    ]);
-    lineRepository.find.mockResolvedValue([
-      { lineCode: '20', lineName: 'ICT', organizationId: 7 } as ProdLineMaster,
+      },
     ]);
 
     const result = await target.listResources('ASSY', 7, 'EUNSUNG', '1');
     expect(result).toEqual([
       {
-        resourceId: 20,
         processCode: 'ASSY',
         resourceType: 'CELL',
-        resourceCode: '20',
-        resourceName: 'ICT',
+        lineCode: '20',
+        lineName: 'Wave 2라인',
         parentLineCode: '20',
+        activeYn: 'Y',
+        mesDisplayYn: 'Y',
+        sortOrder: 2,
       },
     ]);
+    expect(dataSource.query.mock.calls[0][1]).toEqual({
+      organizationId: 7,
+      processCode: 'ASSY',
+    });
   });
 
   it('rejects incomplete tenant context before querying', async () => {
@@ -226,7 +158,7 @@ describe('OeeMobileService', () => {
       BadRequestException,
     );
 
-    expect(lineRepository.find).not.toHaveBeenCalled();
+    expect(dataSource.query).not.toHaveBeenCalled();
   });
 
   it('rejects an unsupported process code without falling back to a resource source', async () => {
@@ -234,11 +166,11 @@ describe('OeeMobileService', () => {
       target.listResources('PROCESS_X' as 'SMT', 7, 'EUNSUNG', '1'),
     ).rejects.toThrow(BadRequestException);
 
-    expect(lineRepository.find).not.toHaveBeenCalled();
+    expect(dataSource.query).not.toHaveBeenCalled();
   });
 
   it('returns an empty list when no ASSY cells match the scoped contract', async () => {
-    lineRepository.find.mockResolvedValue([]);
+    dataSource.query.mockResolvedValue([]);
 
     await expect(target.listResources('ASSY', 7, 'EUNSUNG', '1')).resolves.toEqual([]);
   });
@@ -365,89 +297,90 @@ describe('OeeMobileService', () => {
   });
 
   it('allows both LINE and CELL resource types for either mobile process', async () => {
-    resourceRepository.find.mockResolvedValue([
-      {
-        resourceId: 2,
-        organizationId: 7,
-        processCode: 'SMT',
-        resourceType: 'CELL',
-        refCode: '02',
-        resourceName: 'SMT cell',
-        useYn: 'Y',
-        sortOrder: 1,
-      } as OeeResource,
-      {
-        resourceId: 3,
-        organizationId: 7,
-        processCode: 'ASSY',
-        resourceType: 'LINE',
-        refCode: '19',
-        resourceName: 'ASSY line',
-        useYn: 'Y',
-        sortOrder: 1,
-      } as OeeResource,
-      {
-        resourceId: 4,
-        organizationId: 7,
-        processCode: 'ASSY',
-        resourceType: 'CELL',
-        refCode: '20',
-        resourceName: 'ASSY cell',
-        useYn: 'Y',
-        sortOrder: 2,
-      } as OeeResource,
-    ]);
-    lineRepository.find.mockResolvedValue([
-      { lineCode: '02', lineName: 'SMT cell', parentLineCode: '01', organizationId: 7 } as ProdLineMaster,
-      { lineCode: '19', lineName: 'ASSY line', organizationId: 7 } as ProdLineMaster,
-      { lineCode: '20', lineName: 'ASSY cell', organizationId: 7 } as ProdLineMaster,
-    ]);
+    dataSource.query
+      .mockResolvedValueOnce([
+        {
+          processCode: 'SMT',
+          resourceType: 'CELL',
+          lineCode: '02',
+          lineName: 'SMT cell',
+          parentLineCode: '01',
+          activeYn: 'Y',
+          mesDisplayYn: 'Y',
+          sortOrder: 1,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          processCode: 'ASSY',
+          resourceType: 'LINE',
+          lineCode: '19',
+          lineName: 'ASSY line',
+          parentLineCode: null,
+          activeYn: 'Y',
+          mesDisplayYn: 'Y',
+          sortOrder: 1,
+        },
+        {
+          processCode: 'ASSY',
+          resourceType: 'CELL',
+          lineCode: '20',
+          lineName: 'ASSY cell',
+          parentLineCode: null,
+          activeYn: 'Y',
+          mesDisplayYn: 'Y',
+          sortOrder: 2,
+        },
+      ]);
 
     await expect(target.listResources('SMT', 7, 'EUNSUNG', '1')).resolves.toEqual([
       {
-        resourceId: 2,
         processCode: 'SMT',
         resourceType: 'CELL',
-        resourceCode: '02',
-        resourceName: 'SMT cell',
+        lineCode: '02',
+        lineName: 'SMT cell',
         parentLineCode: '01',
+        activeYn: 'Y',
+        mesDisplayYn: 'Y',
+        sortOrder: 1,
       },
     ]);
     await expect(target.listResources('ASSY', 7, 'EUNSUNG', '1')).resolves.toEqual([
       {
-        resourceId: 3,
         processCode: 'ASSY',
         resourceType: 'LINE',
-        resourceCode: '19',
-        resourceName: 'ASSY line',
+        lineCode: '19',
+        lineName: 'ASSY line',
         parentLineCode: '19',
+        activeYn: 'Y',
+        mesDisplayYn: 'Y',
+        sortOrder: 1,
       },
       {
-        resourceId: 4,
         processCode: 'ASSY',
         resourceType: 'CELL',
-        resourceCode: '20',
-        resourceName: 'ASSY cell',
+        lineCode: '20',
+        lineName: 'ASSY cell',
         parentLineCode: '20',
+        activeYn: 'Y',
+        mesDisplayYn: 'Y',
+        sortOrder: 2,
       },
     ]);
   });
 
   it('requires the configured reference for the exact process, type, and parent tuple', async () => {
-    resourceRepository.find.mockResolvedValue([
+    dataSource.query.mockResolvedValue([
       {
-        resourceId: 2,
-        organizationId: 7,
         processCode: 'SMT',
         resourceType: 'CELL',
-        refCode: '02',
-        resourceName: 'SMT cell',
-        useYn: 'Y',
+        lineCode: '02',
+        lineName: 'SMT cell',
+        parentLineCode: '01',
+        activeYn: 'Y',
+        mesDisplayYn: 'Y',
         sortOrder: 1,
-      } as OeeResource,
-    ]);
-    lineRepository.find.mockResolvedValue([
-      { lineCode: '02', lineName: 'SMT cell', parentLineCode: '01', organizationId: 7 } as ProdLineMaster,
+      },
     ]);
 
     const now = new Date('2026-08-07T08:30:00+09:00');
@@ -501,20 +434,17 @@ describe('OeeMobileService', () => {
     ['SMT', 'CELL', '02', 'SMTWORKTIME'],
     ['ASSY', 'CELL', '20', 'WORKTIME'],
   ] as const)('selects %s worktime by process for %s resources', async (processCode, resourceType, refCode, rangeType) => {
-    resourceRepository.find.mockResolvedValue([
+    dataSource.query.mockResolvedValue([
       {
-        resourceId: 2,
-        organizationId: 7,
         processCode,
         resourceType,
-        refCode,
-        resourceName: 'Configured resource',
-        useYn: 'Y',
+        lineCode: refCode,
+        lineName: 'Configured resource',
+        parentLineCode: refCode,
+        activeYn: 'Y',
+        mesDisplayYn: 'Y',
         sortOrder: 1,
-      } as OeeResource,
-    ]);
-    lineRepository.find.mockResolvedValue([
-      { lineCode: refCode, lineName: 'Canonical line', organizationId: 7 } as ProdLineMaster,
+      },
     ]);
     worktimeRepository.find.mockResolvedValue([
       {
@@ -551,9 +481,18 @@ describe('OeeMobileService', () => {
       reasonCode: 'A',
       requestId: 'start-1',
     } as const;
-    lineRepository.find.mockResolvedValue([
-      { lineCode: '01', lineName: 'A', organizationId: 7, lineDivision: 'D' },
-    ] as ProdLineMaster[]);
+    dataSource.query.mockResolvedValue([
+      {
+        processCode: 'SMT',
+        resourceType: 'LINE',
+        lineCode: '01',
+        lineName: 'A',
+        parentLineCode: '01',
+        activeYn: 'Y',
+        mesDisplayYn: 'Y',
+        sortOrder: 1,
+      },
+    ]);
     eventRepository.findOne.mockResolvedValue(null);
     userRepository.findOne.mockResolvedValue(null);
 
@@ -600,9 +539,18 @@ describe('OeeMobileService', () => {
     const created = { eventId: 10 } as OeeDowntimeEvent;
     jest.useFakeTimers().setSystemTime(now);
     try {
-      lineRepository.find.mockResolvedValue([
-        { lineCode: '01', lineName: 'A', organizationId: 7, lineDivision: 'D' },
-      ] as ProdLineMaster[]);
+      dataSource.query.mockResolvedValue([
+        {
+          processCode: 'SMT',
+          resourceType: 'LINE',
+          lineCode: '01',
+          lineName: 'A',
+          parentLineCode: '01',
+          activeYn: 'Y',
+          mesDisplayYn: 'Y',
+          sortOrder: 1,
+        },
+      ]);
       eventRepository.findOne.mockResolvedValue(null);
       userRepository.findOne.mockResolvedValue({
         userId: 'WORKER01',
@@ -646,7 +594,6 @@ describe('OeeMobileService', () => {
       expect(inserted).toMatchObject({
         organizationId: 7,
         resourceType: 'LINE',
-        resourceCode: '01',
         parentLineCode: '01',
         processCode: 'SMT',
         workSegment: 'DAY',
@@ -682,9 +629,18 @@ describe('OeeMobileService', () => {
       reasonCode: 'A',
       requestId: 'start-1',
     } as const;
-    lineRepository.find.mockResolvedValue([
-      { lineCode: '01', lineName: 'A', organizationId: 7, lineDivision: 'D' },
-    ] as ProdLineMaster[]);
+    dataSource.query.mockResolvedValue([
+      {
+        processCode: 'SMT',
+        resourceType: 'LINE',
+        lineCode: '01',
+        lineName: 'A',
+        parentLineCode: '01',
+        activeYn: 'Y',
+        mesDisplayYn: 'Y',
+        sortOrder: 1,
+      },
+    ]);
     userRepository.findOne.mockResolvedValue({ userId: 'WORKER01', organizationId: 7 } as IsysUser);
     reasonRepository.findOne.mockResolvedValue({
       reasonCode: 'A',
@@ -738,9 +694,18 @@ describe('OeeMobileService', () => {
         eventId: 11,
         endTime: null,
       } as OeeDowntimeEvent);
-      lineRepository.find.mockResolvedValue([
-        { lineCode: '01', lineName: 'A', organizationId: 7, lineDivision: 'D' },
-      ] as ProdLineMaster[]);
+      dataSource.query.mockResolvedValue([
+        {
+          processCode: 'SMT',
+          resourceType: 'LINE',
+          lineCode: '01',
+          lineName: 'A',
+          parentLineCode: '01',
+          activeYn: 'Y',
+          mesDisplayYn: 'Y',
+          sortOrder: 1,
+        },
+      ]);
       userRepository.findOne.mockResolvedValue({ userId: 'WORKER01', organizationId: 7 } as IsysUser);
       reasonRepository.findOne.mockResolvedValue({
         reasonCode: 'A',
@@ -874,9 +839,18 @@ describe('OeeMobileService', () => {
     const now = new Date('2026-08-07T22:30:00+09:00');
     jest.useFakeTimers().setSystemTime(now);
     try {
-      lineRepository.find.mockResolvedValue([
-        { lineCode: '01', lineName: 'A', organizationId: 7, lineDivision: 'D' },
-      ] as ProdLineMaster[]);
+      dataSource.query.mockResolvedValue([
+        {
+          processCode: 'SMT',
+          resourceType: 'LINE',
+          lineCode: '01',
+          lineName: 'A',
+          parentLineCode: '01',
+          activeYn: 'Y',
+          mesDisplayYn: 'Y',
+          sortOrder: 1,
+        },
+      ]);
       worktimeRepository.find.mockResolvedValue([
         {
           rangeType: 'SMTWORKTIME',
@@ -929,9 +903,18 @@ describe('OeeMobileService', () => {
     } as OeeDowntimeEvent;
     jest.useFakeTimers().setSystemTime(new Date('2026-08-07T08:30:00+09:00'));
     try {
-      lineRepository.find.mockResolvedValue([
-        { lineCode: '01', lineName: 'A', organizationId: 7, lineDivision: 'D' },
-      ] as ProdLineMaster[]);
+      dataSource.query.mockResolvedValue([
+        {
+          processCode: 'SMT',
+          resourceType: 'LINE',
+          lineCode: '01',
+          lineName: 'A',
+          parentLineCode: '01',
+          activeYn: 'Y',
+          mesDisplayYn: 'Y',
+          sortOrder: 1,
+        },
+      ]);
       userRepository.findOne.mockResolvedValue({ userId: 'WORKER01', organizationId: 7 } as IsysUser);
       reasonRepository.findOne.mockResolvedValue({
         reasonCode: 'A',
@@ -1000,9 +983,18 @@ describe('OeeMobileService', () => {
     } as OeeDowntimeEvent;
     jest.useFakeTimers().setSystemTime(new Date('2026-08-07T08:30:00+09:00'));
     try {
-      lineRepository.find.mockResolvedValue([
-        { lineCode: '01', lineName: 'A', organizationId: 7, lineDivision: 'D' },
-      ] as ProdLineMaster[]);
+      dataSource.query.mockResolvedValue([
+        {
+          processCode: 'SMT',
+          resourceType: 'LINE',
+          lineCode: '01',
+          lineName: 'A',
+          parentLineCode: '01',
+          activeYn: 'Y',
+          mesDisplayYn: 'Y',
+          sortOrder: 1,
+        },
+      ]);
       userRepository.findOne.mockResolvedValue({ userId: 'WORKER01', organizationId: 7 } as IsysUser);
       reasonRepository.findOne.mockResolvedValue({
         reasonCode: 'A',

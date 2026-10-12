@@ -91,16 +91,16 @@ test("stale selected resources remain removable and block batch submission", () 
   assert.match(page, /disabled=\{contextLocked \|\| \(availability\.disabled && !selected\)\}/);
 });
 
-test("canonical OEE page enables compact full view from its query parameter", () => {
+test("canonical OEE page uses the query parameter only for the shared chrome toggle", () => {
   assert.match(page, /import\s+\{[^}]*usePathname[^}]*\}\s+from\s+["']next\/navigation["']/);
   assert.match(page, /const pathname = usePathname\(\);/);
   assert.match(page, /resolveOeeViewMode\(searchParams\.get\(["']view["']\)\)/);
-  assert.match(page, /const isCompactFullView = viewMode === ["']full["']/);
+  assert.doesNotMatch(page, /isCompactFullView/);
 });
 
 test("tablet header keeps title, statuses, worker, and view switch in one responsive row", () => {
   assert.match(page, /oee-multi-entry-header-row/);
-  assert.match(page, /lg:grid-cols-\[minmax\(10\.5rem,1fr\)/);
+  assert.match(page, /lg:grid-cols-\[minmax\(10\.5rem,1fr\)[\s\S]*_max-content\]/);
   assert.match(page, /data-testid=["']oee-multi-status-area["'][\s\S]*lg:contents/);
   assert.match(page, /oee-header-optional-icon/);
   assert.match(page, /oee-header-optional-copy/);
@@ -114,11 +114,14 @@ test("the page-internal OEE view switch keeps the pathname, preserves page state
   assert.match(page, /data-testid=["']oee-multi-view-switch["']/);
   assert.match(page, /viewMode === 'normal' \? 'full' : 'normal'/);
   assert.match(page, /viewMode === 'normal' \? t\('oeeMultiEntry\.viewFull'\) : t\('oeeMultiEntry\.viewNormal'\)/);
+  assert.match(page, /viewMode === 'normal' \? <Expand/);
+  assert.match(page, /: <Minimize2/);
   assert.match(page, /params\.set\(["']view["'], nextMode\)/);
   assert.match(page, /router\.replace\([\s\S]*pathname[\s\S]*scroll:\s*false/);
 
-  const switchStart = page.indexOf('data-testid="oee-multi-view-switch"');
-  const switchEnd = page.indexOf('</div>', switchStart);
+  const switchTestId = page.indexOf('data-testid="oee-multi-view-switch"');
+  const switchStart = page.lastIndexOf('<button', switchTestId);
+  const switchEnd = page.indexOf('</button>', switchStart);
   const switchBlock = switchStart >= 0 && switchEnd >= 0 ? page.slice(switchStart, switchEnd) : "";
   assert.equal((switchBlock.match(/<button/g) ?? []).length, 1);
   assert.match(switchBlock, /disabled=\{submitting \|\| contextLocked\}/);
@@ -183,26 +186,32 @@ test("mobile resource normalization preserves LINE/CELL identity and parent line
   assert.equal(normalizeEvent({ eventId: 2, resourceType: "CELL" })?.resourceType, "CELL");
 
   const line = normalizeResource({
-    resourceId: 1,
     processCode: "SMT",
     resourceType: "LINE",
-    resourceCode: "L-01",
-    resourceName: "Line 01",
+    lineCode: "L-01",
+    lineName: "Line 01",
     parentLineCode: "P-01",
+    activeYn: "N",
+    mesDisplayYn: "Y",
+    sortOrder: 1,
   });
   const cell = normalizeResource({
-    resourceId: 2,
     processCode: "ASSY",
     resourceType: "CELL",
-    resourceCode: "C-01",
-    resourceName: "Cell 01",
+    lineCode: "C-01",
+    lineName: "Cell 01",
     parentLineCode: "L-02",
+    activeYn: "N",
+    mesDisplayYn: "N",
+    sortOrder: 2,
   });
 
   assert.equal(line.resourceType, "LINE");
   assert.equal(line.parentLineCode, "P-01");
   assert.equal(cell.resourceType, "CELL");
   assert.equal(cell.parentLineCode, "L-02");
+  assert.equal(line.activeYn, "N");
+  assert.equal(cell.mesDisplayYn, "N");
   assert.notEqual(resourceIdentity(line), resourceIdentity(cell));
 });
 
@@ -367,8 +376,8 @@ test("selected process groups share one responsive resource scroll and compact c
   assert.match(page, /selectedProcessList\.length === 1 \? ['"]grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3['"] : ['"]grid-cols-1 sm:grid-cols-2['"]/);
 
   const resourceCard = page.match(/data-testid=["']oee-multi-resource-card["'][\s\S]*?<\/button>/)?.[0] ?? "";
-  assert.match(resourceCard, /resource\.resourceCode/);
-  assert.match(resourceCard, /resource\.resourceName/);
+  assert.match(resourceCard, /resource\.lineCode/);
+  assert.match(resourceCard, /resource\.lineName/);
   assert.match(resourceCard, /resource\.resourceType/);
   assert.doesNotMatch(resourceCard, /resourceTypeLine|resourceTypeCell/);
   assert.match(resourceCard, /selected[\s\S]*Check/);
@@ -383,12 +392,12 @@ test("resource cards use a compact two-row identity and status layout", () => {
 
   assert.match(resourceCard, /min-h-\[56px\]/);
   assert.doesNotMatch(resourceCard, /min-h-\[68px\]/);
-  assert.match(identityRow, /resource\.resourceCode/);
-  assert.match(identityRow, /resource\.resourceName/);
+  assert.match(identityRow, /resource\.lineCode/);
+  assert.match(identityRow, /resource\.lineName/);
   assert.match(statusRow, /resource\.resourceType/);
   assert.match(statusRow, /StateIcon/);
   assert.match(resourceCard, /availability\.disabledReason/);
-  assert.match(resourceCard, /aria-label=\{`\$\{resource\.resourceCode\}, \$\{resource\.resourceName\}, \$\{resource\.resourceType\}, \$\{availability\.label\}/);
+  assert.match(resourceCard, /aria-label=\{`\$\{resource\.lineCode\}, \$\{resource\.lineName\}, \$\{resource\.resourceType\}, \$\{availability\.label\}/);
   assert.match(resourceCard, /selected \? <Check/);
   assert.doesNotMatch(resourceCard, /selected\s*\?\s*<Check[\s\S]*:\s*<StateIcon/);
 });
@@ -408,7 +417,7 @@ test("resource cards keep actual status icons and labels separate from selection
 
 test("status and command payloads use the selected process and line-based batch contract", () => {
   assert.match(page, /processCode:\s*resource\.processCode/);
-  assert.match(page, /lineCode:\s*resource\.resourceCode/);
+  assert.match(page, /lineCode:\s*resource\.lineCode/);
   assert.match(page, /\/oee\/multi-entry\/status/);
   assert.match(page, /\/oee\/multi-entry\/\$\{mode === ['"]START['"] \? ['"]start['"] : ['"]end['"]\}/);
   assert.match(page, /lineCodes/);
@@ -570,6 +579,33 @@ test("the primary START or END action stays visible in the command header", () =
   assert.doesNotMatch(page, /<span[^>]*>\s*\{mode\}\s*<\/span>/);
 });
 
+test("the COMMAND workspace matches the light Result-Entry input console", () => {
+  const commandStart = page.indexOf('data-testid="oee-multi-command-panel"');
+  const commandEnd = page.indexOf("\n      <Modal", commandStart);
+  const commandPanel = page.slice(commandStart, commandEnd);
+
+  assert.ok(commandStart >= 0 && commandEnd > commandStart, "light COMMAND panel must be present");
+  assert.match(commandPanel, /bg-\[#f4f7f8\]/);
+  assert.match(commandPanel, /border-slate-200 bg-white/);
+  assert.match(commandPanel, /text-slate-950/);
+  assert.match(commandPanel, /bg-emerald-600/);
+  assert.match(commandPanel, /bg-red-600/);
+  assert.match(commandPanel, /<textarea[\s\S]*bg-white[\s\S]*text-slate-900/);
+  assert.doesNotMatch(commandPanel, /bg-\[#(?:07111d|0d1a2a|101f31)\]/);
+});
+
+test("the reason picker uses light cards consistent with the COMMAND workspace", () => {
+  const pickerStart = page.indexOf('data-testid="oee-multi-reason-picker"');
+  const pickerEnd = page.indexOf("\n      </Modal>", pickerStart);
+  const picker = page.slice(pickerStart, pickerEnd);
+
+  assert.ok(pickerStart >= 0 && pickerEnd > pickerStart, "reason picker must be present");
+  assert.match(picker, /border-slate-200 bg-slate-50/);
+  assert.match(picker, /border-slate-200 bg-white text-slate-700/);
+  assert.match(picker, /border-teal-500 bg-teal-600 text-white/);
+  assert.doesNotMatch(picker, /bg-\[#(?:07111d|0d1a2a|101f31)\]/);
+});
+
 test("the tablet board exposes touch-sized accessible controls and never uses browser dialogs", () => {
   assert.match(page, /min-h-\[64px\]/);
   assert.match(page, /aria-pressed/);
@@ -582,27 +618,16 @@ test("the tablet board exposes touch-sized accessible controls and never uses br
   assert.match(page, /lastCommunication|recentCommunication/);
   assert.match(page, /Device network|deviceNetwork|deviceNetworkLabel/);
   assert.match(page, /MES communication|mesCommunication|recentMes/);
-  assert.match(page, /lg:grid-cols-\[minmax\(0,3fr\)_minmax\(0,2fr\)\]/);
+  assert.match(page, /grid-cols-\[minmax\(0,3fr\)_minmax\(0,2fr\)\]/);
   assert.match(page, /oee-multi-entry-header/);
 });
 
-test("view=full uses a compact two-column board with internal resource and result scrolling", () => {
+test("the 11-inch board keeps one compact layout in normal and full modes", () => {
   assert.match(page, /import \{[^}]*useSearchParams[^}]*\} from ['"]next\/navigation['"]/);
   assert.match(page, /const searchParams = useSearchParams\(\);/);
   assert.match(page, /const viewMode = resolveOeeViewMode\(searchParams\.get\(['"]view['"]\)\);/);
-  assert.match(page, /const isCompactFullView = viewMode === ['"]full['"];?/);
-
-  assert.match(
-    page,
-    /isCompactFullView \? ['"][^'"]*gap-2 overflow-hidden p-2[^'"]*['"] : ['"][^'"]*gap-3 overflow-y-auto p-3 sm:p-4 lg:p-5[^'"]*['"]/
-  );
-  assert.match(
-    page,
-    /isCompactFullView \? ['"][^'"]*flex-1[^'"]*grid-cols-\[minmax\(0,3fr\)_minmax\(0,2fr\)\][^'"]*gap-2[^'"]*['"] : ['"][^'"]*shrink-0[^'"]*grid-cols-1[^'"]*lg:flex-1[^'"]*lg:grid-cols-\[minmax\(0,3fr\)_minmax\(0,2fr\)\][^'"]*['"]/
-  );
-
-  const compactPanelBranches = page.match(/isCompactFullView \? ['"]min-h-0['"] : ['"]min-h-\[560px\]['"]/g) ?? [];
-  assert.equal(compactPanelBranches.length, 2, "both panels must drop the 560px minimum only in view=full");
+  assert.doesNotMatch(page, /isCompactFullView|min-h-\[560px\]/);
+  assert.match(page, /flex-1 grid-cols-\[minmax\(0,3fr\)_minmax\(0,2fr\)\] gap-2/);
 
   assert.match(page, /data-testid=["']oee-multi-resource-groups["'][\s\S]*overflow-y-auto/);
   assert.match(page, /resultsTitle[\s\S]*overflow-y-auto/);
@@ -693,7 +718,7 @@ test("reasons expose PLAN/UNPLAN ordering and render two-column modal slots", ()
 });
 
 test("desktop selection and command panels use the approved 3:2 ratio", () => {
-  assert.match(page, /lg:grid-cols-\[minmax\(0,3fr\)_minmax\(0,2fr\)\]/);
+  assert.match(page, /grid-cols-\[minmax\(0,3fr\)_minmax\(0,2fr\)\]/);
   assert.doesNotMatch(page, /lg:grid-cols-\[minmax\(0,0\.95fr\)_minmax\(0,1\.2fr\)\]/);
 });
 
@@ -788,10 +813,10 @@ test("all active locale files contain the new menu label and board copy", () => 
     vi: { startMode: "ON", endMode: "OFF", startRule: "Đang chạy", endRule: "Đang dừng" },
   };
   const expectedViewCopy = {
-    ko: { viewNormal: "메뉴", viewFull: "전체화면" },
-    en: { viewNormal: "Menu", viewFull: "Fullscreen" },
-    zh: { viewNormal: "菜单", viewFull: "全屏" },
-    vi: { viewNormal: "Menu", viewFull: "Toàn màn hình" },
+    ko: { viewNormal: "메뉴 보기", viewFull: "전체 화면" },
+    en: { viewNormal: "Show menu", viewFull: "Full screen" },
+    zh: { viewNormal: "显示菜单", viewFull: "全屏" },
+    vi: { viewNormal: "Hiện menu", viewFull: "Toàn màn hình" },
   };
   const expectedShortCopy = {
     ko: {

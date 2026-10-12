@@ -4,13 +4,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Not, Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import { EquipDowntimeReason } from '../../entities/equip-downtime-reason.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { OeeDowntimeEvent } from '../../entities/oee-downtime-event.entity';
-import { OeeResource } from '../../entities/oee-resource.entity';
-import { ProdLineMaster } from '../../entities/prod-line-master.entity';
 import { WorktimeRange } from '../../entities/worktime-range.entity';
 import {
   OEE_MOBILE_PROCESS_CODES,
@@ -62,10 +60,7 @@ function isOracleUniqueViolation(error: unknown): boolean {
 @Injectable()
 export class OeeMobileService {
   constructor(
-    @InjectRepository(ProdLineMaster)
-    private readonly lineRepository: Repository<ProdLineMaster>,
-    @InjectRepository(OeeResource)
-    private readonly resourceRepository: Repository<OeeResource>,
+    @InjectDataSource() private readonly dataSource: DataSource,
     @InjectRepository(IsysUser)
     private readonly userRepository: Repository<IsysUser>,
     @InjectRepository(EquipDowntimeReason)
@@ -83,16 +78,17 @@ export class OeeMobileService {
     plantCd?: string,
   ): Promise<OeeMobileResource[]> {
     this.assertTenant(organizationId, company, plantCd);
+    const organization = this.requireOrganization(organizationId);
 
     if (!OEE_MOBILE_PROCESS_CODES.includes(processCode)) {
       throw new BadRequestException('지원하지 않는 OEE 모바일 공정입니다.');
     }
 
     if (processCode === 'SMT') {
-      return this.listLineResources('SMT', organizationId);
+      return this.listLineResources('SMT', organization);
     }
 
-    return this.listLineResources('ASSY', organizationId);
+    return this.listLineResources('ASSY', organization);
   }
 
   async getWorker(
@@ -175,16 +171,16 @@ export class OeeMobileService {
       organization,
       processCode,
       resource.resourceType,
-      resource.resourceCode,
-      resource.parentLineCode ?? resource.resourceCode,
+      resource.lineCode,
+      resource.parentLineCode,
       context.workDate,
     );
     const openEvent = await this.findOpenEvent(
       organization,
       processCode,
       resource.resourceType,
-      resource.resourceCode,
-      resource.parentLineCode ?? resource.resourceCode,
+      resource.lineCode,
+      resource.parentLineCode,
     );
 
     return {
@@ -234,13 +230,13 @@ export class OeeMobileService {
 
     const now = new Date();
     const context = await this.resolveCurrentWorkContext(dto.processCode, organization, now);
-    const normalizedParentLineCode = resource.parentLineCode ?? resource.resourceCode;
+    const normalizedParentLineCode = resource.parentLineCode;
     const openEvent = await this.eventRepository.findOne({
       where: {
         organizationId: organization,
         processCode: dto.processCode,
         resourceType: resource.resourceType,
-        resourceCode: resource.resourceCode,
+        resourceCode: resource.lineCode,
         parentLineCode: normalizedParentLineCode,
         endTime: IsNull(),
       },
@@ -250,7 +246,7 @@ export class OeeMobileService {
     const event = this.eventRepository.create({
       organizationId: organization,
       resourceType: resource.resourceType,
-      resourceCode: resource.resourceCode,
+      resourceCode: resource.lineCode,
       parentLineCode: normalizedParentLineCode,
       processCode: dto.processCode,
       workDate: this.toKstMidnight(context.workDate),
@@ -358,66 +354,41 @@ export class OeeMobileService {
     processCode: OeeMobileProcessCode,
     organizationId: number,
   ): Promise<OeeMobileResource[]> {
-    const resources = await this.resourceRepository.find({
-      where: {
-        organizationId,
-        processCode,
-        resourceType: In([...OEE_MOBILE_RESOURCE_TYPES]),
-        useYn: 'Y',
-        refCode: Not(IsNull()),
-      },
-      order: { sortOrder: 'ASC', refCode: 'ASC' },
-    });
-    const configuredResources = resources.filter(
-      (resource) =>
-        resource.organizationId === organizationId &&
-        resource.processCode === processCode &&
-        resource.useYn === 'Y' &&
-        typeof resource.refCode === 'string' &&
-        resource.refCode.trim().length > 0 &&
-        OEE_MOBILE_RESOURCE_TYPES.includes(resource.resourceType as OeeMobileResourceType),
-    );
-    if (configuredResources.length === 0) return [];
+    const rows = (await this.dataSource.query(
+      `SELECT v.PROCESS_CODE AS "processCode",
+              v.RESOURCE_TYPE AS "resourceType",
+              v.LINE_CODE AS "lineCode",
+              v.LINE_NAME AS "lineName",
+              v.PARENT_LINE_CODE AS "parentLineCode",
+              v.ACTIVE_YN AS "activeYn",
+              v.MES_DISPLAY_YN AS "mesDisplayYn",
+              v.SORT_ORDER AS "sortOrder"
+         FROM V_OEE_PRODUCT_LINE v
+        WHERE v.ORGANIZATION_ID = :organizationId
+          AND v.PROCESS_CODE = :processCode
+        ORDER BY v.SORT_ORDER ASC NULLS LAST, v.LINE_CODE ASC`,
+      { organizationId, processCode } as unknown as unknown[],
+    )) as Array<{
+      processCode: OeeMobileProcessCode;
+      resourceType: OeeMobileResourceType;
+      lineCode: string;
+      lineName: string;
+      parentLineCode: string | null;
+      activeYn: string | null;
+      mesDisplayYn: string | null;
+      sortOrder: number | null;
+    }>;
 
-    const refCodes = configuredResources.map((resource) => resource.refCode as string);
-    const lines = await this.lineRepository.find({
-      where: {
-        organizationId,
-        lineCode: In(refCodes),
-      },
-    });
-    const linesByCode = new Map(
-      lines
-        .filter((line) => line.organizationId === organizationId)
-        .map((line) => [line.lineCode, line]),
-    );
-
-    return configuredResources
-      .flatMap((resource) => {
-        const refCode = resource.refCode as string;
-        const line = linesByCode.get(refCode);
-        return line ? [{ resource, line, refCode }] : [];
-      })
-      .sort((left, right) => {
-        const leftSortOrder = Number.isFinite(left.resource.sortOrder)
-          ? left.resource.sortOrder
-          : Number.MAX_SAFE_INTEGER;
-        const rightSortOrder = Number.isFinite(right.resource.sortOrder)
-          ? right.resource.sortOrder
-          : Number.MAX_SAFE_INTEGER;
-        if (leftSortOrder !== rightSortOrder) return leftSortOrder - rightSortOrder;
-        const codeOrder = left.refCode.localeCompare(right.refCode);
-        if (codeOrder !== 0) return codeOrder;
-        return left.resource.resourceType.localeCompare(right.resource.resourceType);
-      })
-      .map(({ resource, line, refCode }) => ({
-        resourceId: resource.resourceId,
-        processCode,
-        resourceType: resource.resourceType as OeeMobileResourceType,
-        resourceCode: refCode,
-        resourceName: line.lineName,
-        parentLineCode: line.parentLineCode?.trim() || refCode,
-      }));
+    return rows.map((row) => ({
+      processCode: row.processCode,
+      resourceType: row.resourceType,
+      lineCode: row.lineCode,
+      lineName: row.lineName,
+      parentLineCode: row.parentLineCode?.trim() || row.lineCode,
+      activeYn: row.activeYn,
+      mesDisplayYn: row.mesDisplayYn,
+      sortOrder: row.sortOrder,
+    }));
   }
 
   private async resolveResourceContract(
@@ -443,7 +414,7 @@ export class OeeMobileService {
       return (
         resource.processCode === processCode &&
         resource.resourceType === resourceType &&
-        resource.resourceCode === resourceCode &&
+        resource.lineCode === resourceCode &&
         resource.parentLineCode === parentLineCode
       );
     });

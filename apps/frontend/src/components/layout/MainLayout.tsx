@@ -21,7 +21,6 @@ import { api } from "@/services/api";
 import ImprovementFAB from "@/components/improvement/ImprovementFAB";
 import AiChatPanel from "@/components/ai/AiChatPanel";
 import HelpPanel from "@/components/help/HelpPanel";
-import { isOeeMultiEntryPath, resolveOeeViewMode } from "@/lib/oee-view-mode";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -34,47 +33,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [showConnectionCheck, setShowConnectionCheck] = useState(false);
   const errorCountRef = useRef(0);
-  const preOeeAutoCollapseRef = useRef<boolean | null>(null);
   const isKioskWorkView =
     pathname === "/production/input-kiosk" && searchParams.get("view") === "work";
   /** view=full: 헤더/사이드바/탭을 모두 숨기는 전체화면(chromeless) 모드 — 검사 키오스크 등 */
   const isFullscreenView = searchParams.get("view") === "full";
-  const oeeViewMode = resolveOeeViewMode(searchParams.get("view"));
-  const isOeeMultiEntry = isOeeMultiEntryPath(pathname);
-  const isChromeless = isKioskWorkView || isFullscreenView || (isOeeMultiEntry && oeeViewMode === "full");
-
-  useEffect(() => {
-    const tabletRange = window.matchMedia("(min-width: 1024px) and (max-width: 1535.98px)");
-
-    const restoreSidebar = () => {
-      if (preOeeAutoCollapseRef.current === null) return;
-      const previous = preOeeAutoCollapseRef.current;
-      preOeeAutoCollapseRef.current = null;
-      setCollapsed(previous);
-    };
-
-    const syncSidebar = () => {
-      const shouldAutoCollapse = isOeeMultiEntry && !isChromeless && tabletRange.matches;
-      if (!shouldAutoCollapse) {
-        restoreSidebar();
-        return;
-      }
-      if (preOeeAutoCollapseRef.current !== null) return;
-
-      setCollapsed((current) => {
-        preOeeAutoCollapseRef.current = current;
-        return true;
-      });
-    };
-
-    const initialSync = window.setTimeout(syncSidebar, 0);
-    tabletRange.addEventListener("change", syncSidebar);
-    return () => {
-      window.clearTimeout(initialSync);
-      tabletRange.removeEventListener("change", syncSidebar);
-      restoreSidebar();
-    };
-  }, [isChromeless, isOeeMultiEntry]);
+  const isChromeless = isKioskWorkView || isFullscreenView;
 
   useEffect(() => {
     const interceptor = api.interceptors.response.use(

@@ -5,9 +5,8 @@ import test from "node:test";
 const source = readFileSync(new URL("./MainLayout.tsx", import.meta.url), "utf8");
 
 test("canonical OEE full mode keeps one stable TabKeepAlive mount", () => {
-  assert.match(source, /resolveOeeViewMode\(searchParams\.get\(["']view["']\)\)/);
-  assert.match(source, /isOeeMultiEntry && oeeViewMode === ["']full["']/);
   assert.match(source, /const isFullscreenView = searchParams\.get\(["']view["']\) === ["']full["'];/);
+  assert.match(source, /const isChromeless = isKioskWorkView \|\| isFullscreenView/);
   assert.equal((source.match(/<TabKeepAlive>/g) ?? []).length, 1);
   assert.doesNotMatch(source, /\{isChromeless \? \(/);
   assert.match(source, /!isChromeless\s*&&\s*<Header/);
@@ -15,9 +14,7 @@ test("canonical OEE full mode keeps one stable TabKeepAlive mount", () => {
   assert.match(source, /!isChromeless\s*&&\s*<TabBar/);
 });
 
-test("canonical OEE tablet mode auto-collapses and restores the sidebar without locking its toggle", () => {
-  assert.match(source, /matchMedia\(["']\(min-width: 1024px\) and \(max-width: 1535\.98px\)["']\)/);
-  assert.match(source, /preOeeAutoCollapseRef/);
-  assert.match(source, /restoreSidebar/);
+test("11-inch OEE screens preserve the user's sidebar state", () => {
+  assert.doesNotMatch(source, /matchMedia|preOeeAutoCollapseRef|restoreSidebar|isOeeMultiEntry/);
   assert.match(source, /setCollapsed\(\(current\) => !current\)/);
 });

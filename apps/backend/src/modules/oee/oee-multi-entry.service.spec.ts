@@ -34,20 +34,24 @@ describe('OeeMultiEntryService', () => {
 
   const resources = [
     {
-      resourceId: 1,
       processCode: 'SMT' as const,
       resourceType: 'LINE' as const,
-      resourceCode: '01',
-      resourceName: 'SMT 01',
+      lineCode: '01',
+      lineName: 'SMT 01',
       parentLineCode: '01',
+      activeYn: 'Y',
+      mesDisplayYn: 'Y',
+      sortOrder: 1,
     },
     {
-      resourceId: 2,
       processCode: 'SMT' as const,
       resourceType: 'LINE' as const,
-      resourceCode: '02',
-      resourceName: 'SMT 02',
+      lineCode: '02',
+      lineName: 'SMT 02',
       parentLineCode: '02',
+      activeYn: 'N',
+      mesDisplayYn: 'N',
+      sortOrder: 2,
     },
   ];
 
@@ -104,7 +108,7 @@ describe('OeeMultiEntryService', () => {
     manager.query.mockImplementation(async (sql: string) => {
       if (sql.includes('FROM IP_PRODUCT_LINE')) {
         return resources.map((resource) => ({
-          lineCode: resource.resourceCode,
+          lineCode: resource.lineCode,
           organizationId: 7,
         }));
       }
@@ -175,7 +179,10 @@ describe('OeeMultiEntryService', () => {
           sql.includes('FROM IP_PRODUCT_LINE') && sql.includes('FOR UPDATE'),
       );
       expect(lineLock?.[0]).toContain('ORDER BY LINE_CODE, ORGANIZATION_ID');
-      expect(lineLock?.[1]).toEqual([7, '01', '02']);
+      expect(lineLock?.[0]).toContain("RESOURCE_TYPE IN ('LINE', 'CELL')");
+      expect(lineLock?.[0]).toContain('LINE_CODE IS NOT NULL');
+      expect(lineLock?.[0]).toContain('LINE_NAME IS NOT NULL');
+      expect(lineLock?.[1]).toEqual([7, 'SMT', '01', '02']);
 
       const insertCalls = manager.query.mock.calls.filter(([sql]) =>
         sql.includes('INSERT INTO IP_EQUIP_DOWNTIME_RESULT'),
@@ -262,12 +269,14 @@ describe('OeeMultiEntryService', () => {
     mobileService.listResources.mockResolvedValue([
       ...resources,
       {
-        resourceId: 3,
         processCode: 'SMT' as const,
         resourceType: 'LINE' as const,
-        resourceCode: '03',
-        resourceName: 'SMT 03',
+        lineCode: '03',
+        lineName: 'SMT 03',
         parentLineCode: '03',
+        activeYn: 'Y',
+        mesDisplayYn: 'Y',
+        sortOrder: 3,
       },
     ]);
     manager.query.mockImplementation(async (sql: string) => {
@@ -922,7 +931,7 @@ describe('OeeMultiEntryService', () => {
 
   it('uses only the authenticated organization for cross-tenant validation and ledger binds', async () => {
     mobileService.listResources.mockResolvedValue([
-      { ...resources[0], resourceCode: '01', parentLineCode: '01' },
+      { ...resources[0], lineCode: '01', parentLineCode: '01' },
     ]);
     mobileService.getWorker.mockResolvedValue({
       workerId: 'WORKER01',
@@ -1046,7 +1055,7 @@ describe('OeeMultiEntryService', () => {
     const lineLock = manager.query.mock.calls.find(([sql]) =>
       sql.includes('FROM IP_PRODUCT_LINE'),
     );
-    expect(lineLock?.[1]).toEqual([7, '01']);
+    expect(lineLock?.[1]).toEqual([7, 'SMT', '01']);
 
     await expect(
       target.end(
@@ -1110,12 +1119,14 @@ describe('OeeMultiEntryService', () => {
     mobileService.listResources.mockResolvedValue([
       ...resources,
       {
-        resourceId: 3,
         processCode: 'SMT' as const,
         resourceType: 'LINE' as const,
-        resourceCode: '03',
-        resourceName: 'SMT 03',
+        lineCode: '03',
+        lineName: 'SMT 03',
         parentLineCode: '03',
+        activeYn: 'Y',
+        mesDisplayYn: 'Y',
+        sortOrder: 3,
       },
     ]);
     manager.query.mockImplementation(async (sql: string) => {

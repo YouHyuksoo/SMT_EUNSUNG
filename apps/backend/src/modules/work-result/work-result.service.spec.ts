@@ -27,7 +27,37 @@ describe('WorkResultService tenancy', () => {
     const [sql, params] = query.mock.calls[0] as [string, unknown[]];
     expect(sql).toContain('r.ORGANIZATION_ID = :1');
     expect(sql).not.toContain('ORGANIZATION_ID = 1');
+    expect(sql).toContain('WHERE ROWNUM <= 101');
+    expect(sql).not.toContain('ROWNUM <= 500');
     expect(params).toEqual([7, '2026-08-01', '2026-08-25']);
+  });
+
+  it('uses positional binds for multiple lines and preserves existing filters', async () => {
+    await service.list(
+      '2026-08-01',
+      '2026-08-25',
+      'LEGACY-LINE',
+      'ITEM',
+      7,
+      'MACHINE-1',
+      ['L1', 'L2'],
+    );
+
+    const [sql, params] = query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain('AND r.LINE_CODE IN (:4, :5)');
+    expect(sql).toContain('AND r.MACHINE_CODE = :6');
+    expect(sql).toContain('UPPER(r.ITEM_CODE) LIKE :7');
+    expect(sql).not.toContain('L1');
+    expect(sql).not.toContain('L2');
+    expect(params).toEqual([
+      7,
+      '2026-08-01',
+      '2026-08-25',
+      'L1',
+      'L2',
+      'MACHINE-1',
+      '%ITEM%',
+    ]);
   });
 
   it('uses the authenticated user and organization for writes', async () => {

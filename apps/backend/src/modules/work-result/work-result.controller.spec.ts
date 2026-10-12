@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import { GUARDS_METADATA } from '@nestjs/common/constants';
+import { BadRequestException } from '@nestjs/common';
 import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { WorkResultController } from './work-result.controller';
@@ -61,6 +62,7 @@ describe('WorkResultController', () => {
       'ITEM',
       7,
       undefined,
+      undefined,
     );
     expect(service.upsertResult).toHaveBeenCalledWith(
       { ...resultDto, seqNo: undefined },
@@ -80,5 +82,92 @@ describe('WorkResultController', () => {
       7,
       'user-7',
     );
+  });
+
+  it('parses unique trimmed lineCodes and forwards them as the final list argument', async () => {
+    const controller = new WorkResultController(service);
+
+    await controller.list(
+      '2026-08-01',
+      '2026-08-25',
+      '01',
+      'ITEM',
+      'MC-1',
+      7,
+      ' L1, L2, L1 ',
+    );
+
+    expect(service.list).toHaveBeenCalledWith(
+      '2026-08-01',
+      '2026-08-25',
+      '01',
+      'ITEM',
+      7,
+      'MC-1',
+      ['L1', 'L2'],
+    );
+  });
+
+  it('returns exactly 100 rows without truncation', async () => {
+    const controller = new WorkResultController(service);
+    const rows = Array.from({ length: 100 }, (_, index) => ({
+      runNo: `RUN-${index}`,
+    }));
+    (service.list as jest.Mock).mockResolvedValueOnce(rows);
+
+    await expect(
+      controller.list(
+        '2026-08-01',
+        '2026-08-25',
+        undefined,
+        undefined,
+        undefined,
+        7,
+      ),
+    ).resolves.toEqual({ list: rows, truncated: false });
+  });
+
+  it('returns the first 100 rows and marks an additional row as truncated', async () => {
+    const controller = new WorkResultController(service);
+    const rows = Array.from({ length: 101 }, (_, index) => ({
+      runNo: `RUN-${index}`,
+    }));
+    (service.list as jest.Mock).mockResolvedValueOnce(rows);
+
+    await expect(
+      controller.list(
+        '2026-08-01',
+        '2026-08-25',
+        undefined,
+        undefined,
+        undefined,
+        7,
+      ),
+    ).resolves.toEqual({ list: rows.slice(0, 100), truncated: true });
+  });
+
+  it('rejects malformed lineCodes before calling the service', async () => {
+    const controller = new WorkResultController(service);
+    const malformed = [
+      'L1,,L2',
+      'X'.repeat(21),
+      Array.from({ length: 101 }, (_, index) => `L${index}`).join(','),
+    ];
+
+    for (const lineCodes of malformed) {
+      await expect(
+        controller.list(
+          '2026-08-01',
+          '2026-08-25',
+          undefined,
+          undefined,
+          undefined,
+          7,
+          lineCodes,
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    }
+
+    expect(service.list).not.toHaveBeenCalled();
   });
 });

@@ -20,12 +20,14 @@ export const OEE_MOBILE_REASON_TYPES = ['PLAN', 'UNPLAN'] as const;
 export type OeeMobileReasonType = (typeof OEE_MOBILE_REASON_TYPES)[number];
 
 export interface OeeMobileResource {
-  resourceId: number;
   processCode: OeeMobileProcessCode;
   resourceType: OeeMobileResourceType;
-  resourceCode: string;
-  resourceName: string;
+  lineCode: string;
+  lineName: string;
   parentLineCode: string;
+  activeYn: string | null;
+  mesDisplayYn: string | null;
+  sortOrder: number | null;
 }
 
 export interface OeeMobileReason {
