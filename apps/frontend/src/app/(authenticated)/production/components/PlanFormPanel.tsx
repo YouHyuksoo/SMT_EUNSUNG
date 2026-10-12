@@ -38,6 +38,7 @@ import api from '@/services/api';
 import type { PlanRow } from '../planning-types';
 import { SLOT_INDEXES } from '../planning-types';
 
+import { getTodayLocal } from '@/utils/date';
 export interface PlanForm {
   planDate: string;
   planSequence: string;
@@ -69,7 +70,7 @@ export interface PlanForm {
 }
 
 const text = (value: unknown) => (value == null ? '' : String(value));
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getTodayLocal();
 
 const emptySlots = (): Record<string, string> => {
   const out: Record<string, string> = {};

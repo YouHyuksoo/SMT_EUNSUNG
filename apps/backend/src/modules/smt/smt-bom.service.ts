@@ -44,6 +44,7 @@ import {
 import { affectedRows } from '../../common/utils/affected-rows.util';
 import { namedBinds } from '../../common/utils/named-binds.util';
 
+import { formatDate } from '@smt/shared';
 const EDITABLE: Array<[column: string, field: keyof SmtBomUpsertDto]> = [
   ['ITEM_UNIT_QTY', 'itemUnitQty'],
   ['SORT_SEQUENCE', 'sortSequence'],
@@ -131,7 +132,7 @@ export class SmtBomService {
           pcbItem: this.like(query.pcbItem),
           revision: this.like(query.revision),
           feederShaft: this.like(query.feederShaft),
-          dateSet: query.dateSet ?? new Date().toISOString().slice(0, 10),
+          dateSet: query.dateSet ?? formatDate(new Date()),
         }),
     )) as Record<string, unknown>[];
     return { data: rows, total: rows.length };

@@ -29,7 +29,8 @@ import { manualInputColumns } from '../reprint-msl-columns';
 import type { ManualInputRow } from '../reprint-msl-columns';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 export default function ManualInputPage() {
   const [dateFrom, setDateFrom] = useState(today());

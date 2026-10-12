@@ -23,6 +23,7 @@ import { ResponseUtil } from '../../../common/dto/response.dto';
 import { BomQueryDto, CreateBomDto, UpdateBomDto } from '../dto/bom.dto';
 import { BomService } from '../services/bom.service';
 
+import { formatDate } from '@smt/shared';
 @ApiTags('Master - BOM')
 @Controller('master/boms')
 export class BomController {
@@ -52,7 +53,7 @@ export class BomController {
     @Res() res: Response,
   ) {
     const buffer = await this.bomService.exportToExcel(parentItemCode, organizationId, effectiveDate);
-    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const dateStr = formatDate(new Date()).replace(/-/g, '');
     const filename = parentItemCode
       ? `BOM_${parentItemCode}_${dateStr}.xlsx`
       : `BOM_ALL_${dateStr}.xlsx`;

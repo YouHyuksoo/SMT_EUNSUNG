@@ -32,7 +32,8 @@ import { bakingHistoryColumns, CHAMBER_LABEL } from '../divide-baking-columns';
 import type { BakingHistoryRow, BakingLookup } from '../divide-baking-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 const CHAMBER_OPTIONS = [
   { value: 'B', label: `${CHAMBER_LABEL.B} (B)` },

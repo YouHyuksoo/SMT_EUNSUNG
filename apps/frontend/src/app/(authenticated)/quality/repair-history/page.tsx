@@ -23,7 +23,8 @@ import api from '@/services/api';
 import { repairHistoryColumns } from './columns';
 import type { RepairHistoryRow } from './types';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 export default function RepairHistoryPage() {
   const [rows, setRows] = useState<RepairHistoryRow[]>([]);

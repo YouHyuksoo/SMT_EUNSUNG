@@ -23,6 +23,7 @@ import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import api from '@/services/api';
 import { SmtModelSelect } from '../../components/SmtSelects';
 
+import { getTodayLocal } from '@/utils/date';
 /** PB DataWindow 컬럼 ↔ 엑셀 열 번호(0-based). PB 의 C02/C03/C32/C34 다. */
 const COL = { feederId: 1, feederType: 2, transferCount: 31, adsorptionErrorCount: 33 };
 
@@ -45,7 +46,7 @@ const toNumber = (value: unknown) => {
 };
 
 export default function SmtPickupUploadModal({ defaultLineCode, onClose, onDone }: Props) {
-  const [productDate, setProductDate] = useState(new Date().toISOString().slice(0, 10));
+  const [productDate, setProductDate] = useState(getTodayLocal());
   const [lineCode, setLineCode] = useState(defaultLineCode);
   const [modelName, setModelName] = useState('');
   const [fileName, setFileName] = useState('');

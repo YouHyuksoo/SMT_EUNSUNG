@@ -29,6 +29,7 @@ import {
 import { LABEL_TYPE_NAME, magazineSplitColumns } from '../magazine-columns';
 import type { MagazineSplitRow } from '../magazine-columns';
 
+import { getTodayLocal } from '@/utils/date';
 interface SplitTarget {
   magazineLabelNo: string;
   runNo: string | null;
@@ -45,7 +46,7 @@ interface SplitTarget {
 }
 
 /** 이번 달 1일 / 오늘 — 분할은 드물어 기간을 넓게 잡는다. */
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getTodayLocal();
 
 export default function MagazineSplitPage() {
   const [dateFrom, setDateFrom] = useState(today());

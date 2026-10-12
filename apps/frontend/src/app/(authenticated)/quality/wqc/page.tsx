@@ -25,7 +25,8 @@ import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui'
 import api from '@/services/api';
 import { wqcColumns, type WqcRow } from '../qc-columns';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
 
 export default function WqcPage() {

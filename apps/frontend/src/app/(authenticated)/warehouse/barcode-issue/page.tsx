@@ -50,7 +50,8 @@ import type {
 import PartSearchField from '@/components/shared/PartSearchField';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 type TabKey = 'issues' | 'waiting' | 'bom';
 

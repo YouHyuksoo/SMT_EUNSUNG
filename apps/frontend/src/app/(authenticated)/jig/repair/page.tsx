@@ -21,7 +21,8 @@ import api from '@/services/api';
 import { jigRepairColumns, type JigRepairRow } from './columns';
 import RepairActionPanel from './components/RepairActionPanel';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
 
 export default function JigRepairPage() {

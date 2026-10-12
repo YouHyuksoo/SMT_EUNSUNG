@@ -47,10 +47,11 @@ import type {
 import PartSearchField from '@/components/shared/PartSearchField';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 const FACTORY_OPTIONS = SOLDER_FACTORIES.map((f) => ({ value: f, label: `공장 ${f}` }));

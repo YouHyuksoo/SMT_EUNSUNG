@@ -26,10 +26,11 @@ import { pickupAmountColumns, pickupDetailColumns } from '../report-columns';
 import type { PickupAmountRow, PickupDetailRow } from '../report-types';
 import PartSearchField from '@/components/shared/PartSearchField';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 type Tab = 'amount' | 'detail';

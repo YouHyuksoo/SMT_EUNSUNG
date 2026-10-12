@@ -29,6 +29,7 @@ import type { SmdActualRow, SmdActualSummaryRow } from '../planning-types';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import { smdShiftActualColumns, type SmdShiftActualRow } from './shift-actual-columns';
 
+import { getTodayLocal } from '@/utils/date';
 type Tab = 'shift' | 'list' | 'summary';
 
 /** 수기 입력칸 — 비우면 null(자동으로 돌아감). 빈 문자열을 0 으로 보내지 않는다. */
@@ -37,7 +38,7 @@ const manualValue = (text: string) => (text.trim() === '' ? null : Number(text))
 const errorMessage = (error: unknown) =>
   (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
 
 export default function SmdActualPage() {

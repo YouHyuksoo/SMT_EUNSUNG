@@ -29,7 +29,8 @@ import {
 import { jigRepairRequestColumns, repairableJigColumns } from '../jig-extra-columns';
 import type { JigRepairRequestRow, RepairableJigRow } from '../jig-extra-columns';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 export default function JigRepairRequestPage() {
   const [dateFrom, setDateFrom] = useState(today());

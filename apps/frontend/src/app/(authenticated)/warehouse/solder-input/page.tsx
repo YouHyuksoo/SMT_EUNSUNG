@@ -23,10 +23,11 @@ import { solderInputHistoryColumns } from '../solder-columns';
 import type { SolderInputHistoryRow } from '../warehouse-types';
 import EquipSelect from '@/components/shared/EquipSelect';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 export default function SolderInputHistoryPage() {

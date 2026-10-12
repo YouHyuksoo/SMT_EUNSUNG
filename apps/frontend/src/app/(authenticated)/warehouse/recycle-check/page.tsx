@@ -24,7 +24,8 @@ import api from '@/services/api';
 import { recycleCheckColumns } from '../warehouse-columns';
 import type { RecycleCheckRow } from '../warehouse-types';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 const STATUS_OPTIONS = [
   { value: '', label: '판정: 전체' },

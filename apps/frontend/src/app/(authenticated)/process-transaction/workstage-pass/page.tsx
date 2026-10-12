@@ -13,7 +13,8 @@ import api from '@/services/api';
 import { workstagePassColumns } from './columns';
 import type { WorkstagePassMode, WorkstagePassRow } from './types';
 
-const iso = (date: Date) => date.toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const iso = (date: Date) => getTodayLocal(date);
 const modeLabels: Record<WorkstagePassMode, string> = { wait: '입고대기', history: '통과이력', inventory: '재공현황', today: '당일현황', workstageSummary: '공정집계' };
 
 export default function WorkstagePassPage() {

@@ -24,6 +24,7 @@ import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import type { SampleMasterRow } from '../columns';
 
+import { getTodayLocal } from '@/utils/date';
 export interface SampleForm {
   sampleCode: string;
   sampleLotNo: string;
@@ -43,7 +44,7 @@ export interface SampleForm {
   managementCommnets: string;
 }
 
-const todayIso = () => new Date().toISOString().slice(0, 10);
+const todayIso = () => getTodayLocal();
 
 /** PB 'INSERT' 분기의 기본값 */
 export const emptySampleForm = (): SampleForm => ({

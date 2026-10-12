@@ -29,9 +29,10 @@ import MoldCodeField from '../components/MoldCodeField';
 import { moldIssueColumns, moldIssueTargetColumns, moldRequestColumns } from '../columns';
 import type { MoldIssueRow, MoldIssueTargetRow, MoldRequestRow } from '../types';
 
+import { getTodayLocal } from '@/utils/date';
 type Mode = 'history' | 'targets' | 'requests';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
 
 export default function MoldIssuePage() {

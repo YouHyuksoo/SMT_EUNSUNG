@@ -39,6 +39,7 @@ import {
 } from '../shipping-columns';
 import type { FgIssueCrosstabRow, FgIssueRow, FgIssueSummaryRow } from '../shipping-columns';
 
+import { getTodayLocal } from '@/utils/date';
 type SummaryKey = 'customer' | 'item' | 'date';
 type TabKey = 'history' | SummaryKey | 'crosstab';
 
@@ -55,7 +56,7 @@ const SUMMARY_TABS: Record<
   date: { label: '일자별', columns: fgIssueDateSummaryColumns, exportName: '제품출하_일자별' },
 };
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getTodayLocal();
 
 const sumOf = <T,>(list: T[], pick: (row: T) => unknown) =>
   list.reduce((sum, row) => sum + Number(pick(row) ?? 0), 0);

@@ -22,7 +22,8 @@ import { pidIssueScanColumns, type PidIssueScanRow } from '../pid-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
 
 export default function PidIssueScanPage() {

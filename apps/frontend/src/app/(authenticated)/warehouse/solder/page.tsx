@@ -33,7 +33,8 @@ import type {
   SolderStageCountRow,
 } from '../warehouse-types';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 const TYPE_OPTIONS = [
   { value: '', label: '종류: 전체' },

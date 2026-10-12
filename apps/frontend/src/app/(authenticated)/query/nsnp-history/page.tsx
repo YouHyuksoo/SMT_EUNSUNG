@@ -32,6 +32,7 @@ import {
 import { nsnpHistoryColumns, nsnpLineColumns } from '../query-columns';
 import type { NsnpHistoryRow, NsnpLineRow } from '../query-types';
 
+import { getTodayLocal } from '@/utils/date';
 type NsnpAction = 'lock' | 'unlock' | 'use' | 'noUse';
 
 const NSNP_LABEL: Record<NsnpAction, string> = {
@@ -44,7 +45,7 @@ const NSNP_LABEL: Record<NsnpAction, string> = {
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 export default function NsnpHistoryPage() {

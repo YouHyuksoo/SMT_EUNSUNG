@@ -25,7 +25,8 @@ import { buildReceiptCancelColumns } from './columns';
 import { receiptKey, type ReceiptCancelMode, type ReceiptCancelRow } from './types';
 import PartSearchField from '@/components/shared/PartSearchField';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 export default function ReceiptCancelPage() {
   const [mode, setMode] = useState<ReceiptCancelMode>('CANCEL');

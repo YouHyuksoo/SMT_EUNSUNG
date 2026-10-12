@@ -22,7 +22,7 @@
  */
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { checkTrackingFilter, likePrefix } from '@smt/shared';
+import { checkTrackingFilter, likePrefix, formatDate } from '@smt/shared';
 import { TransactionService } from '../../shared/transaction.service';
 import {
   MaterialBarcodeQueryDto,
@@ -135,7 +135,7 @@ export class SensorActualService {
       namedBinds({
         lineCode: likePrefix(query.lineCode),
         modelName: likePrefix(query.modelName),
-        dateFrom: query.dateFrom ?? new Date().toISOString().slice(0, 10),
+        dateFrom: query.dateFrom ?? formatDate(new Date()),
         organizationId,
       }),
     )) as Row[];

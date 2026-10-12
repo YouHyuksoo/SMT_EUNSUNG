@@ -29,10 +29,11 @@ import { TruncationNotice, useTruncation } from '../components/TruncationNotice'
 import { runCardReportColumns, runCardSummaryColumns } from '../report-columns';
 import type { RunCardReportRow, RunCardSummaryRow } from '../report-types';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 type Tab = 'summary' | 'detail';

@@ -21,9 +21,10 @@ import { moldOrderColumns, moldOrderGroupColumns } from '../columns';
 import type { MoldOrderGroupRow, MoldOrderRow } from '../types';
 import OrderActionPanel from './components/OrderActionPanel';
 
+import { getTodayLocal } from '@/utils/date';
 type Mode = 'orders' | 'groups';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
 
 export default function MoldOrderPage() {

@@ -20,6 +20,7 @@ import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui'
 import api from '@/services/api';
 import type { JigRepairRow } from '../columns';
 
+import { getTodayLocal } from '@/utils/date';
 interface Props {
   /** 목록에서 고른 수리건 (없으면 처리 버튼 비활성) */
   selected: JigRepairRow | null;
@@ -73,7 +74,7 @@ export default function RepairActionPanel({ selected, onChanged }: Props) {
         jigLotNo: selected.jigLotNo ?? '',
         repairSequence: selected.repairSequence,
         repairStatus: next.status,
-        repairDate: new Date().toISOString().slice(0, 10),
+        repairDate: getTodayLocal(),
         repairBy: repairBy || undefined,
         repairAmt: repairAmt.trim() === '' ? undefined : Number(repairAmt),
         repairComments: repairComments || undefined,

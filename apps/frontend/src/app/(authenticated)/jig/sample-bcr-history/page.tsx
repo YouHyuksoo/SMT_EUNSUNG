@@ -21,7 +21,8 @@ import api from '@/services/api';
 import { sampleBcrHistoryColumns } from './columns';
 import type { SampleBcrHistoryRow, SampleBcrMode } from './types';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
 
 const MODES: { value: SampleBcrMode; label: string }[] = [

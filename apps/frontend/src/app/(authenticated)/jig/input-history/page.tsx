@@ -22,7 +22,8 @@ import { jigInputHistoryColumns } from './columns';
 import type { JigInputHistoryRow } from './types';
 import PartSearchField from '@/components/shared/PartSearchField';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
 
 export default function JigInputHistoryPage() {

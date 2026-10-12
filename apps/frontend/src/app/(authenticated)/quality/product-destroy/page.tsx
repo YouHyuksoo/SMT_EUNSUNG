@@ -24,7 +24,8 @@ import api from '@/services/api';
 import { destroyHistoryColumns, serialColumns } from './columns';
 import type { DestroyResponse, ProductDestroyMode, ProductDestroyRow } from './types';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 const parseSerials = (text: string) => text.split(/[\s,;]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
 
 export default function ProductDestroyPage() {

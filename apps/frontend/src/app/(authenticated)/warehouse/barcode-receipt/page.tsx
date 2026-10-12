@@ -45,10 +45,11 @@ import type {
 } from '../barcode-receipt-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 type TabKey = 'waiting' | 'barcodes' | 'receipts' | 'noReceipt';

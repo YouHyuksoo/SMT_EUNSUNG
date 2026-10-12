@@ -56,7 +56,8 @@ describe('DbBackupService', () => {
 
     it('DATE/TIMESTAMP 타입 - Date 객체는 TO_TIMESTAMP로 포맷해야 한다', () => {
       // Arrange
-      const date = new Date('2026-03-20T10:30:00.000Z');
+      // oracledb 는 DATE 를 서버 TZ(KST) 벽시계 시각으로 준다 — 그 시각 그대로 써야 한다
+      const date = new Date(2026, 2, 20, 10, 30, 0, 0);
 
       // Act
       const result = target.formatValue(date, 'DATE');

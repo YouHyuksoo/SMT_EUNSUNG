@@ -30,7 +30,8 @@ import { issueColumns } from '../issue-manage-columns';
 import type { IssueRow } from '../issue-manage-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 const STATUS_OPTIONS = [
   { value: 'N', label: '정상 출고만' },

@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import { EquipmentResultQueryDto } from '../dto/equipment-result-query.dto';
 import { namedBinds } from '../../../common/utils/named-binds.util';
 
+import { formatDate } from '@smt/shared';
 interface ResultDefinition {
   table: string;
   dateColumn: string;
@@ -31,7 +32,7 @@ function toCamelCase(key: string) {
 function nextDay(dateText: string) {
   const date = new Date(`${dateText}T00:00:00+09:00`);
   date.setDate(date.getDate() + 1);
-  return date.toISOString().slice(0, 10).replaceAll('-', '/');
+  return formatDate(date).replaceAll('-', '/');
 }
 
 @Injectable()

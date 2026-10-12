@@ -28,7 +28,8 @@ import FgScanPanel from '../components/FgScanPanel';
 import { fgIssueColumns } from '../shipping-columns';
 import type { FgIssueRow } from '../shipping-columns';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 export default function FgModelIssuePage() {
   const [dateFrom, setDateFrom] = useState(today());

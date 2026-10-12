@@ -21,7 +21,8 @@ import api from '@/services/api';
 import { squeezeCheckColumns, type SqueezeCheckRow } from './columns';
 import SqueezeScanPanel from './components/SqueezeScanPanel';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
 
 export default function SqueezeCheckPage() {

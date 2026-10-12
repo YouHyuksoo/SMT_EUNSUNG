@@ -42,6 +42,7 @@ import {
 } from './jig-check.dto';
 import { namedBinds } from '../../common/utils/named-binds.util';
 
+import { formatDate } from '@smt/shared';
 type OracleRow = Record<string, unknown>;
 
 const DEFAULT_LIMIT = 500;
@@ -649,7 +650,7 @@ export class JigCheckService {
     }
     columns.push('SAMPLE_APPLY_DATE');
     values.push("TO_DATE(:sampleApplyDate, 'YYYY-MM-DD')");
-    binds.sampleApplyDate = dto.sampleApplyDate ?? new Date().toISOString().slice(0, 10);
+    binds.sampleApplyDate = dto.sampleApplyDate ?? formatDate(new Date());
     columns.push('ENTER_BY', 'ENTER_DATE', 'LAST_MODIFY_BY', 'LAST_MODIFY_DATE');
     values.push(':userId', 'SYSDATE', ':userId', 'SYSDATE');
 

@@ -21,11 +21,12 @@ import api from '@/services/api';
 import { runCardColumns } from '../tracking-columns';
 import type { RunCardRow } from '../tracking-types';
 
+import { getTodayLocal } from '@/utils/date';
 /** 기본 기간 — 최근 7일. 롯트카드는 최근 것을 보는 일이 대부분이다. */
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 export interface RunCardPickerProps {

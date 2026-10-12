@@ -38,7 +38,8 @@ import type {
 import PartSearchField from '@/components/shared/PartSearchField';
 import LineSelect from '@/components/shared/LineSelect';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 type TabKey = 'returns' | 'losses';
 

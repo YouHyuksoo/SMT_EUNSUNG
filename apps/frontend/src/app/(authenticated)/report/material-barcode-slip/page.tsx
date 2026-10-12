@@ -24,10 +24,11 @@ import { materialBarcodeSlipColumns } from '../report-b-columns';
 import type { MaterialBarcodeSlipRow } from '../report-b-types';
 import PartSearchField from '@/components/shared/PartSearchField';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 const DIVIDE_OPTIONS = [

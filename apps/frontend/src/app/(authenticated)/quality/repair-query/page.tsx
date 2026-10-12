@@ -30,7 +30,8 @@ import {
 import { repairSummaryColumns } from '../repair-query-columns';
 import type { RepairSummaryRow } from '../repair-query-columns';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 type TabKey = 'daily' | 'position';
 

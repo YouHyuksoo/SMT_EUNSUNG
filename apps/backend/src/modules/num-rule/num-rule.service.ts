@@ -16,6 +16,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { QueryRunner } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
 
+import { formatDate } from '@smt/shared';
 interface NumRule {
   PATTERN: string;
   PREFIX: string | null;
@@ -87,10 +88,10 @@ export class NumRuleService {
       const last = new Date(rule.LAST_RESET);
       switch (rule.RESET_TYPE) {
         case 'DAILY':
-          needReset = last.toISOString().slice(0, 10) !== now.toISOString().slice(0, 10);
+          needReset = formatDate(last) !== formatDate(now);
           break;
         case 'MONTHLY':
-          needReset = last.toISOString().slice(0, 7) !== now.toISOString().slice(0, 7);
+          needReset = formatDate(last).slice(0, 7) !== formatDate(now).slice(0, 7);
           break;
         case 'YEARLY':
           needReset = last.getFullYear() !== now.getFullYear();

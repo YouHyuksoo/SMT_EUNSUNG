@@ -32,7 +32,8 @@ import { dividedColumns } from '../divide-baking-columns';
 import type { DivideLookup, DivideResult, DividedRow } from '../divide-baking-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 /** 조각 입력을 숫자 목록으로 바꾼다 (쉼표·공백·줄바꿈 구분). */
 const parsePieces = (text: string) => text

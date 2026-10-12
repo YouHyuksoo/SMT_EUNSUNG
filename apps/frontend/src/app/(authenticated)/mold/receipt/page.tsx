@@ -25,9 +25,10 @@ import MoldCodeField from '../components/MoldCodeField';
 import { moldReceiptColumns, moldReceiptTargetColumns } from '../columns';
 import type { MoldReceiptRow, MoldReceiptTargetRow } from '../types';
 
+import { getTodayLocal } from '@/utils/date';
 type Mode = 'history' | 'targets';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
 
 export default function MoldReceiptPage() {

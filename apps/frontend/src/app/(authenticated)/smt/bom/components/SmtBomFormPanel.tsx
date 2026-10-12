@@ -22,6 +22,7 @@ import { SmtMachineSelect, SmtPcbItemSelect } from '../../components/SmtSelects'
 import type { SmtBomRow } from '../../types';
 import PartSearchField from '@/components/shared/PartSearchField';
 
+import { getTodayLocal } from '@/utils/date';
 export interface SmtBomForm {
   parentItemCode: string;
   childItemCode: string;
@@ -48,7 +49,7 @@ export interface SmtBomForm {
 
 const text = (value: unknown) => (value == null ? '' : String(value));
 const day = (value: unknown) => (value ? String(value).slice(0, 10) : '');
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getTodayLocal();
 
 export const emptySmtBomForm = (modelName = ''): SmtBomForm => ({
   parentItemCode: modelName, childItemCode: '', dateSet: today(), locationCode: '',

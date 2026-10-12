@@ -12,8 +12,9 @@ import ModelSearchField from '@/components/shared/ModelSearchField';
 import api from '@/services/api';
 import type { ResultQueryDefinition } from '../_lib/result-query-definitions';
 
+import { getTodayLocal } from '@/utils/date';
 type ResultRow = Record<string, unknown>;
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getTodayLocal();
 const resultOptions = ['', 'OK', 'NG', 'USEROK', 'USERNG'].map(value => ({ value, label: value || '전체 결과' }));
 const formatValue = (value: unknown) => value instanceof Date ? value.toLocaleString('ko-KR') : value == null ? '' : String(value);
 

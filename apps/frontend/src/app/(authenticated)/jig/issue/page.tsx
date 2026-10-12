@@ -21,7 +21,8 @@ import api from '@/services/api';
 import { jigIssueColumns, type JigIssueRow } from './columns';
 import IssueActionPanel from './components/IssueActionPanel';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
 
 export default function JigIssuePage() {

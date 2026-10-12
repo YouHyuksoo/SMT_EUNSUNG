@@ -38,7 +38,8 @@ import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import EquipSelect from '@/components/shared/EquipSelect';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 /** 정상출고(N)를 고를 수 있는 출고계정. 그 밖의 계정은 기타출고(E)다. */
 const NORMAL_ISSUE_ACCOUNTS = ['M001', 'M002'];
 

@@ -24,7 +24,8 @@ import { moldRepairColumns, moldRepairItemColumns } from '../columns';
 import type { MoldRepairItemRow, MoldRepairRow } from '../types';
 import RepairProcessPanel from './components/RepairProcessPanel';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
 
 export default function MoldRepairPage() {

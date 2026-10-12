@@ -30,6 +30,7 @@ import api from '@/services/api';
 import { dailyReportColumns } from '../planning-columns';
 import type { DailyReportRow } from '../planning-types';
 
+import { getTodayLocal } from '@/utils/date';
 type Basis = 'run' | 'actual';
 
 const BASES: Array<{ key: Basis; label: string; hint: string }> = [
@@ -37,7 +38,7 @@ const BASES: Array<{ key: Basis; label: string; hint: string }> = [
   { key: 'actual', label: '실생산일 기준', hint: '생산시작(PDA ON) 시각의 날짜로 묶는다' },
 ];
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getTodayLocal();
 
 export default function DailyReportPage() {
   const [basis, setBasis] = useState<Basis>('run');

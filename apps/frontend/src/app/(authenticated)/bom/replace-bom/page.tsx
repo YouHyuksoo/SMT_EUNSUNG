@@ -22,7 +22,8 @@ import { bomExpandColumns, replaceColumns } from './columns';
 import type { BomExpandRow, ReplaceBomMode, ReplaceForm, ReplaceRow } from './types';
 import PartSearchField from '@/components/shared/PartSearchField';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 const emptyForm = (): ReplaceForm => ({
   parentItemCode: '', childItemCode: '', replaceItemCode: '', workstageCode: '',
   itemUnitQty: 1, dateset: today(), dateend: '9999-12-31', bomLocationCode: '',

@@ -43,6 +43,7 @@ import {
   type ProductionTeamValue,
 } from '@smt/shared';
 
+import { getTodayLocal } from '@/utils/date';
 const TEAM_OPTIONS = [
   { value: '', label: '생산팀: 전체' },
   ...PRODUCTION_TEAM_VALUES.map((v) => ({ value: v, label: `생산팀: ${PRODUCTION_TEAM_LABELS[v]}` })),
@@ -60,7 +61,7 @@ export interface PlanScreenConfig {
   teamFilter?: boolean;
 }
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
 
 export default function PlanScreen({ config }: { config: PlanScreenConfig }) {
