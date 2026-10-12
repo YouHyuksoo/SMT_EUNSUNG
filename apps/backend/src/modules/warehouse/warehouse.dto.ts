@@ -847,9 +847,11 @@ export class EtcIssueCreateDto {
   @IsOptional() @Type(() => Number) @IsNumber()
   issuePrice?: number;
 
-  @ApiPropertyOptional({ description: '출고계정 (공통코드)' })
-  @IsOptional() @IsString() @Length(0, 20)
-  issueAccount?: string;
+  @ApiProperty({
+    description: '출고계정 (공통코드 ISSUE ACCOUNT, 필수). M001·M002 는 정상출고(N), 그 밖은 기타출고(E).',
+  })
+  @IsString() @Length(1, 20)
+  issueAccount!: string;
 
   @ApiPropertyOptional({ description: '전표번호. 비우면 시퀀스로 채번한다.' })
   @IsOptional() @IsString() @Length(0, 60)

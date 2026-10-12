@@ -48,9 +48,15 @@ const SEQUENCES = {
   issueInvoice: 'SEQ_ISSUE_INVOICE_SEQUENCE',
 } as const;
 
+/**
+ * 출고구분은 출고계정이 정한다 — M001·M002 는 정상출고 'N', 그 밖은 기타출고 'E'.
+ * (재생출고 'R' 은 재생 재고에서만 나오는데 그 표가 0행이라 쓰지 않는다.)
+ */
+const NORMAL_ISSUE_ACCOUNTS = ['M001', 'M002'];
+const issueTypeOf = (issueAccount: string) =>
+  (NORMAL_ISSUE_ACCOUNTS.includes(issueAccount) ? 'N' : 'E');
+
 const FIXED = {
-  /** 'N' = 정상출고. PB 는 기타출고 'E'·재생출고 'R' 도 쓰지만 최근 1년 실데이터가 전부 'N' 이다. */
-  issueType: 'N',
   issueStatus: 'N',
   /** 취소로 만들어지는 행의 상태 */
   cancelStatus: 'C',
@@ -199,8 +205,8 @@ export class IssueManageService {
    * 기타출고 등록 (**쓰기**). PB 의 "선택한 재고를 출고 목록으로 옮기고 저장" 을
    * 한 번에 한다.
    *
-   * PB 가 요구하던 것을 그대로 요구한다: **라인·공정·설비를 반드시 고른다.**
-   * 세 값 중 하나라도 비면 PB 도 거절했다 (어디로 나갔는지 모르는 출고가 생긴다).
+   * **라인·공정·설비·출고계정을 반드시 고른다.** 하나라도 비면 거절한다
+   * (어디로·무슨 계정으로 나갔는지 모르는 출고가 생긴다).
    */
   async createEtcIssue(dto: EtcIssueCreateDto, organizationId: number, userId: string) {
     const qty = Number(dto.issueQty);
@@ -260,7 +266,7 @@ export class IssueManageService {
             -- 수량 부호가 출고(3)/반납(4)을 정한다 (PB 그대로).
             DECODE(SIGN(:issueQty), -1, '4', '3'),
             :issuePrice, :issueQty * :issuePrice,
-            '${FIXED.issueStatus}', '${FIXED.issueType}', :issueAccount,
+            '${FIXED.issueStatus}', :issueType, :issueAccount,
             :invoiceNo, '${FIXED.workOrderNo}', :comments,
             SYSDATE, :userId, SYSDATE, :userId)`,
         namedBinds({
@@ -279,7 +285,8 @@ export class IssueManageService {
           inventoryType: dto.inventoryType ?? null,
           issueQty,
           issuePrice: Number(dto.issuePrice ?? 0),
-          issueAccount: dto.issueAccount ?? null,
+          issueType: issueTypeOf(dto.issueAccount),
+          issueAccount: dto.issueAccount,
           invoiceNo,
           comments: dto.comments ?? null,
           userId,

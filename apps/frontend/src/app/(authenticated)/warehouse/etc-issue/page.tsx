@@ -7,8 +7,8 @@
  * 초보자 가이드:
  * 1. **재고에서 자재를 빼는 화면이다.** 왼쪽 재고 목록에서 품목을 고르고 오른쪽 폼에서
  *    수량과 라인·공정·설비를 넣으면 출고 원장에 한 건이 들어간다.
- * 2. **라인·공정·설비는 반드시 넣어야 한다** (PB 도 같다). 비우면 어디로 나갔는지
- *    모르는 출고가 생긴다.
+ * 2. **라인·공정·설비·출고계정은 반드시 넣어야 한다.** 비우면 어디로 나갔는지
+ *    모르는 출고가 생긴다. 출고계정 M001·M002 는 정상출고, 그 밖은 기타출고로 남는다.
  * 3. **수량이 음수면 반납이다.** 라인에서 되돌려 받은 자재를 넣을 때 쓴다.
  * 4. **포장 단위 적용을 켜면 실제 출고 수량이 올라간다.** 250개들이 부품을 300개
  *    요청하면 500개가 나간다. 화면이 미리 보여주는 값과 서버가 넣는 값은 **같은
@@ -63,7 +63,8 @@ export default function EtcIssuePage() {
   const [lineCode, setLineCode] = useState('');
   const [workstageCode, setWorkstageCode] = useState('');
   const [machineCode, setMachineCode] = useState('');
-  const [issueAccount, setIssueAccount] = useState('');
+  // 출고계정은 필수다. 기본은 M001 — 실제 출고가 거의 전부 이 계정이다.
+  const [issueAccount, setIssueAccount] = useState('M001');
   const [invoiceNo, setInvoiceNo] = useState('');
   const [comments, setComments] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -120,11 +121,12 @@ export default function EtcIssuePage() {
     if (!machineCode.trim()) return '설비를 넣으세요.';
     if (qty > 0 && finalQty > Number(picked.inventoryQty ?? 0)) {
       return `재고(${Number(picked.inventoryQty ?? 0).toLocaleString()})보다`
+    if (!issueAccount) return '출고계정을 고르세요.';
         + ` 많이 나갑니다 (${finalQty.toLocaleString()}).`;
     }
     return null;
   }, [picked, qtyValid, applyPacking, qty, lineCode, workstageCode, machineCode,
-    finalQty]);
+    issueAccount, finalQty]);
 
   const submit = useCallback(async () => {
     setConfirmOpen(false);
@@ -143,7 +145,7 @@ export default function EtcIssuePage() {
         materialMfs: picked.materialMfs || undefined,
         lineType: picked.lineType || undefined,
         issuePrice: picked.inventoryPrice ?? undefined,
-        issueAccount: issueAccount.trim() || undefined,
+        issueAccount,
         invoiceNo: invoiceNo.trim() || undefined,
         comments: comments.trim() || undefined,
       });
