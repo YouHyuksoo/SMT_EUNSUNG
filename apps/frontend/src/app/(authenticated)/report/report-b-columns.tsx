@@ -206,12 +206,9 @@ export const materialReceiptSupplierColumns: ColumnDef<MaterialReceiptSupplierRo
 // ───────────────────────────────── 364 자재입고합계
 
 /**
- * 품목별 입고합계 컬럼.
- * @param withContact 협력사 연락처 3칸을 넣을지 (PB '협력사용' DataWindow)
+ * 품목별 입고합계 컬럼. 품목별·협력사용 탭이 같이 쓴다.
  */
-export function materialReceiptSumItemColumns(
-  withContact: boolean,
-): ColumnDef<MaterialReceiptSumItemRow>[] {
+export function materialReceiptSumItemColumns(): ColumnDef<MaterialReceiptSumItemRow>[] {
   const cols: ColumnDef<MaterialReceiptSumItemRow>[] = [
     {
       id: 'supplierName',
@@ -220,13 +217,6 @@ export function materialReceiptSumItemColumns(
       accessorFn: (r) => codeWithName(r.supplierCode, r.supplierName),
     },
   ];
-  if (withContact) {
-    cols.push(
-      { accessorKey: 'supplierAddress', header: '주소', size: 220 },
-      { accessorKey: 'supplierTelNo', header: '전화', size: 130 },
-      { accessorKey: 'supplierFaxNo', header: '팩스', size: 130 },
-    );
-  }
   cols.push(
     { accessorKey: 'itemCode', header: '품목코드', size: 150 },
     { accessorKey: 'itemName', header: '품목명', size: 180 },

@@ -102,8 +102,7 @@ export default function MaterialReceiptSumPage() {
 
   useEffect(() => { void search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const itemColumns = useMemo(() => materialReceiptSumItemColumns(false), []);
-  const contactColumns = useMemo(() => materialReceiptSumItemColumns(true), []);
+  const itemColumns = useMemo(() => materialReceiptSumItemColumns(), []);
 
   const spec = useMemo<CrosstabSpec<MaterialTxnMatrixRow>>(() => ({
     // 입고와 출고를 같은 품목·위치에서 따로 줄로 놓는다 — 섞으면 상계돼 버린다.
@@ -185,7 +184,7 @@ export default function MaterialReceiptSumPage() {
           {tab === 'contact' && (
             <DataGrid
               data={withContact}
-              columns={contactColumns}
+              columns={itemColumns}
               isLoading={loading}
               pageSize={100}
               enableColumnFilter
