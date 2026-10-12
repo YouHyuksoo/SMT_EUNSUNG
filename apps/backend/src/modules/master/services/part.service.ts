@@ -3,11 +3,46 @@
  * @description 품목마스터 비즈니스 로직 서비스 - TypeORM Repository 패턴
  */
 
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ItemMaster } from '../../../entities/item-master.entity';
+import { ITEM_MASTER_EDITABLE_COLUMNS, itemMasterDefaults, type ItemMasterColumn } from '@smt/shared';
 import { CreatePartDto, UpdatePartDto, PartQueryDto } from '../dto/part.dto';
+
+/** 오늘 (KST, YYYY-MM-DD). 백엔드 시간대는 main.ts 에서 KST 로 고정돼 있다. */
+const todayKst = (): string => {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+/** 화면 값 → 컬럼 값. 빈 문자열은 NULL, 날짜는 그날 0시(KST). */
+function toColumnValue(col: ItemMasterColumn, value: unknown): unknown {
+  if (value === undefined || value === null) return null;
+  if (col.type === 'number') {
+    if (value === '') return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  const text = String(value).trim();
+  if (text === '') return null;
+  if (col.type === 'date') return new Date(`${text.slice(0, 10)}T00:00:00+09:00`);
+  return text;
+}
+
+/** DB 값과 새 값이 같은지 — 날짜는 일자, 숫자는 수치로 비교한다. */
+function sameColumnValue(col: ItemMasterColumn, current: unknown, next: unknown): boolean {
+  const a = current ?? null;
+  const b = next ?? null;
+  if (a === null || b === null) return a === b;
+  if (col.type === 'date') {
+    const day = (v: unknown) => new Date(v as string | Date).toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+    return day(a) === day(b);
+  }
+  if (col.type === 'number') return Number(a) === Number(b);
+  return String(a) === String(b);
+}
 
 @Injectable()
 export class PartService {
@@ -23,7 +58,10 @@ export class PartService {
   }
 
   async findAll(query: PartQueryDto, organizationId?: number) {
-    const { page = 1, limit = 20, itemType, itemTypes, search, mesDisplayYn } = query;
+    const {
+      page = 1, limit = 20, itemType, itemTypes, search, mesDisplayYn,
+      itemDivision, lineType, itemClass, setItemYn, supplierCode, customerCode,
+    } = query;
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.partRepository.createQueryBuilder('p')
@@ -40,6 +78,15 @@ export class PartService {
 
     if (mesDisplayYn) {
       queryBuilder.andWhere('p.mesDisplayYn = :mesDisplayYn', { mesDisplayYn });
+    }
+
+    // 코드 컬럼 필터 — 값과 정확히 같은 행만
+    const exact: Array<[string, string | undefined]> = [
+      ['itemDivision', itemDivision], ['lineType', lineType], ['itemClass', itemClass],
+      ['isSplittable', setItemYn], ['supplierCode', supplierCode], ['customerCode', customerCode],
+    ];
+    for (const [field, value] of exact) {
+      if (value) queryBuilder.andWhere(`p.${field} = :${field}`, { [field]: value });
     }
 
     if (search) {
@@ -78,112 +125,64 @@ export class PartService {
     return part;
   }
 
-  async create(dto: CreatePartDto, organizationId?: number) {
+  async create(dto: CreatePartDto, organizationId?: number, userId?: string) {
     const existing = await this.partRepository.findOne({
       where: { itemCode: dto.itemCode, ...this.tenantWhere(organizationId) },
     });
 
     if (existing) throw new ConflictException(`이미 존재하는 품목 코드입니다: ${dto.itemCode}`);
 
+    // 컬럼 목록 순서대로 — 보낸 값, 없으면 등록 기본값(최근 등록 데이터가 쓰는 값).
+    const defaults = itemMasterDefaults(todayKst());
+    const values: Record<string, unknown> = {};
+    for (const col of ITEM_MASTER_EDITABLE_COLUMNS) {
+      const sent = toColumnValue(col, (dto as unknown as Record<string, unknown>)[col.key]);
+      const value = sent ?? toColumnValue(col, defaults[col.key]);
+      if (col.required && value == null) {
+        throw new BadRequestException(`${col.label}은(는) 필수입니다.`);
+      }
+      values[col.key] = value;
+    }
+    const now = new Date();
     const part = this.partRepository.create({
-      itemCode: dto.itemCode,
-      itemName: dto.itemName ?? dto.itemCode,
-      itemNo: dto.itemNo ?? dto.itemCode,
-      custPartNo: dto.custPartNo,
-      itemType: dto.itemType,
-      itemClass: dto.itemClass,
-      lineType: '*',
-      itemDivision: dto.itemType,
-      modelName: dto.modelName ?? null,
-      modelSuffix: dto.modelSuffix ?? null,
-      spec: dto.spec ?? '*',
-      rev: dto.rev ?? 'A',
-      markingText: dto.markingText,
-      itemUom: dto.itemUom ?? 'EA',
-      color: dto.color ?? null,
-      drawNo: dto.drawNo,
-      leadTime: dto.leadTime ?? 0,
-      safetyStock: dto.safetyStock ?? 0,
-      lotUnitQty: dto.lotUnitQty,
-      boxQty: dto.boxQty ?? 0,
-      minPackQty: dto.minPackQty ?? 0,
-      tactTime: dto.tactTime ?? 0,
-      expiryDate: dto.expiryDate ?? 0,
-      expiryExtDays: dto.expiryExtDays ?? 0,
-      toleranceRate: dto.toleranceRate ?? 5,
-      isSplittable: dto.isSplittable ?? 'Y',
-      packUnit: dto.packUnit ?? null,
-      storageLocation: dto.storageLocation ?? null,
-      remark: dto.remark,
-      mesDisplayYn: dto.mesDisplayYn ?? 'Y',
-      imageUrl: dto.imageUrl,
+      ...(values as Partial<ItemMaster>),
+      routeNo: '*',
       organizationId,
+      createdBy: userId ?? null,
+      createdAt: now,
+      updatedBy: userId ?? null,
+      updatedAt: now,
     });
 
     return this.partRepository.save(part);
   }
 
-  async update(itemCode: string, dto: UpdatePartDto, organizationId?: number) {
-    await this.findById(itemCode, organizationId);
+  /**
+   * 수정 — 값이 실제로 바뀐 컬럼만 UPDATE 한다.
+   * ID_ITEM 의 UPDATE OF 트리거(TRG_ID_ITEM_UPD: LINE_TYPE·SUPPLIER_CODE·CUSTOMER_CODE)는
+   * 값이 같아도 SET 에 들어가기만 하면 돌아서, 폼 전체를 SET 하면 저장할 때마다 연결 테이블이 고쳐진다.
+   */
+  async update(itemCode: string, dto: UpdatePartDto, organizationId?: number, userId?: string) {
+    const current = await this.findById(itemCode, organizationId);
+    const currentRow = current as unknown as Record<string, unknown>;
 
-    const updateData: Partial<Pick<ItemMaster,
-      | 'itemName'
-      | 'itemNo'
-      | 'custPartNo'
-      | 'itemType'
-      | 'itemClass'
-      | 'modelName'
-      | 'modelSuffix'
-      | 'spec'
-      | 'rev'
-      | 'markingText'
-      | 'itemUom'
-      | 'color'
-      | 'drawNo'
-      | 'leadTime'
-      | 'safetyStock'
-      | 'lotUnitQty'
-      | 'boxQty'
-      | 'tactTime'
-      | 'expiryDate'
-      | 'expiryExtDays'
-      | 'toleranceRate'
-      | 'isSplittable'
-      | 'packUnit'
-      | 'storageLocation'
-      | 'imageUrl'
-      | 'remark'
-      | 'mesDisplayYn'
-    >> = {
-      ...(dto.itemName !== undefined ? { itemName: dto.itemName } : {}),
-      ...(dto.itemNo !== undefined ? { itemNo: dto.itemNo } : {}),
-      ...(dto.custPartNo !== undefined ? { custPartNo: dto.custPartNo } : {}),
-      ...(dto.itemType !== undefined ? { itemType: dto.itemType } : {}),
-      ...(dto.itemClass !== undefined ? { itemClass: dto.itemClass } : {}),
-      ...(dto.modelName !== undefined ? { modelName: dto.modelName || null } : {}),
-      ...(dto.modelSuffix !== undefined ? { modelSuffix: dto.modelSuffix || null } : {}),
-      ...(dto.spec !== undefined ? { spec: dto.spec } : {}),
-      ...(dto.rev !== undefined ? { rev: dto.rev } : {}),
-      ...(dto.markingText !== undefined ? { markingText: dto.markingText } : {}),
-      ...(dto.itemUom !== undefined ? { itemUom: dto.itemUom } : {}),
-      ...(dto.color !== undefined ? { color: dto.color } : {}),
-      ...(dto.drawNo !== undefined ? { drawNo: dto.drawNo } : {}),
-      ...(dto.leadTime !== undefined ? { leadTime: dto.leadTime } : {}),
-      ...(dto.safetyStock !== undefined ? { safetyStock: dto.safetyStock } : {}),
-      ...(dto.lotUnitQty !== undefined ? { lotUnitQty: dto.lotUnitQty } : {}),
-      ...(dto.boxQty !== undefined ? { boxQty: dto.boxQty } : {}),
-      ...(dto.tactTime !== undefined ? { tactTime: dto.tactTime } : {}),
-      ...(dto.expiryDate !== undefined ? { expiryDate: dto.expiryDate } : {}),
-      ...(dto.expiryExtDays !== undefined ? { expiryExtDays: dto.expiryExtDays } : {}),
-      ...(dto.toleranceRate !== undefined ? { toleranceRate: dto.toleranceRate } : {}),
-      ...(dto.isSplittable !== undefined ? { isSplittable: dto.isSplittable } : {}),
-      ...(dto.packUnit !== undefined ? { packUnit: dto.packUnit } : {}),
-      ...(dto.storageLocation !== undefined ? { storageLocation: dto.storageLocation } : {}),
-      ...(dto.imageUrl !== undefined ? { imageUrl: dto.imageUrl } : {}),
-      ...(dto.remark !== undefined ? { remark: dto.remark } : {}),
-      ...(dto.mesDisplayYn !== undefined ? { mesDisplayYn: dto.mesDisplayYn } : {}),
-    };
-    await this.partRepository.update({ itemCode, ...this.tenantWhere(organizationId) }, updateData);
+    const changed: Record<string, unknown> = {};
+    for (const col of ITEM_MASTER_EDITABLE_COLUMNS) {
+      if (col.edit !== 'always') continue;
+      const raw = (dto as unknown as Record<string, unknown>)[col.key];
+      if (raw === undefined) continue;
+      const next = toColumnValue(col, raw);
+      if (col.required && next == null) {
+        throw new BadRequestException(`${col.label}은(는) 비울 수 없습니다.`);
+      }
+      if (!sameColumnValue(col, currentRow[col.key], next)) changed[col.key] = next;
+    }
+    if (Object.keys(changed).length === 0) return current;
+
+    await this.partRepository.update(
+      { itemCode, ...this.tenantWhere(organizationId) },
+      { ...(changed as Partial<ItemMaster>), updatedBy: userId ?? null, updatedAt: new Date() },
+    );
     return this.findById(itemCode, organizationId);
   }
 
@@ -243,12 +242,6 @@ export class PartService {
     await this.assertDeletable(itemCode, organizationId);
     await this.partRepository.delete({ itemCode, ...this.tenantWhere(organizationId) });
     return { itemCode };
-  }
-
-  async updateImage(itemCode: string, imageUrl: string | null, organizationId?: number) {
-    await this.findById(itemCode, organizationId);
-    await this.partRepository.update({ itemCode, ...this.tenantWhere(organizationId) }, { imageUrl });
-    return this.findById(itemCode, organizationId);
   }
 
   async findByType(itemType: string, organizationId?: number) {

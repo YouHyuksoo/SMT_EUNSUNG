@@ -1,25 +1,32 @@
 /**
  * @file src/app/(authenticated)/master/part/components/PartFormPanel.tsx
- * @description 품목 추가/수정 오른쪽 슬라이드 패널
+ * @description 품목 추가/수정 오른쪽 패널 — ID_ITEM 109개 컬럼 전부.
  *
  * 초보자 가이드:
- * 1. **슬라이드 패널**: 오른쪽에서 슬라이드 인/아웃되는 폼 패널
- * 2. **외부 클릭**: 패널 외부 클릭 시 자동 닫기
- * 3. **API**: POST /master/parts (생성), PUT /master/parts/:id (수정)
+ * 1. **칸은 컬럼 목록(@smt/shared ITEM_MASTER_COLUMNS)으로 그린다.** 구역(기본정보·분류·구매 …)도
+ *    목록에 적혀 있다. 컬럼을 늘리면 목록만 고치면 된다.
+ * 2. **키(품목코드)는 수정 때 잠긴다.** 조직·등록/수정 이력·라우팅번호는 표시만 한다
+ *    (라우팅번호를 바꾸면 DB 트리거가 재고 행을 지운다).
+ * 3. **구입유형·공급상·고객을 바꿔 저장하면 DB 트리거가 연결 테이블을 고친다.** 저장 전에 확인을 받는다.
+ *    서버는 값이 바뀐 컬럼만 UPDATE 한다.
+ * 4. **API**: POST /master/parts (등록), PUT /master/parts/:itemCode (수정)
  */
 
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { ImageIcon, RefreshCw, Trash2, Upload } from "lucide-react";
-// X 아이콘 제거됨 — 헤더에 취소/저장 버튼 사용
+import {
+  ITEM_MASTER_CASCADE_COLUMNS,
+  ITEM_MASTER_COLUMNS,
+  ITEM_MASTER_SECTIONS,
+  itemMasterDefaults,
+  type ItemMasterColumn,
+} from "@smt/shared";
 import { Button, ConfirmModal } from "@/components/ui";
-import { useLocationOptions } from "@/hooks/useMasterOptions";
 import api from "@/services/api";
 import { Part } from "../types";
-import { FieldComCodeSelect, FieldInput, FieldLabel, FieldSelect, FieldYnRadio, Field } from "./PartFieldHelp";
-import { QtyInput } from "@/components/shared";
+import { ItemField, kstDate, kstDateTime, ORDERED_ITEM_COLUMNS } from "./PartFieldHelp";
 
 interface Props {
   editingPart: Part | null;
@@ -31,166 +38,88 @@ interface Props {
   onDirtyChange?: (dirty: boolean) => void;
 }
 
-/** editingPart로부터 폼 초기값 생성 — useState 초기화와 prop 변경 리셋에서 공용 */
-const buildForm = (editingPart: Part | null) => ({
-  itemCode: editingPart?.itemCode || "",
-  itemName: editingPart?.itemName || "",
-  itemNo: editingPart?.itemNo || "",
-  custPartNo: editingPart?.custPartNo || "",
-  itemType: editingPart?.itemType || "T",
-  itemClass: editingPart?.itemClass || "*",
-  modelName: editingPart?.modelName || "",
-  modelSuffix: editingPart?.modelSuffix || "",
-  spec: editingPart?.spec || "",
-  rev: editingPart?.rev || "",
-  markingText: editingPart?.markingText || "",
-  itemUom: editingPart?.itemUom || "EA",
-  color: editingPart?.color || "",
-  boxQty: editingPart?.boxQty ?? 0,
-  minPackQty: editingPart?.minPackQty ?? 0,
-  lotUnitQty: editingPart?.lotUnitQty ?? 0,
-  safetyStock: editingPart?.safetyStock ?? 0,
-  expiryDate: editingPart?.expiryDate ?? 0,
-  expiryExtDays: editingPart?.expiryExtDays ?? 0,
-  mesDisplayYn: editingPart?.mesDisplayYn || "Y",
-  packUnit: editingPart?.packUnit ?? 0,
-  storageLocation: editingPart?.storageLocation || "",
-  remark: editingPart?.remark || "",
-});
+type FormState = Record<string, string>;
 
-const PACKAGING_QTY_OPTIONS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+/** 넓은 칸 — 두 칸을 차지한다 */
+const WIDE = new Set(["itemName", "spec", "imageUrl", "remark", "ecoCheckComments", "hsName", "hsSpec", "hsNameSale"]);
+
+const todayKst = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
+
+/** 행 값 → 폼 문자열 */
+function toFormValue(col: ItemMasterColumn, value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (col.type === "date") return col.section === "audit" ? kstDateTime(value) : kstDate(value);
+  return String(value);
+}
+
+/** editingPart 로부터 폼 초기값. 등록이면 등록 기본값을 채운다. */
+function buildForm(editingPart: Part | null): FormState {
+  const row = editingPart as unknown as Record<string, unknown> | null;
+  const defaults = itemMasterDefaults(todayKst());
+  const form: FormState = {};
+  for (const col of ITEM_MASTER_COLUMNS) {
+    form[col.key] = row ? toFormValue(col, row[col.key]) : String(defaults[col.key] ?? "");
+  }
+  return form;
+}
+
+/** 폼 문자열 → API 값. 숫자는 Number, 빈 칸은 숫자·날짜면 null, 문자면 '' (서버가 NULL 로 바꾼다). */
+function toPayloadValue(col: ItemMasterColumn, value: string): string | number | null {
+  const text = value.trim();
+  if (col.type === "number") return text === "" ? null : Number(text);
+  if (col.type === "date") return text === "" ? null : text;
+  return text;
+}
 
 export default function PartFormPanel({ editingPart, onClose, onSave, animate = true, onDirtyChange }: Props) {
   const { t } = useTranslation();
   const isEdit = !!editingPart;
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { options: rawLocationOptions, isLoading: locationLoading } = useLocationOptions();
-  const locationOptions = useMemo(
-    () => [{ value: "", label: t("common.select", "선택하세요") }, ...rawLocationOptions],
-    [rawLocationOptions, t],
-  );
 
-
-  const [form, setForm] = useState(() => buildForm(editingPart));
+  const [form, setForm] = useState<FormState>(() => buildForm(editingPart));
   const initialFormRef = useRef(form);
   const [saving, setSaving] = useState(false);
-  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(editingPart?.imageUrl ?? null);
-  const [imageError, setImageError] = useState(false);
-  const [imageDeleteConfirmOpen, setImageDeleteConfirmOpen] = useState(false);
-  const canSave = !saving
-    && !!form.itemCode.trim()
-    && !!form.itemNo.trim()
-    && !!form.itemName.trim()
-    && !!form.itemClass;
+  const [cascadeConfirm, setCascadeConfirm] = useState<string[] | null>(null);
 
   // editingPart 변경 시 폼 리셋
   useEffect(() => {
-    if (previewUrl?.startsWith("blob:")) {
-      URL.revokeObjectURL(previewUrl);
-    }
     const init = buildForm(editingPart);
     setForm(init);
     initialFormRef.current = init;
-    setSelectedImageFile(null);
-    setPreviewUrl(editingPart?.imageUrl ?? null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingPart]);
 
-  // 작성 중(저장 안 됨) 여부 계산 후 부모에 보고 — 행 전환 시 유실 방어
   const dirty = useMemo(
-    () =>
-      JSON.stringify(form) !== JSON.stringify(initialFormRef.current) ||
-      previewUrl !== (editingPart?.imageUrl ?? null),
-    [form, previewUrl, editingPart],
+    () => JSON.stringify(form) !== JSON.stringify(initialFormRef.current),
+    [form],
   );
   useEffect(() => {
     onDirtyChange?.(dirty);
   }, [dirty, onDirtyChange]);
-  // 언마운트 시 dirty 해제
   useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
 
-  useEffect(() => {
-    setImageError(false);
-    return () => {
-      if (previewUrl?.startsWith("blob:")) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
+  const setField = (key: string, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
 
+  /** 이 칸을 고칠 수 있는가 */
+  const editable = (col: ItemMasterColumn) =>
+    col.edit === "always" || (col.edit === "create" && !isEdit);
 
+  /** 등록창에서 반드시 넣어야 하는 칸 — NOT NULL 컬럼 */
+  const missing = ITEM_MASTER_COLUMNS.filter(
+    (col) => col.required && editable(col) && form[col.key].trim() === "",
+  );
+  const canSave = !saving && missing.length === 0;
 
-  const setField = (key: string, value: string | number) => {
-    setForm(prev => ({ ...prev, [key]: value }));
-  };
-
-  const handleImageSelect = (file: File) => {
-    if (previewUrl?.startsWith("blob:")) {
-      URL.revokeObjectURL(previewUrl);
-    }
-    setSelectedImageFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
-  };
-
-  const handleImageClear = () => {
-    if (previewUrl?.startsWith("blob:")) {
-      URL.revokeObjectURL(previewUrl);
-    }
-    setSelectedImageFile(null);
-    setPreviewUrl(null);
-    setImageDeleteConfirmOpen(false);
-  };
-
-  const uploadImage = async (itemCode: string, file: File) => {
-    const formData = new FormData();
-    formData.append("image", file);
-    await api.post(`/master/parts/${encodeURIComponent(itemCode)}/image`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-  };
-
-  const handleSubmit = async () => {
-    if (!canSave) return;
+  const submit = async () => {
     setSaving(true);
     try {
-      const payload = {
-        itemCode: form.itemCode,
-        itemName: form.itemName,
-        itemType: form.itemType,
-        itemNo: form.itemNo,
-        custPartNo: form.custPartNo || undefined,
-        itemClass: form.itemClass,
-        modelName: form.modelName || undefined,
-        modelSuffix: form.modelSuffix || undefined,
-        spec: form.spec || undefined,
-        rev: form.rev || undefined,
-        markingText: form.markingText || undefined,
-        itemUom: form.itemUom,
-        color: form.color || undefined,
-        boxQty: form.boxQty,
-        minPackQty: form.minPackQty,
-        lotUnitQty: form.lotUnitQty || undefined,
-        safetyStock: form.safetyStock,
-        expiryDate: form.expiryDate,
-        expiryExtDays: form.expiryExtDays,
-        mesDisplayYn: form.mesDisplayYn,
-        packUnit: form.packUnit || undefined,
-        storageLocation: form.storageLocation || undefined,
-        remark: form.remark || undefined,
-      };
+      const payload: Record<string, string | number | null> = {};
+      for (const col of ITEM_MASTER_COLUMNS) {
+        if (!editable(col)) continue;
+        payload[col.key] = toPayloadValue(col, form[col.key]);
+      }
       if (isEdit && editingPart?.itemCode) {
-        await api.put(`/master/parts/${editingPart.itemCode}`, payload);
-        if (selectedImageFile) {
-          await uploadImage(editingPart.itemCode, selectedImageFile);
-        } else if (!previewUrl && editingPart.imageUrl) {
-          await api.delete(`/master/parts/${encodeURIComponent(editingPart.itemCode)}/image`);
-        }
+        await api.put(`/master/parts/${encodeURIComponent(editingPart.itemCode)}`, payload);
       } else {
         await api.post("/master/parts", payload);
-        if (selectedImageFile) {
-          await uploadImage(form.itemCode, selectedImageFile);
-        }
       }
       onDirtyChange?.(false);
       onSave();
@@ -202,187 +131,84 @@ export default function PartFormPanel({ editingPart, onClose, onSave, animate = 
     }
   };
 
+  const handleSubmit = () => {
+    if (!canSave) return;
+    // 바꾸면 DB 트리거가 다른 테이블을 고치는 컬럼 — 수정에서 값이 바뀌었으면 먼저 확인
+    const changedCascade = isEdit
+      ? ITEM_MASTER_COLUMNS.filter(
+        (col) => ITEM_MASTER_CASCADE_COLUMNS.includes(col.column)
+          && form[col.key] !== initialFormRef.current[col.key],
+      ).map((col) => `${col.label}: ${initialFormRef.current[col.key] || "(없음)"} → ${form[col.key] || "(없음)"}`)
+      : [];
+    if (changedCascade.length > 0) {
+      setCascadeConfirm(changedCascade);
+      return;
+    }
+    void submit();
+  };
+
   return (
     <>
       <div
-        className={`w-[480px] border-l border-border bg-background flex flex-col h-full overflow-hidden shadow-2xl text-xs ${animate ? 'animate-slide-in-right' : ''}`}
+        className={`w-[560px] border-l border-border bg-background flex flex-col h-full overflow-hidden shadow-2xl text-xs ${animate ? "animate-slide-in-right" : ""}`}
       >
-      {/* 헤더 */}
-      <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
-        <h2 className="text-sm font-bold text-text">
-          {isEdit ? t("master.part.editPart") : t("master.part.addPart")}
-        </h2>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="secondary" onClick={onClose}>{t("common.cancel")}</Button>
-          <Button size="sm" onClick={handleSubmit} disabled={!canSave}>
-          {saving ? t("common.saving") : t("common.save", "저장")}
-          </Button>
-        </div>
-      </div>
-
-      {/* 본문 (스크롤 가능) */}
-      <div className="flex-1 overflow-y-auto px-5 py-3 space-y-4">
-        {/* 기본정보 섹션 */}
-        <div>
-          <h3 className="text-xs font-semibold text-text-muted mb-2">
-            {t("master.part.sectionBasic", "기본정보")}
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <FieldInput field="itemCode" label={t("master.part.partCode")} required
-              value={form.itemCode} onChange={e => setField("itemCode", e.target.value)}
-              disabled={isEdit} fullWidth />
-            <FieldInput field="itemNo" label={t("master.part.partNo", "품번")} required
-              value={form.itemNo} onChange={e => setField("itemNo", e.target.value)} fullWidth />
-            <FieldInput field="itemName" label={t("master.part.partName")} required wrapperClassName="col-span-2"
-              value={form.itemName} onChange={e => setField("itemName", e.target.value)} fullWidth />
-            <FieldInput field="custPartNo" label={t("master.part.custPartNo", "고객품번")}
-              value={form.custPartNo} onChange={e => setField("custPartNo", e.target.value)} fullWidth />
-            <FieldInput field="rev" label={t("master.part.rev", "리비전")}
-              value={form.rev} onChange={e => setField("rev", e.target.value)} fullWidth />
-            <FieldInput field="markingText" label={t("master.part.markingText", "마킹문구")} wrapperClassName="col-span-2"
-              value={form.markingText} maxLength={100}
-              onChange={e => setField("markingText", e.target.value)} fullWidth />
-            <FieldComCodeSelect field="itemType" groupCode="ITEM_TYPE" includeAll={false} label={t("master.part.type")}
-              value={form.itemType}
-              onChange={v => setField("itemType", v)}
-              fullWidth required />
-            <FieldComCodeSelect field="itemClass" groupCode="ITEM_CLASS" includeAll={false}
-              label={t("master.part.itemClass", "품목분류")}
-              value={form.itemClass} onChange={v => setField("itemClass", v)} fullWidth required />
-            <FieldInput field="modelName" label={t("master.part.modelName", "차종")}
-              value={form.modelName} onChange={e => setField("modelName", e.target.value)} fullWidth />
-            <FieldInput field="modelSuffix"
-              label={t("master.part.modelSuffix", "모델접미")}
-              value={form.modelSuffix} onChange={e => setField("modelSuffix", e.target.value)} fullWidth />
-            <FieldInput field="spec" label={t("master.part.spec")} wrapperClassName="col-span-2"
-              value={form.spec} onChange={e => setField("spec", e.target.value)} fullWidth />
-            <FieldInput field="color" label={t("master.part.color", "색상")}
-              value={form.color} onChange={e => setField("color", e.target.value)} fullWidth />
-            <FieldComCodeSelect field="itemUom" groupCode="ITEM_UOM" label={t("master.part.unit")} includeAll={false} showCode
-              value={form.itemUom} onChange={v => setField("itemUom", v)} fullWidth />
-            <FieldYnRadio field="mesDisplayYn" label={t("common.useYn", "사용여부")} value={form.mesDisplayYn} onChange={v => setField("mesDisplayYn", v)} />
+        {/* 헤더 */}
+        <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
+          <div>
+            <h2 className="text-sm font-bold text-text">
+              {isEdit ? t("master.part.editPart") : t("master.part.addPart")}
+            </h2>
+            {missing.length > 0 && (
+              <p className="mt-0.5 text-xs text-text-muted">
+                필수: {missing.map((col) => col.label).join(", ")}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="secondary" onClick={onClose}>{t("common.cancel")}</Button>
+            <Button size="sm" onClick={handleSubmit} disabled={!canSave}>
+              {saving ? t("common.saving") : t("common.save", "저장")}
+            </Button>
           </div>
         </div>
 
-        {/* 수량 섹션 */}
-        <div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Field field="boxQty" label={t("master.part.boxQty", "박스장입수량")}>
-                <QtyInput value={Number(form.boxQty) || 0} onChange={(n) => setField("boxQty", n)} fullWidth />
-              </Field>
-              <datalist id="part-panel-box-qty-options">
-                {PACKAGING_QTY_OPTIONS.map(qty => <option key={qty} value={qty} />)}
-              </datalist>
-            </div>
-            <Field field="minPackQty" label={t("master.part.minPackQty", "최소불출단위수량(자재)")}>
-              <QtyInput value={Number(form.minPackQty) || 0} onChange={(n) => setField("minPackQty", n)} fullWidth />
-            </Field>
-            <Field field="lotUnitQty" label={t("master.part.lotUnitQty", "묶음단위수량(생산공정품)")}>
-              <QtyInput value={Number(form.lotUnitQty) || 0} onChange={(n) => setField("lotUnitQty", n)} fullWidth />
-            </Field>
-            <Field field="safetyStock" label={t("master.part.safetyStock")}>
-              <QtyInput value={Number(form.safetyStock) || 0} onChange={(n) => setField("safetyStock", n)} fullWidth />
-            </Field>
-            <Field field="expiryDate" label={t("master.part.expiryDate", "유효기간(일)")}>
-              <QtyInput value={Number(form.expiryDate) || 0} onChange={(n) => setField("expiryDate", n)} fullWidth />
-            </Field>
-            <Field field="expiryExtDays" label={t("master.part.expiryExtDays", "유효기간 연장(일)")}>
-              <QtyInput value={Number(form.expiryExtDays) || 0} onChange={(n) => setField("expiryExtDays", n)} fullWidth />
-            </Field>
-            <Field field="packUnit" label={t("master.part.palletUnit", "팔레트구성단위")}>
-              <QtyInput value={Number(form.packUnit) || 0} onChange={(n) => setField("packUnit", n)} fullWidth />
-            </Field>
-            <FieldSelect field="storageLocation" label={t("master.part.storageLocation", "품목고정 적재로케이션")}
-              options={locationOptions}
-              value={form.storageLocation} onChange={v => setField("storageLocation", v)}
-              disabled={locationLoading} fullWidth wrapperClassName="col-span-2" />
-          </div>
-        </div>
-
-        {/* 비고 */}
-        <div>
-          <FieldLabel field="imageUrl" label={t("master.part.sectionImage", "사진")} />
-          {previewUrl ? (
-            <div className="relative group">
-              {imageError ? (
-                <div className="w-full h-44 rounded-lg border border-border bg-surface flex flex-col items-center justify-center gap-2">
-                  <ImageIcon className="w-8 h-8 text-text-muted" />
-                  <span className="text-xs text-text-muted">
-                    {t("master.part.imageLoadFailed", "이미지를 불러올 수 없습니다")}
-                  </span>
+        {/* 본문 (스크롤 가능) — 구역별 */}
+        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-5">
+          {ITEM_MASTER_SECTIONS.map((section) => {
+            const cols = ORDERED_ITEM_COLUMNS.filter((col) => col.section === section.key);
+            // 이력 구역은 수정할 때만 보인다 (등록 전에는 값이 없다)
+            if (section.key === "audit" && !isEdit) return null;
+            return (
+              <div key={section.key}>
+                <h3 className="text-xs font-semibold text-text-muted mb-2">{section.label}</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {cols.map((col) => (
+                    <ItemField
+                      key={col.key}
+                      col={col}
+                      value={form[col.key]}
+                      onChange={(value) => setField(col.key, value)}
+                      readOnly={!editable(col)}
+                      required={col.required && editable(col)}
+                      className={WIDE.has(col.key) ? "col-span-2" : ""}
+                    />
+                  ))}
                 </div>
-              ) : (
-                <img
-                  src={previewUrl}
-                  alt={form.itemName || form.itemCode}
-                  onError={() => setImageError(true)}
-                  className="w-full h-44 object-contain rounded-lg border border-border bg-surface"
-                />
-              )}
-              <button
-                type="button"
-                onClick={() => setImageDeleteConfirmOpen(true)}
-                className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={saving}
-              className="w-full h-28 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
-            >
-              {saving ? (
-                <RefreshCw className="w-6 h-6 text-text-muted animate-spin" />
-              ) : (
-                <ImageIcon className="w-8 h-8 text-text-muted" />
-              )}
-              <span className="text-xs text-text-muted">
-                {t("master.part.imageUploadHint", "클릭하여 품목 사진 선택")}
-              </span>
-            </button>
-          )}
-          {previewUrl && (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={saving}
-              className="mt-2 w-full text-xs text-primary hover:text-primary/80 flex items-center justify-center gap-1"
-            >
-              <Upload className="w-3.5 h-3.5" />
-              {t("master.part.imageChange", "사진 변경")}
-            </button>
-          )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleImageSelect(file);
-              e.target.value = "";
-            }}
-          />
-        </div>
-
-        <div>
-          <FieldInput field="remark" label={t("common.remark")}
-            value={form.remark} onChange={e => setField("remark", e.target.value)} fullWidth />
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      </div>
       <ConfirmModal
-        isOpen={imageDeleteConfirmOpen}
-        onClose={() => setImageDeleteConfirmOpen(false)}
-        onConfirm={handleImageClear}
-        title={t("common.deleteConfirm", "삭제 확인")}
-        message={t("master.part.imageDeleteConfirm", "품목 사진을 삭제하시겠습니까?")}
-        variant="danger"
+        isOpen={!!cascadeConfirm}
+        onClose={() => setCascadeConfirm(null)}
+        onConfirm={() => {
+          setCascadeConfirm(null);
+          void submit();
+        }}
+        title="연결 정보도 함께 바뀝니다"
+        message={`${(cascadeConfirm ?? []).join("\n")}\n\n이 값을 바꾸면 DB 트리거가 BOM 의 구입유형, 구매 품목·단가의 공급상 정보를 함께 고칩니다. 저장할까요?`}
       />
     </>
   );

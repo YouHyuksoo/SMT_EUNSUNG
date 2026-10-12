@@ -5,15 +5,19 @@
  * @description ID_ITEM 품목 기준정보 관리 페이지
  *
  * 초보자 가이드:
- * 1. **품목 목록**: GET /master/parts API로 실제 DB 데이터 조회
+ * 1. **품목 목록**: GET /master/parts API로 실제 DB 데이터 조회 — ID_ITEM 109개 컬럼 전부
+ * 2. **조회조건**: 품목구분·품목유형·구입유형·품목분류·세트품목구분·공급상·고객·MES 사용은 서버에서 거른다.
+ *    나머지 컬럼은 그리드 머리글 필터로 거른다.
  * 3. **CRUD**: 추가/수정/삭제 모두 API를 통해 DB에 반영
  */
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Search, Package, RefreshCw, Download } from "lucide-react";
-import { Card, CardContent, Button, Input, ConfirmModal } from "@/components/ui";
+import { Plus, Search, Package, RefreshCw } from "lucide-react";
+import { Card, CardContent, Button, Input, ConfirmModal, Select } from "@/components/ui";
 import { ComCodeSelect, UseYnSelect } from "@/components/shared";
+import SupplierSelect from "@/components/shared/SupplierSelect";
+import { useCustomerOptions } from "@/hooks/useMasterOptions";
 import DataGrid from "@/components/data-grid/DataGrid";
 import api from "@/services/api";
 import { Part } from "./types";
@@ -31,10 +35,18 @@ export default function PartPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [partTypeFilter, setPartTypeFilter] = useState("");
   const [mesDisplayYnFilter, setMesDisplayYnFilter] = useState("");
+  /** 서버에서 거르는 코드 컬럼 — 키는 /master/parts 조회 파라미터 이름 */
+  const [codeFilters, setCodeFilters] = useState({
+    itemDivision: "", lineType: "", itemClass: "", setItemYn: "", supplierCode: "", customerCode: "",
+  });
+  const setCodeFilter = (key: keyof typeof codeFilters) => (value: string) =>
+    setCodeFilters((prev) => ({ ...prev, [key]: value }));
+  const { options: customerOptions } = useCustomerOptions();
+  const customerFilterOptions = useMemo(
+    () => [{ value: "", label: "고객: 전체" }, ...customerOptions.map((o) => ({ ...o, label: `고객: ${o.label}` }))],
+    [customerOptions],
+  );
 
-  const [erpSyncing, setErpSyncing] = useState(false);
-  const [erpSyncConfirmOpen, setErpSyncConfirmOpen] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [editingPart, setEditingPart] = useState<Part | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Part | null>(null);
@@ -55,6 +67,9 @@ export default function PartPage() {
       if (partTypeFilter) params.itemType = partTypeFilter;
       if (mesDisplayYnFilter) params.mesDisplayYn = mesDisplayYnFilter;
       if (debouncedSearch) params.search = debouncedSearch;
+      for (const [key, value] of Object.entries(codeFilters)) {
+        if (value) params[key] = value;
+      }
 
       const partsRes = await api.get("/master/parts", { params });
       const partsBody = partsRes.data;
@@ -67,7 +82,7 @@ export default function PartPage() {
     } finally {
       setLoading(false);
     }
-  }, [partTypeFilter, mesDisplayYnFilter, debouncedSearch]);
+  }, [partTypeFilter, mesDisplayYnFilter, debouncedSearch, codeFilters]);
 
   /** 초기 로드 */
   useEffect(() => { fetchParts(); }, [fetchParts]);
@@ -109,22 +124,6 @@ export default function PartPage() {
     fetchParts();
   }, [fetchParts]);
 
-  const handleErpSync = useCallback(async () => {
-    setErpSyncConfirmOpen(false);
-    setErpSyncing(true);
-    setSyncResult(null);
-    try {
-      const res = await api.post("/interface/inbound/item-master");
-      const { insert, update } = res.data.data ?? {};
-      setSyncResult({ ok: true, msg: t("master.part.erpSyncDone", "동기화 완료 — 신규 {{insert}}건, 변경 {{update}}건", { insert: insert ?? 0, update: update ?? 0 }) });
-      fetchParts();
-    } catch (e: any) {
-      setSyncResult({ ok: false, msg: t("master.part.erpSyncFailed", "동기화 실패: {{message}}", { message: e?.response?.data?.message ?? e.message }) });
-    } finally {
-      setErpSyncing(false);
-    }
-  }, [fetchParts]);
-
   return (
     <div className="flex h-full animate-fade-in">
       {/* 좌측: 메인 콘텐츠 */}
@@ -137,14 +136,6 @@ export default function PartPage() {
             <p className="text-text-muted mt-1">{t("master.part.subtitle")} ({total}건)</p>
           </div>
           <div className="flex gap-2 items-center">
-            {syncResult && (
-              <span className={`text-xs px-3 py-1.5 rounded border ${syncResult.ok ? "bg-green-50 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700" : "bg-red-50 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700"}`}>
-                {syncResult.msg}
-              </span>
-            )}
-            <Button variant="secondary" size="sm" onClick={() => setErpSyncConfirmOpen(true)} disabled={erpSyncing}>
-              <Download className={`w-4 h-4 mr-1 ${erpSyncing ? "animate-bounce" : ""}`} />{t("master.part.erpSync", "ERP 동기화")}
-            </Button>
             <Button variant="secondary" size="sm" onClick={() => { fetchParts(); }}>
               <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />{t("common.refresh")}
             </Button>
@@ -167,16 +158,34 @@ export default function PartPage() {
             rowClassName={(row) => row.mesDisplayYn === "N" ? "!text-red-500 dark:!text-red-400" : ""}
             toolbarLeft={
               <div className="flex flex-wrap gap-3 flex-1 min-w-0">
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-[16rem]">
                   <Input placeholder={t("master.part.searchPlaceholder")} value={searchText}
                     onChange={e => handleSearch(e.target.value)}
                     leftIcon={<Search className="w-4 h-4" />} fullWidth />
                 </div>
                 <div className="w-40 flex-shrink-0">
-                  <ComCodeSelect groupCode="ITEM_TYPE" value={partTypeFilter} onChange={handleTypeFilter} labelPrefix={t("master.part.type")} fullWidth />
+                  <ComCodeSelect groupCode="ITEM DIVISION" value={codeFilters.itemDivision} onChange={setCodeFilter("itemDivision")} labelPrefix="품목구분" fullWidth />
+                </div>
+                <div className="w-40 flex-shrink-0">
+                  <ComCodeSelect groupCode="ITEM TYPE" value={partTypeFilter} onChange={handleTypeFilter} labelPrefix="품목유형" fullWidth />
+                </div>
+                <div className="w-44 flex-shrink-0">
+                  <ComCodeSelect groupCode="LINE TYPE" value={codeFilters.lineType} onChange={setCodeFilter("lineType")} labelPrefix="구입유형" fullWidth />
+                </div>
+                <div className="w-48 flex-shrink-0">
+                  <ComCodeSelect groupCode="ITEM CLASS" value={codeFilters.itemClass} onChange={setCodeFilter("itemClass")} labelPrefix="품목분류" fullWidth />
+                </div>
+                <div className="w-44 flex-shrink-0">
+                  <ComCodeSelect groupCode="SET ITEM YN" value={codeFilters.setItemYn} onChange={setCodeFilter("setItemYn")} labelPrefix="세트품목구분" fullWidth />
+                </div>
+                <div className="w-48 flex-shrink-0">
+                  <SupplierSelect includeAll labelPrefix="공급상" value={codeFilters.supplierCode} onChange={setCodeFilter("supplierCode")} fullWidth />
+                </div>
+                <div className="w-48 flex-shrink-0">
+                  <Select options={customerFilterOptions} value={codeFilters.customerCode} onChange={setCodeFilter("customerCode")} fullWidth aria-label="고객" />
                 </div>
                 <div className="w-36 flex-shrink-0">
-                  <UseYnSelect value={mesDisplayYnFilter} onChange={setMesDisplayYnFilter} fullWidth />
+                  <UseYnSelect value={mesDisplayYnFilter} onChange={setMesDisplayYnFilter} labelPrefix="MES 사용" fullWidth />
                 </div>
               </div>
             }
@@ -205,14 +214,6 @@ export default function PartPage() {
         onConfirm={handleDeleteConfirm}
         variant="danger"
         message={t("master.part.deleteConfirmMessage", "'{{itemCode}} ({{itemName}})'을(를) 삭제하시겠습니까?", { itemCode: deleteTarget?.itemCode || "", itemName: deleteTarget?.itemName || "" })}
-      />
-
-      <ConfirmModal
-        isOpen={erpSyncConfirmOpen}
-        onClose={() => setErpSyncConfirmOpen(false)}
-        onConfirm={handleErpSync}
-        title={t("master.part.erpSync", "ERP 동기화")}
-        message={t("master.part.erpSyncConfirmMessage", "ERP 품목 마스터를 동기화하시겠습니까? ERP의 전체 품목이 MES에 추가/변경됩니다.")}
       />
     </div>
   );

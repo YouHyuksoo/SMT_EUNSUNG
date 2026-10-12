@@ -9,7 +9,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException, ConflictException } from '@nestjs/common';
+import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { PartService } from './part.service';
 import { ItemMaster } from '../../../entities/item-master.entity';
@@ -101,21 +101,35 @@ describe('PartService', () => {
       const dto = {
         itemCode: 'ITEM01',
         itemName: 'Part1',
-        itemType: 'RM',
+        lineType: 'G',
+        itemDivision: 'R',
       } as any;
-      const created = { ...dto, useYn: 'Y' } as ItemMaster;
+      const created = { ...dto } as ItemMaster;
       mockRepo.findOne.mockResolvedValue(null);
       mockRepo.create.mockReturnValue(created);
       mockRepo.save.mockResolvedValue(created);
 
       // Act
-      const result = await target.create(dto, 1);
+      const result = await target.create(dto, 1, 'USER1');
 
       // Assert
       expect(result).toEqual(created);
       expect(mockRepo.findOne).toHaveBeenCalledWith({
         where: { itemCode: 'ITEM01', organizationId: 1 },
       });
+      // 품목구분은 보낸 값 그대로(예전에는 품목유형을 넣었다), 비운 NOT NULL 칸은 등록 기본값
+      expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+        itemDivision: 'R', lineType: 'G', itemType: 'T', isSplittable: 'N', rev: 'C',
+        spec: '*', itemUom: 'EA', routeNo: '*', organizationId: 1, createdBy: 'USER1',
+        dateend: new Date('9999-12-31T00:00:00+09:00'),
+      }));
+    });
+
+    it('rejects create without a NOT NULL column that has no default', async () => {
+      mockRepo.findOne.mockResolvedValue(null);
+      await expect(target.create({ itemCode: 'ITEM01', itemName: 'P', lineType: 'G' } as any, 1))
+        .rejects.toThrow(BadRequestException);
+      expect(mockRepo.save).not.toHaveBeenCalled();
     });
 
     it('should throw ConflictException when item code exists', async () => {
@@ -166,10 +180,8 @@ describe('PartService', () => {
         organizationId: 2,
       } as any, 1);
 
-      expect(mockRepo.update).toHaveBeenCalledWith(
-        { itemCode: 'ITEM01', organizationId: 1 },
-        { itemName: 'New' },
-      );
+      const payload = mockRepo.update.mock.calls[0][1] as Record<string, unknown>;
+      expect(Object.keys(payload).sort()).toEqual(['itemName', 'updatedAt', 'updatedBy']);
     });
 
     it('does not pass arbitrary fields from update payload to the repository', async () => {
@@ -186,10 +198,37 @@ describe('PartService', () => {
         externalSource: 'ERP',
       } as any, 1);
 
-      expect(mockRepo.update).toHaveBeenCalledWith(
-        { itemCode: 'ITEM01', organizationId: 1 },
-        { itemName: 'New' },
-      );
+      const payload = mockRepo.update.mock.calls[0][1] as Record<string, unknown>;
+      expect(Object.keys(payload).sort()).toEqual(['itemName', 'updatedAt', 'updatedBy']);
+    });
+
+    // 트리거(TRG_ID_ITEM_UPD)는 SET 에 들어가기만 해도 돈다 — 안 바뀐 컬럼은 SET 하지 않는다
+    it('sets only columns whose value changed', async () => {
+      const existing = {
+        itemCode: 'ITEM01', itemName: 'Old', lineType: 'G', supplierCode: 'IP', customerCode: null,
+        safetyStock: 10, dateset: new Date('2020-12-31T00:00:00+09:00'), organizationId: 1,
+      } as unknown as ItemMaster;
+      mockRepo.findOne.mockResolvedValue(existing);
+      mockRepo.update.mockResolvedValue({ affected: 1 } as any);
+
+      await target.update('ITEM01', {
+        itemName: 'Old', lineType: 'G', supplierCode: 'IP', customerCode: '',
+        safetyStock: 10, dateset: '2020-12-31', itemType: 'S',
+      } as any, 1);
+
+      const payload = mockRepo.update.mock.calls[0][1] as Record<string, unknown>;
+      expect(Object.keys(payload).sort()).toEqual(['itemType', 'updatedAt', 'updatedBy']);
+    });
+
+    it('does not update when nothing changed', async () => {
+      mockRepo.findOne.mockResolvedValue({ itemCode: 'ITEM01', itemName: 'Same', organizationId: 1 } as ItemMaster);
+      await target.update('ITEM01', { itemName: 'Same' } as any, 1);
+      expect(mockRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects clearing a NOT NULL column', async () => {
+      mockRepo.findOne.mockResolvedValue({ itemCode: 'ITEM01', itemName: 'Old', organizationId: 1 } as ItemMaster);
+      await expect(target.update('ITEM01', { itemDivision: '' } as any, 1)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -211,23 +250,6 @@ describe('PartService', () => {
   });
 
   // ─── findByType ───
-  describe('updateImage', () => {
-    it('should update imageUrl and return the part', async () => {
-      const existing = { itemCode: 'ITEM01', imageUrl: null } as ItemMaster;
-      const updated = { itemCode: 'ITEM01', imageUrl: '/uploads/parts/item.png' } as ItemMaster;
-      mockRepo.findOne.mockResolvedValueOnce(existing).mockResolvedValueOnce(updated);
-      mockRepo.update.mockResolvedValue({ affected: 1 } as any);
-
-      const result = await target.updateImage('ITEM01', '/uploads/parts/item.png', 1);
-
-      expect(mockRepo.update).toHaveBeenCalledWith(
-        { itemCode: 'ITEM01', organizationId: 1 },
-        { imageUrl: '/uploads/parts/item.png' },
-      );
-      expect(result).toEqual(updated);
-    });
-  });
-
   describe('findByType', () => {
     it('should return active parts of given type', async () => {
       // Arrange
