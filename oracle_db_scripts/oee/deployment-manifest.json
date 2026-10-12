@@ -6,6 +6,7 @@
     "12_resource_management_contract.sql",
     "13_day_night_shift_contract.sql",
     "15_downtime_line_code.sql",
+    "17_view_product_line.sql",
     "04_view_plan_time.sql",
     "05_view_live.sql",
     "06_proc_build_summary.sql"

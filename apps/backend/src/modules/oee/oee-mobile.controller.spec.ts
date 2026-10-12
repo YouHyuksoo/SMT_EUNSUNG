@@ -57,9 +57,12 @@ describe('OeeMobileController', () => {
       {
         processCode: 'SMT',
         resourceType: 'LINE',
-        resourceCode: '01',
-        resourceName: 'A',
+        lineCode: '01',
+        lineName: 'A',
         parentLineCode: '01',
+        activeYn: 'N',
+        mesDisplayYn: 'Y',
+        sortOrder: 1,
       },
     ];
     service.listResources.mockResolvedValue(resources);

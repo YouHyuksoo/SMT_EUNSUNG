@@ -65,12 +65,19 @@ export class WorkResultService {
     organizationId?: number,
     machineCode?: string,
     excludeSmt?: boolean,
+    lineCodes?: string[],
   ) {
     const organization = this.requireOrganization(organizationId);
     const params: unknown[] = [organization, fromDate, toDate];
     let where = `r.ORGANIZATION_ID = :1
       AND r.RUN_DATE >= TO_DATE(:2,'YYYY-MM-DD') AND r.RUN_DATE < TO_DATE(:3,'YYYY-MM-DD') + 1`;
-    if (lineCode) {
+    if (lineCodes?.length) {
+      const placeholders = lineCodes.map(
+        (_, index) => `:${params.length + index + 1}`,
+      );
+      params.push(...lineCodes);
+      where += ` AND r.LINE_CODE IN (${placeholders.join(', ')})`;
+    } else if (lineCode) {
       params.push(lineCode);
       where += ` AND r.LINE_CODE = :${params.length}`;
     }
@@ -95,6 +102,7 @@ export class WorkResultService {
       where += ` AND (UPPER(r.ITEM_CODE) LIKE :${i} OR UPPER(r.MODEL_NAME) LIKE :${i} OR UPPER(r.MACHINE_CODE) LIKE :${i}
         OR EXISTS (SELECT 1 FROM IMCN_MACHINE mk WHERE mk.MACHINE_CODE = r.MACHINE_CODE AND mk.ORGANIZATION_ID = r.ORGANIZATION_ID AND UPPER(mk.MACHINE_NAME) LIKE :${i}))`;
     }
+    const rowLimit = lineCodes?.length ? 101 : 500;
     return this.q(
       `SELECT * FROM (
         SELECT r.RUN_NO AS "runNo",
@@ -121,7 +129,7 @@ export class WorkResultService {
         FROM IP_PRODUCT_RUN_CARD r
         WHERE ${where}
         ORDER BY r.RUN_DATE DESC, r.RUN_NO
-      ) WHERE ROWNUM <= 500`,
+       ) WHERE ROWNUM <= ${rowLimit}`,
       params,
     );
   }

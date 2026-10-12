@@ -10,6 +10,7 @@ const routineDeploymentFiles = [
   '12_resource_management_contract.sql',
   '13_day_night_shift_contract.sql',
   '15_downtime_line_code.sql',
+  '17_view_product_line.sql',
   '04_view_plan_time.sql',
   '05_view_live.sql',
   '06_proc_build_summary.sql',
@@ -133,6 +134,10 @@ describe('OEE MOBILE prerequisite DDL', () => {
     join(__dirname, '../../../../../oracle_db_scripts/oee/05_view_live.sql'),
     'utf8',
   );
+  const productLineView = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/17_view_product_line.sql'),
+    'utf8',
+  );
   const summaryProcedure = readFileSync(
     join(__dirname, '../../../../../oracle_db_scripts/oee/06_proc_build_summary.sql'),
     'utf8',
@@ -141,6 +146,23 @@ describe('OEE MOBILE prerequisite DDL', () => {
     join(__dirname, '../../../../../oracle_db_scripts/oee/13_day_night_shift_contract.sql'),
     'utf8',
   );
+
+  it('projects OEE product lines without active or display filtering', () => {
+    expect(productLineView.trimStart()).toMatch(
+      /^CREATE OR REPLACE NONEDITIONABLE VIEW V_OEE_PRODUCT_LINE\b/,
+    );
+    expect(productLineView).toMatch(/\bFROM\s+IP_PRODUCT_LINE\s+l\b/i);
+    expect(productLineView).not.toMatch(/\bOEE_RESOURCE\b/i);
+    expect(productLineView).toContain("l.PROCESS_CODE IN ('SMT', 'ASSY')");
+    expect(productLineView).toContain("l.RESOURCE_TYPE IN ('LINE', 'CELL')");
+    expect(productLineView).toContain('l.LINE_CODE IS NOT NULL');
+    expect(productLineView).toContain('l.LINE_NAME IS NOT NULL');
+    expect(productLineView).toContain('l.ACTIVE_YN');
+    expect(productLineView).toContain('l.MES_DISPLAY_YN');
+    expect(productLineView).toContain('l.MES_DISPLAY_SEQUENCE AS SORT_ORDER');
+    expect(productLineView).not.toMatch(/ACTIVE_YN\s*=|MES_DISPLAY_YN\s*=/i);
+    expect(extractTargets(productLineView, 'write')).toEqual([]);
+  });
 
   it('contains the event contract and guarded Oracle objects', () => {
     expect(source.trimStart()).toMatch(/^DECLARE\b/);

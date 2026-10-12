@@ -172,7 +172,12 @@ export class OeeMultiEntryService {
       organization,
     );
     return this.dataSource.transaction(async (manager) => {
-      await this.lockLineMasters(manager, organization, lineCodes);
+      await this.lockLineMasters(
+        manager,
+        organization,
+        dto.processCode,
+        lineCodes,
+      );
       const openRows = rowsOf(
         await manager.query(
           `SELECT ${EVENT_COLUMNS}
@@ -256,7 +261,12 @@ export class OeeMultiEntryService {
       const lineCodes = [
         ...new Set(dto.items.map((item) => item.lineCode)),
       ].sort((left, right) => left.localeCompare(right));
-      await this.lockLineMasters(manager, organization, lineCodes);
+      await this.lockLineMasters(
+        manager,
+        organization,
+        dto.processCode,
+        lineCodes,
+      );
       const targetRows = rowsOf(
         await manager.query(
           `SELECT ${EVENT_COLUMNS}
@@ -321,6 +331,7 @@ export class OeeMultiEntryService {
   private async lockLineMasters(
     manager: EntityManager,
     organization: number,
+    processCode: OeeMultiEntryProcessCode,
     lineCodes: string[],
   ): Promise<void> {
     const sortedLineCodes = [...new Set(lineCodes)].sort((left, right) =>
@@ -331,10 +342,14 @@ export class OeeMultiEntryService {
         `SELECT LINE_CODE AS "lineCode", ORGANIZATION_ID AS "organizationId"
          FROM IP_PRODUCT_LINE
         WHERE ORGANIZATION_ID = :1
-          AND LINE_CODE IN (${this.inPlaceholders(sortedLineCodes, 2)})
+          AND PROCESS_CODE = :2
+          AND RESOURCE_TYPE IN ('LINE', 'CELL')
+          AND LINE_CODE IS NOT NULL
+          AND LINE_NAME IS NOT NULL
+          AND LINE_CODE IN (${this.inPlaceholders(sortedLineCodes, 3)})
         ORDER BY LINE_CODE, ORGANIZATION_ID
         FOR UPDATE`,
-        [organization, ...sortedLineCodes],
+        [organization, processCode, ...sortedLineCodes],
       ),
     );
     const lockedKeys = new Set(
@@ -567,7 +582,7 @@ export class OeeMultiEntryService {
 
   private assertKnownLineCodes(
     lineCodes: string[],
-    resources: Array<{ processCode: string; resourceCode: string }>,
+    resources: Array<{ processCode: string; lineCode: string }>,
     processCode: OeeMultiEntryProcessCode,
   ): void {
     const known = new Set(
@@ -575,9 +590,9 @@ export class OeeMultiEntryService {
         .filter(
           (resource) =>
             resource.processCode === processCode &&
-            typeof resource.resourceCode === 'string',
+            typeof resource.lineCode === 'string',
         )
-        .map((resource) => resource.resourceCode),
+        .map((resource) => resource.lineCode),
     );
     if (lineCodes.some((lineCode) => !known.has(lineCode))) {
       throw new BadRequestException('인증 테넌트의 현재 공정 라인이 아닙니다.');
