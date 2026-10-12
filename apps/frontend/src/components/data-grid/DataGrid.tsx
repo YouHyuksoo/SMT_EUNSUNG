@@ -146,7 +146,8 @@ function DataGrid<T>({
   exportFileName = "export",
   exportExcludeColumns,
   toolbarLeft,
-  enableColumnPinning = false,
+  // 모든 그리드에서 컬럼 고정을 쓸 수 있게 기본으로 켠다 (화면마다 켜고 안 켜서 들쭉날쭉했다)
+  enableColumnPinning = true,
   defaultPinnedColumns,
   selectedRowId,
   getRowId,
@@ -621,7 +622,7 @@ function DataGrid<T>({
                                 e.stopPropagation();
                                 header.column.pin(pinned ? false : 'left');
                               }}
-                              className={`flex-shrink-0 p-0.5 rounded hover:bg-primary/10 transition-colors ${pinned ? 'text-primary' : 'text-text-muted opacity-0 group-hover/resize:opacity-50 hover:!opacity-100'}`}
+                              className={`flex-shrink-0 p-0.5 rounded hover:bg-primary/10 transition-colors ${pinned ? 'text-primary' : 'text-text-muted opacity-30 group-hover/resize:opacity-60 hover:!opacity-100'}`}
                               title={pinned ? '고정 해제' : '컬럼 고정'}
                             >
                               {pinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
