@@ -6,7 +6,6 @@ import {
   PATH_METADATA,
 } from '@nestjs/common/constants';
 import { OeeController } from './oee.controller';
-import { OeeDashboardService } from './oee-dashboard.service';
 import { OeeLogService } from './oee-log.service';
 import { OeeMasterService } from './oee-master.service';
 import { SmtCloseRunPreviewService } from './smt-close-run-preview.service';
@@ -16,7 +15,6 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 describe('OeeController SMT close-run preview', () => {
   const master = {} as OeeMasterService;
   const log = {} as OeeLogService;
-  const dashboard = {} as OeeDashboardService;
   const sourcePreview = {
     preview: jest.fn().mockResolvedValue({ status: 'SOURCE_VALID' }),
   };
@@ -43,7 +41,6 @@ describe('OeeController SMT close-run preview', () => {
     const target = new OeeController(
       master,
       log,
-      dashboard,
       sourcePreview as unknown as SmtCloseRunPreviewService,
     );
     const query = {

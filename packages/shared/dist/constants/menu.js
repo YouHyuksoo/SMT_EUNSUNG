@@ -33,9 +33,7 @@ exports.MENU_ITEMS = [
         labelEn: 'OEE Management',
         labelVi: 'Quản lý OEE',
         icon: 'Activity',
-        children: [
-            { key: 'oee-dashboard', label: '공정별 OEE 종합', icon: 'Activity', path: '/oee/dashboard' },
-        ],
+        children: [],
     },
     {
         key: 'material',

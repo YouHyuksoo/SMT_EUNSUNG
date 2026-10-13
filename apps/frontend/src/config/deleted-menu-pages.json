@@ -142,7 +142,8 @@
     "/workflow",
     "/oee/entry",
     "/inventory-query/barcode-check",
-    "/report/fg-issue"
+    "/report/fg-issue",
+    "/oee/dashboard"
   ],
   "forbiddenCodes": [
     "OEE_DRILLDOWN",
@@ -262,7 +263,8 @@
     "OEE_ENTRY",
     "INV_BARCODE_CHECK",
     "OUTSOURCING",
-    "RPT_FG_ISSUE"
+    "RPT_FG_ISSUE",
+    "OEE_DASHBOARD"
   ],
   "deletedRouteDirs": [
     "apps/frontend/src/app/(authenticated)/oee/dashboard/drilldown",
@@ -311,7 +313,8 @@
     "apps/frontend/src/config/workflowConfig.ts",
     "apps/frontend/src/config/workflowMap.ts",
     "apps/frontend/src/app/(authenticated)/inventory-query/barcode-check",
-    "apps/frontend/src/app/(authenticated)/report/fg-issue"
+    "apps/frontend/src/app/(authenticated)/report/fg-issue",
+    "apps/frontend/src/app/(authenticated)/oee/dashboard"
   ],
   "deletedRegistryFiles": [
     "apps/frontend/src/components/layout/page-registries/oee__dashboard__drilldown.generated.ts",
@@ -424,7 +427,8 @@
     "apps/frontend/src/components/layout/page-registries/inventory__transaction.generated.ts",
     "apps/frontend/src/components/layout/page-registries/oee__entry.generated.ts",
     "apps/frontend/src/components/layout/page-registries/inventory-query__barcode-check.generated.ts",
-    "apps/frontend/src/components/layout/page-registries/report__fg-issue.generated.ts"
+    "apps/frontend/src/components/layout/page-registries/report__fg-issue.generated.ts",
+    "apps/frontend/src/components/layout/page-registries/oee__dashboard.generated.ts"
   ],
   "expectedTopLevelMenuCodes": [
     "MONITORING",

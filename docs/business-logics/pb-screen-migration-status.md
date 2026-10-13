@@ -4,7 +4,7 @@ sources:
   - apps/frontend/scripts/data/pb-screen-inventory.json
   - apps/frontend/scripts/data/pb-screen-exclusions.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 14121b17
+verifiedCommit: e5b935ec
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -24,7 +24,7 @@ verifiedCommit: 14121b17
 | 미착수 | 43 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 175개 / 웹 신규 29개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 175개 / 웹 신규 28개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 

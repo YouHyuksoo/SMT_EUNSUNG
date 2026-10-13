@@ -15,7 +15,6 @@ import { EquipDowntimeReason } from '../../entities/equip-downtime-reason.entity
 import { OeeController } from './oee.controller';
 import { OeeMasterService } from './oee-master.service';
 import { OeeLogService } from './oee-log.service';
-import { OeeDashboardService } from './oee-dashboard.service';
 import { ProdLineMaster } from '../../entities/prod-line-master.entity';
 import { OeeMobileController } from './oee-mobile.controller';
 import { OeeMobileService } from './oee-mobile.service';
@@ -41,7 +40,6 @@ import { SmtCloseRunPreviewService } from './smt-close-run-preview.service';
   providers: [
     OeeMasterService,
     OeeLogService,
-    OeeDashboardService,
     OeeMobileService,
     OeeMultiEntryService,
     SmtCloseRunPreviewService,

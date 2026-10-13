@@ -214,7 +214,7 @@ describe('MenuCategoriesService', () => {
       expect(itemRepo.save).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({ organizationId: 7, menuCode: 'SYS_COMPANY', categoryCode: 'SYSTEM' }),
-          expect.objectContaining({ organizationId: 7, menuCode: 'OEE_DASHBOARD', categoryCode: 'OEE' }),
+          expect.objectContaining({ organizationId: 7, menuCode: 'OEE_RESULT_ENTRY', categoryCode: 'OEE' }),
           expect.objectContaining({ organizationId: 7, menuCode: 'SYS_CODE', categoryCode: 'SYSTEM' }),
           expect.objectContaining({ organizationId: 7, menuCode: 'SYS_SCHEDULER', categoryCode: 'SYSTEM' }),
         ]),
@@ -255,7 +255,7 @@ describe('MenuCategoriesService', () => {
         { organizationId: 7, categoryCode: 'SYSTEM' },
       ] as any);
       itemRepo.find.mockResolvedValue([
-        { menuCode: 'OEE_DASHBOARD' },
+        { menuCode: 'OEE_RESULT_ENTRY' },
       ] as any);
       itemRepo.save.mockImplementation(async (e: any) => e);
       tx.run.mockImplementationOnce(async (cb: any) =>
@@ -270,7 +270,7 @@ describe('MenuCategoriesService', () => {
 
       expect(itemRepo.save).toHaveBeenCalledWith(
         expect.arrayContaining([
-          expect.objectContaining({ menuCode: 'OEE_MULTI_ENTRY', categoryCode: 'OEE', sortOrder: 20 }),
+          expect.objectContaining({ menuCode: 'OEE_MULTI_ENTRY', categoryCode: 'OEE', sortOrder: 10 }),
         ]),
       );
     });

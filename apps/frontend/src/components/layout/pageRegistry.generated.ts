@@ -402,11 +402,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/oee/dashboard": {
-      const mod = await import("./page-registries/oee__dashboard.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/oee/equip-ops-analysis": {
       const mod = await import("./page-registries/oee__equip-ops-analysis.generated");
       component = mod.getPageComponent();

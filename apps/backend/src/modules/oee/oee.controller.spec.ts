@@ -4,7 +4,6 @@ import { GUARDS_METADATA, METHOD_METADATA, PATH_METADATA } from '@nestjs/common/
 import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { OeeController } from './oee.controller';
-import { OeeDashboardService } from './oee-dashboard.service';
 import { OeeLogService } from './oee-log.service';
 import { OeeMasterService } from './oee-master.service';
 import {
@@ -26,13 +25,6 @@ type AuthenticatedOeeController = {
   updateReason(dto: ReasonUpsertDto, organizationId: number): Promise<unknown>;
   loadLog(resourceId: string, workDate: string, shift: string, organizationId: number): Promise<unknown>;
   saveLog(dto: LogSaveDto, organizationId: number, userId: string): Promise<unknown>;
-  dashboardOverview(date: string | undefined, organizationId: number): Promise<unknown>;
-  dashboardDrilldown(
-    processCode: string,
-    date: string | undefined,
-    organizationId: number,
-  ): Promise<unknown>;
-  dashboardLoss(date: string | undefined, organizationId: number): Promise<unknown>;
   previewSmtCloseRun(query: unknown, organizationId: number): Promise<unknown>;
 };
 
@@ -50,11 +42,6 @@ describe('OeeController', () => {
     loadShift: jest.fn().mockResolvedValue([]),
     saveShift: jest.fn().mockResolvedValue(undefined),
   } as unknown as OeeLogService;
-  const dashboard = {
-    overview: jest.fn().mockResolvedValue({}),
-    drilldown: jest.fn().mockResolvedValue({}),
-    lossPareto: jest.fn().mockResolvedValue({}),
-  } as unknown as OeeDashboardService;
   const smtCloseRunPreview = {
     preview: jest.fn().mockResolvedValue({}),
   } as unknown as SmtCloseRunPreviewService;
@@ -78,7 +65,7 @@ describe('OeeController', () => {
   });
 
   it('forwards authenticated organization and user values to every endpoint', async () => {
-    const target = new OeeController(master, log, dashboard, smtCloseRunPreview) as unknown as AuthenticatedOeeController;
+    const target = new OeeController(master, log, smtCloseRunPreview) as unknown as AuthenticatedOeeController;
     const resourceDto = {
       lineCode: '01',
       processCode: 'SMT',
@@ -114,9 +101,6 @@ describe('OeeController', () => {
     await target.updateReason(reasonDto, 7);
     await target.loadLog('10', '2026-08-20', 'DAY', 7);
     await target.saveLog(logDto, 7, 'authenticated-user');
-    await target.dashboardOverview('2026-08-20', 7);
-    await target.dashboardDrilldown('SMT', '2026-08-20', 7);
-    await target.dashboardLoss('2026-08-20', 7);
 
     expect(master.listResources).toHaveBeenCalledWith(7);
     expect(master.listResourceCandidates).toHaveBeenCalledWith(7);
@@ -128,8 +112,5 @@ describe('OeeController', () => {
     expect(master.upsertReason).toHaveBeenNthCalledWith(2, reasonDto, true, 7);
     expect(log.loadShift).toHaveBeenCalledWith(10, '2026-08-20', 'DAY', 7);
     expect(log.saveShift).toHaveBeenCalledWith(logDto, 7, 'authenticated-user');
-    expect(dashboard.overview).toHaveBeenCalledWith('2026-08-20', 7);
-    expect(dashboard.drilldown).toHaveBeenCalledWith('SMT', '2026-08-20', 7);
-    expect(dashboard.lossPareto).toHaveBeenCalledWith('2026-08-20', 7);
   });
 });

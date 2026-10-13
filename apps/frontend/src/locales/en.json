@@ -472,7 +472,6 @@
     "system.improvementRequests": "Improvement Requests",
     "system.inventoryCloseDate": "Inventory Close Dates",
     "oee": "OEE",
-    "oee.dashboard": "OEE Overview",
     "oee.drilldown": "Resource Drilldown",
     "oee.multiEntry": "OEE Downtime Entry",
     "oee.resultEntry": "Tablet Result Entry",

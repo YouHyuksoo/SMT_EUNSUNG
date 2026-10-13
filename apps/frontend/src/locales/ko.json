@@ -472,7 +472,6 @@
     "system.improvementRequests": "개선요청 관리",
     "system.inventoryCloseDate": "재고마감일자설정",
     "oee": "OEE 관리",
-    "oee.dashboard": "공정별 OEE 종합",
     "oee.drilldown": "리소스 드릴다운",
     "oee.multiEntry": "OEE 비가동 입력",
     "oee.resultEntry": "OEE 실적 입력",

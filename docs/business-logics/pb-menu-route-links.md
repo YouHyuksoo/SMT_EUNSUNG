@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 14121b17
+verifiedCommit: e5b935ec
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 14121b17
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 205 | 175 | 29 | 1 |
+| 204 | 175 | 28 | 1 |
 
 ## 전체 연결표
 
@@ -34,7 +34,7 @@ verifiedCommit: 14121b17
 | 기준정보 | 설비마스터 | `EQUIP_MASTER` | `/master/equip` | PB 연결 | `w_mcn_machine_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 표준시간 관리 | `OEE_MST_STD_TIME` | `/oee/master/standard-time` | 웹 신규 |  | PB 대응 없음 |
 | 기준정보 | 설비 비가동 사유코드 | `OEE_MST_IDLE_REASON` | `/oee/master/idle-reason` | 웹 신규 |  | PB 대응 없음 |
-| 기준정보 | 설비별 비가동 사유 연계 | `OEE_MST_EQUIP_REASON` | `/oee/master/equip-reason-map` | 웹 신규 |  | PB 대응 없음 |
+| 기준정보 | 설비별 비가동코드 관리 | `OEE_MST_EQUIP_REASON` | `/oee/master/equip-reason-map` | 웹 신규 |  | PB 대응 없음 |
 | 기준정보 | 공정관리 | `MST_PROCESS` | `/master/process` | PB 연결 | `w_pln_workstage_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 생산라인관리 | `MST_PROD_LINE` | `/master/prod-line` | PB 연결 | `w_pln_line_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 라우팅관리 | `MST_ROUTING` | `/master/routing` | 웹 신규 |  | PB 대응 없음 |
@@ -62,7 +62,6 @@ verifiedCommit: 14121b17
 | 설비관리 | 솔더점도 검사결과조회 | `EQUIP_RESULT_SOLDER` | `/equipment/result-query/solder` | PB 연결 | `w_qc_machine_inspect_data_solder_query` | PB 메뉴 인벤토리 |
 | 설비관리 | REFLOW 작업결과조회 | `EQUIP_RESULT_REFLOW` | `/equipment/result-query/reflow` | PB 연결 | `w_qc_machine_inspect_data_reflow_query` | PB 메뉴 인벤토리 |
 | 설비관리 | 성능 검사결과조회 | `EQUIP_RESULT_PERFORMANCE` | `/equipment/result-query/performance` | PB 연결 | `w_qc_machine_inspect_data_eol_query` | PB 메뉴 인벤토리 |
-| OEE 관리 | 공정별 OEE 종합 | `OEE_DASHBOARD` | `/oee/dashboard` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | OEE 비가동 입력 | `OEE_MULTI_ENTRY` | `/oee/multi-entry` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | OEE 실적 입력 | `OEE_RESULT_ENTRY` | `/oee/result-entry` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | OEE 종합 현황 | `OEE_OVERALL_STATUS` | `/oee/overall-status` | 웹 신규 |  | PB 대응 없음 |
