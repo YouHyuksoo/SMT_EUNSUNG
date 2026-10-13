@@ -22,6 +22,7 @@ import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import EquipSelect from '@/components/shared/EquipSelect';
 import LineSelect from '@/components/shared/LineSelect';
 import ProcessSelect from '@/components/shared/ProcessSelect';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -241,10 +242,17 @@ export default function MoldIssuePage() {
             {searched ? `${shown}/${total}건` : '조회조건을 선택하세요'}
           </p>
         </div>
-        <Button size="sm" onClick={search} disabled={loading}>
-          <Search className="mr-1 h-4 w-4" />조회
-        </Button>
       </header>
+
+      <ScreenTabs
+        tabs={[
+          { key: 'history', label: '출고이력' },
+          { key: 'targets', label: '출고대상(재고)' },
+          { key: 'requests', label: '청구출고' },
+        ]}
+        active={mode}
+        onChange={changeMode}
+      />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
@@ -263,6 +271,9 @@ export default function MoldIssuePage() {
                 value={moldUseStatus} onChange={setMoldUseStatus} className="w-52" />
             </>
           )}
+          <Button size="sm" onClick={search} disabled={loading}>
+            <Search className="mr-1 h-4 w-4" />조회
+          </Button>
         </CardContent>
       </Card>
 
@@ -283,24 +294,6 @@ export default function MoldIssuePage() {
           </CardContent>
         </Card>
       )}
-
-      <nav className="flex gap-1 border-b border-border" aria-label="조회 모드">
-        {([['history', '출고이력'], ['targets', '출고대상(재고)'], ['requests', '청구출고']] as const)
-          .map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => changeMode(key)}
-              className={`px-3 py-1.5 text-sm ${
-                mode === key
-                  ? 'border-b-2 border-primary font-semibold text-text'
-                  : 'text-text-muted'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-      </nav>
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">

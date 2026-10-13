@@ -15,6 +15,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Calendar, RefreshCw, CalendarPlus, Lock, Unlock } from "lucide-react";
 import { Card, CardContent, Button, ConfirmModal } from "@/components/ui";
+import ScreenTabs from "@/components/shared/ScreenTabs";
 import api from "@/services/api";
 import CalendarGrid from "./components/CalendarGrid";
 import DayEditModal from "./components/DayEditModal";
@@ -211,18 +212,15 @@ export default function WorkCalendarPage() {
       </div>
 
       {/* 탭 */}
-      <div className="flex gap-1 flex-shrink-0">
-        {(["calendar", "shift"] as const).map((tab) => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-sm font-medium rounded-t transition-colors
-              ${activeTab === tab
-                ? "bg-white dark:bg-slate-800 text-primary border-b-2 border-primary"
-                : "text-text-muted dark:text-gray-400 hover:text-text dark:hover:text-gray-200"}`}>
-            {tab === "calendar"
-              ? t("master.workCalendar.calendarManagement")
-              : t("master.workCalendar.shiftTimeTab")}
-          </button>
-        ))}
+      <div className="flex-shrink-0">
+        <ScreenTabs
+          tabs={[
+            { key: "calendar", label: t("master.workCalendar.calendarManagement") },
+            { key: "shift", label: t("master.workCalendar.shiftTimeTab"), count: shiftTimes.length },
+          ]}
+          active={activeTab}
+          onChange={setActiveTab}
+        />
       </div>
 
       {activeTab === "calendar" ? (

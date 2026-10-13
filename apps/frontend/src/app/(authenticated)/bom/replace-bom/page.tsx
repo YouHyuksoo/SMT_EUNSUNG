@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import { GitFork, Search } from 'lucide-react';
 import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
 import DateFilter from '@/components/shared/DateFilter';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
 import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
@@ -156,22 +157,16 @@ export default function ReplaceBomPage() {
           </h1>
           <p className="mt-1 text-sm text-text-muted">SET 품목 BOM 을 전개해 구성품별 대체품을 등록·관리합니다</p>
         </div>
-        <nav className="flex flex-wrap gap-1 border-b border-border" aria-label="조회 모드">
-          {([['MANAGE', '대체품 관리'], ['LIST', '대체품 목록']] as const).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setMode(value)}
-              aria-current={mode === value ? 'page' : undefined}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                mode === value ? 'border-b-2 border-primary text-primary' : 'text-text-muted hover:text-text'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
       </header>
+
+      <ScreenTabs
+        tabs={[
+          { key: 'MANAGE', label: '대체품 관리', count: bomRows.length },
+          { key: 'LIST', label: '대체품 목록', count: rows.length },
+        ]}
+        active={mode}
+        onChange={setMode}
+      />
 
       {mode === 'MANAGE' ? (
         <>

@@ -18,6 +18,7 @@ import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DepartmentSelect from '@/components/shared/DepartmentSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import LineSelect from '@/components/shared/LineSelect';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProcessSelect from '@/components/shared/ProcessSelect';
@@ -144,38 +145,23 @@ export default function ProductDestroyPage() {
 
   return (
     <main className="flex h-full min-w-0 flex-col gap-3 p-5">
-      <header className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="flex items-center gap-2 text-xl font-bold text-text">
-            <Trash2 className="h-6 w-6 text-primary" />공정폐기관리
-          </h1>
-          <p className="mt-1 text-sm text-text-muted">
-            시리얼별 공정 폐기를 등록하고 반품 여부를 관리합니다 · 폐기는 삭제가 아니라 검사처리 D 이력으로 쌓인다
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <nav className="flex flex-wrap gap-1 border-b border-border" aria-label="조회 모드">
-            {([['DESTROY', '폐기등록'], ['HISTORY', '폐기이력']] as const).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setMode(value)}
-                aria-current={mode === value ? 'page' : undefined}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  mode === value ? 'border-b-2 border-primary text-primary' : 'text-text-muted hover:text-text'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-          {mode === 'HISTORY' && (
-            <Button size="sm" onClick={searchHistory} disabled={loading}>
-              <Search className="mr-1 h-4 w-4" />조회
-            </Button>
-          )}
-        </div>
+      <header>
+        <h1 className="flex items-center gap-2 text-xl font-bold text-text">
+          <Trash2 className="h-6 w-6 text-primary" />공정폐기관리
+        </h1>
+        <p className="mt-1 text-sm text-text-muted">
+          시리얼별 공정 폐기를 등록하고 반품 여부를 관리합니다 · 폐기는 삭제가 아니라 검사처리 D 이력으로 쌓인다
+        </p>
       </header>
+
+      <ScreenTabs
+        tabs={[
+          { key: 'DESTROY', label: '폐기등록' },
+          { key: 'HISTORY', label: '폐기이력', count: searched ? total : undefined },
+        ]}
+        active={mode}
+        onChange={setMode}
+      />
 
       {mode === 'DESTROY' ? (
         <>
@@ -250,6 +236,9 @@ export default function ProductDestroyPage() {
               <LineSelect aria-label="라인" labelPrefix="라인" value={lineCode} onChange={value => setLineCode(value)} className="w-40" />
               <ProcessSelect aria-label="공정" labelPrefix="공정" value={workstageCode} onChange={value => setWorkstageCode(value)} className="w-44" />
               <DateRangeFilter label="폐기일자" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
+              <Button size="sm" onClick={searchHistory} disabled={loading}>
+                <Search className="mr-1 h-4 w-4" />조회
+              </Button>
               <span className="text-sm text-text-muted">{searched ? `${rows.length}/${total}건` : '조회조건을 입력하세요'}</span>
             </div>
           </Card>

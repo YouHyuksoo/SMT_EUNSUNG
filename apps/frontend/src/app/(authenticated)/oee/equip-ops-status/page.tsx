@@ -14,8 +14,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useActiveInterval } from '@/hooks/useTabActive';
-import { Activity, MonitorDot, PauseCircle, RefreshCw } from 'lucide-react';
+import { Activity, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Select } from '@/components/ui';
 import api from '@/services/api';
 import MonitoringTab from './components/MonitoringTab';
@@ -51,9 +52,9 @@ export default function EquipOpsStatusPage() {
   // 숨겨진 탭에서는 멈추고, 돌아오면 놓친 갱신을 한 번 즉시 실행한다
   useActiveInterval(() => { loadMachines(); }, refreshSec ? refreshSec * 1000 : null, { catchUp: true });
 
-  const tabs: { key: TabValue; label: string; icon: React.ReactNode }[] = [
-    { key: 'monitor', label: '모니터링', icon: <MonitorDot className="w-4 h-4" /> },
-    { key: 'downtime', label: '비가동 처리', icon: <PauseCircle className="w-4 h-4" /> },
+  const tabs: { key: TabValue; label: string }[] = [
+    { key: 'monitor', label: '모니터링' },
+    { key: 'downtime', label: '비가동 처리' },
   ];
 
   return (
@@ -81,23 +82,8 @@ export default function EquipOpsStatusPage() {
       </div>
 
       {/* 탭 네비게이션 */}
-      <div className="border-b border-border flex-shrink-0">
-        <div className="flex gap-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.key
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-text-muted hover:text-text hover:border-border'
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      <div className="flex-shrink-0">
+        <ScreenTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
       </div>
 
       {/* 탭 컨텐츠 */}

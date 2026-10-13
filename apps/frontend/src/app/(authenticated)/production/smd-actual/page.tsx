@@ -22,6 +22,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, ConfirmModal, Input, Modal } from '@/components/ui';
 import api from '@/services/api';
 import { smdActualColumns, smdActualSummaryColumns } from '../planning-columns';
@@ -253,26 +254,15 @@ export default function SmdActualPage() {
         </div>
       </header>
 
-      <div className="flex gap-1 border-b border-border">
-        {([
-          { key: 'shift' as Tab, label: '계획별 주야 실적' },
-          { key: 'list' as Tab, label: '실적 목록' },
-          { key: 'summary' as Tab, label: '라인·모델 합계' },
-        ]).map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => { setTab(t.key); setSelected(null); setShiftSelected(null); }}
-            className={`px-4 py-2 text-sm ${
-              tab === t.key
-                ? 'border-b-2 border-primary font-semibold text-text'
-                : 'text-text-muted'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <ScreenTabs
+        tabs={[
+          { key: 'shift', label: '계획별 주야 실적', count: shiftRows.length },
+          { key: 'list', label: '실적 목록', count: total },
+          { key: 'summary', label: '라인·모델 합계', count: summary.length },
+        ]}
+        active={tab}
+        onChange={(key) => { setTab(key); setSelected(null); setShiftSelected(null); }}
+      />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">

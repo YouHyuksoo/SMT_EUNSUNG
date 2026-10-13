@@ -7,6 +7,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
 import ProcessSelect from '@/components/shared/ProcessSelect';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import api from '@/services/api';
@@ -66,21 +67,15 @@ export default function MagazineLabelHistoryPage() {
       <Input aria-label="RUN NO" placeholder="RUN NO" value={runNo} onChange={e => setRunNo(e.target.value)} className="w-40" />
       <DateRangeFilter label="발행일" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
     </div></Card>
-    <nav className="flex flex-wrap gap-1 border-b border-border" aria-label="조회 모드">
-      {([['history', '이력'], ['summary', '집계'], ['matrix', '매트릭스']] as const).map(([value, label]) => (
-        <button
-          key={value}
-          type="button"
-          onClick={() => setViewMode(value)}
-          aria-current={viewMode === value ? 'page' : undefined}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
-            viewMode === value ? 'border-b-2 border-primary text-primary' : 'text-text-muted hover:text-text'
-          }`}
-        >
-          {label}
-        </button>
-      ))}
-    </nav>
+    <ScreenTabs
+      tabs={[
+        { key: 'history', label: '이력' },
+        { key: 'summary', label: '집계' },
+        { key: 'matrix', label: '매트릭스' },
+      ]}
+      active={viewMode}
+      onChange={setViewMode}
+    />
     <div className="text-sm text-text-muted">수량 합계: <strong className="text-text">{lotQty.toLocaleString(undefined, { maximumFractionDigits: 3 })}</strong></div>
     <Card className="min-h-0 flex-1 overflow-hidden" padding="none"><CardContent className="h-full p-3"><DataGrid data={displayedRows} columns={columns} isLoading={loading} pageSize={50} enableColumnFilter enableExport exportFileName="매거진발행이력" emptyMessage={searched ? '조회 결과가 없습니다.' : '조회 버튼을 눌러 발행이력을 확인하세요.'} /></CardContent></Card>
   </main>;

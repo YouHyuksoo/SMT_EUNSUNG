@@ -11,6 +11,7 @@ import {
   improvementRequestService,
   ImprRequestItem,
 } from "@/services/improvementRequestService";
+import ScreenTabs from "@/components/shared/ScreenTabs";
 import ImprovementDetailModal from "./components/ImprovementDetailModal";
 import { formatDisplayDate } from "@/utils/date";
 
@@ -151,21 +152,16 @@ export default function ImprovementRequestsPage() {
       </div>
 
       {/* 상태 탭 */}
-      <div className="flex-shrink-0 flex gap-1 border-b border-border">
-        {STATUS_TABS.map((s) => (
-          <button
-            key={s}
-            onClick={() => handleStatusTab(s)}
-            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              statusFilter === s
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-text-muted hover:text-text"
-            }`}
-          >
-            {s === "ALL" ? t("common.all", "전체") : t(STATUS_I18N[s])}
-          </button>
-        ))}
-        <span className="ml-auto text-xs text-text-muted self-center pr-2">{total}{t("common.countSuffix", "건")}</span>
+      <div className="flex-shrink-0">
+        <ScreenTabs
+          tabs={STATUS_TABS.map((s) => ({
+            key: s,
+            label: s === "ALL" ? t("common.all", "전체") : t(STATUS_I18N[s]),
+            count: statusFilter === s ? total : undefined,
+          }))}
+          active={statusFilter}
+          onChange={handleStatusTab}
+        />
       </div>
 
       {/* 목록 */}

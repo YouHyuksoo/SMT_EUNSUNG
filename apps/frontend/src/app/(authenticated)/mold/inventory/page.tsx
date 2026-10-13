@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import { PackageSearch, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import MoldCodeField from '../components/MoldCodeField';
@@ -145,26 +146,21 @@ export default function MoldInventoryPage() {
 
       <Card padding="none" className="h-60 shrink-0 overflow-hidden">
         <CardContent className="flex h-full flex-col p-3">
-          <nav className="mb-2 flex gap-1 border-b border-border" aria-label="상세 탭">
-            {([['issues', '출고이력 (최근 30일)'], ['requests', '미처리 청구']] as const)
-              .map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setTab(key)}
-                  className={`px-3 py-1.5 text-sm ${
-                    tab === key
-                      ? 'border-b-2 border-primary font-semibold text-text'
-                      : 'text-text-muted'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            <span className="ml-auto self-center text-xs text-text-muted">
+          <div className="mb-2 flex items-end border-b border-border">
+            <div className="-mb-px min-w-0 flex-1">
+              <ScreenTabs
+                tabs={[
+                  { key: 'issues', label: '출고이력 (최근 30일)' },
+                  { key: 'requests', label: '미처리 청구' },
+                ]}
+                active={tab}
+                onChange={setTab}
+              />
+            </div>
+            <span className="self-center text-xs text-text-muted">
               {selected ? selected.moldCode : '재고를 선택하세요'}
             </span>
-          </nav>
+          </div>
           <div className="min-h-0 flex-1">
             {tab === 'issues' ? (
               <DataGrid

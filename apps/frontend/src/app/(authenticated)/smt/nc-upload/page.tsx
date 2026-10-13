@@ -19,6 +19,7 @@ import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { SmtMachineSelect, SmtModelSelect, SmtPcbItemSelect } from '../components/SmtSelects';
@@ -129,22 +130,15 @@ export default function SmtNcUploadPage() {
         적재는 기존 NC 적재 프로그램으로 하고, 이 화면에서는 적재 결과를 조회·검증·대조합니다.
       </div>
 
-      <div className="flex gap-1 border-b border-border">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 text-sm ${
-              tab === t.key
-                ? 'border-b-2 border-primary font-semibold text-text'
-                : 'text-text-muted'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <ScreenTabs
+        tabs={TABS.map((t) => ({
+          key: t.key,
+          label: t.label,
+          count: { list: rows.length, duplicates: duplicates.length, compare: compare.length }[t.key],
+        }))}
+        active={tab}
+        onChange={setTab}
+      />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">

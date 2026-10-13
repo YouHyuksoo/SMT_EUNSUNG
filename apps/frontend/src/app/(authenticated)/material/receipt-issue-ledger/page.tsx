@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { ClipboardList, RefreshCw, Search } from "lucide-react";
 import { Button, Card, CardContent } from "@/components/ui";
 import DataGrid from "@/components/data-grid/DataGrid";
+import ScreenTabs from "@/components/shared/ScreenTabs";
 import { getRecentDaysRange } from "@/utils/date";
 import LedgerFilters from "./LedgerFilters";
 import { LEDGER_ROW_LIMIT, useLedgerQuery } from "./useLedgerQuery";
@@ -86,23 +87,11 @@ export default function ReceiptIssueLedgerPage() {
         </div>
       </header>
 
-      <nav className="flex flex-wrap gap-1 border-b border-border" aria-label={t("materialLedger.modeTabs")}>
-        {LEDGER_MODES.map(item => (
-          <button
-            key={item}
-            type="button"
-            onClick={() => changeMode(item)}
-            aria-current={mode === item ? "page" : undefined}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
-              mode === item
-                ? "border-b-2 border-primary text-primary"
-                : "text-text-muted hover:text-text"
-            }`}
-          >
-            {t(`materialLedger.mode.${item}`)}
-          </button>
-        ))}
-      </nav>
+      <ScreenTabs
+        tabs={LEDGER_MODES.map(item => ({ key: item, label: t(`materialLedger.mode.${item}`) }))}
+        active={mode}
+        onChange={changeMode}
+      />
 
       {mode === "issueLoss" && (
         <p className="text-sm text-text-muted">{t("materialLedger.notice.issueLossEndDate")}</p>

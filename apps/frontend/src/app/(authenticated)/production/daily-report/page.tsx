@@ -25,6 +25,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import DateFilter from '@/components/shared/DateFilter';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { dailyReportColumns } from '../planning-columns';
@@ -103,22 +104,11 @@ export default function DailyReportPage() {
         </Button>
       </header>
 
-      <div className="flex gap-1 border-b border-border">
-        {BASES.map((b) => (
-          <button
-            key={b.key}
-            type="button"
-            onClick={() => setBasis(b.key)}
-            className={`px-4 py-2 text-sm ${
-              basis === b.key
-                ? 'border-b-2 border-primary font-semibold text-text'
-                : 'text-text-muted'
-            }`}
-          >
-            {b.label}
-          </button>
-        ))}
-      </div>
+      <ScreenTabs
+        tabs={BASES.map((b) => ({ key: b.key, label: b.label }))}
+        active={basis}
+        onChange={setBasis}
+      />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">

@@ -18,6 +18,7 @@ import { CheckCircle2, RotateCcw, Search, ShieldCheck, XCircle, Zap } from 'luci
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import { ESD_CHECK_LIMIT, iqcHistoryColumns, iqcTargetColumns } from './columns';
@@ -180,6 +181,16 @@ export default function IqcPage() {
         </Button>
       </header>
 
+      <ScreenTabs
+        tabs={[
+          { key: 'wait', label: '판정대기' },
+          { key: 'cancel', label: '판정취소' },
+          { key: 'history', label: '검사이력' },
+        ]}
+        active={mode}
+        onChange={changeMode}
+      />
+
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <DateRangeFilter
@@ -247,24 +258,6 @@ export default function IqcPage() {
           </CardContent>
         </Card>
       )}
-
-      <nav className="flex gap-1 border-b border-border" aria-label="조회 모드">
-        {([['wait', '판정대기'], ['cancel', '판정취소'], ['history', '검사이력']] as const)
-          .map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => changeMode(key)}
-              className={`px-3 py-1.5 text-sm ${
-                mode === key
-                  ? 'border-b-2 border-primary font-semibold text-text'
-                  : 'text-text-muted'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-      </nav>
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">

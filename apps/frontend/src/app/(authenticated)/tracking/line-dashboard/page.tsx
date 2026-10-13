@@ -25,6 +25,7 @@ import toast from 'react-hot-toast';
 import { Lock, RefreshCw, Search, Unlock } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import LineSelect from '@/components/shared/LineSelect';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import {
@@ -305,24 +306,14 @@ export default function LineDashboardPage() {
             </CardContent>
           </Card>
 
-          <div className="flex flex-wrap gap-1 border-b border-border">
-            {TABS.map((t) => {
-              const count = t.key === 'pickup' ? pickup.length : detail[t.key].length;
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => setTab(t.key)}
-                  className={`px-3 py-2 text-sm ${tab === t.key
-                    ? 'border-b-2 border-primary font-semibold text-text'
-                    : 'text-text-muted hover:text-text'}`}
-                >
-                  {t.label}
-                  {count > 0 && <span className="ml-1 text-xs text-text-muted">{count}</span>}
-                </button>
-              );
-            })}
-          </div>
+          <ScreenTabs
+            tabs={TABS.map((t) => ({
+              ...t,
+              count: t.key === 'pickup' ? pickup.length : detail[t.key].length,
+            }))}
+            active={tab}
+            onChange={setTab}
+          />
 
           <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
             <CardContent className="flex h-full flex-col gap-2 p-3">

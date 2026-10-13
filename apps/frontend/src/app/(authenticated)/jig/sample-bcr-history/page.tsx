@@ -16,6 +16,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { sampleBcrHistoryColumns } from './columns';
@@ -86,29 +87,13 @@ export default function SampleBcrHistoryPage() {
             바코드로 투입한 샘플마스터의 공정별 이력과 판정결과를 조회합니다 · {searched ? `${rows.length}/${total}건` : '조회조건을 선택하세요'}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button size="sm" onClick={() => search()} disabled={loading}>
-            <Search className="mr-1 h-4 w-4" />조회
-          </Button>
-        </div>
       </header>
 
-      <nav className="flex flex-wrap gap-1 border-b border-border" aria-label="조회 모드">
-        {MODES.map((item) => (
-          <button
-            key={item.value}
-            type="button"
-            onClick={() => changeMode(item.value)}
-            className={`-mb-px border-b-2 px-4 py-2 text-sm ${
-              mode === item.value
-                ? 'border-primary font-semibold text-primary'
-                : 'border-transparent text-text-muted hover:text-text'
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
-      </nav>
+      <ScreenTabs
+        tabs={MODES.map((item) => ({ key: item.value, label: item.label }))}
+        active={mode}
+        onChange={changeMode}
+      />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
@@ -127,6 +112,9 @@ export default function SampleBcrHistoryPage() {
             onChange={(event) => setSampleLotNo(event.target.value)}
             className="w-44"
           />
+          <Button size="sm" onClick={() => search()} disabled={loading}>
+            <Search className="mr-1 h-4 w-4" />조회
+          </Button>
         </CardContent>
       </Card>
 

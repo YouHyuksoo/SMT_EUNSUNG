@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import { Ban, PackageX, Search, Undo2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import {
@@ -163,6 +164,15 @@ export default function InventoryHoldPage() {
         </Button>
       </header>
 
+      <ScreenTabs
+        tabs={[
+          { key: 'targets', label: '통제대상' },
+          { key: 'holds', label: '통제목록' },
+        ]}
+        active={mode}
+        onChange={changeMode}
+      />
+
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
@@ -217,23 +227,6 @@ export default function InventoryHoldPage() {
           )}
         </CardContent>
       </Card>
-
-      <nav className="flex gap-1 border-b border-border" aria-label="조회 모드">
-        {([['targets', '통제대상'], ['holds', '통제목록']] as const).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => changeMode(key)}
-            className={`px-3 py-1.5 text-sm ${
-              mode === key
-                ? 'border-b-2 border-primary font-semibold text-text'
-                : 'text-text-muted'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">
