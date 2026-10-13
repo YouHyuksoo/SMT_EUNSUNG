@@ -24,6 +24,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Box, PackageCheck, Printer, ScanLine, Search, Trash2, Undo2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
 import ProcessSelect from '@/components/shared/ProcessSelect';
@@ -176,8 +177,8 @@ export default function ProductPackPage() {
   }, [modelName, modelSuffix, itemCode, lineCode, workstageCode, packUnitQty, search]);
 
   /** PID 를 찍으면 바로 처리하고 입력칸을 비운다 (현장은 연속으로 찍는다). */
-  const scanPid = useCallback(async () => {
-    const serialNo = pid.trim();
+  const scanPid = useCallback(async (scanned: string) => {
+    const serialNo = scanned.trim();
     if (!selected || !serialNo) return;
     setBusy(true);
     try {
@@ -201,7 +202,7 @@ export default function ProductPackPage() {
       setBusy(false);
       pidRef.current?.focus();
     }
-  }, [pid, selected, unpackMode, repairMode, lineCode, workstageCode, loadSerials]);
+  }, [selected, unpackMode, repairMode, lineCode, workstageCode, loadSerials]);
 
   const act = useCallback(async (kind: 'complete' | 'reprint' | 'delete') => {
     if (!selected) return;
@@ -306,12 +307,12 @@ export default function ProductPackPage() {
               수리품
             </Button>
           )}
-          <Input ref={pidRef} aria-label="PID" placeholder="PID" value={pid}
+          <BarcodeScanInput ref={pidRef} aria-label="PID" placeholder="PID" value={pid}
             className="w-64" disabled={!canEdit || busy}
-            onChange={(e) => setPid(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void scanPid(); }} />
+            onChange={setPid}
+            onScan={scanPid} />
           <Button size="sm" disabled={!canEdit || busy || !pid.trim()}
-            onClick={scanPid}>
+            onClick={() => void scanPid(pid)}>
             {unpackMode ? '빼기' : '담기'}
           </Button>
           {lastResult && (

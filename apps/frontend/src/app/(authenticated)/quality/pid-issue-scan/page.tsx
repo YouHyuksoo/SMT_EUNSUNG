@@ -14,9 +14,10 @@ import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { ScanSearch, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import ModelSearchField from '@/components/shared/ModelSearchField';
-import { Button, Card, CardContent, Input } from '@/components/ui';
+import { Button, Card, CardContent } from '@/components/ui';
 import api from '@/services/api';
 import { pidIssueScanColumns, type PidIssueScanRow } from '../pid-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
@@ -39,13 +40,15 @@ export default function PidIssueScanPage() {
   const [itemCode, setItemCode] = useState('');
   const [pidIssueType, setPidIssueType] = useState('');
 
-  const search = useCallback(async () => {
+  // 스캔은 입력값이 state 에 반영되기 전에 조회하므로 스캔한 값을 직접 넘긴다
+  const search = useCallback(async (scannedPid?: string) => {
+    const pid = scannedPid ?? serialNo;
     setLoading(true);
     try {
       const response = await api.get('/quality/pid/issue-scans', {
         params: {
           dateFrom, dateTo,
-          serialNo: serialNo || undefined,
+          serialNo: pid || undefined,
           modelName: modelName || undefined,
           itemCode: itemCode || undefined,
           pidIssueType: pidIssueType || undefined,
@@ -75,7 +78,7 @@ export default function PidIssueScanPage() {
             {searched ? `${rows.length}/${total}건` : '기간을 정하고 조회하세요'}
           </p>
         </div>
-        <Button size="sm" onClick={search} disabled={loading}>
+        <Button size="sm" onClick={() => search()} disabled={loading}>
           <Search className="mr-1 h-4 w-4" />조회
         </Button>
       </header>
@@ -84,9 +87,8 @@ export default function PidIssueScanPage() {
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <DateRangeFilter label="스캔일" from={dateFrom} to={dateTo}
             onFromChange={setDateFrom} onToChange={setDateTo} />
-          <Input aria-label="PID" placeholder="PID" value={serialNo}
-            className="w-52" onChange={(e) => setSerialNo(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
+          <BarcodeScanInput aria-label="PID" placeholder="PID 스캔" value={serialNo}
+            className="w-52" onChange={setSerialNo} onScan={search} />
           <ModelSearchField value={modelName} onChange={(v) => setModelName(v)}
             className="w-44" aria-label="모델명" placeholder="모델명" />
           <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}

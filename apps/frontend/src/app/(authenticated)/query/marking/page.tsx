@@ -19,6 +19,7 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -52,12 +53,13 @@ export default function MarkingQueryPage() {
   const [searched, setSearched] = useState(false);
   const { truncated, rowLimit, mark } = useTruncation();
 
-  const search = useCallback(async () => {
+  const search = useCallback(async (scannedPid?: string) => {
+    const pid = scannedPid ?? serialNo;
     setLoading(true);
     try {
       const params = {
         runNo: runNo || undefined,
-        serialNo: serialNo || undefined,
+        serialNo: pid || undefined,
         dateFrom,
         dateTo,
       };
@@ -98,12 +100,12 @@ export default function MarkingQueryPage() {
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <Input aria-label="Run No" placeholder="Run No" value={runNo} className="w-40"
             onChange={(e) => setRunNo(e.target.value)} />
-          <Input aria-label="PID" placeholder="PID" value={serialNo} className="w-44"
-            onChange={(e) => setSerialNo(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
+          <BarcodeScanInput aria-label="PID" placeholder="PID 스캔" value={serialNo} className="w-44"
+            onChange={setSerialNo}
+            onScan={search} />
           <DateRangeFilter label="마킹일" from={dateFrom} to={dateTo}
             onFromChange={setDateFrom} onToChange={setDateTo} />
-          <Button size="sm" onClick={search} disabled={loading}>
+          <Button size="sm" onClick={() => search()} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>
         </CardContent>

@@ -19,6 +19,7 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Search, Wrench } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import LineSelect from '@/components/shared/LineSelect';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
@@ -50,14 +51,15 @@ export default function PidInfoQueryPage() {
   // 백엔드와 같은 함수로 판정한다 — 규칙을 두 곳에 두면 한쪽만 고쳐진다.
   const verdict = checkTrackingFilter({ runNo, serialNo, magazineNo });
 
-  const search = useCallback(async () => {
+  const search = useCallback(async (scannedPid?: string) => {
+    const pid = scannedPid ?? serialNo;
     setLoading(true);
     setSelected(null);
     try {
       const response = await api.get('/query/pid-info', {
         params: {
           runNo: runNo || undefined,
-          serialNo: serialNo || undefined,
+          serialNo: pid || undefined,
           magazineNo: magazineNo || undefined,
           lineCode: lineCode || undefined,
           modelName: modelName || undefined,
@@ -114,7 +116,7 @@ export default function PidInfoQueryPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" onClick={search} disabled={!verdict.ok || loading}>
+          <Button size="sm" onClick={() => search()} disabled={!verdict.ok || loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>
           <Button size="sm" variant="secondary" disabled={!canRepair || busy}
@@ -128,9 +130,10 @@ export default function PidInfoQueryPage() {
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <Input aria-label="Run No" placeholder="Run No" value={runNo} className="w-40"
             onChange={(e) => setRunNo(e.target.value)} />
-          <Input aria-label="PID" placeholder="PID (2D 바코드)" value={serialNo} className="w-48"
-            onChange={(e) => setSerialNo(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && verdict.ok) void search(); }} />
+          {/* 스캔값은 비어 있지 않아 PID 조건만으로 checkTrackingFilter 를 통과한다 */}
+          <BarcodeScanInput aria-label="PID" placeholder="PID 스캔" value={serialNo} className="w-48"
+            onChange={setSerialNo}
+            onScan={search} />
           <Input aria-label="매거진" placeholder="매거진" value={magazineNo} className="w-36"
             onChange={(e) => setMagazineNo(e.target.value)} />
           <div className="w-44">

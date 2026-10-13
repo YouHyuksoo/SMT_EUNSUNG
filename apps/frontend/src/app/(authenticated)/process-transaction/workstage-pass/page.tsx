@@ -4,11 +4,12 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { GitPullRequestArrow, ScanLine, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import ScreenTabs from '@/components/shared/ScreenTabs';
-import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import api from '@/services/api';
 import { workstagePassColumns } from './columns';
@@ -28,10 +29,11 @@ export default function WorkstagePassPage() {
   const [dateFrom, setDateFrom] = useState(() => iso(new Date())); const [dateTo, setDateTo] = useState(() => iso(new Date()));
   const [cancel, setCancel] = useState(false); const [rework, setRework] = useState(false); const [confirmPid, setConfirmPid] = useState<string | null>(null);
 
-  const search = useCallback(async () => {
+  const search = useCallback(async (scannedSerial?: string) => {
+    const serial = scannedSerial ?? serialNo;
     setLoading(true);
     try {
-      const response = await api.get('/process-transaction/workstage-pass', { params: { mode, lineCode: lineCode || undefined, workstageCode: workstageCode || undefined, modelName: modelName || undefined, serialNo: serialNo || undefined, dateFrom, dateTo, limit: 5000 } });
+      const response = await api.get('/process-transaction/workstage-pass', { params: { mode, lineCode: lineCode || undefined, workstageCode: workstageCode || undefined, modelName: modelName || undefined, serialNo: serial || undefined, dateFrom, dateTo, limit: 5000 } });
       setRows(response.data?.data ?? []); setTotal(Number(response.data?.meta?.total ?? 0)); setSearched(true);
     } catch { setRows([]); setTotal(0); toast.error('공정통과이력 조회에 실패했습니다.'); }
     finally { setLoading(false); }
@@ -50,13 +52,13 @@ export default function WorkstagePassPage() {
     } finally { setLoading(false); pidRef.current?.focus(); }
   }, [cancel, lineCode, rework, search, workstageCode]);
 
-  const requestScan = () => { const value = pid.trim(); if (!value) return; if (cancel) setConfirmPid(value); else void submitScan(value); };
+  const requestScan = (scanned?: string) => { const value = (scanned ?? pid).trim(); if (!value) return; if (cancel) setConfirmPid(value); else void submitScan(value); };
   const columns = useMemo(() => workstagePassColumns(mode), [mode]);
 
   return <main className="flex h-full min-w-0 flex-col gap-3 p-5">
-    <header className="flex items-center justify-between gap-4"><div><h1 className="flex items-center gap-2 text-xl font-bold text-text"><GitPullRequestArrow className="h-6 w-6 text-primary" />공정통과이력 관리</h1><p className="mt-1 text-sm text-text-muted">PID 스캔으로 공정 통과를 등록하고 모드별 재공·이력을 조회합니다 · {searched ? `${rows.length}/${total}건` : '라인·공정을 선택하고 PID를 스캔하세요'}</p></div><div className="flex gap-2"><Button size="sm" onClick={search} disabled={loading}><Search className="mr-1 h-4 w-4" />조회</Button></div></header>
-    <Card padding="sm"><div className="flex flex-wrap items-center gap-2"><LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-40" /><ProcessSelect labelPrefix="공정" value={workstageCode} onChange={setWorkstageCode} className="w-44" /><Input ref={pidRef} aria-label="PID 스캔" placeholder="PID 또는 매거진 라벨 스캔" value={pid} onChange={e => setPid(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') requestScan(); }} className="w-64" /><Button onClick={requestScan} disabled={loading || !pid.trim()} variant={cancel ? 'danger' : 'primary'}><ScanLine className="mr-1 h-4 w-4" />{cancel ? '통과취소' : '통과등록'}</Button><label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={cancel} onChange={e => setCancel(e.target.checked)} />취소</label><label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={rework} onChange={e => setRework(e.target.checked)} />재작업 허용</label></div></Card>
-    <Card padding="sm"><div className="flex flex-wrap items-center gap-2"><ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName} onChange={(v) => setModelName(v)} className="w-40" /><Input aria-label="시리얼번호" placeholder="시리얼번호" value={serialNo} onChange={e => setSerialNo(e.target.value)} className="w-44" /><DateRangeFilter label="기간" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} /></div></Card>
+    <header className="flex items-center justify-between gap-4"><div><h1 className="flex items-center gap-2 text-xl font-bold text-text"><GitPullRequestArrow className="h-6 w-6 text-primary" />공정통과이력 관리</h1><p className="mt-1 text-sm text-text-muted">PID 스캔으로 공정 통과를 등록하고 모드별 재공·이력을 조회합니다 · {searched ? `${rows.length}/${total}건` : '라인·공정을 선택하고 PID를 스캔하세요'}</p></div><div className="flex gap-2"><Button size="sm" onClick={() => search()} disabled={loading}><Search className="mr-1 h-4 w-4" />조회</Button></div></header>
+    <Card padding="sm"><div className="flex flex-wrap items-center gap-2"><LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-40" /><ProcessSelect labelPrefix="공정" value={workstageCode} onChange={setWorkstageCode} className="w-44" /><BarcodeScanInput ref={pidRef} aria-label="PID 스캔" placeholder="PID 또는 매거진 라벨 스캔" value={pid} onChange={setPid} onScan={requestScan} className="w-64" /><Button onClick={() => requestScan()} disabled={loading || !pid.trim()} variant={cancel ? 'danger' : 'primary'}><ScanLine className="mr-1 h-4 w-4" />{cancel ? '통과취소' : '통과등록'}</Button><label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={cancel} onChange={e => setCancel(e.target.checked)} />취소</label><label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={rework} onChange={e => setRework(e.target.checked)} />재작업 허용</label></div></Card>
+    <Card padding="sm"><div className="flex flex-wrap items-center gap-2"><ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName} onChange={(v) => setModelName(v)} className="w-40" /><BarcodeScanInput aria-label="시리얼번호" placeholder="시리얼 스캔" value={serialNo} onChange={setSerialNo} onScan={search} maintainFocus={false} blinkIndicator={false} className="w-44" /><DateRangeFilter label="기간" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} /></div></Card>
     <ScreenTabs tabs={(Object.keys(modeLabels) as WorkstagePassMode[]).map(value => ({ key: value, label: modeLabels[value] }))} active={mode} onChange={setMode} />
     <Card className="min-h-0 flex-1 overflow-hidden" padding="none"><CardContent className="h-full p-3"><DataGrid data={rows} columns={columns} isLoading={loading} pageSize={50} enableColumnFilter enableExport exportFileName="공정통과이력" emptyMessage={searched ? '조회 결과가 없습니다.' : '조회 버튼을 눌러 공정통과이력을 확인하세요.'} /></CardContent></Card>
     <ConfirmModal isOpen={confirmPid !== null} onClose={() => setConfirmPid(null)} onConfirm={() => { if (confirmPid) void submitScan(confirmPid); }} title="공정통과 취소" message={`${confirmPid ?? ''}의 현재 공정통과 이력을 취소하시겠습니까?`} confirmText="통과취소" variant="danger" isLoading={loading} />

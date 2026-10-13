@@ -12,7 +12,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Search, Wrench } from 'lucide-react';
-import { Button, Card, CardContent, Input } from '@/components/ui';
+import { Button, Card, CardContent } from '@/components/ui';
+import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
@@ -42,13 +43,14 @@ export default function RepairHistoryPage() {
   const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
 
-  const search = useCallback(async () => {
+  const search = useCallback(async (scannedSerial?: string) => {
+    const serial = scannedSerial ?? serialNo;
     setLoading(true);
     try {
       const response = await api.get('/quality/repair-history', {
         params: {
           limit: '5000',
-          serialNo: serialNo || undefined,
+          serialNo: serial || undefined,
           modelName: modelName || undefined,
           lineCode: lineCode || undefined,
           workstageCode: workstageCode || undefined,
@@ -90,7 +92,7 @@ export default function RepairHistoryPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" onClick={search} disabled={loading}>
+          <Button size="sm" onClick={() => search()} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>
         </div>
@@ -98,7 +100,7 @@ export default function RepairHistoryPage() {
 
       <Card className="shrink-0" padding="sm">
         <div className="flex flex-wrap items-center gap-2">
-          <Input aria-label="PCB 시리얼" placeholder="PCB 시리얼" value={serialNo} onChange={e => setSerialNo(e.target.value)} className="w-44" />
+          <BarcodeScanInput aria-label="PCB 시리얼" placeholder="시리얼 스캔" value={serialNo} onChange={setSerialNo} onScan={search} className="w-44" />
           <ModelSearchField value={modelName} onChange={(v) => setModelName(v)} className="w-40" aria-label="모델명" placeholder="모델명" />
           <LineSelect aria-label="라인" labelPrefix="라인" value={lineCode} onChange={value => setLineCode(value)} className="w-40" />
           <ProcessSelect aria-label="공정" labelPrefix="공정" value={workstageCode} onChange={value => setWorkstageCode(value)} className="w-44" />
