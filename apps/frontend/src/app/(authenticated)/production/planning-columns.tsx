@@ -19,7 +19,7 @@ import type {
   SmdActualSummaryRow,
 } from './planning-types';
 import { SLOT_INDEXES } from './planning-types';
-import { comCodeCell } from '@/components/shared/codeCells';
+import { comCodeCell, processNameCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 
@@ -55,7 +55,7 @@ function planCommonColumns(variant: 'mi' | 'smd'): ColumnDef<PlanRow>[] {
   ];
 
   if (variant === 'mi') {
-    base.push({ accessorKey: 'workstageCode', header: '공정', size: 90 });
+    base.push({ accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() });
   } else {
     base.push(
       { accessorKey: 'shiftCode', header: '교대', size: 80 },
@@ -180,7 +180,7 @@ export const smdActualColumns: ColumnDef<SmdActualRow>[] = [
   },
   { accessorKey: 'modelName', header: '모델명', size: 190 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   {
     id: 'pcbItemName',
     header: 'PCB면',
@@ -316,7 +316,7 @@ export const kittingPidColumns: ColumnDef<KittingPidRow>[] = [
   { accessorKey: 'modelCode', header: '모델코드', size: 100 },
   { accessorKey: 'modelName', header: '모델명', size: 180 },
   { accessorKey: 'lineCode', header: '라인', size: 80 },
-  { accessorKey: 'workstageCode', header: '공정', size: 80 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   {
     id: 'barcodeStatusName',
     header: '바코드상태',
@@ -351,7 +351,7 @@ export const resultPeriodColumns: ColumnDef<ResultPeriodRow>[] = [
     size: 130,
     accessorFn: (r) => codeWithName(r.lineCode, r.lineName),
   },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'lotQty', header: 'LOT수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   {
     accessorKey: 'resultQty',
@@ -372,7 +372,7 @@ export const resultRunColumns: ColumnDef<ResultRunRow>[] = [
     size: 140,
     accessorFn: (r) => codeWithName(r.lineCode, r.lineName),
   },
-  { accessorKey: 'workstageCode', header: '공정', size: 110 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   {
     accessorKey: 'resultQty',
     header: '실적수량',

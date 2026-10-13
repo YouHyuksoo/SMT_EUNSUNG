@@ -29,7 +29,7 @@ import type {
   StageTimelineRow,
 } from './tracking-types';
 import { formatDisplayDate } from '@/utils/date';
-import { comCodeCell } from '@/components/shared/codeCells';
+import { comCodeCell, processNameCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -189,7 +189,7 @@ export const materialUsageColumns: ColumnDef<MaterialUsageRow>[] = [
     size: 120,
     accessorFn: (r) => codeWithName(r.lineCode, r.lineName),
   },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'runNo', header: 'Run No', size: 130 },
   { accessorKey: 'smtModelName', header: 'SMT 모델', size: 170 },
   { accessorKey: 'pcbItem', header: 'PCB면', size: 80, meta: center },

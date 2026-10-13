@@ -39,7 +39,7 @@ import type {
   SmtCheckHistoryRow,
 } from './report-b-types';
 import { formatDisplayDate } from '@/utils/date';
-import { comCodeCell } from '@/components/shared/codeCells';
+import { comCodeCell, processNameCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -297,7 +297,7 @@ export const materialIssueColumns: ColumnDef<MaterialIssueRow>[] = [
   { accessorKey: 'abcGrade', header: 'ABC', size: 70, meta: center },
   { accessorKey: 'materialMfs', header: '자재 롯트', size: 140 },
   { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'locationCode', header: '창고', size: 100 },
   { accessorKey: 'locationAddress', header: '랙 주소', size: 110 },
   { accessorKey: 'issueDeficit', header: '입출고', size: 80, meta: center },
@@ -328,7 +328,7 @@ export const materialNotIssuedColumns: ColumnDef<MaterialNotIssuedRow>[] = [
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'parentItemCode', header: '상위품목', size: 140 },
   { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'mfs', header: 'MFS', size: 120 },
   { accessorKey: 'planYyyymm', header: '계획월', size: 100, meta: center },
   { accessorKey: 'issuePlanQty', header: '지시수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
@@ -593,7 +593,7 @@ export const moldIssueColumns: ColumnDef<MoldIssueRow>[] = [
   { accessorKey: 'moldSpec', header: '규격', size: 160 },
   { accessorKey: 'moldGroup', header: '그룹', size: 110 },
   { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'machineCode', header: '설비', size: 110 },
   { accessorKey: 'issueDeficit', header: '입출고', size: 80, meta: center },
   { accessorKey: 'moldIssueAccount', header: '출고계정', size: 120, cell: comCodeCell('MOLD ISSUE ACCOUNT') },
@@ -620,7 +620,7 @@ export const jigReportColumns: ColumnDef<JigReportRow>[] = [
   { accessorKey: 'jigStatus', header: '지그상태', size: 100, meta: center, cell: comCodeCell('JIG STATUS') },
   { accessorKey: 'jigModelName', header: '지그모델', size: 150 },
   { accessorKey: 'useStatus', header: '사용상태', size: 100, meta: center, cell: comCodeCell('USE STATUS') },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   {
     id: 'supplierName',
     header: '협력사',
@@ -655,7 +655,7 @@ export const jigCardColumns: ColumnDef<JigCardRow>[] = [
   { accessorKey: 'jigType', header: '지그유형', size: 110, cell: comCodeCell('JIG TYPE') },
   { accessorKey: 'jigStatus', header: '지그상태', size: 100, meta: center, cell: comCodeCell('JIG STATUS') },
   { accessorKey: 'jigModelName', header: '지그모델', size: 150 },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'acquisitionType', header: '취득구분', size: 100, cell: comCodeCell('ACQUISITION TYPE') },
   { accessorKey: 'acquisitionDate', header: '취득일', size: 110 },
   {
@@ -683,7 +683,7 @@ export const jigIssueReportColumns: ColumnDef<JigIssueReportRow>[] = [
   { accessorKey: 'jigLotNo', header: '지그 롯트', size: 140 },
   { accessorKey: 'jigType', header: '지그유형', size: 110, cell: comCodeCell('JIG TYPE') },
   { accessorKey: 'jigStatus', header: '지그상태', size: 100, meta: center, cell: comCodeCell('JIG STATUS') },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'machineCode', header: '설비', size: 110 },
   { accessorKey: 'issueDeficit', header: '입출고', size: 80, meta: center },
   { accessorKey: 'issueAccount', header: '출고계정', size: 120, cell: comCodeCell('ISSUE ACCOUNT') },

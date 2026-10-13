@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { codeMasterCell, comCodeCell } from '@/components/shared/codeCells';
+import { codeMasterCell, comCodeCell, processNameCell } from '@/components/shared/codeCells';
 import type { ProductDestroyRow } from './types';
 
 const qty = (value: unknown) => value == null ? '' : Number(value).toLocaleString(undefined, { maximumFractionDigits: 3 });
@@ -18,7 +18,7 @@ export const destroyHistoryColumns: ColumnDef<ProductDestroyRow>[] = [
   { accessorKey: 'modelName', header: '모델명', size: 150 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
   { accessorKey: 'lineCode', header: '라인', size: 100 },
-  { accessorKey: 'workstageCode', header: '공정', size: 110 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'badReasonCode', header: '불량사유', size: 110, cell: codeMasterCell('WQC BAD REASON CODE') },
   { accessorKey: 'departmentName', header: '부서', size: 100, cell: ctx => ctx.getValue() ?? ctx.row.original.departmentCode ?? '' },
   { accessorKey: 'receiptDeficit', header: '불량구분', size: 100, cell: comCodeCell('RECEIPT DEFICIT') },
@@ -40,7 +40,7 @@ export const serialColumns: ColumnDef<ProductDestroyRow>[] = [
   { accessorKey: 'serialNo', header: '시리얼', size: 160 },
   { accessorKey: 'modelName', header: '모델명', size: 140 },
   { accessorKey: 'lineCode', header: '라인', size: 90 },
-  { accessorKey: 'workstageCode', header: '공정', size: 100 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'badReasonCode', header: '불량사유', size: 100, cell: codeMasterCell('WQC BAD REASON CODE') },
   { accessorKey: 'departmentName', header: '부서', size: 95, cell: ctx => ctx.getValue() ?? ctx.row.original.departmentCode ?? '' },
   { accessorKey: 'qcInspectHandling', header: '검사처리', size: 95, cell: comCodeCell('QC INSPECT HANDLING') },

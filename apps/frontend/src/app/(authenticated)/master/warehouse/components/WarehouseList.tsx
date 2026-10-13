@@ -19,6 +19,7 @@ import { WarehouseData, WAREHOUSE_TYPE_COLORS } from "../types";
 import WarehouseForm from "./WarehouseForm";
 import api from "@/services/api";
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
+import { processNameCell } from "@/components/shared/codeCells";
 
 const EMPTY_WAREHOUSE_FORM = {
   warehouseCode: "", warehouseName: "", warehouseType: "RAW",
@@ -164,7 +165,7 @@ export default function WarehouseList({ onHeaderActions }: Props) {
       return <span className={`px-2 py-1 rounded text-xs font-medium ${WAREHOUSE_TYPE_COLORS[type] || "bg-gray-100 text-gray-800 dark:bg-gray-700/50 dark:text-gray-300"}`}>{getTypeLabel(type)}</span>;
     }},
     { accessorKey: "lineCode", header: t("inventory.warehouse.line"), size: 80, meta: { filterType: "text" as const }, cell: ({ getValue }) => getValue() || "-" },
-    { accessorKey: "processCode", header: t("inventory.warehouse.process"), size: 80, meta: { filterType: "text" as const }, cell: ({ getValue }) => getValue() || "-" },
+    { accessorKey: "processCode", header: t("inventory.warehouse.process"), size: 120, meta: { filterType: "text" as const }, cell: processNameCell() },
     { accessorKey: "isDefault", header: t("inventory.warehouse.default"), size: 60, meta: { filterType: "multi" as const }, cell: ({ getValue }) => getValue() ? <Check className="h-4 w-4 text-green-600" /> : "-" },
     { accessorKey: "useYn", header: t("inventory.warehouse.use"), size: 60, meta: { filterType: "multi" as const }, cell: ({ getValue }) => {
       const v = getValue() as string;

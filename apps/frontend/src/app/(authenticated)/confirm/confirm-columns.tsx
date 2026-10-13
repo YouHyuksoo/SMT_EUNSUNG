@@ -7,7 +7,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, dateOnly, dateTime, num } from '@/components/shared/grid-format';
 import type { BomWorkNumberRow, BomWorkspaceRow, PriceConfirmRow } from './confirm-types';
-import { comCodeCell } from '@/components/shared/codeCells';
+import { comCodeCell, processNameCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 
@@ -179,7 +179,7 @@ export const bomWorkspaceColumns: ColumnDef<BomWorkspaceRow>[] = [
     meta: right,
     cell: (c) => num(c.getValue()),
   },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   {
     id: 'itemTypeName',
     header: '품목유형',

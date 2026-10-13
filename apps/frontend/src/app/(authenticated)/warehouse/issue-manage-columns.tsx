@@ -8,7 +8,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
-import { comCodeCell } from '@/components/shared/codeCells';
+import { comCodeCell, processNameCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -120,7 +120,7 @@ export const issueColumns: ColumnDef<IssueRow>[] = [
     size: 150,
     accessorFn: (r) => codeWithName(r.lineCode, r.lineName),
   },
-  { accessorKey: 'workstageCode', header: '공정', size: 90, meta: center },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, meta: center, cell: processNameCell() },
   { accessorKey: 'machineCode', header: '설비', size: 90, meta: center },
   { accessorKey: 'locationCode', header: '창고', size: 80, meta: center },
   { accessorKey: 'materialMfs', header: '자재 롯트', size: 130 },

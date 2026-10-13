@@ -4,6 +4,7 @@ import type { TFunction } from "i18next";
 import { Edit2, Trash2 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { type WorkInstruction } from "./components/WorkInstructionFormPanel";
+import { processNameCell } from "@/components/shared/codeCells";
 
 interface CreateWorkInstructionGridColumnsOptions {
   t: TFunction;
@@ -33,7 +34,7 @@ export function createWorkInstructionGridColumns({
     },
     { accessorKey: "itemCode", header: t("common.partCode"), size: 100, meta: { filterType: "text" as const } },
     { accessorKey: "itemName", header: t("common.partName"), size: 140, meta: { filterType: "text" as const } },
-    { accessorKey: "processCode", header: t("master.workInstruction.processCode"), size: 90, cell: ({ getValue }) => getValue() || "-" },
+    { accessorKey: "processCode", header: t("master.workInstruction.processCode"), size: 120, cell: processNameCell() },
     { accessorKey: "title", header: t("master.workInstruction.docTitle"), size: 220, meta: { filterType: "text" as const } },
     {
       accessorKey: "revision", header: "Rev", size: 60,

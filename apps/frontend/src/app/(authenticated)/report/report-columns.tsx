@@ -25,7 +25,7 @@ import type {
   WorkstageStockRow,
 } from './report-types';
 import { formatDisplayDate } from '@/utils/date';
-import { comCodeCell } from '@/components/shared/codeCells';
+import { comCodeCell, processNameCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -156,7 +156,7 @@ export const machineColumns: ColumnDef<MachineRow>[] = [
     size: 130,
     accessorFn: (r) => codeWithName(r.lineCode, r.lineName),
   },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'capacity', header: '능력', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'reservedCapacity', header: '예비능력', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'useStatus', header: '사용상태', size: 100, meta: center, cell: comCodeCell('USE STATUS') },

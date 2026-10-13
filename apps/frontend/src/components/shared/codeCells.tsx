@@ -15,6 +15,20 @@
 import type { CellContext } from '@tanstack/react-table';
 import { ComCodeBadge } from '@/components/ui';
 import { useCodeMasterLabel } from '@/hooks/useCodeMaster';
+import { useProcessOptions } from '@/hooks/useMasterOptions';
+
+type ProcessRow = ReturnType<typeof useProcessOptions>['rawData'][number];
+
+/** 공정 목록 배열 → 코드별 이름 Map. 같은 배열이면 셀마다 다시 만들지 않는다. */
+const processNameMaps = new WeakMap<readonly ProcessRow[], Map<string, string>>();
+function processNameMapOf(rows: readonly ProcessRow[]): Map<string, string> {
+  let map = processNameMaps.get(rows);
+  if (!map) {
+    map = new Map(rows.map((p) => [p.processCode, p.processName]));
+    processNameMaps.set(rows, map);
+  }
+  return map;
+}
 
 /**
  * 공통코드(ISYS_BASECODE) 셀. 값이 없으면 배지를 그리지 않는다(빈 배지 노이즈 방지).
@@ -36,5 +50,21 @@ export function codeMasterCell<TRow>(codeType: string) {
     const value = ctx.getValue();
     const label = useCodeMasterLabel(codeType, value == null ? null : String(value));
     return label ? <span>{label}</span> : null;
+  };
+}
+
+/**
+ * 공정(IP_PRODUCT_WORKSTAGE) 셀 — 공정코드를 공정명으로 보여준다. 마스터에 없으면 코드를 그대로 쓴다.
+ * 공정명은 공통코드(ISYS_BASECODE)가 아니라 공정 마스터에 있다.
+ * PB 대응: `dddw.name=vd_workstage_code`
+ */
+export function processNameCell<TRow>() {
+  return function ProcessNameCell(ctx: CellContext<TRow, unknown>) {
+    const value = ctx.getValue();
+    const { rawData } = useProcessOptions();
+    if (value == null || value === '') return null;
+    const code = String(value);
+    const name = processNameMapOf(rawData).get(code);
+    return <span title={code}>{name || code}</span>;
   };
 }

@@ -5,7 +5,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
-import { comCodeCell } from '@/components/shared/codeCells';
+import { comCodeCell, processNameCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -153,7 +153,7 @@ export const barcodeIssueColumns: ColumnDef<BarcodeIssueRow>[] = [
     size: 150,
     accessorFn: (r) => codeWithName(r.lineCode, r.lineName),
   },
-  { accessorKey: 'workstageCode', header: '공정', size: 90, meta: center },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, meta: center, cell: processNameCell() },
   { accessorKey: 'feederLocationCode', header: '피더 위치', size: 110 },
   { accessorKey: 'modelName', header: '모델명', size: 150 },
   {
@@ -203,7 +203,7 @@ export const issueWaitingColumns: ColumnDef<IssueWaitingRow>[] = [
 export const kittingBomColumns: ColumnDef<KittingBomRow>[] = [
   { accessorKey: 'itemCode', header: '자재코드', size: 140 },
   { accessorKey: 'itemName', header: '자재명', size: 170 },
-  { accessorKey: 'workstageCode', header: '공정', size: 90, meta: center },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, meta: center, cell: processNameCell() },
   { accessorKey: 'feederLocationCode', header: '피더 위치', size: 110 },
   { accessorKey: 'feederShaft', header: '피더 축', size: 90, meta: center },
   { accessorKey: 'itemSpec', header: '규격', size: 150 },
