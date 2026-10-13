@@ -32,6 +32,7 @@ export interface Qc4mForm {
   ecoStatus: string;
   ecoType: string;
   ecoDivision: string;
+  ecoOrigin: string;
   pcbItem: string;
   hwRevision: string;
   swRevision: string;
@@ -48,7 +49,7 @@ const dateInput = (value: unknown) => (value ? String(value).slice(0, 10) : '');
 export const emptyQc4mForm = (): Qc4mForm => ({
   modelName: '', modelSuffix: '*', ecoDate: today(), applyDate: '',
   firstProductDate: '', lastProductDate: '',
-  workstageCode: '', ecoStatus: '', ecoType: '', ecoDivision: '', pcbItem: '',
+  workstageCode: '', ecoStatus: '', ecoType: '', ecoDivision: '', ecoOrigin: '', pcbItem: '',
   hwRevision: '', swRevision: '', ecoPoint: '', ecoComments: '', ecoReason: '',
 });
 
@@ -63,6 +64,7 @@ export const toQc4mForm = (row: Qc4mRow): Qc4mForm => ({
   ecoStatus: text(row.ecoStatus),
   ecoType: text(row.ecoType),
   ecoDivision: text(row.ecoDivision),
+  ecoOrigin: text(row.ecoOrigin),
   pcbItem: text(row.pcbItem),
   hwRevision: text(row.hwRevision),
   swRevision: text(row.swRevision),
@@ -103,6 +105,7 @@ export default function Qc4mFormPanel({ mode, initialForm, onClose, onSaved }: P
       ecoStatus: optional(form.ecoStatus),
       ecoType: optional(form.ecoType),
       ecoDivision: optional(form.ecoDivision),
+      ecoOrigin: optional(form.ecoOrigin),
       pcbItem: optional(form.pcbItem),
       hwRevision: optional(form.hwRevision),
       swRevision: optional(form.swRevision),
@@ -153,6 +156,11 @@ export default function Qc4mFormPanel({ mode, initialForm, onClose, onSaved }: P
             <span className="text-text-muted">4M 구분</span>
             <ComCodeSelect groupCode="ECO DIVISION" includeAll={false} fullWidth placeholder="선택"
               value={form.ecoDivision} onChange={(v) => set('ecoDivision', v)} />
+          </label>
+          <label className="block text-sm">
+            <span className="text-text-muted">4M 발생구분</span>
+            <ComCodeSelect groupCode="ECO ORIGIN" includeAll={false} fullWidth placeholder="선택"
+              value={form.ecoOrigin} onChange={(v) => set('ecoOrigin', v)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">변경유형</span>

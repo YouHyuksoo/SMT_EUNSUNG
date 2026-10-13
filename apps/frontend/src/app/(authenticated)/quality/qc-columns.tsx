@@ -26,6 +26,9 @@ export interface Qc4mRow {
   ecoTypeName: string | null;
   ecoDivision: string | null;
   ecoDivisionName: string | null;
+  /** 4M 발생구분 — C=고객, S=자체 (공통코드 ECO ORIGIN) */
+  ecoOrigin: string | null;
+  ecoOriginName: string | null;
   pcbItem: string | null;
   pcbItemName: string | null;
   hwRevision: string | null;
@@ -49,6 +52,7 @@ export const qc4mColumns: ColumnDef<Qc4mRow>[] = [
   { accessorKey: 'modelName', header: '모델명', size: 200 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
   { id: 'ecoDivisionName', header: '4M 구분', size: 120, accessorFn: (r) => codeWithName(r.ecoDivision, r.ecoDivisionName) },
+  { id: 'ecoOriginName', header: '4M 발생구분', size: 110, accessorFn: (r) => codeWithName(r.ecoOrigin, r.ecoOriginName) },
   { id: 'ecoTypeName', header: '변경유형', size: 110, accessorFn: (r) => codeWithName(r.ecoType, r.ecoTypeName) },
   { id: 'ecoStatusName', header: '진행상태', size: 100, accessorFn: (r) => codeWithName(r.ecoStatus, r.ecoStatusName) },
   { id: 'workstageName', header: '공정', size: 130, accessorFn: (r) => codeWithName(r.workstageCode, r.workstageName) },

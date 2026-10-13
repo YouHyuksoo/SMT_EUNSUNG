@@ -1,0 +1,33 @@
+-- =====================================================================
+-- 2026-10-13 4M 이력(IQ_4M_MASTER)에 4M 발생구분 칸 추가 + 공통코드 시드 — ESDB 적용
+--
+-- 4M 변경이 고객 요청으로 생긴 것인지, 자체적으로 낸 것인지 구분한다.
+-- 공통코드 CODE_TYPE 'ECO ORIGIN' (C=고객, S=자체). 다른 4M 코드(ECO DIVISION/TYPE/STATUS)와
+-- 같은 한 글자 코드라 VARCHAR2(1) 이다. 기존 행은 NULL 그대로 둔다.
+-- 사용처: apps/backend/src/modules/quality/services/qc-4m.service.ts
+-- =====================================================================
+
+ALTER TABLE IQ_4M_MASTER ADD (ECO_ORIGIN VARCHAR2(1));
+/
+COMMENT ON COLUMN IQ_4M_MASTER.ECO_ORIGIN IS '4M 발생구분: C=고객, S=자체 (ISYS_BASECODE ECO ORIGIN)';
+/
+
+-- 공통코드 시드 (멱등)
+MERGE INTO ISYS_BASECODE t
+USING (
+  SELECT 'ECO ORIGIN' AS CODE_TYPE, 'C' AS CODE_NAME, '고객' AS CODE_MEAN_KOR, 'CUSTOMER' AS CODE_MEAN_ENG, 1 AS ORGANIZATION_ID FROM DUAL UNION ALL
+  SELECT 'ECO ORIGIN', 'S', '자체', 'INTERNAL', 1 FROM DUAL
+) s
+ON (t.CODE_TYPE = s.CODE_TYPE AND t.CODE_NAME = s.CODE_NAME AND t.ORGANIZATION_ID = s.ORGANIZATION_ID)
+WHEN NOT MATCHED THEN
+  INSERT (CODE_TYPE, CODE_NAME, ORGANIZATION_ID, CODE_MEAN_KOR, CODE_MEAN_ENG, CODE_MEAN_LOCAL,
+          CODE_TYPE_DESC_KOR, CODE_TYPE_DESC_ENG, CODE_GROUP,
+          ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE)
+  VALUES (s.CODE_TYPE, s.CODE_NAME, s.ORGANIZATION_ID, s.CODE_MEAN_KOR, s.CODE_MEAN_ENG, s.CODE_MEAN_ENG,
+          '4M 발생구분', '4M ORIGIN', 'GENERAL',
+          'SYSTEM', SYSDATE, 'SYSTEM', SYSDATE);
+/
+
+-- 되돌리기
+-- ALTER TABLE IQ_4M_MASTER DROP (ECO_ORIGIN);
+-- DELETE FROM ISYS_BASECODE WHERE CODE_TYPE = 'ECO ORIGIN';

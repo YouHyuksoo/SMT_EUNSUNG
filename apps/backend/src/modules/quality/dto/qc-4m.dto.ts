@@ -13,6 +13,8 @@ export class Qc4mQueryDto {
   @IsOptional() @IsString() ecoStatus?: string;
   @IsOptional() @IsString() ecoType?: string;
   @IsOptional() @IsString() ecoDivision?: string;
+  /** 4M 발생구분 — 공통코드 ECO ORIGIN (C=고객, S=자체) */
+  @IsOptional() @IsString() ecoOrigin?: string;
   /** PB 는 변경점·변경내용·변경사유 세 컬럼을 OR 로 훑는다 */
   @IsOptional() @IsString() keyword?: string;
   @IsOptional() @IsDateString() dateFrom?: string;
@@ -39,6 +41,8 @@ export class Qc4mUpsertDto {
   @IsOptional() @IsString() ecoStatus?: string;
   @IsOptional() @IsString() ecoType?: string;
   @IsOptional() @IsString() ecoDivision?: string;
+  /** 4M 발생구분 — 공통코드 ECO ORIGIN (C=고객, S=자체) */
+  @IsOptional() @IsString() ecoOrigin?: string;
   @IsOptional() @IsString() pcbItem?: string;
   @IsOptional() @IsString() hwRevision?: string;
   @IsOptional() @IsString() swRevision?: string;

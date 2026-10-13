@@ -33,6 +33,7 @@ export default function Qc4mPage() {
   const [modelName, setModelName] = useState('');
   const [workstageCode, setWorkstageCode] = useState('');
   const [ecoDivision, setEcoDivision] = useState('');
+  const [ecoOrigin, setEcoOrigin] = useState('');
   const [ecoStatus, setEcoStatus] = useState('');
   const [keyword, setKeyword] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -50,6 +51,7 @@ export default function Qc4mPage() {
           modelName: modelName || undefined,
           workstageCode: workstageCode || undefined,
           ecoDivision: ecoDivision || undefined,
+          ecoOrigin: ecoOrigin || undefined,
           ecoStatus: ecoStatus || undefined,
           keyword: keyword || undefined,
           dateFrom: dateFrom || undefined,
@@ -65,7 +67,7 @@ export default function Qc4mPage() {
     } finally {
       setLoading(false);
     }
-  }, [modelName, workstageCode, ecoDivision, ecoStatus, keyword, dateFrom, dateTo]);
+  }, [modelName, workstageCode, ecoDivision, ecoOrigin, ecoStatus, keyword, dateFrom, dateTo]);
 
   const remove = useCallback(async () => {
     if (!selected) return;
@@ -128,6 +130,8 @@ export default function Qc4mPage() {
               onChange={setWorkstageCode} className="w-44" />
             <ComCodeSelect groupCode="ECO DIVISION" labelPrefix="4M 구분"
               value={ecoDivision} onChange={setEcoDivision} className="w-44" />
+            <ComCodeSelect groupCode="ECO ORIGIN" labelPrefix="발생구분"
+              value={ecoOrigin} onChange={setEcoOrigin} className="w-44" />
             <ComCodeSelect groupCode="ECO STATUS" labelPrefix="진행상태"
               value={ecoStatus} onChange={setEcoStatus} className="w-44" />
             <Input aria-label="변경점 검색" placeholder="변경점·내용·사유 검색" value={keyword}

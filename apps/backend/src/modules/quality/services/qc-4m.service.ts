@@ -9,7 +9,9 @@
  *    ORGANIZATION_ID 를 키로 다룬다. 등록할 때 같은 키가 있으면 막는다.
  * 3. **PB 는 ROWID 로 단건을 잡았다.** 웹은 ROWID 를 클라이언트로 내보내지 않는다 —
  *    재접속하면 달라질 수 있고 행 위치를 그대로 노출하는 값이라 키로 쓰지 않는다.
- * 4. **첨부 이미지는 이관 범위 밖이다.** PB 는 ECO_IMAGE / ECO_IMAGE2 에 파일을 담고
+ * 4. **발생구분(ECO_ORIGIN)은 고객 요청(C)인지 자체(S)인지다.** 공통코드 ECO ORIGIN.
+ *    2026-10-13 추가한 칸이라 그 전 행은 비어 있다.
+ * 5. **첨부 이미지는 이관 범위 밖이다.** PB 는 ECO_IMAGE / ECO_IMAGE2 에 파일을 담고
  *    f_download_qc_4m_data 로 내려줬다. 목록에는 첨부가 있는지만(있음/없음) 보여준다.
  */
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
@@ -22,7 +24,7 @@ type OracleRow = Record<string, unknown>;
 /** 등록·수정에서 사용자가 값을 넣는 컬럼. 키·감사·첨부 컬럼은 여기에 없다. */
 const EDITABLE: Array<[column: string, field: keyof Qc4mUpsertDto]> = [
   ['WORKSTAGE_CODE', 'workstageCode'], ['ECO_STATUS', 'ecoStatus'],
-  ['ECO_TYPE', 'ecoType'], ['ECO_DIVISION', 'ecoDivision'],
+  ['ECO_TYPE', 'ecoType'], ['ECO_DIVISION', 'ecoDivision'], ['ECO_ORIGIN', 'ecoOrigin'],
   ['PCB_ITEM', 'pcbItem'], ['HW_REVISION', 'hwRevision'], ['SW_REVISION', 'swRevision'],
   ['ECO_POINT', 'ecoPoint'], ['ECO_COMMENTS', 'ecoComments'], ['ECO_REASON', 'ecoReason'],
 ];
@@ -50,6 +52,7 @@ export class Qc4mService {
       ecoStatus: this.like(query.ecoStatus),
       ecoType: this.like(query.ecoType),
       ecoDivision: this.like(query.ecoDivision),
+      ecoOrigin: this.like(query.ecoOrigin),
       // PB 는 키워드를 앞자리 LIKE 로 썼다. 변경점 본문 검색이라 부분일치가 맞다.
       keyword: query.keyword?.trim() ? `%${query.keyword.trim()}%` : null,
       dateFrom: query.dateFrom ? query.dateFrom.slice(0, 10) : null,
@@ -65,6 +68,7 @@ export class Qc4mService {
              m.ECO_STATUS AS "ecoStatus", sta.CODE_MEAN_KOR AS "ecoStatusName",
              m.ECO_TYPE AS "ecoType", typ.CODE_MEAN_KOR AS "ecoTypeName",
              m.ECO_DIVISION AS "ecoDivision", dvn.CODE_MEAN_KOR AS "ecoDivisionName",
+             m.ECO_ORIGIN AS "ecoOrigin", org.CODE_MEAN_KOR AS "ecoOriginName",
              m.PCB_ITEM AS "pcbItem", pcb.CODE_MEAN_KOR AS "pcbItemName",
              m.HW_REVISION AS "hwRevision", m.SW_REVISION AS "swRevision",
              m.ECO_POINT AS "ecoPoint", m.ECO_COMMENTS AS "ecoComments",
@@ -90,6 +94,9 @@ export class Qc4mService {
         LEFT JOIN ISYS_BASECODE dvn
                ON dvn.CODE_TYPE = 'ECO DIVISION' AND dvn.CODE_NAME = m.ECO_DIVISION
               AND dvn.ORGANIZATION_ID = m.ORGANIZATION_ID
+        LEFT JOIN ISYS_BASECODE org
+               ON org.CODE_TYPE = 'ECO ORIGIN' AND org.CODE_NAME = m.ECO_ORIGIN
+              AND org.ORGANIZATION_ID = m.ORGANIZATION_ID
         LEFT JOIN ISYS_BASECODE pcb
                ON pcb.CODE_TYPE = 'PCB ITEM' AND pcb.CODE_NAME = m.PCB_ITEM
               AND pcb.ORGANIZATION_ID = m.ORGANIZATION_ID
@@ -100,6 +107,7 @@ export class Qc4mService {
          AND NVL(m.ECO_STATUS, '*') LIKE :ecoStatus
          AND NVL(m.ECO_TYPE, '*') LIKE :ecoType
          AND NVL(m.ECO_DIVISION, '*') LIKE :ecoDivision
+         AND NVL(m.ECO_ORIGIN, '*') LIKE :ecoOrigin
          AND (:dateFrom IS NULL OR m.ECO_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD'))
          AND (:dateTo IS NULL OR m.ECO_DATE < TO_DATE(:dateTo, 'YYYY-MM-DD') + 1)
          AND (:keyword IS NULL
