@@ -6,7 +6,9 @@
  * 1. 한 모델에 양식번호(LABEL_FORM_NO)별로 양식이 여러 개 있다. 키는 모델명 + 양식번호 + 조직이다 (DB 에 PK 는 없다).
  * 2. LABEL_SYNTAX 에 BarTender 양식 파일(.btw), LABEL_IMAGE 에 미리보기 이미지를 BLOB 로 저장한다.
  *    양식 파일을 올리면 LABEL_FORM_NAME 을 그 파일 이름으로 바꾼다 (내려받을 때 파일 이름으로 쓴다).
- * 3. V1~V20 은 BarTender 양식의 값 칸에 넣을 항목이다. 공통코드 LABEL STEP(QTY, BARCODE …)이거나 고정 문자다.
+ * 3. 한 모델에 같은 유형(B 박스 / P 팔레트 / R 입고전표) 양식은 하나만 둔다.
+ *    라벨 발행은 모델명 + 유형으로 양식 하나를 골라 출력하므로, 같은 유형이 둘이면 발행이 실패한다.
+ * 4. V1~V20 은 BarTender 양식의 값 칸에 넣을 항목이다. 공통코드 LABEL STEP(QTY, BARCODE …)이거나 고정 문자다.
  *    미리보기 값은 DB 함수 F_GEN_LABEL_DATA_4_BARTENDER 의 PREVIEW 모드로 만든다.
  */
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
@@ -70,6 +72,7 @@ export class LabelFormService {
   async create(dto: SaveLabelFormDto, organizationId: number, userId?: string) {
     const fields = this.fields(dto);
     await this.assertNotExists(fields.modelName, fields.labelFormNo, organizationId);
+    await this.assertTypeFree(fields.modelName, fields.labelFormType, organizationId);
     await this.query(`
       INSERT INTO ISYS_LABEL_FORM
         (MODEL_NAME, LABEL_FORM_NO, LABEL_FORM_NAME, LABEL_FORM_TYPE, USE_FLAG, COMMENTS, ${VALUE_COLUMNS.join(', ')},
@@ -83,6 +86,7 @@ export class LabelFormService {
     const fields = this.fields(dto);
     const keyChanged = fields.modelName !== dto.originalModelName || fields.labelFormNo !== dto.originalLabelFormNo;
     if (keyChanged) await this.assertNotExists(fields.modelName, fields.labelFormNo, organizationId);
+    await this.assertTypeFree(fields.modelName, fields.labelFormType, organizationId, { modelName: dto.originalModelName, labelFormNo: dto.originalLabelFormNo });
     const affected = await this.execute(async (runner) => this.dml(runner, `
       UPDATE ISYS_LABEL_FORM
          SET MODEL_NAME = :modelName, LABEL_FORM_NO = :labelFormNo, LABEL_FORM_NAME = :labelFormName,
@@ -160,6 +164,13 @@ export class LabelFormService {
     if (exists.length > 0) {
       throw new BadRequestException(`대상 모델 ${target} 에 양식번호 ${exists.map((e) => e.labelFormNo).join(', ')} 이(가) 이미 있습니다.`);
     }
+    const sourceTypes = await this.query(
+      `SELECT LABEL_FORM_TYPE AS "labelFormType" FROM ISYS_LABEL_FORM
+        WHERE ORGANIZATION_ID = :organizationId AND (${dto.sources.map((_, i) => `(MODEL_NAME = :m${i} AND LABEL_FORM_NO = :n${i})`).join(' OR ')})`,
+      { organizationId, ...Object.fromEntries(dto.sources.flatMap((s, i) => [[`m${i}`, s.modelName], [`n${i}`, Number(s.labelFormNo)]])) });
+    const types = sourceTypes.map((r) => String(r.labelFormType));
+    if (new Set(types).size !== types.length) throw new BadRequestException('유형이 같은 양식을 한 모델로 함께 복사할 수 없습니다. 한 모델에는 유형별로 양식이 하나만 있어야 합니다.');
+    for (const type of types) await this.assertTypeFree(target, type, organizationId);
 
     let copied = 0;
     await this.execute(async (runner) => {
@@ -213,6 +224,18 @@ export class LabelFormService {
       `SELECT COUNT(*) AS "cnt" FROM ISYS_LABEL_FORM WHERE MODEL_NAME = :modelName AND LABEL_FORM_NO = :labelFormNo AND ORGANIZATION_ID = :organizationId`,
       { modelName, labelFormNo, organizationId });
     if (Number(rows[0]?.cnt ?? 0) > 0) throw new BadRequestException(`모델 ${modelName} 에 양식번호 ${labelFormNo} 이(가) 이미 있습니다.`);
+  }
+
+  /** 한 모델에 같은 유형 양식이 이미 있으면 막는다 (수정 중인 자기 자신은 뺀다) */
+  private async assertTypeFree(modelName: string, labelFormType: string, organizationId: number, self?: { modelName: string; labelFormNo: number }) {
+    const rows = await this.query(`
+      SELECT LABEL_FORM_NO AS "labelFormNo" FROM ISYS_LABEL_FORM
+       WHERE MODEL_NAME = :modelName AND LABEL_FORM_TYPE = :labelFormType AND ORGANIZATION_ID = :organizationId
+         ${self ? 'AND NOT (MODEL_NAME = :selfModel AND LABEL_FORM_NO = :selfNo)' : ''}`,
+      { modelName, labelFormType, organizationId, ...(self ? { selfModel: self.modelName, selfNo: Number(self.labelFormNo) } : {}) });
+    if (rows.length > 0) {
+      throw new BadRequestException(`모델 ${modelName} 에 같은 유형(${labelFormType}) 양식이 이미 있습니다 (양식번호 ${rows.map((r) => r.labelFormNo).join(', ')}). 라벨 발행은 모델·유형별로 양식 하나만 씁니다.`);
+    }
   }
 
   private imageExtension(content: Buffer) {
