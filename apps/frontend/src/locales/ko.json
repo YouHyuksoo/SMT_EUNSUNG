@@ -538,7 +538,7 @@
     "confirm.bom": "설계BOM승인",
     "oee.overallStatus": "OEE 종합 현황",
     "material.receiptIssueLedger": "자재입출고수불원장",
-    "material.currentInventory": "현재고조회",
+    "material.currentInventory": "자재현재고조회",
     "material.totalInventory": "총재고조회",
     "material.inventoryClose": "자재재고마감",
     "material.inventoryCheck": "자재재고실사",

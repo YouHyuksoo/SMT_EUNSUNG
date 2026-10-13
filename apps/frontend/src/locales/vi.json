@@ -538,7 +538,7 @@
     "confirm.bom": "Phê duyệt BOM thiết kế",
     "oee.overallStatus": "Tổng quan OEE",
     "material.receiptIssueLedger": "Sổ cái nhập xuất vật tư",
-    "material.currentInventory": "Tra cứu tồn kho hiện tại",
+    "material.currentInventory": "Tra cứu tồn kho vật tư hiện tại",
     "material.totalInventory": "Tra cứu tổng tồn kho",
     "material.inventoryClose": "Chốt tồn kho vật tư",
     "material.inventoryCheck": "Kiểm kê tồn kho vật tư",

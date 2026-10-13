@@ -538,7 +538,7 @@
     "confirm.bom": "Design BOM Approval",
     "oee.overallStatus": "OEE Overall Status",
     "material.receiptIssueLedger": "Material Receipt/Issue Ledger",
-    "material.currentInventory": "Current Inventory",
+    "material.currentInventory": "Material Current Inventory",
     "material.totalInventory": "Total Inventory",
     "material.inventoryClose": "Material Inventory Close",
     "material.inventoryCheck": "Material Inventory Check",
