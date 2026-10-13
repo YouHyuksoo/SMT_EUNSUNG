@@ -82,6 +82,18 @@ export class ProductPackController {
     return paged(await this.service.findPackHistory(query, organizationId));
   }
 
+  @Get('box-label')
+  @ApiOperation({
+    summary: '299 박스라벨 출력 데이터 (읽기 전용) — 모델 박스 양식(.btw)과 V1~V20 값.'
+      + ' 화면이 작업자 PC 의 Print Agent 로 넘겨 BarTender 로 찍는다.',
+  })
+  async boxLabel(
+    @Query() query: PackCompleteDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(await this.service.getBoxLabel(query.packBarcode, organizationId));
+  }
+
   @Post()
   @ApiOperation({
     summary: '299 박스 바코드 생성 (**쓰기**). 번호는 DB 함수'
@@ -141,7 +153,7 @@ export class ProductPackController {
 
   @Post('reprint')
   @ApiOperation({
-    summary: '299 재출력 횟수를 올린다 (**쓰기**). 인쇄 자체는 옮기지 않았다.',
+    summary: '299 재출력 횟수를 올린다 (**쓰기**). 출력은 화면이 box-label → Print Agent 로 한다.',
   })
   async reprint(
     @Body() dto: PackCompleteDto,

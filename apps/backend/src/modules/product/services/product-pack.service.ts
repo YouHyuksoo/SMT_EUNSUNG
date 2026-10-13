@@ -23,8 +23,9 @@
  * 6. **한 PID 는 한 박스에만 들어간다.** 이미 담긴 PID 를 다시 찍으면 거절한다.
  *    담을 때 `IP_PRODUCT_2D_BARCODE.BOX_NO` 에 박스 바코드를 적고, 빼면 NULL 로 되돌린다.
  *    이 두 가지가 어긋나면 제품 추적이 끊긴다 — 그래서 한 트랜잭션에서 같이 움직인다.
- * 7. **라벨 인쇄는 옮기지 않았다.** PB 는 DataWindow 와 BarTender 로 찍는다.
- *    재출력 횟수(`REPRINT`)만 올려 둘 수 있게 남겼다.
+ * 7. **박스라벨은 BarTender 로 찍는다** (PB `w_com_bartneder_form_popup` 과 같은 데이터).
+ *    `getBoxLabel` 이 박스의 모델 박스 양식(.btw)과 V1~V20 값을 돌려주고, 화면이 작업자 PC 의
+ *    EUNSUNG Print Agent(`POST /print/bartender`)로 넘겨 출력한다. 재출력은 `REPRINT` 를 올린 뒤 같은 방법으로 찍는다.
  * 8. **쓰기는 실행하지 않고 parse 로만 검증했다** (사용자 결정).
  * 9. **목록은 기간을 좁혀 본다.** 이 표들은 기간 컬럼에 인덱스가 없어 한 달을 보면
  *    9,000행에 **8.7초**가 걸린다 (실측). 7일이면 1,583행 **2.4초**다 — 그래서 화면
@@ -535,7 +536,7 @@ export class ProductPackService {
     });
   }
 
-  /** 재출력 횟수를 올린다 (**쓰기**). 인쇄 자체는 옮기지 않았다. */
+  /** 재출력 횟수를 올린다 (**쓰기**). 출력은 화면이 getBoxLabel → Print Agent 로 한다. */
   async markReprint(dto: PackCompleteDto, organizationId: number, userId: string) {
     const packBarcode = dto.packBarcode.trim();
     return this.tx.run(async (qr) => {
@@ -589,6 +590,63 @@ export class ProductPackService {
       }
       return { packBarcode, deletedRows: affected };
     });
+  }
+
+  // ───────────────────────────────── 박스라벨 (조회)
+
+  /**
+   * 박스라벨 출력 데이터 — PB `w_com_bartneder_form_popup` 과 같은 순서로 만든다 (**읽기 전용**).
+   * 1. 박스의 모델·포장수량·포장일을 읽는다.
+   * 2. 그 모델의 박스(B) 양식 파일(.btw)을 `ISYS_LABEL_FORM` 에서 읽는다 (모델·유형별 하나).
+   * 3. V1~V20 값을 `F_GEN_LABEL_DATA_4_BARTENDER('', 모델, 'B', 'Vn', 포장일, 수량, 박스바코드, '')` 로 만든다.
+   *    `NOTFOUND`·빈 값은 그대로 돌려준다 — 출력할 때 넣지 않는 것은 PB 와 같이 에이전트가 한다.
+   */
+  async getBoxLabel(packBarcodeRaw: string, organizationId: number) {
+    const packBarcode = packBarcodeRaw.trim();
+    const packs = (await this.dataSource.query(
+      `SELECT MODEL_NAME AS "modelName", PACK_QTY AS "packQty", PACK_DATE AS "packDate"
+         FROM IP_PRODUCT_PACK_MASTER
+        WHERE PACK_BARCODE = :packBarcode AND ORGANIZATION_ID = :organizationId`,
+      namedBinds({ packBarcode, organizationId }),
+    )) as Row[];
+    const pack = packs[0];
+    if (!pack) throw new BadRequestException(`박스를 찾을 수 없습니다: ${packBarcode}`);
+    const modelName = String(pack.modelName ?? '');
+
+    const forms = (await this.dataSource.query(
+      `SELECT LABEL_FORM_NO AS "labelFormNo", LABEL_FORM_NAME AS "labelFormName", LABEL_SYNTAX AS "labelSyntax"
+         FROM ISYS_LABEL_FORM
+        WHERE MODEL_NAME = :modelName AND LABEL_FORM_TYPE = 'B' AND ORGANIZATION_ID = :organizationId`,
+      namedBinds({ modelName, organizationId }),
+    )) as Row[];
+    if (forms.length === 0) {
+      throw new BadRequestException(`모델 ${modelName} 의 박스 라벨 양식이 없습니다. 제품별 라벨양식 관리에서 등록하세요.`);
+    }
+    if (forms.length > 1) {
+      throw new BadRequestException(`모델 ${modelName} 에 박스 라벨 양식이 ${forms.length}개 있습니다. 제품별 라벨양식 관리에서 하나만 남기세요.`);
+    }
+    const syntax = forms[0].labelSyntax;
+    if (!Buffer.isBuffer(syntax) || syntax.length === 0) {
+      throw new BadRequestException(`모델 ${modelName} 의 박스 라벨 양식 파일(.btw)이 비어 있습니다. 제품별 라벨양식 관리에서 올리세요.`);
+    }
+
+    const slots = Array.from({ length: 20 }, (_, i) => `V${i + 1}`);
+    const valueRows = (await this.dataSource.query(
+      `SELECT ${slots.map((v) => `F_GEN_LABEL_DATA_4_BARTENDER('', :modelName, 'B', '${v}', :packDate, :packQty, :packBarcode, '') AS "${v}"`).join(', ')}
+         FROM DUAL`,
+      namedBinds({ modelName, packDate: pack.packDate, packQty: String(pack.packQty ?? ''), packBarcode }),
+    )) as Row[];
+    const values = Object.fromEntries(slots.map((v) => [v, valueRows[0]?.[v] == null ? '' : String(valueRows[0][v])]));
+
+    return {
+      packBarcode,
+      modelName,
+      packQty: Number(pack.packQty ?? 0),
+      labelFormNo: Number(forms[0].labelFormNo),
+      fileName: String(forms[0].labelFormName ?? `${modelName}_box.btw`),
+      templateBase64: syntax.toString('base64'),
+      values,
+    };
   }
 
   /** PB 가 `'%' + 값 + '%'` 로 넘기던 것을 같은 뜻으로 만든다. */

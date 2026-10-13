@@ -16,7 +16,8 @@
  * 5. **담기 전에 인터락 검사를 거친다.** 라인·공정에 걸린 검사 항목을 서버가
  *    차례로 보고 하나라도 NG 면 담기지 않는다 — PB 가 막던 것과 같다.
  * 6. **수리품은 수리품으로 찍어야 한다.** 공정 수리 이력 유무와 체크가 어긋나면 거절한다.
- * 7. **라벨 인쇄는 없다.** PB 는 BarTender 로 찍는다 — 여기서는 재출력 횟수만 올린다.
+ * 7. **박스라벨은 BarTender 로 찍는다** (PB 와 같은 양식·값). 'BarTender 출력'을 켜 두면 포장완료 때
+ *    출력 매수만큼, 재출력 때 1장을 이 PC 의 Print Agent 로 찍는다. 출력이 실패해도 포장완료는 되돌리지 않는다.
  * 8. **기본 기간이 7일이다.** 이 표는 기간 컬럼에 인덱스가 없어 한 달을 보면
  *    9,000행에 8.7초가 걸린다 (7일이면 2.4초).
  */
@@ -28,7 +29,7 @@ import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
 import ProcessSelect from '@/components/shared/ProcessSelect';
-import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal, Input, Select } from '@/components/ui';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import api from '@/services/api';
 import {
@@ -38,6 +39,8 @@ import {
 import { packColumns, packSerialColumns } from '../shipping-columns';
 import type { PackRow, PackSerialRow } from '../shipping-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
+import { getPrintAgentPrinters } from '@/services/print-agent';
+import { DEFAULT_BOX_LABEL_SETTINGS, loadBoxLabelSettings, printBoxLabel, saveBoxLabelSettings, type BoxLabelSettings } from './boxLabelPrint';
 
 import { getTodayLocal } from '@/utils/date';
 /** 오늘 / 7일 전 — 기본 기간을 좁게 잡는 이유는 파일 상단 주석 6번. */
@@ -77,6 +80,17 @@ export default function ProductPackPage() {
   const [repairMode, setRepairMode] = useState(false);
   const [lastResult, setLastResult] = useState<string | null>(null);
   const pidRef = useRef<HTMLInputElement>(null);
+
+  // 박스라벨 출력 설정 (PC 마다 다르다)
+  const [labelSettings, setLabelSettings] = useState<BoxLabelSettings>(DEFAULT_BOX_LABEL_SETTINGS);
+  const [printers, setPrinters] = useState<string[]>([]);
+  useEffect(() => {
+    setLabelSettings(loadBoxLabelSettings());
+    getPrintAgentPrinters().then(setPrinters).catch(() => setPrinters([]));
+  }, []);
+  const updateLabelSettings = (patch: Partial<BoxLabelSettings>) => {
+    setLabelSettings((prev) => { const next = { ...prev, ...patch }; saveBoxLabelSettings(next); return next; });
+  };
 
   const [completeOpen, setCompleteOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -224,6 +238,16 @@ export default function ProductPackPage() {
         toast.success(kind === 'complete'
           ? `포장완료 — 담긴 수량 ${r.data?.data?.packQty ?? serials.length}`
           : '재출력 횟수를 올렸습니다.');
+        // PB 와 같이 포장완료는 출력 매수만큼, 재출력은 1장. 출력이 실패해도 완료는 되돌리지 않는다.
+        if (labelSettings.enabled) {
+          const copies = kind === 'complete' ? labelSettings.copies : 1;
+          try {
+            await printBoxLabel(selected.packBarcode, copies, labelSettings.printerName);
+            toast.success(`박스라벨 ${copies}장을 출력했습니다.`);
+          } catch (printError: unknown) {
+            toast.error(printError instanceof Error ? printError.message : '박스라벨 출력에 실패했습니다.', { duration: 8000 });
+          }
+        }
       }
       await search();
     } catch (error: unknown) {
@@ -233,7 +257,7 @@ export default function ProductPackPage() {
     } finally {
       setBusy(false);
     }
-  }, [selected, serials.length, search]);
+  }, [selected, serials.length, search, labelSettings]);
 
   const canEdit = Boolean(selected)
     && String(selected?.completeFlag ?? 'N') !== 'Y'
@@ -327,6 +351,18 @@ export default function ProductPackPage() {
               onClick={() => act('reprint')}>
               <Printer className="mr-1 h-4 w-4" />재출력
             </Button>
+            <label className="flex items-center gap-1 whitespace-nowrap text-sm" title="포장완료·재출력 때 이 PC 의 Print Agent 로 BarTender 박스라벨을 찍는다">
+              <input type="checkbox" checked={labelSettings.enabled}
+                onChange={(e) => updateLabelSettings({ enabled: e.target.checked })} />
+              BarTender 출력
+            </label>
+            <Input aria-label="출력 매수" title="포장완료 때 출력 매수" type="number" min={1} max={50} className="w-16"
+              value={String(labelSettings.copies)} disabled={!labelSettings.enabled}
+              onChange={(e) => updateLabelSettings({ copies: Math.min(50, Math.max(1, Number(e.target.value) || 1)) })} />
+            <Select aria-label="라벨 프린터" className="w-48" disabled={!labelSettings.enabled}
+              options={[{ value: '', label: '프린터: 양식 기본' }, ...printers.map((name) => ({ value: name, label: name }))]}
+              value={labelSettings.printerName}
+              onChange={(value) => updateLabelSettings({ printerName: value })} />
             <Button size="sm" variant="danger"
               disabled={!canEdit || busy || serials.length > 0}
               onClick={() => setDeleteOpen(true)}>

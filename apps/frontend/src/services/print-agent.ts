@@ -34,6 +34,18 @@ export interface PrintAgentPngJob {
   outputPath?: string;
 }
 
+/** BarTender 양식(.btw) 출력 작업 — 에이전트가 값 칸에 값을 넣고 BarTender 로 찍는다 */
+export interface PrintAgentBarTenderJob {
+  jobId: string;
+  /** 비우면 양식에 저장된 프린터로 찍는다 */
+  printerName?: string;
+  copies?: number;
+  fileName?: string;
+  templateBase64: string;
+  /** 값 칸 이름(V1~V20) → 값. 빈 값·NOTFOUND 는 에이전트가 넣지 않는다 */
+  values: Record<string, string>;
+}
+
 export interface PrintAgentResult {
   jobId: string;
   printerName: string;
@@ -119,6 +131,15 @@ export async function printAgentPng(job: PrintAgentPngJob): Promise<PrintAgentRe
       format: "png",
       copies: job.copies ?? 1,
     }),
+  });
+  return parseAgentResponse<PrintAgentResult>(res);
+}
+
+export async function printAgentBarTender(job: PrintAgentBarTenderJob): Promise<PrintAgentResult> {
+  const res = await agentFetch(`${PRINT_AGENT_BASE_URL}/print/bartender`, {
+    method: "POST",
+    headers: printAgentHeaders(),
+    body: JSON.stringify({ ...job, copies: job.copies ?? 1 }),
   });
   return parseAgentResponse<PrintAgentResult>(res);
 }

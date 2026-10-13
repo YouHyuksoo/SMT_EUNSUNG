@@ -121,6 +121,13 @@
       ]
     },
     {
+      "key": "product",
+      "title": "제품관리",
+      "items": [
+        { "menuCode": "PRD_PACK", "title": "제품포장관리(PID)", "path": "/product/pack" }
+      ]
+    },
+    {
       "key": "equipment",
       "title": "설비관리",
       "items": [

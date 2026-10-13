@@ -80,6 +80,7 @@ import { MasterPurchasePriceModule } from './modules/master/master-purchase-pric
 import { MasterSalePriceModule } from './modules/master/master-sale-price.module';
 import { MasterInterlockConditionModule } from './modules/master/master-interlock-condition.module';
 import { MasterLabelFormModule } from './modules/master/master-label-form.module';
+import { PrintAgentModule } from './modules/print-agent/print-agent.module';
 import { MasterItemSupplierModule } from './modules/master/master-item-supplier.module';
 import { MasterCustomerModule } from './modules/master/master-customer.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -224,6 +225,8 @@ import { SharedModule } from './shared/shared.module';
     MasterInterlockConditionModule,
     // 기준정보 제품별 라벨양식 (/master/label-forms)
     MasterLabelFormModule,
+    // 작업자 PC 출력 에이전트 설치 파일 (/print-agent/info, /print-agent/download)
+    PrintAgentModule,
 
     // 대시보드 (/dashboard/summary)
     DashboardModule,
