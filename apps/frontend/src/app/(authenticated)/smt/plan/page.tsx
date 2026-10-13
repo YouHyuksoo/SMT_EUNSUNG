@@ -14,12 +14,15 @@
  *      계획으로 자재를 물릴지 알 수 없다.
  * 3. **배치는 PB 와 같다.** 왼쪽 위 '라인'에서 라인을 고르면 오른쪽 위 'Summary'에 그 라인의
  *    배포계획이 모델·PCB면별로 나오고, Summary 한 줄을 고르면 아래 '피더 배치'에 그 계획 상세가 나온다.
- *    배포취소·활성화는 Summary 에서 고른 라인·모델·면에 적용한다.
- * 4. 체크상태·CCS 는 보기만 한다 — 그 값을 바꾸는 것은 현장 스캔·풀체크 화면이다.
+ *    버튼(Line On/Off · Restore · 배포취소 · 피더 레이아웃 출력)은 Summary 에서 고른 라인·모델·면에 적용한다.
+ * 5. **Line On/Off 는 현장 PDA 와 같은 프로시저를 런카드로 부른다.** 장착하면 계획이 활성이 되고 라인 ON 이력이 남는다.
+ *    PB 의 Line On/Off 는 다른 스키마의 프로시저를 가리켜 은성에서는 동작하지 않았다.
+ * 6. **Restore** 는 활성인데 CCS 가 안 끝난 피더를 체크 완료로 바꾸고, 자재 바코드를 체크이력에서 다시 채운다.
+ * 4. 체크상태·CCS 는 보기만 한다 — Restore 외에 그 값을 바꾸는 것은 현장 스캔·풀체크 화면이다.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Play, Power, Search, Trash2 } from 'lucide-react';
+import { History, Play, Power, PowerOff, Printer, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import Select from '@/components/ui/Select';
@@ -28,6 +31,8 @@ import { SmtModelSelect, SmtPcbItemSelect } from '../components/SmtSelects';
 import { smtPlanColumns, smtPlanLineColumns, smtPlanSummaryColumns } from '../columns';
 import type { SmtPlanLineRow, SmtPlanRow, SmtPlanSummaryRow } from '../types';
 import SmtPlanDeployModal from './components/SmtPlanDeployModal';
+import LineOnOffModal from './components/LineOnOffModal';
+import FeederLayoutPrintModal from './components/FeederLayoutPrintModal';
 import LineSelect from '@/components/shared/LineSelect';
 
 const YN_OPTIONS = [
@@ -61,7 +66,9 @@ export default function SmtPlanPage() {
 
   const [deployOpen, setDeployOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [activateOpen, setActivateOpen] = useState<'Y' | 'N' | null>(null);
+  const [lineOnOff, setLineOnOff] = useState<'ON' | 'OFF' | null>(null);
+  const [restoreOpen, setRestoreOpen] = useState(false);
+  const [printOpen, setPrintOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   /** 라인 목록 (PB dw_1). 라인 조건은 화면에서 거른다. */
@@ -168,30 +175,27 @@ export default function SmtPlanPage() {
     }
   }, [selectedPlan, afterChange]);
 
-  const setActive = useCallback(async (yn: 'Y' | 'N') => {
+  const restore = useCallback(async () => {
     if (!selectedPlan) return;
-    setActivateOpen(null);
+    setRestoreOpen(false);
     setBusy(true);
     try {
-      const response = await api.put('/smt/plan/active', {
+      const response = await api.put('/smt/plan/restore', {
         lineCode: selectedPlan.lineCode,
         modelName: selectedPlan.modelName,
-        pcbItem: selectedPlan.pcbItem || undefined,
-        activeYn: yn,
+        pcbItem: selectedPlan.pcbItem === 'B' ? 'B' : 'T',
       });
       const data = response.data?.data;
-      toast.success(
-        `${yn === 'Y' ? '활성화' : '비활성화'} 완료 — 활성 ${data?.active ?? 0}행 / 비활성 ${data?.inactive ?? 0}행`,
-      );
-      afterChange();
+      toast.success(`Restore 완료 — 체크 완료 ${data?.checkedRows ?? 0}행 · 자재 바코드 복원 ${data?.restoredRows ?? 0}행`);
+      void loadDetail(selectedPlan);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
         ?.response?.data?.message;
-      toast.error(message ?? '전환에 실패했습니다.');
+      toast.error(message ?? 'Restore 에 실패했습니다.');
     } finally {
       setBusy(false);
     }
-  }, [selectedPlan, afterChange]);
+  }, [selectedPlan, loadDetail]);
 
   const columns = useMemo(() => smtPlanColumns, []);
   const lineColumns = useMemo(() => smtPlanLineColumns, []);
@@ -219,16 +223,24 @@ export default function SmtPlanPage() {
             <Play className="mr-1 h-4 w-4" />배포
           </Button>
           <Button size="sm" variant="secondary" disabled={!scopeReady || busy}
-            onClick={() => setActivateOpen('Y')}>
-            <Power className="mr-1 h-4 w-4" />활성화
-          </Button>
-          <Button size="sm" variant="secondary" disabled={!scopeReady || busy}
-            onClick={() => setActivateOpen('N')}>
-            <Power className="mr-1 h-4 w-4" />비활성화
-          </Button>
-          <Button size="sm" variant="secondary" disabled={!scopeReady || busy}
             onClick={() => setDeleteOpen(true)}>
             <Trash2 className="mr-1 h-4 w-4 text-red-500" />배포취소
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!scopeReady || busy}
+            onClick={() => setPrintOpen(true)}>
+            <Printer className="mr-1 h-4 w-4" />피더 레이아웃 출력
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!scopeReady || busy}
+            onClick={() => setRestoreOpen(true)}>
+            <History className="mr-1 h-4 w-4" />Restore
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!scopeReady || busy}
+            onClick={() => setLineOnOff('ON')}>
+            <Power className="mr-1 h-4 w-4 text-emerald-600" />Line On
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!scopeReady || busy}
+            onClick={() => setLineOnOff('OFF')}>
+            <PowerOff className="mr-1 h-4 w-4 text-red-500" />Line Off
           </Button>
         </div>
       </header>
@@ -344,16 +356,26 @@ export default function SmtPlanPage() {
       />
 
       <ConfirmModal
-        isOpen={activateOpen !== null}
-        onClose={() => setActivateOpen(null)}
-        onConfirm={() => activateOpen && setActive(activateOpen)}
-        title={activateOpen === 'Y' ? '계획 활성화' : '계획 비활성화'}
-        message={activateOpen === 'Y'
-          ? `${selectedPlan?.lineCode} 라인을 ${selectedPlan?.modelName} 계획으로 돌립니까?`
-            + ' 같은 라인에 이미 활성인 다른 모델이 있으면 거부됩니다.'
-          : `${scopeLabel} 계획을 비활성으로 바꿉니까?`
-            + ' 현장이 이 계획으로 자재를 물리지 않게 됩니다.'}
+        isOpen={restoreOpen}
+        onClose={() => setRestoreOpen(false)}
+        onConfirm={restore}
+        title="Restore"
+        message={`${scopeLabel} — 활성인데 CCS 가 끝나지 않은 피더를 체크 완료(합격)로 바꾸고,`
+          + ' 피더의 자재 바코드·LOT 를 체크이력에서 다시 채웁니다. 체크이력이 없는 피더는 그대로 둡니다.'}
       />
+
+      {lineOnOff && selectedPlan && (
+        <LineOnOffModal
+          mode={lineOnOff}
+          plan={selectedPlan}
+          onClose={() => setLineOnOff(null)}
+          onDone={() => { setLineOnOff(null); afterChange(); }}
+        />
+      )}
+
+      {printOpen && selectedPlan && (
+        <FeederLayoutPrintModal plan={selectedPlan} revision={revision} onClose={() => setPrintOpen(false)} />
+      )}
     </div>
   );
 }

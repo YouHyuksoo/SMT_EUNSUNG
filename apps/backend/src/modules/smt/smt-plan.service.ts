@@ -20,6 +20,7 @@
  *    스캔·풀체크 화면의 일이고 이 화면이 아니다.
  */
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import * as oracledb from 'oracledb';
 import { DataSource } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
 import {
@@ -28,8 +29,12 @@ import {
   SmtPlanQueryDto,
   SmtPlanSetActiveDto,
   SmtPlanSummaryQueryDto,
+  SmtPlanScopeDto,
+  SmtPlanRunCardQueryDto,
+  SmtPlanLineOnOffDto,
 } from './smt-plan.dto';
 import { namedBinds } from '../../common/utils/named-binds.util';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 @Injectable()
 export class SmtPlanService {
@@ -170,6 +175,141 @@ export class SmtPlanService {
         ORDER BY MAX(d.ACTIVE_YN) DESC, d.LINE_CODE, d.MODEL_NAME, d.PCB_ITEM, MAX(d.FEEDER_SHAFT)`,
       namedBinds({ organizationId, lineCode: lineCode || null, modelName: modelName || null, revision: this.like(query.revision) }),
     )) as Record<string, unknown>[];
+  }
+
+  /**
+   * 피더 레이아웃 출력 데이터 — PB d_smt_plandata_list_rpt 와 같은 SQL (읽기 전용).
+   * 소요량은 캐리어 수(F_GET_CARRIER_SIZE)를 곱하고, 단가는 F_GET_MAT_MAX_UNIT_PRICE_CFM 이다.
+   * 출력은 라인·모델·테이블마다 새 쪽, 그 안에서 대체여부(DIV)로 묶는다.
+   */
+  async findLayoutPrint(query: SmtPlanScopeDto, organizationId: number) {
+    return (await this.dataSource.query(
+      `SELECT p.REPLACE_YN AS "div", p.MODEL_NAME AS "modelName", p.ITEM_CODE AS "itemCode",
+              p.ITEM_UNIT_QTY * F_GET_CARRIER_SIZE(p.MODEL_NAME, p.ORGANIZATION_ID) AS "itemUnitQty",
+              a.ITEM_NAME AS "itemName", a.ITEM_SPEC AS "itemSpec", a.ITEM_UOM AS "itemUom",
+              b.ITEM_NAME AS "parentItemName", b.ITEM_SPEC AS "parentItemSpec",
+              a.LOCATION_ADDRESS AS "locationAddress",
+              p.LOCATION_CODE AS "locationCode", p.LINE_CODE AS "lineCode", p.MACHINE AS "machine",
+              lm.LINE_NAME AS "lineName", lm.MACHINE_NAME AS "machineName", p.TABLE_ID AS "tableId",
+              a.FEEDER_SIZE AS "feederType", p.PCB_ITEM AS "pcbItem",
+              F_GET_MAT_MAX_UNIT_PRICE_CFM(p.ITEM_CODE, 'F', TRUNC(SYSDATE), 1) AS "unitPrice",
+              F_GET_PCB_ITEM_BY_NAME(p.MODEL_NAME) AS "pcbItemCode",
+              p.REVISION AS "revision", a.MSL_LEVEL AS "mslLevel"
+         FROM IB_PRODUCT_PLANDATA p
+         LEFT JOIN ID_ITEM a ON a.ITEM_CODE = p.ITEM_CODE AND a.ORGANIZATION_ID = p.ORGANIZATION_ID
+         LEFT JOIN ID_ITEM b ON b.ITEM_CODE = p.MODEL_NAME AND b.ORGANIZATION_ID = p.ORGANIZATION_ID
+         LEFT JOIN IB_LINE_MASTER lm
+                ON lm.LINE_CODE = p.LINE_CODE AND lm.MACHINE = p.MACHINE AND lm.ORGANIZATION_ID = p.ORGANIZATION_ID
+        WHERE p.MODEL_NAME = :modelName
+          AND p.LINE_CODE LIKE :lineCode
+          AND NVL(p.PCB_ITEM, '*') LIKE :pcbItem
+          AND p.ORGANIZATION_ID = :organizationId
+          AND NVL(p.REVISION, '0000') LIKE :revision
+        ORDER BY p.LINE_CODE, p.MODEL_NAME, p.TABLE_ID, p.REPLACE_YN, p.LOCATION_CODE`,
+      namedBinds({
+        modelName: query.modelName.trim(),
+        lineCode: this.like(query.lineCode),
+        pcbItem: this.like(query.pcbItem),
+        organizationId,
+        revision: this.like(query.revision),
+      }),
+    )) as Record<string, unknown>[];
+  }
+
+  /**
+   * Restore — PB w_smt_plan_master 의 Restore 버튼 (**쓰기**).
+   * 1. 활성인데 CCS 가 안 끝난(N) 행을 체크 완료(합격 P · CCS Y)로 바꾼다.
+   * 2. 피더별 자재 바코드·칩명·공급사 바코드·LOT·투입시각을 체크이력(IB_SMT_CHECKHIST, 합격·CHECK_TYPE 1)에서 다시 채운다.
+   * PB 는 2번에서 체크이력이 없는 피더도 바코드를 NULL 로 덮었다 — 여기서는 이력이 있는 피더만 채운다.
+   */
+  async restore(dto: SmtPlanScopeDto, organizationId: number, userId: string) {
+    const binds = { modelName: dto.modelName.trim(), lineCode: dto.lineCode.trim(), pcbItem: dto.pcbItem, organizationId };
+    return this.tx.run(async (qr) => {
+      const checked = await qr.query(
+        `UPDATE IB_PRODUCT_PLANDATA
+            SET CHECK_STATUS = 'P', CHECK_YN = 'Y', CHECK_MSG = 'OK', CHANGE_DATE = SYSDATE,
+                CCS_YN = 'Y', ACTIVE_YN = 'Y', FEEDING_COUNT = 1,
+                LAST_MODIFY_BY = :userId, LAST_MODIFY_DATE = SYSDATE
+          WHERE MODEL_NAME = :modelName AND LINE_CODE = :lineCode AND PCB_ITEM = :pcbItem
+            AND ORGANIZATION_ID = :organizationId
+            AND ACTIVE_YN = 'Y' AND CCS_YN = 'N'`,
+        namedBinds({ ...binds, userId }),
+      );
+      const restored = await qr.query(
+        `UPDATE IB_PRODUCT_PLANDATA a
+            SET (a.SELECTED_DATE, a.ITEM_BARCODE, a.CHIPNAME, a.SUPPLIER_BARCODE, a.LOT_NO, a.FEEDING_END_DATE) = (
+                  SELECT DISTINCT MIN(b.CHECK_DATE), b.SCAN_PARTNAME, b.CHIPNAME, b.SCAN_SUPPLIER_PARTNAME, b.LOT_NO, MAX(b.CCS_END_DATE)
+                    FROM IB_SMT_CHECKHIST b
+                   WHERE a.MODEL_NAME = b.LOT_NAME AND a.LINE_CODE = b.LINE_CODE
+                     AND a.LOCATION_CODE = b.LOCATION_CODE AND a.PCB_ITEM = b.PCB_ITEM
+                     AND b.LOT_NAME = :modelName AND b.LINE_CODE = :lineCode
+                     AND b.CHECK_STATUS = 'P' AND b.CHECK_TYPE = 1 AND b.PCB_ITEM = :pcbItem
+                   GROUP BY b.SCAN_PARTNAME, b.CHIPNAME, b.SCAN_SUPPLIER_PARTNAME, b.LOT_NO)
+          WHERE a.MODEL_NAME = :modelName AND a.LINE_CODE = :lineCode AND a.PCB_ITEM = :pcbItem
+            AND a.ORGANIZATION_ID = :organizationId AND a.ACTIVE_YN = 'Y'
+            AND EXISTS (
+                  SELECT 1 FROM IB_SMT_CHECKHIST b
+                   WHERE b.LOT_NAME = a.MODEL_NAME AND b.LINE_CODE = a.LINE_CODE
+                     AND b.LOCATION_CODE = a.LOCATION_CODE AND b.PCB_ITEM = a.PCB_ITEM
+                     AND b.CHECK_STATUS = 'P' AND b.CHECK_TYPE = 1)`,
+        namedBinds(binds),
+      );
+      return { checkedRows: Number(affectedRows(checked) ?? 0), restoredRows: Number(affectedRows(restored) ?? 0) };
+    });
+  }
+
+  /** 라인 ON/OFF 할 런카드 후보 — 그 라인·모델(·면)의 최근 60일 런카드 */
+  async findRunCards(query: SmtPlanRunCardQueryDto, organizationId: number) {
+    return (await this.dataSource.query(
+      `SELECT * FROM (
+         SELECT RUN_NO AS "runNo", RUN_DATE AS "runDate", MODEL_NAME AS "modelName", LINE_CODE AS "lineCode",
+                PCB_ITEM AS "pcbItem", RUN_STATUS AS "runStatus", LOT_SIZE AS "lotSize"
+           FROM IP_PRODUCT_RUN_CARD
+          WHERE ORGANIZATION_ID = :organizationId AND MODEL_NAME = :modelName
+            AND LINE_CODE LIKE :lineCode AND NVL(PCB_ITEM, '*') LIKE :pcbItem
+            AND RUN_DATE >= TRUNC(SYSDATE) - 60
+          ORDER BY RUN_DATE DESC, RUN_NO DESC)
+        WHERE ROWNUM <= 30`,
+      namedBinds({ organizationId, modelName: query.modelName.trim(), lineCode: this.like(query.lineCode), pcbItem: this.like(query.pcbItem) }),
+    )) as Record<string, unknown>[];
+  }
+
+  /**
+   * 라인 ON(장착)/OFF(회수) — 현장 PDA 와 같은 P_CHECK_PDA_TB_INOUT_PS_USER 를 런카드 번호로 부른다 (**쓰기**).
+   * PB 계획배포 화면의 Line On/Off 는 다른 스키마(INFINITY21_JSLCD)의 P_CHECK_PDA_TB_INOUT_PS 를 불러 은성에서는 동작하지 않았다.
+   * 프로시저가 성공하면 스스로 COMMIT 하고 p_err='OK' 를 돌려준다. 실패 메시지일 때 COMMIT 없이 끝나는 경로가 있어
+   * 트랜잭션 안에서 부르고 'OK' 가 아니면 되돌린다.
+   */
+  async lineOnOff(dto: SmtPlanLineOnOffDto, userId: string) {
+    const runner = this.dataSource.createQueryRunner();
+    await runner.connect();
+    await runner.startTransaction();
+    try {
+      const out = (await runner.query(
+        `BEGIN P_CHECK_PDA_TB_INOUT_PS_USER(:lineCode, :runNo, :pcbItem, :inout, :ps, :err, :userId); END;`,
+        namedBinds({
+          lineCode: dto.lineCode.trim(),
+          runNo: dto.runNo.trim(),
+          pcbItem: dto.pcbItem,
+          inout: dto.onOff === 'ON' ? '1' : '2',
+          ps: dto.ps,
+          err: { dir: oracledb.BIND_OUT, type: oracledb.STRING, maxSize: 4000 },
+          userId,
+        }),
+      )) as { err?: string | null };
+      const message = String(out?.err ?? '').trim();
+      if (message !== 'OK') {
+        await runner.rollbackTransaction();
+        throw new BadRequestException(message || '라인 ON/OFF 처리 결과를 알 수 없습니다.');
+      }
+      await runner.commitTransaction();
+      return { onOff: dto.onOff, runNo: dto.runNo, message };
+    } catch (error: unknown) {
+      if (runner.isTransactionActive) await runner.rollbackTransaction();
+      throw error;
+    } finally {
+      await runner.release();
+    }
   }
 
   /** 같은 라인·모델·면의 계획 건수. 프로시저 전후를 비교하는 데 쓴다. */

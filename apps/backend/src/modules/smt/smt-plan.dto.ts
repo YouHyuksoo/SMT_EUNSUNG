@@ -102,3 +102,54 @@ export class SmtPlanSetActiveDto {
   @IsIn(['Y', 'N'])
   activeYn!: 'Y' | 'N';
 }
+
+/** 계획 하나(라인·모델·면) — Restore·피더 레이아웃 출력 */
+export class SmtPlanScopeDto {
+  @ApiProperty() @IsString() @Length(1, 30)
+  lineCode!: string;
+
+  @ApiProperty() @IsString() @Length(1, 100)
+  modelName!: string;
+
+  @ApiProperty({ description: 'PCB 면 (T/B)' })
+  @IsIn(['T', 'B'])
+  pcbItem!: 'T' | 'B';
+
+  @ApiPropertyOptional({ description: '리비전 (앞부분 일치, 출력용)' })
+  @IsOptional() @IsString() @Length(0, 10)
+  revision?: string;
+}
+
+/** 라인 ON/OFF 할 런카드 후보 */
+export class SmtPlanRunCardQueryDto {
+  @ApiProperty() @IsString() @Length(1, 30)
+  lineCode!: string;
+
+  @ApiProperty() @IsString() @Length(1, 100)
+  modelName!: string;
+
+  @ApiPropertyOptional() @IsOptional() @IsIn(['T', 'B'])
+  pcbItem?: 'T' | 'B';
+}
+
+/** 라인 ON/OFF — 현장(PDA)과 같은 P_CHECK_PDA_TB_INOUT_PS_USER 를 런카드로 부른다 */
+export class SmtPlanLineOnOffDto {
+  @ApiProperty() @IsString() @Length(1, 30)
+  lineCode!: string;
+
+  @ApiProperty({ description: '런카드 번호 (IP_PRODUCT_RUN_CARD.RUN_NO)' })
+  @IsString() @Length(1, 50)
+  runNo!: string;
+
+  @ApiProperty({ description: 'PCB 면 (T/B)' })
+  @IsIn(['T', 'B'])
+  pcbItem!: 'T' | 'B';
+
+  @ApiProperty({ description: "'ON' 장착 / 'OFF' 회수" })
+  @IsIn(['ON', 'OFF'])
+  onOff!: 'ON' | 'OFF';
+
+  @ApiProperty({ description: "'P' 양산 / 'S' 샘플" })
+  @IsIn(['P', 'S'])
+  ps!: 'P' | 'S';
+}
