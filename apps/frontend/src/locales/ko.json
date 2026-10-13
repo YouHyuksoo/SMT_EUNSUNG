@@ -300,6 +300,7 @@
     "productMgmt.packingHistory": "제품패킹이력",
     "productMgmt.fgReceipt": "제품입고관리(PID)",
     "productMgmt.fgModelReceipt": "제품입고관리(모델단위)",
+    "productMgmt.shippingOrder": "제품납품계획",
     "productMgmt.fgIssue": "제품출하관리",
     "productMgmt.fgIssueQuery": "제품출하조회",
     "productMgmt.fgModelIssue": "제품출고관리(모델단위)",

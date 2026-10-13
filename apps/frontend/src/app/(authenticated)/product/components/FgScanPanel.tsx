@@ -12,7 +12,7 @@
  * 3. **찍으면 바로 처리하고 입력칸을 비운다.** 현장은 연속으로 찍는다.
  * 4. **창고코드는 브라우저에 기억시킨다** — PB 는 PC 설정 파일에 저장했다.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import toast from 'react-hot-toast';
 import { ScanLine, Undo2 } from 'lucide-react';
 import { Button, Card, CardContent, Input } from '@/components/ui';
@@ -35,6 +35,12 @@ export interface FgScanPanelProps {
   storageKey: string;
   /** 처리 성공 뒤 목록을 다시 읽는다. */
   onDone: () => void | Promise<void>;
+  /** 요청 본문에 더할 값 (예: 출하지시번호). */
+  extraBody?: Record<string, unknown>;
+  /** 고객을 정해 둔다 (출하지시를 고르면 그 지시의 고객). 있으면 고객 칸을 잠근다. */
+  fixedCustomerCode?: string;
+  /** 처리 버튼 줄 앞에 그릴 내용 (예: 출하지시 선택). */
+  headerSlot?: ReactNode;
 }
 
 export default function FgScanPanel({
@@ -45,6 +51,9 @@ export default function FgScanPanel({
   defaultLocation = 'P01',
   storageKey,
   onDone,
+  extraBody,
+  fixedCustomerCode,
+  headerSlot,
 }: FgScanPanelProps) {
   const [barcode, setBarcode] = useState('');
   const [qty, setQty] = useState('');
@@ -68,13 +77,14 @@ export default function FgScanPanel({
     } catch { /* 무시 */ }
   }, [locationCode, storageKey]);
 
+  const customer = (fixedCustomerCode ?? customerCode).trim();
   const blocker = !barcode.trim()
     ? '바코드를 찍으세요.'
     : !locationCode.trim()
       ? '창고코드를 넣으세요.'
       : withQty && !(Number(qty) > 0)
         ? '수량을 1 이상으로 넣으세요.'
-        : withCustomer && !customerCode.trim()
+        : withCustomer && !customer
           ? '고객코드를 넣으세요.'
           : null;
 
@@ -87,7 +97,8 @@ export default function FgScanPanel({
         locationCode: locationCode.trim(),
         cancel,
         ...(withQty ? { qty: Number(qty) } : {}),
-        ...(withCustomer ? { customerCode: customerCode.trim() } : {}),
+        ...(withCustomer ? { customerCode: customer } : {}),
+        ...(extraBody ?? {}),
       });
       setLastResult(`${cancel ? '취소했습니다' : '처리했습니다'}: ${barcode.trim()}`);
       setBarcode('');
@@ -103,7 +114,7 @@ export default function FgScanPanel({
       barcodeRef.current?.focus();
     }
   }, [blocker, endpoint, barcode, locationCode, cancel, withQty, qty,
-    withCustomer, customerCode, onDone]);
+    withCustomer, customer, extraBody, onDone]);
 
   return (
     <Card padding="none">
@@ -111,6 +122,7 @@ export default function FgScanPanel({
         <span className="flex items-center gap-1 text-sm font-semibold text-text">
           <ScanLine className="h-4 w-4" />{title}
         </span>
+        {headerSlot}
         <div className="flex gap-1">
           <Button size="sm" variant={cancel ? 'secondary' : 'primary'}
             onClick={() => { setCancel(false); barcodeRef.current?.focus(); }}>
@@ -132,7 +144,7 @@ export default function FgScanPanel({
         )}
         {withCustomer && (
           <PopupSearchField popupId="customer-search" returnKey="customerCode" aria-label="고객코드" placeholder="고객코드"
-            value={customerCode} className="w-40" disabled={busy}
+            value={fixedCustomerCode ?? customerCode} className="w-40" disabled={busy || fixedCustomerCode != null}
             onChange={(e) => setCustomerCode(e.target.value)} />
         )}
         {/* PB w_prd_product_fg_issue ddlb_product_location_code = uo_basecode(PRODUCT LOCATION CODE) */}

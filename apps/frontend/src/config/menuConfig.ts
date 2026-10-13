@@ -289,6 +289,7 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "PRD_PACK_HISTORY", labelKey: "menu.productMgmt.packingHistory", path: "/product/pack-history", pbLinkStatus: "powerbuilder", pbWindow: "w_prd_product_packing_history" },
       { code: "PRD_FG_RECEIPT", labelKey: "menu.productMgmt.fgReceipt", path: "/product/fg-receipt", pbLinkStatus: "powerbuilder", pbWindow: "w_prd_product_fg_receipt" },
       { code: "PRD_FG_MODEL_RECEIPT", labelKey: "menu.productMgmt.fgModelReceipt", path: "/product/fg-model-receipt", pbLinkStatus: "powerbuilder", pbWindow: "w_prd_product_fg_4_model_receipt" },
+      { code: "PRD_SHIPPING_ORDER", labelKey: "menu.productMgmt.shippingOrder", path: "/product/shipping-order", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_delivery_master" },
       { code: "PRD_FG_ISSUE", labelKey: "menu.productMgmt.fgIssue", path: "/product/fg-issue", pbLinkStatus: "powerbuilder", pbWindow: "w_prd_product_fg_issue" },
       { code: "PRD_FG_ISSUE_QUERY", labelKey: "menu.productMgmt.fgIssueQuery", path: "/product/fg-issue-query", pbLinkStatus: "powerbuilder", pbWindow: "w_prd_product_fg_issue_rpt" },
       { code: "PRD_FG_MODEL_ISSUE", labelKey: "menu.productMgmt.fgModelIssue", path: "/product/fg-model-issue", pbLinkStatus: "powerbuilder", pbWindow: "w_prd_product_fg_4_model_issue" },

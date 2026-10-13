@@ -300,6 +300,7 @@
     "productMgmt.packingHistory": "Packing History",
     "productMgmt.fgReceipt": "FG Receipt (PID)",
     "productMgmt.fgModelReceipt": "FG Receipt (Model)",
+    "productMgmt.shippingOrder": "FG Delivery Plan",
     "productMgmt.fgIssue": "FG Shipping",
     "productMgmt.fgIssueQuery": "FG Shipping Inquiry",
     "productMgmt.fgModelIssue": "FG Issue (Model)",

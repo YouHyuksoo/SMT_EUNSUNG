@@ -300,6 +300,7 @@
     "productMgmt.packingHistory": "产品包装履历",
     "productMgmt.fgReceipt": "成品入库管理(PID)",
     "productMgmt.fgModelReceipt": "成品入库管理(按型号)",
+    "productMgmt.shippingOrder": "成品交货计划",
     "productMgmt.fgIssue": "成品出货管理",
     "productMgmt.fgIssueQuery": "成品出货查询",
     "productMgmt.fgModelIssue": "成品出库管理(按型号)",

@@ -300,6 +300,7 @@
     "productMgmt.packingHistory": "Lịch sử đóng gói",
     "productMgmt.fgReceipt": "Nhập kho thành phẩm (PID)",
     "productMgmt.fgModelReceipt": "Nhập kho thành phẩm (theo model)",
+    "productMgmt.shippingOrder": "Kế hoạch giao thành phẩm",
     "productMgmt.fgIssue": "Xuất hàng thành phẩm",
     "productMgmt.fgIssueQuery": "Tra cứu xuất hàng thành phẩm",
     "productMgmt.fgModelIssue": "Xuất kho thành phẩm (theo model)",

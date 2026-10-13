@@ -13,10 +13,12 @@
  *    현장은 이 목록에서 골라 바코드를 찍는다. 출하 이력과 거래처별 · 품목별 · 일자별
  *    합계는 제품출하조회(`/product/fg-issue-query`) 화면에서 본다.
  * 5. **기본 기간이 7일이다.** 재고일 기준으로 거른다.
+ * 6. **제품납품계획(출하지시)을 고르면** 출고한 박스가 그 지시에 쌓이고 고객은 지시의 고객으로 고정된다.
+ *    지시를 고르지 않으면 지금처럼 고객만 넣고 내보낸다. 취소는 박스 기록으로 지시를 찾아 되돌린다.
  */
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Search } from 'lucide-react';
+import { ClipboardList, Search, X } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import { Button, Card, CardContent, Input } from '@/components/ui';
@@ -27,6 +29,8 @@ import {
   useTruncation,
 } from '../../report/components/TruncationNotice';
 import FgScanPanel from '../components/FgScanPanel';
+import ShippingOrderPickerModal from '../components/ShippingOrderPickerModal';
+import type { ShippingOrderRow } from '../shipping-order/types';
 import { fgIssuableColumns } from '../shipping-columns';
 import type { FgIssuableRow } from '../shipping-columns';
 
@@ -42,6 +46,27 @@ export default function FgIssuePage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const { truncated, rowLimit, mark } = useTruncation();
+  const [shipOrder, setShipOrder] = useState<ShippingOrderRow | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  /** 출고 뒤 고른 지시의 잔량을 다시 읽는다. 다 차면 선택을 푼다. */
+  const refreshOrder = useCallback(async () => {
+    if (!shipOrder) return;
+    try {
+      const r = await api.get('/product/shipping-orders', {
+        params: { dateFrom: shipOrder.planDate, dateTo: shipOrder.planDate },
+      });
+      const next = (r.data?.data as ShippingOrderRow[] | undefined)?.find((o) => o.shipOrderNo === shipOrder.shipOrderNo) ?? null;
+      if (next && next.planStatus === 'C') {
+        toast.success(`제품납품계획 ${next.shipOrderNo} 출고가 끝났습니다.`);
+        setShipOrder(null);
+      } else {
+        setShipOrder(next);
+      }
+    } catch {
+      // 잔량 표시만 못 바꾼다. 출고 자체는 이미 끝났다.
+    }
+  }, [shipOrder]);
 
   const search = useCallback(async () => {
     setLoading(true);
@@ -84,7 +109,25 @@ export default function FgIssuePage() {
       </header>
 
       <FgScanPanel endpoint="/product/fg/issue" title="제품 출하"
-        withQty={false} withCustomer storageKey="mes-fg-issue-location" onDone={search} />
+        withQty={false} withCustomer storageKey="mes-fg-issue-location"
+        onDone={async () => { await refreshOrder(); await search(); }}
+        extraBody={shipOrder ? { shipOrderNo: shipOrder.shipOrderNo } : undefined}
+        fixedCustomerCode={shipOrder?.customerCode ?? undefined}
+        headerSlot={shipOrder ? (
+          <span className="flex items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 text-sm">
+            <span className="font-mono font-semibold text-text">{shipOrder.shipOrderNo}</span>
+            <span className="text-text">{shipOrder.modelName}</span>
+            <span className="text-text-muted">잔량 {Number(shipOrder.remainQty).toLocaleString()}</span>
+            <button type="button" aria-label="제품납품계획 선택 해제" onClick={() => setShipOrder(null)}
+              className="text-text-muted hover:text-text"><X className="h-4 w-4" /></button>
+          </span>
+        ) : (
+          <Button size="sm" variant="secondary" onClick={() => setPickerOpen(true)}>
+            <ClipboardList className="mr-1 h-4 w-4" />제품납품계획 선택
+          </Button>
+        )} />
+      <ShippingOrderPickerModal isOpen={pickerOpen} onClose={() => setPickerOpen(false)}
+        onPick={(o) => { setShipOrder(o); setPickerOpen(false); }} />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
