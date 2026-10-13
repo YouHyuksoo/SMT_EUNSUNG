@@ -18,6 +18,7 @@ import {
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import {
   ApplySensorDto,
+  CancelResultDto,
   DefectSaveDto,
   DowntimeBulkDto,
   DowntimeUpsertDto,
@@ -67,6 +68,7 @@ export class WorkResultController {
     @OrganizationId() organizationId?: number,
     @Query('excludeSmt') excludeSmt?: string,
     @Query('lineCodes') lineCodes?: string,
+    @Query('workstageCode') workstageCode?: string,
   ) {
     const parsedLineCodes = parseLineCodes(lineCodes);
     const rows = await this.service.list(
@@ -78,6 +80,7 @@ export class WorkResultController {
       machineCode || undefined,
       excludeSmt === 'Y',
       parsedLineCodes,
+      workstageCode || undefined,
     );
 
     if (!parsedLineCodes) return { list: rows };
@@ -137,6 +140,16 @@ export class WorkResultController {
     @OrganizationId() organizationId?: number,
   ) {
     return await this.service.applySensor(dto, organizationId);
+  }
+
+  /** 실적 취소 — 오늘 업무일 실적만. 센서 누적에서 그 수량을 뺀다 */
+  @Post('results/cancel')
+  async cancelResult(
+    @Body() dto: CancelResultDto,
+    @OrganizationId() organizationId?: number,
+    @UserId() userId?: string,
+  ) {
+    return await this.service.cancelResult(dto, organizationId, userId);
   }
 
   /** 작업지시 대표불량 조회 */

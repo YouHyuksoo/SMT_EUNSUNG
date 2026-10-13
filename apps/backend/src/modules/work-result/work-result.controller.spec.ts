@@ -64,6 +64,7 @@ describe('WorkResultController', () => {
       undefined,
       true,
       undefined,
+      undefined,
     );
     expect(service.upsertResult).toHaveBeenCalledWith(
       { ...resultDto, seqNo: undefined },
@@ -108,6 +109,17 @@ describe('WorkResultController', () => {
       'MC-1',
       false,
       ['L1', 'L2'],
+      undefined,
+    );
+  });
+
+  it('forwards the process filter for process-bound run cards', async () => {
+    const controller = new WorkResultController(service);
+
+    await controller.list('2026-10-14', '2026-10-14', '34', undefined, undefined, 7, 'Y', undefined, 'W091');
+
+    expect(service.list).toHaveBeenCalledWith(
+      '2026-10-14', '2026-10-14', '34', undefined, 7, undefined, true, undefined, 'W091',
     );
   });
 

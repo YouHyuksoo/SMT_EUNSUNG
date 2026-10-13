@@ -29,6 +29,12 @@ export class ApplySensorDto {
   @IsString() @IsNotEmpty() seqNo: string;
 }
 
+// 실적 취소 — 행은 남기고 RESULT_STATUS='CANCEL', 센서 누적에서는 그 수량을 뺀다
+export class CancelResultDto {
+  @IsString() @IsNotEmpty() runNo: string;
+  @IsString() @IsNotEmpty() seqNo: string;
+}
+
 // 작업지시 대표불량 단일 저장 (실적과 독립)
 export class DefectSaveDto {
   @IsString() @IsNotEmpty() runNo: string;

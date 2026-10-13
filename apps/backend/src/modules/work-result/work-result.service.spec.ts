@@ -17,8 +17,36 @@ describe('WorkResultService tenancy', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    query.mockResolvedValue([]);
+    // 라인구분 조회는 SMT('D')로 답한다 — 센서 누적 프로시저는 SMT 라인에서만 부른다
+    query.mockImplementation((sql: string) =>
+      Promise.resolve(sql.includes('LINE_DIVISION') ? [{ div: 'D' }] : []),
+    );
     callProcScalar.mockResolvedValue({ P_OUT: 'OK' });
+  });
+
+  it('does not call the sensor procedure for a non-SMT line and marks the result X', async () => {
+    query.mockImplementation((sql: string) =>
+      Promise.resolve(sql.includes('LINE_DIVISION') ? [{ div: 'W' }] : []),
+    );
+    const manager = {
+      query: jest.fn().mockImplementation((sql: string) => {
+        if (sql.includes('MAX(TO_NUMBER(SEQ_NO))')) return Promise.resolve([{ seq: '01' }]);
+        if (sql.includes('SELECT LINE_CODE')) return Promise.resolve([{ lineCode: '34' }]);
+        return Promise.resolve([]);
+      }),
+    };
+    transaction.mockImplementation((callback: (value: typeof manager) => unknown) => callback(manager));
+
+    const res = await service.upsertResult(
+      { runNo: 'RUN-1', machineCode: 'MC-1', workstageCode: 'WS-1', resultQty: 10, resultStatus: 'DONE' } as never,
+      7,
+      'user-7',
+    );
+
+    expect(callProcScalar).not.toHaveBeenCalled();
+    expect(res).toEqual({ seqNo: '01', sensorApplyYn: 'X' });
+    const marked = query.mock.calls.find(([sql]) => String(sql).includes("SENSOR_APPLY_YN='X'"));
+    expect(marked?.[1]).toEqual(['RUN-1', '01', 7]);
   });
 
   it('requires an authenticated organization', () => {
@@ -296,6 +324,8 @@ describe('WorkResultService tenancy', () => {
       query: jest.fn().mockImplementation((sql: string) => {
         if (sql.includes('MAX(TO_NUMBER(SEQ_NO))'))
           return Promise.resolve([{ seq: '01' }]);
+        if (sql.includes('SELECT LINE_CODE'))
+          return Promise.resolve([{ lineCode: 'L1' }]);
         return Promise.resolve([]);
       }),
     };
@@ -338,16 +368,17 @@ describe('WorkResultService tenancy', () => {
   });
 
   it('re-applies a completed result that has not been reflected yet', async () => {
-    query.mockResolvedValue([
-      {
-        workstageCode: 'WS-1',
-        machineCode: 'MC-1',
-        resultQty: 25,
-        resultStatus: 'DONE',
-        sensorApplyYn: 'N',
-        lineCode: 'L1',
-      },
-    ]);
+    const row = {
+      workstageCode: 'WS-1',
+      machineCode: 'MC-1',
+      resultQty: 25,
+      resultStatus: 'DONE',
+      sensorApplyYn: 'N',
+      lineCode: 'L1',
+    };
+    query.mockImplementation((sql: string) =>
+      Promise.resolve(sql.includes('LINE_DIVISION') ? [{ div: 'D' }] : [row]),
+    );
 
     const res = await service.applySensor({ runNo: 'RUN-1', seqNo: '01' }, 7);
 
@@ -359,5 +390,53 @@ describe('WorkResultService tenancy', () => {
     ];
     expect(inParams.P_ACC_COUNT).toBe(25);
     expect(res.sensorApplyYn).toBe('Y');
+  });
+});
+
+describe('WorkResultService process-bound run cards', () => {
+  const query = jest.fn();
+  const transaction = jest.fn();
+  const repository = { manager: { query, transaction } } as unknown as Repository<ProductWorkResult>;
+  const service = new WorkResultService(repository, { callProcScalar: jest.fn() } as unknown as OracleService);
+
+  function managerFor(fixed: string | null) {
+    const manager = {
+      query: jest.fn().mockImplementation((sql: string) => {
+        if (sql.includes('MAX(TO_NUMBER(SEQ_NO))')) return Promise.resolve([{ seq: '01' }]);
+        if (sql.includes('SELECT LINE_CODE')) return Promise.resolve([{ lineCode: '34', workstageCode: fixed }]);
+        return Promise.resolve([]);
+      }),
+    };
+    transaction.mockImplementation((callback: (value: typeof manager) => unknown) => callback(manager));
+    return manager;
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    query.mockResolvedValue([]);
+  });
+
+  it('list filters by process but keeps unassigned run cards', async () => {
+    await service.list('2026-10-14', '2026-10-14', '34', undefined, 7, undefined, true, undefined, 'W091');
+    const [sql, params] = query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toMatch(/\(r\.WORKSTAGE_CODE = :\d+ OR r\.WORKSTAGE_CODE IS NULL\)/);
+    expect(params).toContain('W091');
+  });
+
+  it('rejects a result for a different process than the run card', async () => {
+    const manager = managerFor('W091');
+    await expect(service.upsertResult(
+      { runNo: 'R1', machineCode: 'M1', workstageCode: 'W120', resultQty: 5, resultStatus: 'WIP' } as never, 7, 'U',
+    )).rejects.toThrow('W091');
+    expect(manager.query.mock.calls.some(([s]) => String(s).startsWith('INSERT INTO IP_PRODUCT_WORK_RESULT'))).toBe(false);
+  });
+
+  it('locks an unassigned run card to the first result process', async () => {
+    const manager = managerFor(null);
+    await service.upsertResult(
+      { runNo: 'R1', machineCode: 'M1', workstageCode: 'W091', resultQty: 5, resultStatus: 'WIP' } as never, 7, 'U',
+    );
+    const write = manager.query.mock.calls.find(([s]) => String(s).startsWith('UPDATE IP_PRODUCT_RUN_CARD'));
+    expect(String(write?.[0])).toContain('WORKSTAGE_CODE=NVL(WORKSTAGE_CODE,');
   });
 });

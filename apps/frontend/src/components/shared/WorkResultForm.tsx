@@ -24,6 +24,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import api from '@/services/api';
 import DataGrid from '@/components/data-grid/DataGrid';
 import NumberKeypadModal from './NumberKeypadModal';
+import { isSensorPending as sensorPending } from './sensorApply';
 
 /** 실적 등록에 필요한 작업지시 정보. 목록 행(RunRow)의 부분집합이다. */
 export interface WorkResultRun {
@@ -51,7 +52,7 @@ interface ResultRow {
 
 /** 완료인데 센서에 아직 반영되지 않은 실적 — 처리구분을 빨간색으로 표기한다 */
 function isSensorPending(h: ResultRow) {
-  return h.resultStatus === 'DONE' && (h.sensorApplyYn ?? 'N') !== 'Y';
+  return sensorPending(h.resultStatus, h.sensorApplyYn);
 }
 
 /** 실적 이력 그리드 컬럼 — 처리구분 값은 완료/진행 이름으로 둬서 필터·내보내기에도 이름이 나온다 */

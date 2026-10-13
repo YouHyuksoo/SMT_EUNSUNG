@@ -18,6 +18,7 @@ import { ProductWorkResult } from '../../entities/product-work-result.entity';
 import { OracleService } from '../../common/services/oracle.service';
 import {
   ApplySensorDto,
+  CancelResultDto,
   DowntimeBulkDto,
   DowntimeUpsertDto,
   PlanDowntimeCreateDto,
@@ -45,6 +46,16 @@ export class WorkResultService {
     return this.repo.manager.query(sql, params);
   }
 
+  /** 라인이 SMT(라인구분 SMT_LINE_DIVISIONS)인지 — 센서 누적 프로시저는 SMT 피더 계획이 있는 라인에서만 쌓인다 */
+  private async isSmtLine(lineCode: string | null, organization: number): Promise<boolean> {
+    if (!lineCode) return false;
+    const rows = await this.q<{ div: string | null }>(
+      `SELECT MAX(LINE_DIVISION) AS "div" FROM IP_PRODUCT_LINE WHERE LINE_CODE=:1 AND ORGANIZATION_ID=:2`,
+      [lineCode, organization],
+    );
+    return (SMT_LINE_DIVISIONS as readonly string[]).includes(rows[0]?.div ?? '');
+  }
+
   private requireOrganization(organizationId?: number): number {
     if (
       organizationId == null ||
@@ -66,6 +77,7 @@ export class WorkResultService {
     machineCode?: string,
     excludeSmt?: boolean,
     lineCodes?: string[],
+    workstageCode?: string,
   ) {
     const organization = this.requireOrganization(organizationId);
     const params: unknown[] = [organization, fromDate, toDate];
@@ -95,6 +107,11 @@ export class WorkResultService {
       params.push(machineCode);
       where += ` AND r.MACHINE_CODE = :${params.length}`;
     }
+    // 후공정 지시는 공정마다 따로 내린다. 공정이 비어 있는 예전 런카드는 전환 기간 동안 함께 보여준다.
+    if (workstageCode) {
+      params.push(workstageCode);
+      where += ` AND (r.WORKSTAGE_CODE = :${params.length} OR r.WORKSTAGE_CODE IS NULL)`;
+    }
     if (keyword) {
       const kw = `%${keyword.toUpperCase()}%`;
       params.push(kw);
@@ -106,6 +123,8 @@ export class WorkResultService {
     return this.q(
       `SELECT * FROM (
         SELECT r.RUN_NO AS "runNo",
+          -- 제품생산계획(작업지시, /production/master-plan)의 작업지시번호 — 롯트카드는 LOT_NO = 계획 MFS 로 이어진다
+          (SELECT MAX(p.WORK_ORDER_NO) FROM IP_PRODUCT_MI_PLAN p WHERE p.MFS=r.LOT_NO AND p.ORGANIZATION_ID=r.ORGANIZATION_ID) AS "workOrderNo",
           r.MACHINE_CODE AS "machineCode",
           (SELECT MAX(m.MACHINE_NAME) FROM IMCN_MACHINE m WHERE m.MACHINE_CODE=r.MACHINE_CODE AND m.ORGANIZATION_ID=r.ORGANIZATION_ID) AS "machineName",
           r.WORKSTAGE_CODE AS "workstageCode",
@@ -121,9 +140,9 @@ export class WorkResultService {
              AND bc.CODE_NAME = (SELECT MAX(mm.PRODUCT_CLASS) FROM IP_PRODUCT_MODEL_MASTER mm WHERE mm.ITEM_CODE=r.ITEM_CODE AND mm.ORGANIZATION_ID=r.ORGANIZATION_ID)) AS "carModel",
           (SELECT MAX(st.CT_VALUE) FROM IP_PRODUCT_ST_MASTER st WHERE st.MODEL_NAME=r.MODEL_NAME AND st.ORGANIZATION_ID=r.ORGANIZATION_ID) AS "ct",
           r.LOT_SIZE AS "planQty",
-          NVL((SELECT SUM(wr.RESULT_QTY) FROM IP_PRODUCT_WORK_RESULT wr WHERE wr.RUN_NO=r.RUN_NO AND wr.ORGANIZATION_ID=r.ORGANIZATION_ID),0) AS "resultQty",
-          (SELECT COUNT(*) FROM IP_PRODUCT_WORK_RESULT wc WHERE wc.RUN_NO=r.RUN_NO AND wc.ORGANIZATION_ID=r.ORGANIZATION_ID) AS "resultCount",
-          (SELECT COUNT(*) FROM IP_PRODUCT_WORK_RESULT ww WHERE ww.RUN_NO=r.RUN_NO AND ww.ORGANIZATION_ID=r.ORGANIZATION_ID AND NVL(ww.RESULT_STATUS,'WIP')<>'DONE') AS "wipCount",
+          NVL((SELECT SUM(wr.RESULT_QTY) FROM IP_PRODUCT_WORK_RESULT wr WHERE wr.RUN_NO=r.RUN_NO AND wr.ORGANIZATION_ID=r.ORGANIZATION_ID AND NVL(wr.RESULT_STATUS,'WIP')<>'CANCEL'),0) AS "resultQty",
+          (SELECT COUNT(*) FROM IP_PRODUCT_WORK_RESULT wc WHERE wc.RUN_NO=r.RUN_NO AND wc.ORGANIZATION_ID=r.ORGANIZATION_ID AND NVL(wc.RESULT_STATUS,'WIP')<>'CANCEL') AS "resultCount",
+          (SELECT COUNT(*) FROM IP_PRODUCT_WORK_RESULT ww WHERE ww.RUN_NO=r.RUN_NO AND ww.ORGANIZATION_ID=r.ORGANIZATION_ID AND NVL(ww.RESULT_STATUS,'WIP') NOT IN ('DONE','CANCEL')) AS "wipCount",
           NVL((SELECT df.BAD_QTY FROM IP_PRODUCT_WORK_DEFECT df WHERE df.RUN_NO=r.RUN_NO AND df.ORGANIZATION_ID=r.ORGANIZATION_ID),0) AS "defectQty",
           (SELECT COUNT(*) FROM IP_EQUIP_DOWNTIME_RESULT dr WHERE dr.MACHINE_CODE=r.MACHINE_CODE AND dr.ORGANIZATION_ID=r.ORGANIZATION_ID AND dr.END_TIME IS NULL) AS "openDowntime"
         FROM IP_PRODUCT_RUN_CARD r
@@ -145,7 +164,8 @@ export class WorkResultService {
               NVL(wr.SENSOR_APPLY_YN,'N') AS "sensorApplyYn", wr.SENSOR_APPLY_MSG AS "sensorApplyMsg",
               (SELECT r.ITEM_CODE FROM IP_PRODUCT_RUN_CARD r WHERE r.RUN_NO=wr.RUN_NO AND r.ORGANIZATION_ID=wr.ORGANIZATION_ID AND ROWNUM=1) AS "itemCode",
               (SELECT r.MODEL_NAME FROM IP_PRODUCT_RUN_CARD r WHERE r.RUN_NO=wr.RUN_NO AND r.ORGANIZATION_ID=wr.ORGANIZATION_ID AND ROWNUM=1) AS "modelName",
-              TO_CHAR(NVL(wr.LAST_MODIFY_DATE, wr.ENTER_DATE),'YYYY-MM-DD HH24:MI') AS "updatedAt"
+              TO_CHAR(NVL(wr.LAST_MODIFY_DATE, wr.ENTER_DATE),'YYYY-MM-DD HH24:MI') AS "updatedAt",
+              TO_CHAR(wr.ENTER_DATE,'YYYY-MM-DD HH24:MI:SS') AS "enteredAt"
          FROM IP_PRODUCT_WORK_RESULT wr
         WHERE wr.RUN_NO = :1 AND wr.ORGANIZATION_ID = :2
         ORDER BY wr.SEQ_NO`,
@@ -191,11 +211,16 @@ export class WorkResultService {
     const { seqNo, lineCode } = await this.repo.manager.transaction(async (mgr) => {
       // 라인코드는 작업지시에서 가져온다. 설비의 LINE_CODE는 전부 '*'(미배정)라 쓰지 않는다.
       const runCard = (await mgr.query(
-        `SELECT LINE_CODE AS "lineCode" FROM IP_PRODUCT_RUN_CARD
-          WHERE RUN_NO=:1 AND ORGANIZATION_ID=:2`,
+        `SELECT LINE_CODE AS "lineCode", WORKSTAGE_CODE AS "workstageCode" FROM IP_PRODUCT_RUN_CARD
+          WHERE RUN_NO=:1 AND ORGANIZATION_ID=:2 FOR UPDATE`,
         [dto.runNo, organization],
-      )) as Array<{ lineCode: string | null }>;
+      )) as Array<{ lineCode: string | null; workstageCode: string | null }>;
       const line = runCard[0]?.lineCode ?? null;
+      // 생산지시(런카드)는 공정 단위다. 공정이 정해진 지시에 다른 공정 실적을 넣지 않는다.
+      const fixed = runCard[0]?.workstageCode ?? null;
+      if (fixed && dto.workstageCode && fixed !== dto.workstageCode) {
+        throw new BadRequestException(`이 작업지시는 ${fixed} 공정 지시입니다. 다른 공정 실적은 그 공정 지시로 넣으세요.`);
+      }
       let seq = dto.seqNo;
       if (seq) {
         const cur = (await mgr.query(
@@ -207,6 +232,8 @@ export class WorkResultService {
           throw new BadRequestException('실적을 찾을 수 없습니다');
         if (cur[0].st === 'DONE')
           throw new BadRequestException('완료된 실적은 수정할 수 없습니다');
+        if (cur[0].st === 'CANCEL')
+          throw new BadRequestException('취소된 실적은 수정할 수 없습니다');
         await mgr.query(
           `UPDATE IP_PRODUCT_WORK_RESULT SET MACHINE_CODE=:1, WORKSTAGE_CODE=:2,
              RESULT_QTY=:3, WORK_TIME=:4, WORKER_COUNT=:5, WORKER_NAME=:6, RESULT_STATUS=:7,
@@ -256,15 +283,27 @@ export class WorkResultService {
           ],
         );
       }
-      // run card write-back (설비/공정)
+      // run card write-back — 설비는 마지막 실적 설비로, 공정은 비어 있을 때만 첫 실적 공정으로 채운다(전환 기간)
       await mgr.query(
-        `UPDATE IP_PRODUCT_RUN_CARD SET MACHINE_CODE=:1, WORKSTAGE_CODE=:2 WHERE RUN_NO=:3 AND ORGANIZATION_ID=:4`,
+        `UPDATE IP_PRODUCT_RUN_CARD SET MACHINE_CODE=:1, WORKSTAGE_CODE=NVL(WORKSTAGE_CODE, :2) WHERE RUN_NO=:3 AND ORGANIZATION_ID=:4`,
         [machineCode, dto.workstageCode, dto.runNo, organization],
       );
       return { seqNo: seq!, lineCode: line };
     });
 
     if (!isDone) return { seqNo, sensorApplyYn: 'N' };
+
+    // 센서 누적 프로시저는 라인의 활성 피더 계획(IB_PRODUCT_PLANDATA, SMT 전용)이 있어야 쌓는다.
+    // 조립·가공 등 SMT 가 아닌 라인은 늘 'NG ACTIVE PLAN NOT FOUND' 로 실패하므로 부르지 않고
+    // 실적 원장(IP_PRODUCT_WORK_RESULT)만 기준으로 둔다. 'X' = 센서 반영 해당 없음.
+    if (!(await this.isSmtLine(lineCode, organization))) {
+      await this.q(
+        `UPDATE IP_PRODUCT_WORK_RESULT SET SENSOR_APPLY_YN='X', SENSOR_APPLY_MSG=NULL
+          WHERE RUN_NO=:1 AND SEQ_NO=:2 AND ORGANIZATION_ID=:3`,
+        [dto.runNo, seqNo, organization],
+      );
+      return { seqNo, sensorApplyYn: 'X' };
+    }
 
     // 실적은 위 트랜잭션에서 이미 커밋됐다. 프로시저가 실패해도 실적은 남는다.
     const applied = await this.applyToSensor(
@@ -329,6 +368,82 @@ export class WorkResultService {
     return { ok, message: message || `${SENSOR_PROC} 응답이 비어 있습니다` };
   }
 
+  /**
+   * 실적 취소 — 행은 지우지 않고 RESULT_STATUS='CANCEL' 로 남긴다(합계에서 빠진다).
+   *
+   * 오늘 업무일(F_GET_WORK_ACTUAL_DATE) 실적만 취소한다. 지난 업무일 실적이 바뀌면 이미 본 집계가 틀어진다.
+   * 센서에 반영된 실적이면 같은 프로시저에 음수 수량을 넘겨 차감한다. 프로시저는 호출 시점의 시간대에
+   * 누적하므로, 하루 합계는 맞지만 시간대별 실적은 등록 시간대가 아니라 취소 시간대에서 줄어든다.
+   * 차감에 실패해도 취소는 유지하고 경고를 돌려준다(SENSOR_APPLY_YN 은 'Y' 로 남아 재확인할 수 있다).
+   */
+  async cancelResult(
+    dto: CancelResultDto,
+    organizationId?: number,
+    userId?: string,
+  ): Promise<{ cancelled: true; sensorWarning?: string }> {
+    const organization = this.requireOrganization(organizationId);
+    const user = userId ?? DEFAULT_USER;
+
+    const row = await this.repo.manager.transaction(async (mgr) => {
+      const rows = (await mgr.query(
+        `SELECT NVL(wr.RESULT_STATUS,'WIP') AS "st", NVL(wr.SENSOR_APPLY_YN,'N') AS "applied",
+                wr.RESULT_QTY AS "resultQty", wr.WORKSTAGE_CODE AS "workstageCode", wr.MACHINE_CODE AS "machineCode",
+                CASE WHEN F_GET_WORK_ACTUAL_DATE(wr.ENTER_DATE,'A') = F_GET_WORK_ACTUAL_DATE(SYSDATE,'A')
+                     THEN 'Y' ELSE 'N' END AS "today"
+           FROM IP_PRODUCT_WORK_RESULT wr
+          WHERE wr.RUN_NO=:1 AND wr.SEQ_NO=:2 AND wr.ORGANIZATION_ID=:3
+          FOR UPDATE`,
+        [dto.runNo, dto.seqNo, organization],
+      )) as Array<{
+        st: string; applied: string; resultQty: number | null;
+        workstageCode: string | null; machineCode: string | null; today: string;
+      }>;
+      const cur = rows[0];
+      if (!cur) throw new NotFoundException('실적을 찾을 수 없습니다');
+      if (cur.st === 'CANCEL') throw new BadRequestException('이미 취소된 실적입니다');
+      if (cur.today !== 'Y') throw new BadRequestException('오늘 업무일 실적만 취소할 수 있습니다');
+      await mgr.query(
+        `UPDATE IP_PRODUCT_WORK_RESULT SET RESULT_STATUS='CANCEL', LAST_MODIFY_BY=:1, LAST_MODIFY_DATE=SYSDATE
+          WHERE RUN_NO=:2 AND SEQ_NO=:3 AND ORGANIZATION_ID=:4`,
+        [user, dto.runNo, dto.seqNo, organization],
+      );
+      const line = (await mgr.query(
+        `SELECT LINE_CODE AS "lineCode" FROM IP_PRODUCT_RUN_CARD WHERE RUN_NO=:1 AND ORGANIZATION_ID=:2`,
+        [dto.runNo, organization],
+      )) as Array<{ lineCode: string | null }>;
+      return { ...cur, lineCode: line[0]?.lineCode ?? null };
+    });
+
+    // 센서에 반영되지 않은 실적은 뺄 것이 없다
+    if (row.applied !== 'Y') return { cancelled: true };
+
+    let message: string;
+    try {
+      const out = await this.oracle.callProcScalar(
+        SENSOR_PROC,
+        [{ name: 'P_OUT', type: 'STRING', maxSize: 1000 }],
+        {
+          P_LINE_CODE: row.lineCode,
+          P_WORKSTAGE_CODE: row.workstageCode ?? '',
+          P_MACHINE_CODE: row.machineCode,
+          P_COUNT: 1,
+          P_ACC_COUNT: -Number(row.resultQty ?? 0),
+        },
+        { autoCommit: true },
+      );
+      message = String(out.P_OUT ?? '').trim();
+    } catch (error: unknown) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+    const ok = message.toUpperCase() === 'OK';
+    await this.q(
+      `UPDATE IP_PRODUCT_WORK_RESULT SET SENSOR_APPLY_YN=:1, SENSOR_APPLY_MSG=:2
+        WHERE RUN_NO=:3 AND SEQ_NO=:4 AND ORGANIZATION_ID=:5`,
+      [ok ? 'C' : 'Y', ok ? null : `취소 차감 실패: ${message}`.slice(0, 1000), dto.runNo, dto.seqNo, organization],
+    );
+    return ok ? { cancelled: true } : { cancelled: true, sensorWarning: message || `${SENSOR_PROC} 응답이 비어 있습니다` };
+  }
+
   /** 센서 반영 재시도 — 완료 상태인데 미반영인 실적만 대상이다 */
   async applySensor(
     dto: ApplySensorDto,
@@ -359,6 +474,8 @@ export class WorkResultService {
     // 이미 반영된 건을 다시 부르면 수량이 가산된다 — 반드시 막는다.
     if (row.sensorApplyYn === 'Y')
       throw new BadRequestException('이미 센서에 반영된 실적입니다');
+    if (row.sensorApplyYn === 'X' || !(await this.isSmtLine(row.lineCode, organization)))
+      throw new BadRequestException('SMT 라인이 아니라 센서 실적 반영 대상이 아닙니다');
 
     const applied = await this.applyToSensor(
       dto.runNo,
@@ -403,7 +520,7 @@ export class WorkResultService {
     const info = (
       await this.q(
         `SELECT NVL(r.LOT_SIZE,0) AS "planQty",
-              NVL((SELECT SUM(wr.RESULT_QTY) FROM IP_PRODUCT_WORK_RESULT wr WHERE wr.RUN_NO=r.RUN_NO AND wr.ORGANIZATION_ID=r.ORGANIZATION_ID),0) AS "resultQty"
+              NVL((SELECT SUM(wr.RESULT_QTY) FROM IP_PRODUCT_WORK_RESULT wr WHERE wr.RUN_NO=r.RUN_NO AND wr.ORGANIZATION_ID=r.ORGANIZATION_ID AND NVL(wr.RESULT_STATUS,'WIP')<>'CANCEL'),0) AS "resultQty"
          FROM IP_PRODUCT_RUN_CARD r WHERE r.RUN_NO=:1 AND r.ORGANIZATION_ID=:2`,
         [runNo, organization],
       )
@@ -451,7 +568,7 @@ export class WorkResultService {
     );
   }
 
-  /** 후공정(PBA) 설비 콤보 */
+  /** 후공정(PBA) 설비 콤보 — 검사공정(공정유형 Q) 설비는 뺀다 */
   machines(organizationId?: number) {
     const organization = this.requireOrganization(organizationId);
     return this.q(
@@ -462,6 +579,7 @@ export class WorkResultService {
          FROM IMCN_MACHINE m
          JOIN IP_PRODUCT_WORKSTAGE w ON w.WORKSTAGE_CODE=m.WORKSTAGE_CODE AND w.ORGANIZATION_ID=m.ORGANIZATION_ID
         WHERE m.ORGANIZATION_ID=:1 AND w.WORKSTAGE_CODE_GROUP='PBA'
+          AND NVL(w.WORKSTAGE_TYPE,'I')<>'Q'  -- 검사공정(ICT·성능검사 등) 설비는 실적 대상이 아니다
         ORDER BY m.MACHINE_CODE`,
       [organization],
     );

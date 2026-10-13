@@ -2,374 +2,316 @@
 
 /**
  * @file (authenticated)/oee/equip-work-result/page.tsx
- * @description 설비별 작업 실적관리 — IP_PRODUCT_RUN_CARD 기준 실적/불량/설비비가동 실 DB 연결
+ * @description 설비별 작업 실적관리(현장 단말) — 설비 앞 PC 에서 실적·불량·설비정지를 최소 터치로 기록한다.
  *
- * API(글로벌 prefix /api → 백엔드 /api/v1) : /oee/work-result
- *   목록 GET ?fromDate&toDate&lineCode&keyword&excludeSmt=Y(라인구분 SMT 제외) · 실적이력 GET /results?runNo
- *   실적상세 GET /results/:runNo/:seqNo · 실적 POST/PUT /results
- *   부적합유형 GET /bad-reasons(WQC) · 후공정설비 GET /machines · 비가동사유 GET /downtime-reasons
- *   비가동 설비콤보 GET /downtime-machines?runNo (작업지시 설비 고정 → 공정 배치설비 → 라인 배치설비)
- *   비가동 처리는 공용 컴포넌트 components/shared/EquipDowntimePanel 이 담당
+ * 화면 구성:
+ *   상단 띠  : 라인 · 공정 · 설비 · 작업자 · 설비 가동상태
+ *   중앙     : 생산 현황 — 작업지시 정보 / 실적 이력 그리드(최근순, 취소) / 지표 띠
+ *   중앙 우측: 실적 입력판 — 숫자패드 상시, [실적 저장] 한 번으로 확정
+ *   우측 레일: 라인선택 · 작업지시 · 불량등록 · 설비정지 · 관리자호출(준비 중)
+ *
+ * 초보자 가이드:
+ * 1. 라인·공정·설비·작업자·작업지시는 단말기(localStorage)에 기억했다가 진입 때 자동 선택한다(_lib/scope.ts).
+ * 2. 실적은 항상 확정(DONE)으로 저장한다 → 서버가 센서 누적 프로시저로 생산현황에 바로 반영한다.
+ *    잘못 넣은 실적은 이력 그리드에서 취소한다(POST /oee/work-result/results/cancel, 오늘 업무일만).
+ * 3. 설비는 고른 설비로 고정한다. 실적의 공정은 설비의 공정이다.
+ *
+ * API(글로벌 prefix /api → 백엔드 /api/v1)
+ *   라인/설비·상태: GET /oee/equip-ops/lines, /oee/equip-ops/machines
+ *   작업지시: GET /oee/work-result?fromDate&toDate&lineCode&excludeSmt=Y
+ *   실적: GET /oee/work-result/results?runNo · POST /oee/work-result/results · POST /results/cancel
+ *   불량: GET/POST /oee/work-result/defect · 설비정지: components/shared/EquipDowntimePanel
  */
-import { useCallback, useEffect, useState } from 'react';
-import { Search, Factory, FileText, AlertTriangle, PauseCircle, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, BellRing, ClipboardList, Factory, PauseCircle, PlayCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Card, CardContent, Input } from '@/components/ui';
-import { ProdLineSelect, WorkResultForm } from '@/components/shared';
+import { Modal } from '@/components/ui';
 import EquipDowntimePanel from '@/components/shared/EquipDowntimePanel';
 import api from '@/services/api';
-import { SMT_LINE_DIVISIONS } from '@smt/shared';
+import { useActiveInterval } from '@/hooks/useTabActive';
+import type { OpsLine, OpsMachine } from '../equip-ops-status/types';
+import ScopeModal from './components/ScopeModal';
+import RunPickerModal from './components/RunPickerModal';
+import DefectModal from './components/DefectModal';
+import WorkerModal, { type Worker } from './components/WorkerModal';
+import ProductionStatus from './components/ProductionStatus';
+import EntryPad from './components/EntryPad';
+import { lineLabel, loadRunNo, loadScope, saveRunNo, saveScope, type Scope } from './_lib/scope';
+import { businessDate } from './_lib/kpi';
+import type { ResultHistoryRow, RunRow } from './_lib/types';
 
-function todayStr() {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+const WORKER_KEY = 'oee:equip-work-result:worker';
+
+function loadWorker(): Worker | null {
+  try {
+    const raw = localStorage.getItem(WORKER_KEY);
+    const w = raw ? (JSON.parse(raw) as Worker) : null;
+    return w?.code ? w : null;
+  } catch { return null; }
 }
 
-interface RunRow {
-  runNo: string; machineCode: string | null; machineName: string | null;
-  workstageCode: string | null; workstageName: string | null; workstageGroup: string | null;
-  runDate: string; lineCode: string | null; shiftCode: string | null;
-  itemCode: string | null; revision: string | null; modelName: string | null;
-  unit: string | null; itemClass: string | null; carModel: string | null;
-  ct: number | null; planQty: number | null; resultQty: number; defectQty: number; openDowntime: number;
-  resultCount: number; wipCount: number;
+function errorMessage(e: unknown, fallback: string) {
+  return (e && typeof e === 'object' && 'response' in e
+    ? (e as { response?: { data?: { message?: string } } }).response?.data?.message
+    : undefined) || fallback;
 }
-interface Machine { machineCode: string; machineName: string; workstageCode: string; workstageName: string; lineCode: string; }
-interface Code { code: string; name: string; }
-/** 설비비가동 설비 콤보 — by: 구성 기준(작업지시 설비/공정 배치설비/라인 배치설비/없음) */
-interface DowntimeMachines { by: 'machine' | 'workstage' | 'line' | 'none'; fixed: boolean; list: Machine[]; }
 
-type PanelMode = 'result' | 'defect' | 'downtime';
-
-/** 목록 셀 */
-function Cell({ label, children, className = '', style }: { label: string; children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+/** 우측 레일 버튼 */
+function RailButton({ icon, label, onClick, disabled, tone, sub }: {
+  icon: React.ReactNode; label: string; onClick?: () => void; disabled?: boolean; tone?: 'danger' | 'danger-on'; sub?: string;
+}) {
+  const cls = tone === 'danger-on'
+    ? 'bg-red-600 border-red-600 text-white'
+    : tone === 'danger' ? 'bg-surface border-border text-red-600 hover:border-red-500' : 'bg-surface border-border text-text hover:border-primary';
   return (
-    <div className={`px-2 py-1 border-r border-b border-border min-w-0 ${className}`} style={style}>
-      <div className="text-[10px] text-text-muted leading-tight truncate">{label}</div>
-      <div className="text-xs text-text font-medium leading-tight truncate">{children}</div>
-    </div>
+    <button type="button" onClick={onClick} disabled={disabled}
+      className={`flex-1 min-h-[76px] rounded-xl border flex flex-col items-center justify-center gap-1.5 text-[15px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${cls}`}>
+      {icon}{label}{sub && <span className="text-[11px] font-medium opacity-80">{sub}</span>}
+    </button>
   );
 }
 
 export default function EquipWorkResultPage() {
-  const [fromDate, setFromDate] = useState(todayStr());
-  const [toDate, setToDate] = useState(todayStr());
-  const [lineCode, setLineCode] = useState('');
-  const [keyword, setKeyword] = useState('');
-  const [rows, setRows] = useState<RunRow[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedRun, setSelectedRun] = useState<string | null>(null);
+  const [lines, setLines] = useState<OpsLine[]>([]);
+  const [machines, setMachines] = useState<OpsMachine[]>([]);
+  const [scope, setScope] = useState<Scope | null>(null);
+  const [worker, setWorker] = useState<Worker | null>(null);
+  const [run, setRun] = useState<RunRow | null>(null);
+  const [history, setHistory] = useState<ResultHistoryRow[]>([]);
+  const [now, setNow] = useState(() => new Date());
+  const [booted, setBooted] = useState(false);
 
-  const [panelMode, setPanelMode] = useState<PanelMode | null>(null);
-  const [panelRun, setPanelRun] = useState<RunRow | null>(null);
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const [runOpen, setRunOpen] = useState(false);
+  const [defectOpen, setDefectOpen] = useState(false);
+  const [workerOpen, setWorkerOpen] = useState(false);
+  const [workerNotice, setWorkerNotice] = useState<string | null>(null);
+  const [stopOpen, setStopOpen] = useState(false);
 
-  // 공용 코드/콤보
-  const [machines, setMachines] = useState<Machine[]>([]);
-  const [badReasons, setBadReasons] = useState<Code[]>([]);
-  // 설비비가동 패널의 설비 콤보 (작업지시 선택 시에만, 로딩 중 null)
-  const [dtMachines, setDtMachines] = useState<DowntimeMachines | null>(null);
+  // 지표(목표)는 시간에 따라 변한다 — 1분마다 다시 계산. 숨겨진 탭에서는 멈추고 돌아오면 바로 한 번 돈다.
+  useActiveInterval(() => setNow(new Date()), 60_000, { catchUp: true });
 
-
-  // 불량 패널 (작업지시 단위 대표불량 단일)
-  const [defect, setDefect] = useState<{ badCode: string; badQty: number; remark: string }>({ badCode: '', badQty: 0, remark: '' });
-  const [defectInfoOpen, setDefectInfoOpen] = useState(false); // 기본정보 접힘(기본값)
-
-  const search = useCallback(async () => {
-    setLoading(true);
+  const loadMachines = useCallback(async () => {
     try {
-      const res = await api.get('/oee/work-result', { params: { fromDate, toDate, lineCode: lineCode || undefined, keyword: keyword || undefined, excludeSmt: 'Y' } });
-      setRows(res.data?.data?.list ?? []);
-    } catch { toast.error('작업지시 목록 조회에 실패했습니다'); }
-    finally { setLoading(false); }
-  }, [fromDate, toDate, lineCode, keyword]);
-  useEffect(() => { search(); }, [search]);
-
-  // 공용 콤보 최초 1회
-  useEffect(() => {
-    api.get('/oee/work-result/machines').then((r) => setMachines(r.data?.data?.list ?? [])).catch(() => {});
-    api.get('/oee/work-result/bad-reasons').then((r) => setBadReasons(r.data?.data?.list ?? [])).catch(() => {});
+      const res = await api.get('/oee/equip-ops/machines');
+      setMachines(res.data?.data?.list ?? []);
+    } catch { toast.error('설비 목록 조회에 실패했습니다'); }
   }, []);
 
-  const canRegister = (r: RunRow) => !r.machineCode || r.workstageGroup === 'PBA';
-  const statusClass = (r: RunRow) => !r.machineCode ? 'bg-slate-400 text-white' : r.openDowntime > 0 ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white';
-  const statusLabel = (r: RunRow) => !r.machineCode ? '(미배정)' : r.openDowntime > 0 ? '(정지)' : '(가동)';
-  // 진행상태 색상(초기=테두리 / 진행중=노랑 / 완료=파랑) — 실적·불량 버튼 공통
-  const btnStateCls = (r: RunRow) => r.resultCount === 0 ? 'border border-primary text-primary hover:bg-surface' : r.wipCount > 0 ? 'bg-amber-400 text-white hover:bg-amber-500' : 'bg-blue-600 text-white hover:bg-blue-700';
+  // 진입: 라인·설비 목록을 읽고 기억한 선택을 되살린다. 없으면 라인선택 창을 연다.
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await api.get('/oee/equip-ops/lines');
+        setLines(res.data?.data?.list ?? []);
+      } catch { /* 빈 목록 */ }
+      await loadMachines();
+      const saved = loadScope();
+      setScope(saved);
+      setWorker(loadWorker());
+      if (!saved) setScopeOpen(true);
+      setBooted(true);
+    })();
+  }, [loadMachines]);
 
-  // ---- 실적 패널 ----
-  function openResult(r: RunRow) {
-    if (!canRegister(r)) { toast('후공정 대상이 아닙니다 (대상 제외)'); return; }
-    setSelectedRun(r.runNo); setPanelRun(r); setPanelMode('result');
+  const machine = useMemo(() => machines.find((m) => m.machineCode === scope?.machineCode) ?? null, [machines, scope]);
+  const line = useMemo(() => lines.find((l) => l.lineCode === scope?.lineCode) ?? null, [lines, scope]);
+
+  /** 작업지시 한 건을 다시 읽는다(실적 합계·불량 갱신) */
+  const reloadRun = useCallback(async (runNo: string, lineCode: string | null, runDate: string) => {
+    try {
+      const res = await api.get('/oee/work-result', { params: { fromDate: runDate, toDate: runDate, lineCode: lineCode ?? undefined, excludeSmt: 'Y' } });
+      const found = (res.data?.data?.list as RunRow[] | undefined)?.find((r) => r.runNo === runNo) ?? null;
+      setRun(found);
+      return found;
+    } catch { return null; }
+  }, []);
+
+  const loadHistory = useCallback(async (runNo: string) => {
+    try {
+      const res = await api.get('/oee/work-result/results', { params: { runNo } });
+      setHistory(res.data?.data?.list ?? []);
+    } catch { setHistory([]); }
+  }, []);
+
+  // 범위가 정해지면 오늘 고른 작업지시를 되살린다
+  useEffect(() => {
+    if (!booted || !scope) return;
+    const runNo = loadRunNo();
+    if (!runNo) { setRun(null); setHistory([]); return; }
+    void (async () => {
+      const found = await reloadRun(runNo, scope.lineCode, businessDate(new Date()));
+      if (found) await loadHistory(found.runNo);
+      else { saveRunNo(null); setHistory([]); }
+    })();
+  }, [booted, scope, reloadRun, loadHistory]);
+
+  const refresh = useCallback(async () => {
+    if (!run || !scope) return;
+    await Promise.all([reloadRun(run.runNo, run.lineCode, run.runDate), loadHistory(run.runNo)]);
+  }, [run, scope, reloadRun, loadHistory]);
+
+  function confirmScope(next: Scope) {
+    const lineChanged = next.lineCode !== scope?.lineCode;
+    setScope(next); saveScope(next); setScopeOpen(false);
+    if (lineChanged) { setRun(null); setHistory([]); saveRunNo(null); setRunOpen(true); }
   }
 
-  // ---- 불량 패널 (작업지시 단위 대표불량 단일, 실적과 독립) ----
-  async function openDefect(r: RunRow) {
-    setSelectedRun(r.runNo); setPanelRun(r); setPanelMode('defect');
-    setDefect({ badCode: '', badQty: 0, remark: '' });
-    try {
-      const res = await api.get('/oee/work-result/defect', { params: { runNo: r.runNo } });
-      const d = res.data?.data?.defect;
-      if (d) setDefect({ badCode: d.badCode ?? '', badQty: d.badQty ?? 0, remark: d.remark ?? '' });
-    } catch { /* 없음 */ }
+  async function selectRun(r: RunRow) {
+    setRun(r); saveRunNo(r.runNo); setRunOpen(false);
+    await loadHistory(r.runNo);
   }
-  async function saveDefect() {
-    if (!panelRun) return;
-    if (!defect.badCode) return toast.error('대표 불량유형을 선택하세요');
+
+  function selectWorker(w: Worker) {
+    setWorker(w); setWorkerOpen(false);
+    try { localStorage.setItem(WORKER_KEY, JSON.stringify(w)); } catch { /* 무시 */ }
+  }
+
+  /** 실적 입력이 막힌 상태에서 누르면, 막힌 이유에 맞는 선택 창을 연다 */
+  function guideBlocked() {
+    if (!scope || !machine) { toast('라인·공정·설비를 먼저 선택하세요'); setScopeOpen(true); return; }
+    if (!machine.workstageCode) { toast.error('설비에 공정이 지정되지 않아 실적을 저장할 수 없습니다'); return; }
+    if (!run) { toast('작업지시를 먼저 선택하세요'); setRunOpen(true); return; }
+    if (!worker) { setWorkerNotice('실적을 넣으려면 작업자를 먼저 선택하세요.'); setWorkerOpen(true); }
+  }
+
+  const entryBlocked = !scope ? '라인·공정·설비를 먼저 선택하세요'
+    : !machine ? '선택한 설비를 찾을 수 없습니다. 라인선택에서 다시 고르세요'
+    : !machine.workstageCode ? '설비에 공정이 지정되지 않아 실적을 저장할 수 없습니다'
+    : !run ? '작업지시를 먼저 선택하세요'
+    : !worker ? '작업자를 먼저 선택하세요'
+    : null;
+
+  async function saveResult(v: { qty: number; time: number; crew: number }) {
+    if (!run || !machine || !worker) return false;
     try {
-      await api.post('/oee/work-result/defect', { runNo: panelRun.runNo, badCode: defect.badCode, badQty: defect.badQty, remark: defect.remark || undefined });
-      toast.success('불량이 저장되었습니다');
-      await search();
+      const res = await api.post('/oee/work-result/results', {
+        runNo: run.runNo, machineCode: machine.machineCode, workstageCode: machine.workstageCode,
+        resultQty: v.qty, workTime: v.time, workerCount: v.crew, workerName: worker.name, resultStatus: 'DONE',
+      }, { skipSuccessToast: true });
+      const warning = res.data?.data?.sensorWarning as string | undefined;
+      if (warning) toast.error(`실적은 저장됐지만 생산현황 반영에 실패했습니다 — ${warning}`);
+      else toast.success(`실적 ${v.qty.toLocaleString()} 저장`);
+      await refresh();
+      return true;
     } catch (e: unknown) {
-      const msg = e && typeof e === 'object' && 'response' in e ? (e as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
-      toast.error(msg || '불량 저장에 실패했습니다');
+      toast.error(errorMessage(e, '실적 저장에 실패했습니다'));
+      return false;
     }
   }
 
-  // ---- 비가동 패널 (설비 기준 — 작업지시 선택은 선택사항, ADR 0002) ----
-  // 실제 조회·시작·종료는 공용 컴포넌트 EquipDowntimePanel이 담당한다.
-  // r=null 이면 작업지시 없이 설비만 선택해 등록하는 흐름
-  async function openDowntimePanel(r: RunRow | null) {
-    setSelectedRun(r?.runNo ?? null); setPanelRun(r); setPanelMode('downtime');
-    setDtMachines(null);
-    if (!r) return;
+  const cancelResult = useCallback(async (h: ResultHistoryRow) => {
+    if (!run) return;
     try {
-      const res = await api.get('/oee/work-result/downtime-machines', { params: { runNo: r.runNo } });
-      setDtMachines(res.data?.data ?? { by: 'none', fixed: false, list: [] });
-    } catch {
-      toast.error('설비 목록 조회에 실패했습니다');
-      setDtMachines({ by: 'none', fixed: false, list: [] });
+      const res = await api.post('/oee/work-result/results/cancel', { runNo: run.runNo, seqNo: h.seqNo }, { skipSuccessToast: true });
+      const warning = res.data?.data?.sensorWarning as string | undefined;
+      if (warning) toast.error(`취소했지만 생산현황 차감에 실패했습니다 — ${warning}`);
+      else toast.success(`실적 ${h.resultQty.toLocaleString()} 취소`);
+      await refresh();
+    } catch (e: unknown) {
+      toast.error(errorMessage(e, '실적 취소에 실패했습니다'));
     }
-  }
-  const dtByLabel = (d: DowntimeMachines, r: RunRow) =>
-    d.by === 'machine' ? '작업지시 설비 (고정)'
-      : d.by === 'workstage' ? `공정 ${r.workstageCode} 배치 설비`
-      : d.by === 'line' ? `라인 ${r.lineCode} 배치 설비`
-      : '작업지시에 설비·공정·라인 정보가 없습니다';
+  }, [run, refresh]);
 
-  // 폼 상태는 WorkResultForm이 들고 있다 — 패널이 닫히며 언마운트되면 같이 사라진다
-  function closePanel() { setPanelMode(null); setPanelRun(null); }
+  const stopped = !!machine?.openDtSeq;
 
   return (
-    <div className="flex h-full overflow-hidden">
-      <div className="flex-1 min-w-0 flex flex-col overflow-hidden p-6 gap-4">
-        {/* 헤더 + 조회조건 */}
-        <div className="flex items-start justify-between flex-shrink-0 gap-4 flex-wrap">
-          <div>
-            <h1 className="text-xl font-bold text-text flex items-center gap-2"><Factory className="w-6 h-6 text-primary" /> 설비별 작업 실적관리</h1>
-            <p className="text-sm text-text-muted mt-1">작업지시 기준 설비 가동상태 · 계획/실적 · 실적/불량/비가동 등록</p>
-          </div>
-          <div className="flex items-end gap-2 flex-wrap">
-            <label className="text-xs text-text-muted flex flex-col gap-1">계획일(From)
-              <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="border border-border rounded p-2 bg-background text-text text-sm h-10" />
-            </label>
-            <label className="text-xs text-text-muted flex flex-col gap-1">계획일(To)
-              <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="border border-border rounded p-2 bg-background text-text text-sm h-10" />
-            </label>
-            <label className="text-xs text-text-muted flex flex-col gap-1 w-44">라인
-              <ProdLineSelect includeAll excludeDivisions={SMT_LINE_DIVISIONS} value={lineCode} onChange={setLineCode} fullWidth />
-            </label>
-            <label className="text-xs text-text-muted flex flex-col gap-1">통합검색
-              <div className="w-56"><Input placeholder="품번·품명·설비코드/명" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && search()} leftIcon={<Search className="w-4 h-4" />} fullWidth /></div>
-            </label>
-            <button onClick={search} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
-          </div>
-        </div>
-
-        {/* 본문: 좌 목록 / 우 액션 */}
-        <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
-          <Card className="flex-[3] min-w-0 overflow-hidden" padding="none">
-            <CardContent className="h-full p-3 overflow-auto">
-              <div className="flex flex-col gap-2">
-                {rows.map((r) => {
-                  const selected = selectedRun === r.runNo;
-                  const reg = canRegister(r);
-                  return (
-                    <div key={r.runNo} onClick={() => setSelectedRun(r.runNo)}
-                      className={`border rounded overflow-hidden cursor-pointer ${selected ? 'border-primary ring-1 ring-primary' : 'border-border'}`}>
-                      <div className="grid" style={{ gridTemplateColumns: 'minmax(0,0.7fr) minmax(0,0.7fr) minmax(0,0.6fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr) 168px', gridTemplateRows: 'auto auto auto' }}>
-                        {/* 실적등록 버튼 — 9번째 셀, 3줄 병합 */}
-                        <div style={{ gridColumn: 9, gridRow: '1 / 4' }} className="flex items-center justify-center gap-1.5 border-l border-border p-1">
-                          {reg ? (
-                            <>
-                              <button onClick={(e) => { e.stopPropagation(); openResult(r); }}
-                                className={`flex-1 h-full rounded text-[11px] font-semibold flex flex-col items-center justify-center gap-0.5 ${btnStateCls(r)}`}>
-                                <Factory className="w-4 h-4" />실적등록
-                              </button>
-                              <button onClick={(e) => { e.stopPropagation(); openDefect(r); }}
-                                className={`flex-1 h-full rounded text-[11px] font-semibold flex flex-col items-center justify-center gap-0.5 ${btnStateCls(r)}`}>
-                                <AlertTriangle className="w-4 h-4" />불량등록
-                              </button>
-                            </>
-                          ) : (
-                            <span className="w-full h-full rounded text-[11px] font-semibold text-text-muted bg-surface flex items-center justify-center text-center">대상<br/>제외</span>
-                          )}
-                        </div>
-                        {/* 1줄: 작업지시번호, 라인, 설비, 공정, 계획일 */}
-                        <Cell label="작업지시번호" style={{ gridColumn: '1 / 3' }}><span className="font-mono">{r.runNo}</span></Cell>
-                        <Cell label="라인">{r.lineCode ?? '-'}</Cell>
-                        <div className={`px-2 py-1 border-r border-b border-border min-w-0 ${statusClass(r)}`} style={{ gridColumn: '4 / 6' }}>
-                          <div className="text-[10px] leading-tight truncate opacity-90">설비 {statusLabel(r)}</div>
-                          <div className="text-xs font-semibold leading-tight truncate">{r.machineCode ? `${r.machineCode} · ${r.machineName ?? ''}` : '-'}</div>
-                        </div>
-                        <Cell label="공정" style={{ gridColumn: '6 / 8' }}>{r.workstageCode ? `${r.workstageCode} · ${r.workstageName ?? ''}` : '-'}</Cell>
-                        <Cell label="계획일"><span className="font-mono">{r.runDate}</span></Cell>
-                        {/* 2줄: 교대조, 품번/리비전, 품명, 품목분류 */}
-                        <Cell label="교대조">{r.shiftCode ?? '-'}</Cell>
-                        <Cell label="품번 | 리비전" style={{ gridColumn: '2 / 5' }}><span className="font-mono">{r.itemCode} | {r.revision}</span></Cell>
-                        <Cell label="품명" style={{ gridColumn: '5 / 8' }}>{r.modelName}</Cell>
-                        <Cell label="품목분류">{r.itemClass ?? '-'}</Cell>
-                        {/* 3줄: 차종, 표준시간, 계획/실적/부적합, 단위 */}
-                        <Cell label="차종" style={{ gridColumn: '1 / 3' }}>{r.carModel ?? '-'}</Cell>
-                        <Cell label="표준시간(C/T)"><span className="font-mono">{r.ct != null ? `${r.ct}s` : '-'}</span></Cell>
-                        <div className="px-2 py-1 border-r border-b border-border min-w-0" style={{ gridColumn: '4 / 8' }}>
-                          <div className="text-[10px] text-text-muted leading-tight">계획수량 / 실적수량 / 부적합수량</div>
-                          <div className="text-xs font-medium leading-tight font-mono">
-                            {(r.planQty ?? 0).toLocaleString()} / <span className="text-primary">{r.resultQty.toLocaleString()}</span> / <span className="text-red-500">{r.defectQty.toLocaleString()}</span>
-                          </div>
-                        </div>
-                        <Cell label="단위">{r.unit ?? '-'}</Cell>
-                      </div>
-                    </div>
-                  );
-                })}
-                {loading && <div className="p-8 text-center text-text-muted text-sm">조회 중…</div>}
-                {!loading && !rows.length && <div className="p-8 text-center text-text-muted text-sm">조회 결과가 없습니다 (계획일 범위를 확인하세요)</div>}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 우측 액션 (가로폭 축소) */}
-          <div className="w-[112px] flex-shrink-0 flex flex-col gap-3">
-            <button disabled className="flex flex-col items-center justify-center gap-1.5 border border-border rounded-lg bg-surface py-5 opacity-50 cursor-not-allowed">
-              <FileText className="w-7 h-7 text-sky-600" /><span className="text-xs font-semibold text-text text-center leading-tight">작업지시서<br/>상세보기</span><span className="text-[10px] text-text-muted">추후</span>
-            </button>
-            <button onClick={() => openDowntimePanel(rows.find((x) => x.runNo === selectedRun) ?? null)}
-              className="flex flex-col items-center justify-center gap-1.5 border border-border rounded-lg bg-surface hover:bg-background hover:border-primary transition-colors py-5">
-              <PauseCircle className="w-7 h-7 text-rose-600" /><span className="text-xs font-semibold text-text text-center leading-tight">설비<br/>비가동</span>
-            </button>
-            <p className="text-[11px] text-text-muted mt-1 px-1">실적·불량은 행의 버튼을 누르세요. 비가동은 작업지시 없이 설비만 선택해도 등록됩니다.</p>
-          </div>
-        </div>
+    <div className="h-full flex flex-col overflow-hidden p-4 gap-3 animate-fade-in">
+      {/* 상단 띠 */}
+      <div className="flex-shrink-0 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-border bg-surface px-4 py-2.5">
+        <ScopeItem label="라인" value={scope ? lineLabel(line, scope.lineCode) : '-'} />
+        <Divider />
+        <ScopeItem label="공정" value={machine?.workstageName ?? machine?.workstageCode ?? '-'} />
+        <Divider />
+        <ScopeItem label="설비" value={machine?.machineName ?? scope?.machineCode ?? '-'} sub={machine?.machineCode} />
+        <Divider />
+        <button type="button" onClick={() => { setWorkerNotice(null); setWorkerOpen(true); }}
+          className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-1 hover:border-primary">
+          <span className="text-left">
+            <span className="block text-[11px] text-text-muted">작업자</span>
+            <span className={`block text-base font-bold ${worker ? 'text-text' : 'text-red-600'}`}>{worker?.name ?? '선택 필요'}</span>
+          </span>
+          <span className="text-xs font-semibold text-primary">변경</span>
+        </button>
+        {machine && (
+          <span className={`ml-auto inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold ${
+            stopped ? 'bg-red-500/15 text-red-600 dark:text-red-400' : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+          }`}>
+            <span className={`w-2.5 h-2.5 rounded-full bg-current ${stopped ? 'motion-safe:animate-pulse' : ''}`} />
+            {stopped ? `정지 중${machine.openReasonCode ? ` · ${machine.openReasonCode}` : ''}` : '가동중'}
+          </span>
+        )}
       </div>
 
-      {/* 실적 패널 */}
-      {panelMode === 'result' && panelRun && (
-        <div className="w-[560px] flex-shrink-0 border-l border-border bg-background flex flex-col h-full overflow-hidden shadow-2xl animate-slide-in-right">
-          <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
-            <h2 className="text-sm font-bold text-text">실적등록 <span className="ml-2 font-mono text-text-muted text-xs">{panelRun.runNo}</span></h2>
-            <button onClick={closePanel} className="px-3 py-2 rounded border border-border text-text-muted text-sm">닫기</button>
-          </div>
-          <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
-            <WorkResultForm key={panelRun.runNo} run={panelRun} machines={machines} onSaved={search} />
-          </div>
-        </div>
-      )}
+      {/* 본문: 생산 현황 · 실적 입력 · 레일 */}
+      <div className="flex-1 min-h-0 flex gap-3">
+        {run ? (
+          <ProductionStatus run={run} history={history} now={now} onCancel={cancelResult} />
+        ) : (
+          <section className="flex-1 min-h-0 rounded-xl border border-dashed border-border bg-surface flex flex-col items-center justify-center gap-3 text-text-muted">
+            <ClipboardList className="w-10 h-10" />
+            <p className="text-sm">{scope ? '작업지시를 선택하면 생산 현황이 여기에 보입니다.' : '라인·공정·설비를 먼저 선택하세요.'}</p>
+            <button type="button" onClick={() => (scope ? setRunOpen(true) : setScopeOpen(true))}
+              className="h-11 px-5 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90">
+              {scope ? '작업지시 선택' : '라인 선택'}
+            </button>
+          </section>
+        )}
 
-      {/* 불량 패널 (작업지시 단위 대표불량 단일, 실적과 독립) */}
-      {panelMode === 'defect' && panelRun && (
-        <div className="w-[560px] flex-shrink-0 border-l border-border bg-background flex flex-col h-full overflow-hidden shadow-2xl animate-slide-in-right">
-          <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
-            <h2 className="text-sm font-bold text-text">불량등록 <span className="ml-2 font-mono text-text-muted text-xs">{panelRun.runNo}</span></h2>
-            <div className="flex items-center gap-2">
-              <button onClick={closePanel} className="px-3 py-2 rounded border border-border text-text-muted text-sm">닫기</button>
-              <button onClick={saveDefect} className="px-4 py-2 rounded bg-primary text-white text-sm">저장</button>
-            </div>
-          </div>
-          <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
-            {/* 작업지시 기본 정보 (읽기전용, 설비/공정 포함) — 접기/펼치기, 기본 접힘 */}
-            <div className="border border-border rounded bg-surface/40">
-              <button type="button" onClick={() => setDefectInfoOpen((v) => !v)}
-                className="w-full flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-text">
-                {defectInfoOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                기본정보
-                {!defectInfoOpen && <span className="ml-1 font-normal text-text-muted text-xs truncate">{panelRun.itemCode ?? ''} · {panelRun.modelName ?? ''}</span>}
-              </button>
-              {defectInfoOpen && (
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm px-3 pb-3 pt-1 border-t border-border">
-                  {([
-                    ['설비', panelRun.machineCode ? `${panelRun.machineCode} · ${panelRun.machineName ?? ''}` : '-'],
-                    ['공정', panelRun.workstageCode ? `${panelRun.workstageCode} · ${panelRun.workstageName ?? ''}` : '-'],
-                    ['라인', panelRun.lineCode ?? '-'],
-                    ['교대조', panelRun.shiftCode ?? '-'],
-                    ['품번 | 리비전', `${panelRun.itemCode ?? ''} | ${panelRun.revision ?? ''}`],
-                    ['품명', panelRun.modelName ?? '-'],
-                    ['차종', panelRun.carModel ?? '-'],
-                    ['품목분류', panelRun.itemClass ?? '-'],
-                    ['단위', panelRun.unit ?? '-'],
-                    ['표준시간(C/T)', panelRun.ct != null ? `${panelRun.ct}s` : '-'],
-                    ['계획일', panelRun.runDate],
-                    ['계획수량', (panelRun.planQty ?? 0).toLocaleString()],
-                    ['실적수량', panelRun.resultQty.toLocaleString()],
-                  ] as [string, string][]).map(([k, v]) => (
-                    <div key={k} className="flex flex-col">
-                      <span className="text-[11px] text-text-muted">{k}</span>
-                      <span className="text-text">{v}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+        <EntryPad disabledReason={entryBlocked}
+          subtitle={[machine?.machineCode, run?.runNo].filter(Boolean).join(' · ')}
+          onSave={saveResult} onBlocked={guideBlocked} />
 
-            {/* 대표불량 단일 등록 */}
-            <div className="border-t border-border pt-4 space-y-3">
-              <span className="text-sm font-semibold text-text">대표 불량 (단일 등록)</span>
-              <label className="text-sm text-text-muted flex flex-col gap-1"><span>불량수량 <span className="text-red-500">*</span></span>
-                <input type="number" min="0" value={defect.badQty} onChange={(e) => setDefect({ ...defect, badQty: Number(e.target.value) })} className="border border-border rounded p-2 bg-background text-text text-right font-mono" />
-              </label>
-              <div className="flex flex-col gap-1.5">
-                <span className="text-sm text-text-muted">대표 불량유형 (WQC) <span className="text-red-500">*</span></span>
-                <div className="grid grid-cols-3 gap-2">
-                  {badReasons.map((b) => {
-                    const active = defect.badCode === b.code;
-                    return (
-                      <button key={b.code} type="button" onClick={() => setDefect({ ...defect, badCode: b.code })}
-                        className={`px-2 py-2 rounded border text-xs text-center transition-colors ${active ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'}`}>
-                        <span className="block font-medium leading-tight">{b.name}</span>
-                        <span className={`block text-[10px] font-mono ${active ? 'text-white/80' : 'text-text-muted'}`}>{b.code}</span>
-                      </button>
-                    );
-                  })}
-                  {!badReasons.length && <span className="col-span-3 text-xs text-text-muted py-2">불량유형이 없습니다</span>}
-                </div>
-              </div>
-              <label className="text-sm text-text-muted flex flex-col gap-1">비고
-                <textarea rows={2} value={defect.remark} onChange={(e) => setDefect({ ...defect, remark: e.target.value })} className="border border-border rounded p-2 bg-background text-text resize-none" />
-              </label>
-              <p className="text-[11px] text-text-muted">불량수량은 계획수량({(panelRun.planQty ?? 0).toLocaleString()}){panelRun.resultQty > 0 ? ` · 실적수량(${panelRun.resultQty.toLocaleString()})` : ''}을 초과할 수 없습니다. 실적과 무관하게 등록 가능합니다.</p>
-            </div>
-          </div>
-        </div>
-      )}
+        <nav className="w-[140px] flex-shrink-0 flex flex-col gap-2.5" aria-label="작업">
+          <RailButton icon={<Factory className="w-6 h-6" />} label="라인선택" onClick={() => setScopeOpen(true)} />
+          <RailButton icon={<ClipboardList className="w-6 h-6" />} label="작업지시" onClick={() => setRunOpen(true)} disabled={!scope} />
+          <RailButton icon={<AlertTriangle className="w-6 h-6" />} label="불량등록" onClick={() => setDefectOpen(true)} disabled={!run} />
+          <RailButton icon={stopped ? <PlayCircle className="w-6 h-6" /> : <PauseCircle className="w-6 h-6" />}
+            label={stopped ? '정지 해제' : '설비정지'} tone={stopped ? 'danger-on' : 'danger'}
+            onClick={() => setStopOpen(true)} disabled={!machine} />
+          <RailButton icon={<BellRing className="w-6 h-6" />} label="관리자호출" sub="준비 중" disabled />
+        </nav>
+      </div>
 
-      {/* 설비비가동 패널 — 공용 컴포넌트 (components/shared/EquipDowntimePanel) */}
-      {panelMode === 'downtime' && (
-        <div className="w-[560px] flex-shrink-0 border-l border-border bg-background flex flex-col h-full overflow-hidden shadow-2xl animate-slide-in-right">
-          <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
-            <h2 className="text-sm font-bold text-text">설비비가동 {panelRun
-              ? <span className="ml-2 font-mono text-text-muted text-xs">{panelRun.runNo}</span>
-              : <span className="ml-2 text-text-muted text-xs font-normal">작업지시 없음</span>}</h2>
-            <button onClick={closePanel} className="px-3 py-2 rounded border border-border text-text-muted text-sm">닫기</button>
-          </div>
-          <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
-            {panelRun && !dtMachines ? (
-              <div className="p-8 text-center text-text-muted text-sm">설비 목록 조회 중…</div>
-            ) : (
-              <>
-                {panelRun && dtMachines && <p className="text-[11px] text-text-muted mb-2">설비 목록: {dtByLabel(dtMachines, panelRun)}</p>}
-                <EquipDowntimePanel
-                  key={panelRun?.runNo ?? 'none'}
-                  machine={dtMachines?.fixed ? dtMachines.list[0] ?? null : null}
-                  selectableMachines={panelRun ? dtMachines?.list ?? [] : machines}
-                  runNo={panelRun?.runNo ?? null}
-                  onChanged={search}
-                />
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      <ScopeModal isOpen={scopeOpen} onClose={() => setScopeOpen(false)} lines={lines} machines={machines}
+        value={scope} onConfirm={confirmScope} />
+      <RunPickerModal isOpen={runOpen} onClose={() => setRunOpen(false)} lineCode={scope?.lineCode ?? ''}
+        workstageCode={scope?.workstageCode ?? ''} lineName={scope ? lineLabel(line, scope.lineCode) : ''} selectedRunNo={run?.runNo ?? null} onSelect={(r) => void selectRun(r)} />
+      <DefectModal run={defectOpen ? run : null} onClose={() => setDefectOpen(false)}
+        onSaved={async () => { setDefectOpen(false); await refresh(); }} />
+      <WorkerModal isOpen={workerOpen} onClose={() => setWorkerOpen(false)} value={worker} onSelect={selectWorker} notice={workerNotice} />
 
+      <Modal isOpen={stopOpen && !!machine} onClose={() => setStopOpen(false)} size="2xl" bodyMaxHeightClass="max-h-[85vh]"
+        title={<span>{stopped ? '설비 정지 해제' : '설비 정지'} <span className="ml-2 font-mono text-base text-text-muted">{machine?.machineCode}</span></span>}
+        headerActions={
+          <button type="button" onClick={() => setStopOpen(false)}
+            className="h-9 px-4 rounded-lg border border-border text-sm font-medium text-text hover:bg-surface">닫기</button>
+        }>
+        {machine && (
+          <EquipDowntimePanel
+            key={machine.machineCode}
+            machine={{ machineCode: machine.machineCode, machineName: machine.machineName ?? '', workstageCode: machine.workstageCode ?? '' }}
+            runNo={run?.runNo ?? null}
+            onChanged={async () => { await loadMachines(); setStopOpen(false); }}
+          />
+        )}
+      </Modal>
     </div>
   );
+}
+
+/** 상단 띠 항목 — 라인·공정·설비가 같은 폭을 쓴다(넘치면 말줄임, 전체는 툴팁) */
+function ScopeItem({ label, value, sub }: { label: string; value: string; sub?: string | null }) {
+  return (
+    <div className="w-52 flex-shrink-0 min-w-0" title={sub ? `${value} · ${sub}` : value}>
+      <div className="text-[11px] text-text-muted">{label}</div>
+      <div className="text-base font-bold text-text truncate">
+        {value}{sub && <span className="ml-1.5 font-mono text-xs font-normal text-text-muted">{sub}</span>}
+      </div>
+    </div>
+  );
+}
+
+function Divider() {
+  return <span className="w-px self-stretch bg-border" aria-hidden />;
 }
