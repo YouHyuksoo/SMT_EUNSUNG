@@ -256,6 +256,8 @@
     "master.warehouse": "Warehouse Mgmt",
     "master.company": "Company Mgmt",
     "master.label": "Label Mgmt",
+    "master.labelForm": "Product Label Forms",
+    "master.interlockCondition": "Interlock Conditions",
     "master.vendorBarcode": "Vendor Barcode Mapping",
     "master.purchasePrice": "Purchase Price",
     "master.itemSupplier": "Item Supplier Management",

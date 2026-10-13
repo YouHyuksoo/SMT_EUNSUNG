@@ -256,6 +256,8 @@
     "master.warehouse": "仓库管理",
     "master.company": "公司管理",
     "master.label": "标签管理",
+    "master.labelForm": "产品标签模板管理",
+    "master.interlockCondition": "互锁条件管理",
     "master.vendorBarcode": "供应商条码映射",
     "master.purchasePrice": "采购单价管理",
     "master.itemSupplier": "物料供应商管理",

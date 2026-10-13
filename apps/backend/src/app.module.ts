@@ -78,6 +78,8 @@ import { MasterRoutingModule } from './modules/master/master-routing.module';
 import { MasterRoutingGroupModule } from './modules/master/master-routing-group.module';
 import { MasterPurchasePriceModule } from './modules/master/master-purchase-price.module';
 import { MasterSalePriceModule } from './modules/master/master-sale-price.module';
+import { MasterInterlockConditionModule } from './modules/master/master-interlock-condition.module';
+import { MasterLabelFormModule } from './modules/master/master-label-form.module';
 import { MasterItemSupplierModule } from './modules/master/master-item-supplier.module';
 import { MasterCustomerModule } from './modules/master/master-customer.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -218,6 +220,10 @@ import { SharedModule } from './shared/shared.module';
     MasterRoutingGroupModule,
     MasterPurchasePriceModule,
     MasterSalePriceModule,
+    // 기준정보 인터락조건 (/master/interlock-conditions)
+    MasterInterlockConditionModule,
+    // 기준정보 제품별 라벨양식 (/master/label-forms)
+    MasterLabelFormModule,
 
     // 대시보드 (/dashboard/summary)
     DashboardModule,

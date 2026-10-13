@@ -71,6 +71,16 @@
           "path": "/master/label"
         },
         {
+          "menuCode": "MST_LABEL_FORM",
+          "title": "제품별 라벨양식 관리",
+          "path": "/master/label-form"
+        },
+        {
+          "menuCode": "MST_INTERLOCK_CONDITION",
+          "title": "인터락조건관리",
+          "path": "/master/interlock-condition"
+        },
+        {
           "menuCode": "MST_PURCHASE_PRICE",
           "title": "구매단가관리",
           "path": "/master/purchase-price"

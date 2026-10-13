@@ -50,6 +50,8 @@
       "MST_WORK_INST",
       "MST_WAREHOUSE",
       "MST_LABEL",
+      "MST_LABEL_FORM",
+      "MST_INTERLOCK_CONDITION",
       "MST_PURCHASE_PRICE",
       "MST_ITEM_SUPPLIER",
       "MST_SALE_PRICE"

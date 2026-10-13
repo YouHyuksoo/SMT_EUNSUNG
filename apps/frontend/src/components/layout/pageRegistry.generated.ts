@@ -237,6 +237,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/master/interlock-condition": {
+      const mod = await import("./page-registries/master__interlock-condition.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/master/item-supplier": {
       const mod = await import("./page-registries/master__item-supplier.generated");
       component = mod.getPageComponent();
@@ -244,6 +249,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/master/label": {
       const mod = await import("./page-registries/master__label.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/master/label-form": {
+      const mod = await import("./page-registries/master__label-form.generated");
       component = mod.getPageComponent();
       break;
     }

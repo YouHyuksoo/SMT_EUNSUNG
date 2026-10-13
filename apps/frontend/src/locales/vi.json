@@ -256,6 +256,8 @@
     "master.warehouse": "Quản lý kho hàng",
     "master.company": "Quản lý công ty",
     "master.label": "Quản lý nhãn",
+    "master.labelForm": "Quản lý mẫu nhãn theo sản phẩm",
+    "master.interlockCondition": "Quản lý điều kiện interlock",
     "master.vendorBarcode": "Ánh xạ mã vạch nhà cung cấp",
     "master.purchasePrice": "Quản lý đơn giá mua",
     "master.itemSupplier": "Quản lý nhà cung cấp theo mặt hàng",

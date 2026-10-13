@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: e34e3c3e
+verifiedCommit: 14121b17
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: e34e3c3e
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 203 | 174 | 28 | 1 |
+| 205 | 175 | 29 | 1 |
 
 ## 전체 연결표
 
@@ -42,7 +42,9 @@ verifiedCommit: e34e3c3e
 | 기준정보 | 작업자관리 | `MST_WORKER` | `/master/worker` | 웹 신규 |  | PB 대응 없음 |
 | 기준정보 | 작업지도서관리 | `MST_WORK_INST` | `/master/work-instruction` | 웹 신규 |  | PB 대응 없음 |
 | 기준정보 | 창고관리 | `MST_WAREHOUSE` | `/master/warehouse` | 웹 신규 |  | PB 대응 없음 |
-| 기준정보 | 라벨다자인관리 | `MST_LABEL` | `/master/label` | PB 연결 | `w_product_label_master` | PB 메뉴 인벤토리 |
+| 기준정보 | 라벨다자인관리 | `MST_LABEL` | `/master/label` | 웹 신규 |  | PB 대응 없음 |
+| 기준정보 | 제품별 라벨양식 관리 | `MST_LABEL_FORM` | `/master/label-form` | PB 연결 | `w_product_label_master` | PB 메뉴 인벤토리 |
+| 기준정보 | 인터락조건관리 | `MST_INTERLOCK_CONDITION` | `/master/interlock-condition` | PB 연결 | `w_com_interlock_inspect_condition_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 구매단가관리 | `MST_PURCHASE_PRICE` | `/master/purchase-price` | PB 연결 | `w_mat_buy_price_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 품목별 공급처 관리 | `MST_ITEM_SUPPLIER` | `/master/item-supplier` | PB 연결 | `w_mat_item_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 제품판매단가관리 | `MST_SALE_PRICE` | `/master/sale-price` | PB 연결 | `w_sal_sale_price_master` | PB 메뉴 인벤토리 |
@@ -189,7 +191,7 @@ verifiedCommit: e34e3c3e
 | 정보조회 | 자재장기재고리포트 | `RPT_MATERIAL_LONG_TERM` | `/report/material-long-term` | PB 연결 | `w_mat_long_term_inventory_report` | PB 메뉴 인벤토리 |
 | 정보조회 | 재고리포트 | `RPT_MATERIAL_INVENTORY` | `/report/material-inventory` | PB 연결 | `w_mat_current_inventory_report` | PB 메뉴 인벤토리 |
 | 정보조회 | 자재입출고수불원장 | `MAT_RECEIPT_ISSUE_LEDGER` | `/material/receipt-issue-ledger` | PB 연결 | `w_mat_ledger_report` | PB 메뉴 인벤토리 |
-| 정보조회 | 현재고조회 | `MAT_CURRENT_INVENTORY` | `/material/current-inventory` | PB 연결 | `w_mat_current_inventory_master` | PB 메뉴 인벤토리 |
+| 정보조회 | 자재현재고조회 | `MAT_CURRENT_INVENTORY` | `/material/current-inventory` | PB 연결 | `w_mat_current_inventory_master` | PB 메뉴 인벤토리 |
 | 정보조회 | 총재고조회 | `INV_TOTAL` | `/inventory-query/total-inventory` | PB 연결 | `w_mat_total_inventory_query` | PB 메뉴 인벤토리 |
 | 정보조회 | 베이킹재고조회 | `WH_BAKING_STOCK` | `/warehouse/baking-stock` | PB 연결 | `w_mat_baking_scan_query` | PB 메뉴 인벤토리 |
 | 정보조회 | 진공포장재고조회 | `WH_VACUUM_STOCK` | `/warehouse/vacuum-stock` | PB 연결 | `w_mat_vacuum_scan_query` | PB 메뉴 인벤토리 |
@@ -210,7 +212,7 @@ verifiedCommit: e34e3c3e
 | 품질관리 | 공정품질검사이력 | `QC_WQC` | `/quality/wqc` | PB 연결 | `w_qc_workstage_inspect_data_master_es` | PB 메뉴 인벤토리 |
 | 품질관리 | 온도상태조회 | `QC_TEMPERATURE` | `/quality/temperature` | PB 연결 | `w_pln_product_tempreture_history_query` | PB 메뉴 인벤토리 |
 | 품질관리 | 공정수리이력조회 | `QC_REPAIR_HISTORY` | `/quality/repair-history` | PB 연결 | `w_pln_product_pcb_repair_master` | PB 메뉴 인벤토리 |
-| 품질관리 | 공정수리이력조회 | `QC_REPAIR_QUERY` | `/quality/repair-query` | PB 연결 | `w_pln_product_pcb_repair_query` | PB 메뉴 인벤토리 |
+| 품질관리 | 공정수리이력분석 | `QC_REPAIR_QUERY` | `/quality/repair-query` | PB 연결 | `w_pln_product_pcb_repair_query` | PB 메뉴 인벤토리 |
 | 품질관리 | 공정폐기관리 | `QC_PRODUCT_DESTROY` | `/quality/product-destroy` | PB 연결 | `w_pln_product_pcb_destroy_master` | PB 메뉴 인벤토리 |
 | 승인 | 구매단가승인 | `CFM_BUY_PRICE` | `/confirm/buy-price` | PB 연결 | `w_mat_buy_price_confirm` | PB 메뉴 인벤토리 |
 | 승인 | 판매단가승인 | `CFM_SALE_PRICE` | `/confirm/sale-price` | PB 연결 | `w_sal_sale_price_confirm` | PB 메뉴 인벤토리 |

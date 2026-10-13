@@ -256,6 +256,8 @@
     "master.warehouse": "창고관리",
     "master.company": "회사관리",
     "master.label": "라벨다자인관리",
+    "master.labelForm": "제품별 라벨양식 관리",
+    "master.interlockCondition": "인터락조건관리",
     "master.vendorBarcode": "제조사 바코드 매핑",
     "master.purchasePrice": "구매단가관리",
     "master.itemSupplier": "품목별 공급처 관리",

@@ -4,7 +4,7 @@ sources:
   - apps/frontend/scripts/data/pb-screen-inventory.json
   - apps/frontend/scripts/data/pb-screen-exclusions.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: e34e3c3e
+verifiedCommit: 14121b17
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -19,18 +19,18 @@ verifiedCommit: e34e3c3e
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 174 |
+| 완료(개발됨, pbWindow 매핑) | 175 |
 | 이관제외(사용자 결정) | 31 |
-| 미착수 | 44 |
+| 미착수 | 43 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 174개 / 웹 신규 28개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 175개 / 웹 신규 29개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
 | 대분류 | 코드 | 전체 | 완료 | 이관제외 | 미착수 | 윈도우미상 |
 |---|---|---:|---:|---:|---:|---:|
-| 기준정보 | `M_BASIS1` | 20 | 10 | 0 | 10 | 0 |
+| 기준정보 | `M_BASIS1` | 20 | 11 | 0 | 9 | 0 |
 | 설계 | `M_DESIGN` | 5 | 5 | 0 | 0 | 0 |
 | SMT | `M_SMT` | 9 | 9 | 0 | 0 | 0 |
 | 설비 | `M_JIG` | 19 | 10 | 0 | 7 | 2 |
@@ -70,9 +70,9 @@ verifiedCommit: e34e3c3e
 | 131 | 모델별 ST관리 | `w_pln_product_model_st_master` | srw | 미착수 |  |  |
 | 132 | 생산월력 | `w_pln_product_calendar` | srw | 완료 | `MST_WORK_CALENDAR` | `/master/work-calendar` |
 | 133 | 생산라인보유공수관리 | `w_pln_line_capacity_master` | srw | 미착수 |  |  |
-| 134 | 제품별 라벨양식 관리 | `w_product_label_master` | srw | 완료 | `MST_LABEL` | `/master/label` |
+| 134 | 제품별 라벨양식 관리 | `w_product_label_master` | srw | 완료 | `MST_LABEL_FORM` | `/master/label-form` |
 | 135 | 문서관리 | `w_com_document_master` | srw | 미착수 |  |  |
-| 137 | 인터락조건관리 | `w_com_interlock_inspect_condition_master` | srw | 미착수 |  |  |
+| 137 | 인터락조건관리 | `w_com_interlock_inspect_condition_master` | srw | 완료 | `MST_INTERLOCK_CONDITION` | `/master/interlock-condition` |
 | 138 | QC 품질판정조건표 | `w_qc_led_inspect_condition_master` | srw | 미착수 |  |  |
 | 140 | 풀체크시간관리 | `w_com_full_check_time_master` | srw | 미착수 |  |  |
 | 142 | 자재구매단가 | `w_mat_buy_price_master` | srw | 완료 | `MST_PURCHASE_PRICE` | `/master/purchase-price` |
