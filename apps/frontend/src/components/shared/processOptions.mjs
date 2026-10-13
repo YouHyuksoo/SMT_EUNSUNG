@@ -23,3 +23,12 @@ export function buildProcessOptions(processes, processTypeMap, showProcessType) 
     return { value: process.processCode, label };
   });
 }
+
+/**
+ * 실적·지시 대상 제조공정인가 — SMT 공정(공정그룹 SMT)과 검사공정(공정유형 Q)은 뺀다.
+ * @param {{ codeGroup?: string | null, processType?: string | null }} process
+ * @returns {boolean}
+ */
+export function isManufacturingProcess(process) {
+  return process.codeGroup !== 'SMT' && process.processType !== 'Q';
+}

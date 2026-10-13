@@ -9,8 +9,9 @@
  * 2. **수량은 고르지 않는다.** 계획의 남은 수량(계획 - 이미 만든 롯트카드)이 그대로 롯트카드 수량이 된다.
  *    지시일자는 계획일자, 롯트카드 번호는 서버가 채번한다.
  * 3. 투입 자재(상세)는 계획 품목의 BOM 1단계로 함께 만들어진다. 다른 기준이 필요하면 [상세 생성]을 쓴다.
+ * 4. **후공정(제품) 계획은 공정마다 지시를 따로 내린다.** 공정(제조공정만)을 고르면 남은 수량이 그 공정 기준으로 나온다.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, Search } from 'lucide-react';
@@ -18,6 +19,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import ModelSearchField from '@/components/shared/ModelSearchField';
+import ProcessSelect from '@/components/shared/ProcessSelect';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import { Button, Input } from '@/components/ui';
 import Modal from '@/components/ui/Modal';
@@ -56,12 +58,13 @@ export default function PlanPickerModal({ isOpen, onClose, onCreated }: {
   const [modelClass, setModelClass] = useState('');
   const [pcbWeek, setPcbWeek] = useState('');
   const [saving, setSaving] = useState(false);
+  const [workstageCode, setWorkstageCode] = useState('');
 
   const search = useCallback(async () => {
     if (!lineCode) { toast.error('라인을 고르세요.'); return; }
     setLoading(true);
     try {
-      const res = await api.get('/production/lot-card/plans', { params: { lineCode, modelName: modelName || undefined, dateFrom, dateTo } });
+      const res = await api.get('/production/lot-card/plans', { params: { lineCode, modelName: modelName || undefined, dateFrom, dateTo, workstageCode: workstageCode || undefined } });
       setRows(res.data?.data ?? []);
       setPicked(null);
     } catch {
@@ -69,16 +72,21 @@ export default function PlanPickerModal({ isOpen, onClose, onCreated }: {
     } finally {
       setLoading(false);
     }
-  }, [lineCode, modelName, dateFrom, dateTo]);
+  }, [lineCode, modelName, dateFrom, dateTo, workstageCode]);
+
+  // 남은 수량이 공정 기준이라 공정을 바꾸면 다시 조회한다
+  useEffect(() => { if (lineCode) void search(); }, [workstageCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const create = useCallback(async () => {
     if (!picked) return;
     if (!productRunType) { toast.error('제조유형을 고르세요.'); return; }
+    if (picked.planType === 'MI' && !workstageCode) { toast.error('공정을 고르세요. 후공정 지시는 공정마다 따로 내립니다.'); return; }
     setSaving(true);
     try {
       const res = await api.post('/production/lot-card/from-plan', {
         planType: picked.planType, planDate: picked.planDate, planSequence: picked.planSequence, mfs: picked.mfs,
         productRunType, modelClass: modelClass || undefined, pcbWeek: pcbWeek || undefined,
+        workstageCode: picked.planType === 'MI' ? workstageCode : undefined,
       });
       const runNo = res.data?.data?.runNo as string;
       toast.success(`롯트카드 ${runNo} 를 만들었습니다 (${Number(res.data?.data?.lotSize ?? 0).toLocaleString()}개).`);
@@ -88,7 +96,7 @@ export default function PlanPickerModal({ isOpen, onClose, onCreated }: {
     } finally {
       setSaving(false);
     }
-  }, [picked, productRunType, modelClass, pcbWeek, onCreated]);
+  }, [picked, productRunType, modelClass, pcbWeek, workstageCode, onCreated]);
 
   /** 제조번호가 '*' 인 계획 — 롯트카드 LOT_NO 가 '*' 가 되어 다른 계획과 섞이므로 서버도 거부한다 */
   const noMfs = Boolean(picked && (!picked.mfs || picked.mfs === '*'));
@@ -116,6 +124,7 @@ export default function PlanPickerModal({ isOpen, onClose, onCreated }: {
       <div className="flex h-[72vh] flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <ProdLineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-48" />
+          <ProcessSelect manufacturingOnly labelPrefix="공정(후공정)" value={workstageCode} onChange={setWorkstageCode} className="w-60" />
           <ModelSearchField placeholder="모델명" value={modelName} className="w-52" onChange={(v) => setModelName(v)} />
           <DateRangeFilter label="계획일" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
           <Button size="sm" onClick={() => void search()} disabled={loading}>

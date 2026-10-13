@@ -12,21 +12,23 @@ import Select from "@/components/ui/Select";
 import type { SelectProps } from "@/components/ui/Select";
 import { useProcessOptions } from "@/hooks/useMasterOptions";
 import { useComCodeMap } from "@/hooks/useComCode";
-import { buildProcessOptions } from "./processOptions.mjs";
+import { buildProcessOptions, isManufacturingProcess } from "./processOptions.mjs";
 
 interface ProcessSelectProps extends Omit<SelectProps, "options"> {
   /** 필터용: 모든 옵션 라벨 앞에 접두어 추가 + "전체" 옵션 자동 추가 */
   labelPrefix?: string;
   /** 공정코드 | 공정명 | 공정유형 형식으로 표시 */
   showProcessType?: boolean;
+  /** 제조공정만 (SMT·검사 공정 제외) — 후공정 지시·실적 대상 */
+  manufacturingOnly?: boolean;
 }
 
-export default function ProcessSelect({ labelPrefix, showProcessType = false, ...props }: ProcessSelectProps) {
-  const { options, isLoading, rawData } = useProcessOptions();
+export default function ProcessSelect({ labelPrefix, showProcessType = false, manufacturingOnly = false, ...props }: ProcessSelectProps) {
+  const { isLoading, rawData } = useProcessOptions();
   const processTypeMap = useComCodeMap("WORKSTAGE TYPE");
   const displayOptions = useMemo(
-    () => showProcessType ? buildProcessOptions(rawData, processTypeMap, showProcessType) : options,
-    [options, processTypeMap, rawData, showProcessType],
+    () => buildProcessOptions(manufacturingOnly ? rawData.filter(isManufacturingProcess) : rawData, processTypeMap, showProcessType),
+    [manufacturingOnly, processTypeMap, rawData, showProcessType],
   );
   const finalOptions = useMemo(() => {
     if (!labelPrefix) return displayOptions;
