@@ -14,7 +14,7 @@ export const BOM_FIELD_HELP = {
   revision: { db: "BOM_MASTERS.REVISION", description: "이 BOM 구성의 리비전입니다. 같은 부모·자품목이라도 리비전으로 구분합니다." },
   processCode: { db: "BOM_MASTERS.OPER", description: "이 자품목이 투입되는 공정입니다." },
   side: { db: "BOM_MASTERS.SIDE", description: "투입 위치(사이드) 구분입니다." },
-  remark: { db: "BOM_MASTERS.REMARK", description: "BOM 구성 참고사항입니다." },
+  remark: { db: "ID_ENG_BOM.LOCATION_INFO", description: "부품이 실장되는 로케이션입니다. 여러 개는 쉼표로 구분합니다 (예: C1,C2,R5)." },
   validFrom: { db: "BOM_MASTERS.VALID_FROM", description: "이 BOM 구성이 적용되기 시작하는 날짜입니다." },
   validTo: { db: "BOM_MASTERS.VALID_TO", description: "이 BOM 구성의 적용이 끝나는 날짜입니다." },
 } as const;

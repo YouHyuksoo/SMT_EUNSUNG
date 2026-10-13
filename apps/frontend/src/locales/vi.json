@@ -1431,6 +1431,7 @@
       "selectChildPart": "Vui lòng chọn linh kiện con",
       "seq": "Thứ tự",
       "side": "Mặt",
+      "location": "Vị trí linh kiện",
       "viewAllRouting": "Xem toàn bộ định tuyến",
       "excelUploadTitle": "Tải lên Excel BOM",
       "uploadWithCount": "Tải lên",

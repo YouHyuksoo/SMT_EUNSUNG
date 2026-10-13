@@ -1431,6 +1431,7 @@
       "selectChildPart": "请选择子品目",
       "seq": "顺序",
       "side": "面",
+      "location": "位号",
       "viewAllRouting": "查看全部工艺路线",
       "excelUploadTitle": "BOM Excel 上传",
       "uploadWithCount": "上传",

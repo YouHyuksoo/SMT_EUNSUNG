@@ -111,6 +111,8 @@ export type BomTreeNode = {
   processCode: string | null;
   processName: string | null;
   side: string | null;
+  /** 로케이션 (ID_ENG_BOM.LOCATION_INFO, 예: C1,C2,R5) */
+  location: string | null;
   validFrom: string | null;
   validTo: string | null;
   useYn: string;
@@ -431,6 +433,7 @@ export class BomService {
         processCode: row.processCode,
         processName: row.processName,
         side: row.side,
+        location: row.remark,
         validFrom: row.validFrom,
         validTo: row.validTo,
         useYn: row.useYn ?? 'Y',

@@ -1431,6 +1431,7 @@
       "selectChildPart": "Select a child part",
       "seq": "Seq",
       "side": "Side",
+      "location": "Location",
       "viewAllRouting": "View All Routing",
       "excelUploadTitle": "BOM Excel Upload",
       "uploadWithCount": "Upload",
