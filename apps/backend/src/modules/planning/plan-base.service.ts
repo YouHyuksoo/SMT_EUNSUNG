@@ -11,9 +11,10 @@
  *    컬럼이 아예 없고 PLAN_PRIORITY 는 비워도 된다.
  *    반대로 SMD 는 ITEM_CODE·WORK_ORDER_NO·PCB_ITEM·MASTER_MODEL_NAME·
  *    PRODUCTION_TYPE 이 필수다. 폼에서 먼저 막지 않으면 DB 가 거부한다.
- * 3. **MFS 는 NOT NULL 이고 기본값이 '*' 다.** PB 가 계획을 해제할 때
- *    `MFS='*'` 로 되돌리는 것과 같은 규약이다 — 롯트카드가 붙으면 그 번호가 들어간다.
- *    이 서비스는 MFS 를 화면에서 받지 않는다 (롯트카드 쪽이 쓰는 값이다).
+ * 3. **MFS(제조번호)는 등록 때 'SMD'||순번 / 'MI'||순번 으로 정해진다** (실측: 2026-09 이후
+ *    PB 계획 SMD 372건·MI 459건 전부). 롯트카드를 만들면 LOT_NO 에 이 값이 들어가고, 계획의 남은
+ *    수량은 LOT_NO 로 묶어 센다. '*' 로 두면 롯트카드가 계획과 이어지지 않는다.
+ *    이 서비스는 MFS 를 화면에서 받지 않는다.
  * 4. **실적은 뷰에서 좌측 외부조인으로 붙인다.** 계획일·라인·모델(·공정)로 맞춘다.
  *    내부조인으로 바꾸면 실적이 아직 없는 계획이 목록에서 사라진다.
  * 5. **계획순번은 날짜별 번호가 아니라 시퀀스 SEQ_PLAN_DATE_SEQUENCE 다.**
@@ -57,6 +58,8 @@ export interface PlanTableConfig {
    * SMD 만 해당한다 (MI 테이블에는 MFS_GROUP_NO 가 없다).
    */
   mfsGroupByLine: boolean;
+  /** 제조번호(MFS) 머리 — MFS = 머리 || 계획순번 (가이드 3번) */
+  mfsPrefix: 'MI' | 'SMD';
   /**
    * 실적 뷰 조인 조건 [계획 컬럼, 뷰 컬럼]. PB 데이터윈도 조인을 그대로 옮긴다.
    * 두 뷰는 날짜 컬럼 이름부터 다르다 (IP_PRODUCT_ACTUAL_TIME_V.ACTUAL_DATE / IP_ASSEMBLY_ACTUAL_TIME_V.RECEIPT_DATE).
@@ -75,6 +78,7 @@ export const PLAN_TABLES: Record<'mi' | 'smd', PlanTableConfig> = {
     required: [['workstageCode', '공정코드'], ['planPriority', '계획 우선순위']],
     joinWorkstage: true,
     mfsGroupByLine: false,
+    mfsPrefix: 'MI',
     // d_pln_mi_master_plan_lst_tree: MODEL_SUFFIX 조인은 PB 에서도 주석 처리돼 있다.
     actualJoin: [
       ['PLAN_DATE', 'ACTUAL_DATE'],
@@ -101,6 +105,7 @@ export const PLAN_TABLES: Record<'mi' | 'smd', PlanTableConfig> = {
     ],
     joinWorkstage: false,
     mfsGroupByLine: true,
+    mfsPrefix: 'SMD',
     // d_pln_smd_master_plan_lst_tree: 날짜는 RECEIPT_DATE, 서픽스·PCB 면까지 맞춘다.
     actualJoin: [
       ['PLAN_DATE', 'RECEIPT_DATE'],
@@ -307,14 +312,15 @@ export class PlanBaseService {
         `TO_DATE(:planDate, 'YYYY-MM-DD')`,
         ':planSequence',
         ':organizationId',
-        // MFS 는 NOT NULL 이고 롯트카드가 붙기 전에는 '*' 다 (가이드 3번)
-        `'*'`,
+        // 제조번호 = 'SMD'/'MI' || 계획순번 (가이드 3번)
+        ':mfs',
       ];
       const binds: Record<string, unknown> = {
         planDate: filled.planDate,
         planSequence: sequence,
         organizationId,
         userId,
+        mfs: `${cfg.mfsPrefix}${sequence}`,
       };
       for (const [column, field] of this.editableColumns(cfg)) {
         columns.push(column);
@@ -414,7 +420,8 @@ export class PlanBaseService {
 
   /**
    * 삭제 — 롯트카드가 붙어 있으면 거부한다.
-   * MFS 가 '*' 가 아니면 그 번호의 롯트카드가 이 계획을 물고 있다는 뜻이다.
+   * 롯트카드는 LOT_NO 에 계획의 제조번호(MFS)를 담는다. 그 번호의 롯트카드가 있으면 막는다.
+   * (MFS 는 등록 때부터 채워져 있으므로 '*' 인지로는 판단할 수 없다.)
    * PB 는 이 검사를 하지 않아 롯트카드가 없는 계획을 가리키게 됐다.
    */
   async remove(cfg: PlanTableConfig, key: PlanKeyDto, organizationId: number) {
@@ -436,9 +443,15 @@ export class PlanBaseService {
           `${cfg.label}을 찾을 수 없습니다: ${key.planDate} / 순번 ${key.planSequence}`,
         );
       }
-      if (mfs !== '*') {
+      const cards = mfs === '*' ? [] : (await qr.query(
+        `SELECT MIN(RUN_NO) AS RUN_NO FROM IP_PRODUCT_RUN_CARD
+          WHERE LOT_NO = :mfs AND ORGANIZATION_ID = :organizationId`,
+        namedBinds({ mfs, organizationId }),
+      )) as Array<{ RUN_NO: string | null }>;
+      const runNo = cards[0]?.RUN_NO;
+      if (runNo) {
         throw new ConflictException(
-          `롯트카드 ${mfs} 가 이 계획을 쓰고 있습니다. 롯트카드를 먼저 지우세요.`,
+          `롯트카드 ${runNo} 가 이 계획(${mfs})을 쓰고 있습니다. 롯트카드를 먼저 지우세요.`,
         );
       }
 

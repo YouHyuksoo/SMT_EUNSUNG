@@ -11,7 +11,7 @@
  *    한쪽만 고쳐지는 일을 막으려고 화면을 하나로 둔다.
  * 2. **시간대 보기**를 켜면 10칸(계획/실적)이 그리드 뒤에 붙는다. 컬럼이 20개
  *    늘어나 기본은 끈 상태다.
- * 3. **롯트카드 컬럼이 '미발행' 이 아니면 그 계획은 지울 수 없다.** 서버가
+ * 3. **그 계획의 제조번호(MFS)로 만든 롯트카드가 있으면 지울 수 없다.** 서버가
  *    거부한다 — 롯트카드가 없는 계획을 가리키게 되기 때문이다.
  * 4. **월 계획은 없다.** PB 에 월계획 서브그리드가 있었지만 원천 테이블
  *    (IP_PRODUCT_MI_MONTH_PLAN / IP_PRODUCT_SMD_MONTH_PLAN)이 둘 다 0행이다 —
@@ -262,10 +262,8 @@ export default function PlanScreen({ config }: { config: PlanScreenConfig }) {
         onConfirm={remove}
         title="계획 삭제"
         message={selected
+          // 이 계획의 제조번호로 만든 롯트카드가 있으면 서버가 그 번호를 대며 거부한다.
           ? `${selected.planDate} / 순번 ${selected.planSequence} (${selected.modelName}) 계획을 지울까요?`
-            + (selected.mfs && selected.mfs !== '*'
-              ? ` 롯트카드 ${selected.mfs} 가 이 계획을 쓰고 있어 삭제가 거부됩니다.`
-              : '')
           : ''}
         variant="danger"
       />

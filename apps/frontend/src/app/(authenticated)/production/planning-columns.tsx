@@ -118,12 +118,13 @@ function planCommonColumns(variant: 'mi' | 'smd'): ColumnDef<PlanRow>[] {
       accessorFn: (r) => codeWithName(r.planStatus, r.planStatusName),
     },
     { accessorKey: 'confirmYn', header: '확정', size: 70, cell: comCodeCell('CONFIRM YN') },
-    // '*' 면 롯트카드가 아직 안 붙은 계획이다. 그대로 보여주면 오해하므로 바꿔 적는다.
+    // 제조번호는 등록 때 'SMD'/'MI'||순번 으로 정해지고, 롯트카드의 LOT_NO 가 이 값을 가리킨다.
+    // '*' 는 그 규칙 전에 웹으로 만든 계획이다 — 롯트카드와 이을 수 없다.
     {
       id: 'mfs',
-      header: '롯트카드',
+      header: '제조번호',
       size: 130,
-      accessorFn: (r) => (!r.mfs || r.mfs === '*' ? '미발행' : r.mfs),
+      accessorFn: (r) => (!r.mfs || r.mfs === '*' ? '없음' : r.mfs),
     },
     { accessorKey: 'customerCode', header: '고객', size: 110 },
     { accessorKey: 'comments', header: '비고', size: 200 },
