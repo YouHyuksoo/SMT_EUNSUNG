@@ -267,8 +267,9 @@ export class ProductFgController {
   async issue(
     @Body() dto: FgIssueDto,
     @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
   ) {
-    return ResponseUtil.success(await this.service.issue(dto, organizationId));
+    return ResponseUtil.success(await this.service.issue(dto, organizationId, userId));
   }
 
   @Post('model-issue')

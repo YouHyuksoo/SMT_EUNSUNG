@@ -30,7 +30,7 @@
  *    기본값을 7일로 뒀다. 인덱스 추가는 스키마 변경이라 손대지 않았다.
  */
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
 import { limited, ROW_LIMIT } from '../../../shared/row-limit';
 import { TransactionService } from '../../../shared/transaction.service';
 import {
@@ -45,8 +45,11 @@ import {
   FgReceiptQueryDto,
 } from '../dto/product-fg.dto';
 import { namedBinds } from '../../../common/utils/named-binds.util';
+import { ShippingOrderService } from './shipping-order.service';
 
 type Row = Record<string, unknown>;
+/** 프로시저 호출 전후에 같은 트랜잭션으로 부르는 처리 */
+type ProcHook = (qr: QueryRunner) => Promise<void>;
 
 /** PB `p_txn` — 프로시저가 정상과 취소를 이 값으로 가른다 (프로시저 주석 실측). */
 export const FG_TXN = {
@@ -100,6 +103,7 @@ export class ProductFgService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly tx: TransactionService,
+    private readonly shippingOrders: ShippingOrderService,
   ) {}
 
   // ───────────────────────────────── 조회
@@ -368,13 +372,16 @@ export class ProductFgService {
    * `barType` 은 PB `p_bar_type` 이다 — `'I'` 는 개별 박스, `'P'` 는 파렛트.
    * 파렛트는 이 현장에서 쓰지 않으므로(`IP_PRODUCT_FG_PALLET` 0행) 기본값은 `'I'` 다.
    */
-  async issue(dto: FgIssueDto, organizationId: number) {
+  async issue(dto: FgIssueDto, organizationId: number, userId = 'ADMIN') {
     const txn = dto.cancel ? FG_TXN.issueCancel : FG_TXN.issue;
+    const barcode = dto.barcode.trim();
+    const shipOrderNo = dto.shipOrderNo?.trim() || null;
+    let cancelledOrder: string | null = null;
     return this.runProc(
       'P_PRODUCT_FG_ISSUE(:barcode, :barType, :customerCode, :location,'
         + ' :txn, :commitFlag, v_out, v_msg)',
       {
-        barcode: dto.barcode.trim(),
+        barcode,
         barType: dto.barType ?? 'I',
         customerCode: dto.customerCode,
         location: dto.locationCode,
@@ -382,7 +389,21 @@ export class ProductFgService {
         commitFlag: NO_PROC_COMMIT,
       },
       dto.cancel ? '출하취소' : '출하',
-      { barcode: dto.barcode.trim(), txn, organizationId },
+      { barcode, txn, organizationId, shipOrderNo },
+      {
+        // 출하지시(제품납품계획) 연결 — 프로시저와 같은 트랜잭션이라 연결이 실패하면 출고도 되돌아간다.
+        // 취소는 프로시저가 박스 기록을 바꾸기 전에 어느 지시로 나갔는지 읽어 둔다.
+        before: dto.cancel
+          ? async (qr) => { cancelledOrder = await this.shippingOrders.shipOrderOfBox(qr, barcode, organizationId); }
+          : undefined,
+        after: async (qr) => {
+          if (dto.cancel) {
+            if (cancelledOrder) await this.shippingOrders.unlinkCancelledBox(qr, cancelledOrder, barcode, organizationId, userId);
+          } else if (shipOrderNo) {
+            await this.shippingOrders.linkIssuedBox(qr, shipOrderNo, barcode, organizationId, userId);
+          }
+        },
+      },
     );
   }
 
@@ -416,8 +437,10 @@ export class ProductFgService {
     binds: Record<string, unknown>,
     label: string,
     result: Record<string, unknown>,
+    hooks: { before?: ProcHook; after?: ProcHook } = {},
   ) {
     return this.tx.run(async (qr) => {
+      if (hooks.before) await hooks.before(qr);
       await qr
         .query(
           `DECLARE
@@ -441,6 +464,7 @@ export class ProductFgService {
           }
           throw error;
         });
+      if (hooks.after) await hooks.after(qr);
       return { ...result, label, ok: true };
     });
   }

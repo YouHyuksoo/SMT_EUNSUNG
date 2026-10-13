@@ -14,6 +14,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
 } from 'class-validator';
 
@@ -73,6 +74,8 @@ export class FgIssueDto {
   @IsString() @IsNotEmpty() customerCode!: string;
   @IsString() @IsNotEmpty() locationCode!: string;
   @IsOptional() @IsBoolean() cancel?: boolean;
+  /** 출하지시번호(제품납품계획) — 있으면 출고한 박스를 그 지시에 잇는다. 취소는 박스 기록으로 지시를 찾는다 */
+  @IsOptional() @IsString() @MaxLength(30) shipOrderNo?: string;
 }
 
 export class FgModelIssueDto {
