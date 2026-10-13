@@ -1,4 +1,4 @@
-export const PRINT_AGENT_BASE_URL = process.env.NEXT_PUBLIC_PRINT_AGENT_URL ?? "http://127.0.0.1:37111";
+export const PRINT_AGENT_BASE_URL = process.env.NEXT_PUBLIC_PRINT_AGENT_URL ?? "http://127.0.0.1:37112";
 
 /**
  * MES 백엔드가 배포하는 Print Agent 실행파일 다운로드 경로(같은 origin → Next rewrite → 백엔드 @Public).

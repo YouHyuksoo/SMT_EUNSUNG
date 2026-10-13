@@ -6,7 +6,7 @@
    - `IP_PRODUCT_PACK_MASTER` 에서 모델·포장수량·포장일
    - `ISYS_LABEL_FORM` 에서 그 모델의 박스(B) 양식 `.btw` (모델·유형별 하나)
    - V1~V20: `F_GEN_LABEL_DATA_4_BARTENDER('', 모델, 'B', 'Vn', 포장일, 수량, 박스바코드, '')`
-2. 화면이 작업자 PC 의 Print Agent(`http://127.0.0.1:37111/print/bartender`)로 양식과 값을 넘긴다.
+2. 화면이 작업자 PC 의 Print Agent(`http://127.0.0.1:37112/print/bartender`)로 양식과 값을 넘긴다.
 3. Agent 가 PowerShell 로 BarTender ActiveX 를 불러 양식을 열고, 빈 값·`NOTFOUND` 를 뺀 값을 넣고 매수만큼 찍는다.
 
 PB(`w_com_bartneder_form_popup`)와 같은 데이터·순서다. 포장완료는 출력 매수, 재출력은 1장.

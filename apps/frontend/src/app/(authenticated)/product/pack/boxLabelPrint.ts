@@ -4,7 +4,7 @@
  *
  * 초보자 가이드:
  * 1. GET /product/pack/box-label 이 PB 와 같은 방법으로 박스의 양식 파일과 값을 만든다.
- * 2. Print Agent(127.0.0.1:37111) 가 BarTender 로 양식을 열어 값을 넣고 매수만큼 찍는다.
+ * 2. Print Agent(127.0.0.1:37112) 가 BarTender 로 양식을 열어 값을 넣고 매수만큼 찍는다.
  * 3. 출력 설정(사용 여부·매수·프린터)은 PC 마다 다르므로 브라우저 localStorage 에 둔다.
  */
 import api from "@/services/api";

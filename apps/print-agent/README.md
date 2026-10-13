@@ -11,7 +11,7 @@ cd apps/print-agent
 go run ./cmd/eunsung-print-agent
 ```
 
-기본 주소는 `http://127.0.0.1:37111` 입니다.
+기본 주소는 `http://127.0.0.1:37112` 입니다. HANES Print Agent(37111)와 같은 PC 에 깔려도 겹치지 않게 포트를 달리했습니다.
 
 Windows에서는 실행 후 시스템 트레이에 상주합니다. 트레이 아이콘 우클릭 메뉴는 다음 기능을 제공합니다.
 
@@ -68,11 +68,11 @@ Windows에서는 실행 후 시스템 트레이에 상주합니다. 트레이 �
 
 설정은 사용자 설정 디렉터리 아래 `EUNSUNG/print-agent/config.json`에 저장됩니다.
 
-브라우저에서 `http://127.0.0.1:37111/settings`를 열면 agent가 직접 제공하는 설정관리 화면을 사용할 수 있습니다. 이 화면에서 agent 상태 확인, 프린터 목록 조회, 기본 프린터 저장, 테스트 출력, 허용 Origin, token, 로그 폴더, payload 제한을 관리합니다.
+브라우저에서 `http://127.0.0.1:37112/settings`를 열면 agent가 직접 제공하는 설정관리 화면을 사용할 수 있습니다. 이 화면에서 agent 상태 확인, 프린터 목록 조회, 기본 프린터 저장, 테스트 출력, 허용 Origin, token, 로그 폴더, payload 제한을 관리합니다.
 
 주요 값:
 
-- `listenAddress`: 기본 `127.0.0.1:37111`
+- `listenAddress`: 기본 `127.0.0.1:37112`
 - `allowedOrigins`: 은성 MES 웹 origin 허용 목록
 - `token`: 설정하면 요청 header `X-EUNSUNG-Print-Token` 또는 `Authorization: Bearer ...`로 검증
 - `defaultPrinter`: `printerName`이 비어 있을 때 사용할 프린터

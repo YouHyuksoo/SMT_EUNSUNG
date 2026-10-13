@@ -9,7 +9,7 @@ import (
 )
 
 // 실제 reg.exe 로 임시 키(HKCU\SOFTWARE\EUNSUNGTest\...)에 쓰고 지운다 — 브라우저 정책 키는 건드리지 않는다.
-func TestSyncWritesAndClearsKey(t *testing.T) {
+func TestSyncMergesWithExistingValues(t *testing.T) {
 	saved := policyKeys
 	testKey := `HKCU\SOFTWARE\EUNSUNGTest\browserpolicy\LocalNetworkAccessAllowedForUrls`
 	policyKeys = []string{testKey}
@@ -33,20 +33,27 @@ func TestSyncWritesAndClearsKey(t *testing.T) {
 		t.Fatalf("Registered = %d, want 2", n)
 	}
 
-	// 교체: 하나만 남긴다 (예전 값 2 가 남아 있으면 안 된다)
-	if err := Sync([]string{"https://mes.eunsung.example"}); err != nil {
-		t.Fatalf("Sync replace: %v", err)
+	// 다른 도구가 넣은 값은 지우지 않고, 겹치는 값은 다시 넣지 않는다 (HANES Print Agent 와 같은 키를 나눠 쓴다)
+	if err := exec.Command("reg", "add", testKey, "/v", "9", "/t", "REG_SZ", "/d", "https://hswbs.haengsung.com", "/f").Run(); err != nil {
+		t.Fatalf("seed other value: %v", err)
+	}
+	if err := Sync([]string{"https://mes.eunsung.example/"}); err != nil {
+		t.Fatalf("Sync merge: %v", err)
 	}
 	out, _ = exec.Command("reg", "query", testKey).CombinedOutput()
-	if strings.Contains(string(out), "mes.example.com") {
-		t.Fatalf("stale value remained:\n%s", out)
+	text = string(out)
+	if !strings.Contains(text, "https://hswbs.haengsung.com") || !strings.Contains(text, "https://mes.example.com:8443") {
+		t.Fatalf("existing values were removed:\n%s", text)
+	}
+	if n, _ := Registered(); n != 3 {
+		t.Fatalf("Registered = %d, want 3 (no duplicate)\n%s", n, text)
 	}
 
-	// 비우면 키 삭제
+	// 비어 있으면 아무것도 바꾸지 않는다
 	if err := Sync(nil); err != nil {
-		t.Fatalf("Sync clear: %v", err)
+		t.Fatalf("Sync empty: %v", err)
 	}
-	if err := exec.Command("reg", "query", testKey).Run(); err == nil {
-		t.Fatalf("key should be deleted")
+	if n, _ := Registered(); n != 3 {
+		t.Fatalf("empty sync changed values: %d", n)
 	}
 }

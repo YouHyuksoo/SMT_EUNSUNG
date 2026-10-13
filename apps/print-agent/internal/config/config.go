@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	defaultListenAddress = "127.0.0.1:37111"
+	defaultListenAddress = "127.0.0.1:37112" // HANES Print Agent(37111)와 같은 PC 에 있어도 겹치지 않게
 	defaultMaxPayload    = int64(12 * 1024 * 1024)
 )
 
@@ -96,7 +96,7 @@ func (c *Config) Normalize() {
 	if strings.TrimSpace(c.ListenAddress) == "" {
 		c.ListenAddress = defaultListenAddress
 	}
-	if c.ListenAddress == ":37111" || strings.HasPrefix(c.ListenAddress, "0.0.0.0:") {
+	if c.ListenAddress == ":37112" || strings.HasPrefix(c.ListenAddress, "0.0.0.0:") {
 		c.ListenAddress = defaultListenAddress
 	}
 	if c.MaxPayloadBytes <= 0 {

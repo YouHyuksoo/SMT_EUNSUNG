@@ -61,7 +61,7 @@ const settingsPageHTML = `<!doctype html>
           <input id="effectiveListenAddress" disabled />
         </label>
         <label>저장할 listenAddress
-          <input id="listenAddress" placeholder="127.0.0.1:37111" />
+          <input id="listenAddress" placeholder="127.0.0.1:37112" />
         </label>
         <label>기본 프린터
           <select id="defaultPrinter"></select>

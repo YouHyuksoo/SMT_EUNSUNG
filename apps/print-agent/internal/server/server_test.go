@@ -30,8 +30,8 @@ func TestPrintBarTenderPassesTemplateAndValues(t *testing.T) {
 	fake := &fakeBarTender{}
 	srv.SetBarTender(fake)
 	body := `{"jobId":"BOX-1","copies":2,"templateBase64":"` + base64.StdEncoding.EncodeToString([]byte("btw")) + `","values":{"V1":"M1590","V7":"박스/바코드"}}`
-	req := httptest.NewRequest(http.MethodPost, "http://127.0.0.1:37111/print/bartender", strings.NewReader(body))
-	req.Host = "127.0.0.1:37111"
+	req := httptest.NewRequest(http.MethodPost, "http://127.0.0.1:37112/print/bartender", strings.NewReader(body))
+	req.Host = "127.0.0.1:37112"
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -46,8 +46,8 @@ func TestPrintBarTenderRejectsBadValueName(t *testing.T) {
 	srv := New(nil, nil)
 	srv.SetBarTender(&fakeBarTender{})
 	body := `{"jobId":"BOX-1","templateBase64":"YnR3","values":{"V1; rm":"x"}}`
-	req := httptest.NewRequest(http.MethodPost, "http://127.0.0.1:37111/print/bartender", strings.NewReader(body))
-	req.Host = "127.0.0.1:37111"
+	req := httptest.NewRequest(http.MethodPost, "http://127.0.0.1:37112/print/bartender", strings.NewReader(body))
+	req.Host = "127.0.0.1:37112"
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, req)
 	if rec.Code != http.StatusBadRequest {
