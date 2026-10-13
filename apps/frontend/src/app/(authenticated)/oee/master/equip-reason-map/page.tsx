@@ -63,7 +63,24 @@ interface EditForm extends MachineRef {
   updatedAt: string;
   updatedBy: string;
 }
-const emptyForm = (): EditForm => ({ isEdit: false, machineCode: '', machineName: '', machineType: '', lineCode: '', processCode: '', reasons: [], updatedAt: '', updatedBy: '' });
+// 사유 목록 공용 컬럼 — 사유코드 · 사유명 · 사유구분 · OEE 반영
+const reasonCodeColumn: ColumnDef<MapReason> = { accessorKey: 'reasonCode', header: '사유코드', cell: ({ row }) => <span className="font-mono">{row.original.reasonCode}</span> };
+const reasonTailColumns: ColumnDef<MapReason>[] = [
+  { id: 'reasonType', header: '사유구분', accessorFn: (r) => reasonTypeName(r.reasonType), meta: { align: 'center' } },
+  { id: 'oeeReflect', header: 'OEE 반영', accessorFn: (r) => oeeReflectName(r.oeeReflect), meta: { align: 'center' } },
+];
+// 미사용 사유는 흐리게 — td 의 text-inherit 보다 우선하도록 td 에 직접 건다
+const unusedRowClass = (r: MapReason) => (r.useYn === 'N' ? '[&>td]:text-text-muted' : '');
+
+/** 목록 [사유 N건] 팝업 */
+const viewReasonColumns: ColumnDef<MapReason>[] = [
+  reasonCodeColumn,
+  { accessorKey: 'reasonName', header: '사유명' },
+  ...reasonTailColumns,
+  { id: 'useYn', header: '사용', accessorFn: (r) => (r.useYn === 'N' ? '미사용' : '사용'), meta: { align: 'center' } },
+];
+
+const emptyForm = (): EditForm =>({ isEdit: false, machineCode: '', machineName: '', machineType: '', lineCode: '', processCode: '', reasons: [], updatedAt: '', updatedBy: '' });
 
 export default function EquipReasonMapPage() {
   const [records, setRecords] = useState<MachineReasonRecord[]>([]);
@@ -216,6 +233,25 @@ export default function EquipReasonMapPage() {
     setMachinePickerOpen(false);
   }
 
+  // 설비선택 팝업 그리드 — [선택] 버튼으로 1대를 고른다 (pickMachine 이 form·records 를 읽는다)
+  const machinePickerColumns = useMemo<ColumnDef<MachineRef>[]>(() => [
+    { accessorKey: 'machineCode', header: '설비코드', cell: ({ row }) => <span className="font-mono">{row.original.machineCode}</span> },
+    { accessorKey: 'machineName', header: '설비명' },
+    { accessorKey: 'machineType', header: '유형', meta: { align: 'center' as const }, cell: ({ row }) => <span className="font-mono">{row.original.machineType}</span> },
+    { accessorKey: 'lineCode', header: '라인', meta: { align: 'center' as const }, cell: ({ row }) => <span className="font-mono">{row.original.lineCode}</span> },
+    { accessorKey: 'processCode', header: '공정', meta: { align: 'center' as const }, cell: ({ row }) => <span className="font-mono">{row.original.processCode}</span> },
+    {
+      id: 'actions',
+      header: '선택',
+      size: 80,
+      enableSorting: false,
+      meta: { align: 'center' as const, filterType: 'none' as const },
+      cell: ({ row }) => (
+        <button onClick={(e) => { e.stopPropagation(); pickMachine(row.original); }} className="px-3 py-1 rounded border border-primary text-primary hover:bg-surface text-xs whitespace-nowrap">선택</button>
+      ),
+    },
+  ], [form, records]);
+
   // 사유선택 팝업 — 사용중(USE_YN='Y') 사유 로드
   const loadReasons = useCallback(async () => {
     if (activeReasons.length) return;
@@ -243,6 +279,95 @@ export default function EquipReasonMapPage() {
     setForm({ ...form, reasons: [...form.reasons, ...added] });
     setReasonPickerOpen(false);
   }
+  function togglePicker(code: string) {
+    setPickerChecked((prev) => (prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]));
+  }
+
+  // 등록 패널 사유 그리드 — 체크박스(전체선택) 로 골라 선택삭제
+  const formReasons = form?.reasons;
+  const editReasonColumns = useMemo<ColumnDef<MapReason>[]>(() => {
+    const list = formReasons ?? [];
+    const allChecked = list.length > 0 && gridChecked.length === list.length;
+    return [
+      {
+        id: 'select',
+        size: 44,
+        enableSorting: false,
+        enableResizing: false,
+        meta: { align: 'center' as const, filterType: 'none' as const },
+        header: () => (
+          <input
+            type="checkbox"
+            aria-label="전체 선택"
+            className="w-4 h-4 accent-primary"
+            checked={allChecked}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => setGridChecked(e.target.checked ? list.map((r) => r.reasonCode) : [])}
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            aria-label="줄 선택"
+            className="w-4 h-4 accent-primary"
+            checked={gridChecked.includes(row.original.reasonCode)}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              const code = row.original.reasonCode;
+              setGridChecked((prev) => (e.target.checked ? [...prev, code] : prev.filter((c) => c !== code)));
+            }}
+          />
+        ),
+      },
+      reasonCodeColumn,
+      {
+        accessorKey: 'reasonName',
+        header: '사유명',
+        cell: ({ row }) => (
+          <>{row.original.reasonName}{row.original.useYn === 'N' && <span className="ml-1 text-[11px] text-red-400">(미사용)</span>}</>
+        ),
+      },
+      ...reasonTailColumns,
+    ];
+  }, [formReasons, gridChecked]);
+
+  // 사유선택 팝업 — 행을 눌러도 체크가 바뀐다
+  const pickerReasonColumns = useMemo<ColumnDef<MapReason>[]>(() => {
+    const allChecked = activeReasons.length > 0 && pickerChecked.length === activeReasons.length;
+    return [
+      {
+        id: 'select',
+        size: 44,
+        enableSorting: false,
+        enableResizing: false,
+        meta: { align: 'center' as const, filterType: 'none' as const },
+        header: () => (
+          <input
+            type="checkbox"
+            aria-label="전체 선택"
+            className="w-4 h-4 accent-primary"
+            checked={allChecked}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => setPickerChecked(e.target.checked ? activeReasons.map((r) => r.reasonCode) : [])}
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            aria-label="줄 선택"
+            className="w-4 h-4 accent-primary"
+            checked={pickerChecked.includes(row.original.reasonCode)}
+            onClick={(e) => e.stopPropagation()} // 행 클릭(toggle)과 겹쳐 두 번 바뀌지 않게
+            onChange={() => togglePicker(row.original.reasonCode)}
+          />
+        ),
+      },
+      reasonCodeColumn,
+      { accessorKey: 'reasonName', header: '사유명' },
+      ...reasonTailColumns,
+    ];
+  }, [activeReasons, pickerChecked]);
+
   // 그리드 체크 삭제
   function deleteCheckedReasons() {
     if (!form) return;
@@ -325,30 +450,19 @@ export default function EquipReasonMapPage() {
       </div>
 
       {/* 사유코드 확인 팝업 (목록) — 연계 사유 복수 출력 */}
-      <Modal isOpen={!!viewRec} onClose={() => setViewCode(null)} title={viewRec ? `비가동 사유 — ${viewRec.machineCode} ${viewRec.machineName}` : ''} size="lg">
+      <Modal isOpen={!!viewRec} onClose={() => setViewCode(null)} title={viewRec ? `비가동 사유 — ${viewRec.machineCode} ${viewRec.machineName}` : ''} size="2xl">
         {viewRec && (
-          <table className="w-full text-sm border border-border">
-            <thead>
-              <tr className="bg-surface text-text-muted">
-                <th className="p-2 text-left">사유코드</th>
-                <th className="p-2 text-left">사유명</th>
-                <th className="p-2 text-center">사유구분</th>
-                <th className="p-2 text-center">OEE 반영</th>
-                <th className="p-2 text-center">사용</th>
-              </tr>
-            </thead>
-            <tbody>
-              {viewRec.reasons.map((r) => (
-                <tr key={r.reasonCode} className={`border-t border-border ${r.useYn === 'N' ? 'text-text-muted' : ''}`}>
-                  <td className="p-2 font-mono">{r.reasonCode}</td>
-                  <td className="p-2">{r.reasonName}</td>
-                  <td className="p-2 text-center">{reasonTypeName(r.reasonType)}</td>
-                  <td className="p-2 text-center">{oeeReflectName(r.oeeReflect)}</td>
-                  <td className="p-2 text-center">{r.useYn === 'N' ? '미사용' : '사용'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <DataGrid
+            data={viewRec.reasons}
+            columns={viewReasonColumns}
+            pageSize={1000}
+            maxHeight="60vh"
+            showFooter={false}
+            enableFullscreen={false}
+            getRowId={(r) => r.reasonCode}
+            rowClassName={unusedRowClass}
+            emptyMessage="연계된 비가동 사유가 없습니다"
+          />
         )}
       </Modal>
 
@@ -415,45 +529,19 @@ export default function EquipReasonMapPage() {
                   <button onClick={openReasonPicker} className="text-sm border border-border rounded px-2 py-1 text-primary hover:bg-surface">사유코드선택</button>
                 </div>
               </div>
-              <table className="w-full text-sm border border-border">
-                <thead>
-                  <tr className="bg-surface text-text-muted">
-                    <th className="p-2 w-9 text-center">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 accent-primary"
-                        checked={form.reasons.length > 0 && gridChecked.length === form.reasons.length}
-                        onChange={(e) => setGridChecked(e.target.checked ? form.reasons.map((r) => r.reasonCode) : [])}
-                      />
-                    </th>
-                    <th className="p-2 text-left">사유코드</th>
-                    <th className="p-2 text-left">사유명</th>
-                    <th className="p-2 text-center">사유구분</th>
-                    <th className="p-2 text-center">OEE 반영</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {form.reasons.map((r) => (
-                    <tr key={r.reasonCode} className={`border-t border-border ${r.useYn === 'N' ? 'text-text-muted' : ''}`}>
-                      <td className="p-2 text-center">
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 accent-primary"
-                          checked={gridChecked.includes(r.reasonCode)}
-                          onChange={(e) => setGridChecked((prev) => (e.target.checked ? [...prev, r.reasonCode] : prev.filter((c) => c !== r.reasonCode)))}
-                        />
-                      </td>
-                      <td className="p-2 font-mono">{r.reasonCode}</td>
-                      <td className="p-2">{r.reasonName}{r.useYn === 'N' && <span className="ml-1 text-[11px] text-red-400">(미사용)</span>}</td>
-                      <td className="p-2 text-center">{reasonTypeName(r.reasonType)}</td>
-                      <td className="p-2 text-center">{oeeReflectName(r.oeeReflect)}</td>
-                    </tr>
-                  ))}
-                  {!form.reasons.length && (
-                    <tr><td colSpan={5} className="p-3 text-center text-text-muted">사유코드선택으로 비가동 사유를 추가하세요</td></tr>
-                  )}
-                </tbody>
-              </table>
+              <DataGrid
+                data={form.reasons}
+                columns={editReasonColumns}
+                pageSize={1000}
+                showFooter={false}
+                enableColumnFilter={false}
+                enableFullscreen={false}
+                enableColumnReordering={false}
+                enableColumnPinning={false}
+                getRowId={(r) => r.reasonCode}
+                rowClassName={unusedRowClass}
+                emptyMessage="사유코드선택으로 비가동 사유를 추가하세요"
+              />
             </div>
 
             {/* 최종수정자/일 — 자동 */}
@@ -471,74 +559,34 @@ export default function EquipReasonMapPage() {
       <Modal isOpen={machinePickerOpen} onClose={() => setMachinePickerOpen(false)} title="설비 선택" size="2xl">
         <div className="space-y-2">
           <Input placeholder="설비코드/설비명 검색" value={machineQuery} onChange={(e) => setMachineQuery(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
-          <div className="max-h-[50vh] overflow-auto border border-border rounded">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0">
-                <tr className="bg-surface text-text-muted">
-                  <th className="p-2 text-left whitespace-nowrap">설비코드</th>
-                  <th className="p-2 text-left">설비명</th>
-                  <th className="p-2 text-center">유형</th>
-                  <th className="p-2 text-center">라인</th>
-                  <th className="p-2 text-center">공정</th>
-                  <th className="p-2 text-center w-20">선택</th>
-                </tr>
-              </thead>
-              <tbody>
-                {machineItems.map((m) => (
-                  <tr key={m.machineCode} className="border-t border-border">
-                    <td className="p-2 font-mono whitespace-nowrap">{m.machineCode}</td>
-                    <td className="p-2">{m.machineName}</td>
-                    <td className="p-2 text-center font-mono">{m.machineType}</td>
-                    <td className="p-2 text-center font-mono">{m.lineCode}</td>
-                    <td className="p-2 text-center font-mono">{m.processCode}</td>
-                    <td className="p-2 text-center w-20">
-                      <button onClick={() => pickMachine(m)} className="px-3 py-1 rounded border border-primary text-primary hover:bg-surface text-xs whitespace-nowrap">선택</button>
-                    </td>
-                  </tr>
-                ))}
-                {!machineItems.length && <tr><td colSpan={6} className="p-4 text-center text-text-muted">설비가 없습니다</td></tr>}
-              </tbody>
-            </table>
-          </div>
+          <DataGrid
+            data={machineItems}
+            columns={machinePickerColumns}
+            pageSize={300}
+            maxHeight="50vh"
+            showFooter={false}
+            enableFullscreen={false}
+            getRowId={(m) => m.machineCode}
+            emptyMessage="설비가 없습니다"
+          />
           <p className="text-[11px] text-text-muted">최대 300건 표시. 검색으로 좁혀 선택하세요.</p>
         </div>
       </Modal>
 
       {/* 사유코드선택 팝업 — 설비 비가동 사유코드(사용중) 참조, 복수 선택 */}
-      <Modal isOpen={reasonPickerOpen} onClose={() => setReasonPickerOpen(false)} title="비가동 사유코드 선택 (복수)" size="lg">
+      <Modal isOpen={reasonPickerOpen} onClose={() => setReasonPickerOpen(false)} title="비가동 사유코드 선택 (복수)" size="2xl">
         <div className="space-y-3">
-          <table className="w-full text-sm border border-border">
-            <thead>
-              <tr className="bg-surface text-text-muted">
-                <th className="p-2 w-9 text-center">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 accent-primary"
-                    checked={activeReasons.length > 0 && pickerChecked.length === activeReasons.length}
-                    onChange={(e) => setPickerChecked(e.target.checked ? activeReasons.map((r) => r.reasonCode) : [])}
-                  />
-                </th>
-                <th className="p-2 text-left">사유코드</th>
-                <th className="p-2 text-left">사유명</th>
-                <th className="p-2 text-center">사유구분</th>
-                <th className="p-2 text-center">OEE 반영</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activeReasons.map((r) => (
-                <tr key={r.reasonCode} className="border-t border-border cursor-pointer hover:bg-surface" onClick={() => setPickerChecked((prev) => (prev.includes(r.reasonCode) ? prev.filter((c) => c !== r.reasonCode) : [...prev, r.reasonCode]))}>
-                  <td className="p-2 text-center">
-                    <input type="checkbox" className="w-4 h-4 accent-primary" checked={pickerChecked.includes(r.reasonCode)} readOnly />
-                  </td>
-                  <td className="p-2 font-mono">{r.reasonCode}</td>
-                  <td className="p-2">{r.reasonName}</td>
-                  <td className="p-2 text-center">{reasonTypeName(r.reasonType)}</td>
-                  <td className="p-2 text-center">{oeeReflectName(r.oeeReflect)}</td>
-                </tr>
-              ))}
-              {!activeReasons.length && <tr><td colSpan={5} className="p-4 text-center text-text-muted">사용중인 비가동 사유코드가 없습니다</td></tr>}
-            </tbody>
-          </table>
+          <DataGrid
+            data={activeReasons}
+            columns={pickerReasonColumns}
+            pageSize={1000}
+            maxHeight="55vh"
+            showFooter={false}
+            enableFullscreen={false}
+            getRowId={(r) => r.reasonCode}
+            onRowClick={(r) => togglePicker(r.reasonCode)}
+            emptyMessage="사용중인 비가동 사유코드가 없습니다"
+          />
           <div className="flex justify-end gap-2">
             <button onClick={() => setReasonPickerOpen(false)} className="px-3 py-2 rounded border border-border text-text-muted text-sm">취소</button>
             <button onClick={confirmReasonPicker} disabled={!pickerChecked.length} className="px-4 py-2 rounded bg-primary text-white text-sm disabled:opacity-40 disabled:cursor-not-allowed">선택완료 ({pickerChecked.length})</button>

@@ -8,12 +8,14 @@
  * 1. 타이틀 옆 [이력보기]로 이전 30일 이력을 팝업으로 연다 (우측은 작업실적이 차지한다).
  * 2. 상단에서 고른 작업자의 사번을 비가동 행의 WORKER로 함께 보낸다.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { History, PauseCircle, PlayCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, CardContent } from '@/components/ui';
+import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
 import type { OpsMachine } from '../../equip-ops-status/types';
+import { targetMachineColumns } from '../../equip-ops-status/components/downtime-columns';
 
 interface Code { code: string; name: string; }
 
@@ -56,6 +58,12 @@ export default function DowntimePanel({ targets, mode, workerCode, onHistoryClic
       if (next.has(code)) next.delete(code); else next.add(code);
       return next;
     });
+
+  // 원인설비 체크 상태가 바뀌면 체크박스 셀을 다시 그린다
+  const targetColumns = useMemo(
+    () => targetMachineColumns({ causeCodes, willEnd, onToggleCause: toggleCause }),
+    [causeCodes, willEnd],
+  );
 
   async function apply() {
     if (!actionTargets.length) return;
@@ -102,44 +110,19 @@ export default function DowntimePanel({ targets, mode, workerCode, onHistoryClic
         </div>
 
         {/* 대상 설비 목록 — 여기만 스크롤한다 (사유/전환 버튼은 항상 보인다) */}
-        <div className="border border-border rounded flex-1 min-h-0 overflow-y-auto">
-          <table className="w-full table-fixed text-xs">
-            <thead className="bg-surface text-text-muted sticky top-0 z-10">
-              <tr><th className="py-1.5 px-0.5 text-center font-medium w-8">원인</th><th className="py-1.5 px-0.5 text-center font-medium w-[76px]">설비코드</th><th className="py-1.5 px-1 text-center font-medium">설비명</th><th className="py-1.5 px-0 text-center font-medium w-12">유형</th><th className="py-1.5 pl-0 pr-0.5 text-center font-medium w-16">상태</th></tr>
-            </thead>
-            <tbody>
-              {targets.map((m) => {
-                const down = m.openDtSeq != null;
-                return (
-                  <tr key={m.machineCode} className="border-t border-border">
-                    <td className="py-1.5 px-0.5 text-center">
-                      <input type="checkbox" checked={causeCodes.has(m.machineCode)}
-                        onChange={() => toggleCause(m.machineCode)}
-                        disabled={willEnd || down}
-                        title={willEnd ? '종료 처리에는 원인설비를 지정하지 않습니다' : down ? '이미 비가동 중인 설비입니다' : '이 설비를 라인 정지의 원인으로 표시'}
-                        aria-label={`${m.machineCode} 원인설비`}
-                        className="w-3.5 h-3.5 cursor-pointer rounded border-border disabled:cursor-not-allowed disabled:opacity-40" />
-                    </td>
-                    <td className="py-1.5 px-0.5 text-center font-mono truncate">{m.machineCode}</td>
-                    <td className="py-1.5 px-1 text-center truncate">{m.machineName ?? '-'}</td>
-                    <td className="py-1.5 px-0 text-center truncate">{m.machineTypeName ?? m.machineType ?? '-'}</td>
-                    <td className="py-1.5 pl-0 pr-0.5 text-center">
-                      {down ? (
-                        <span className="px-1.5 py-0.5 rounded bg-red-500 text-white">비가동</span>
-                      ) : (
-                        <span className="px-1.5 py-0.5 rounded bg-emerald-500 text-white">가동</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-              {!targets.length && (
-                <tr><td colSpan={5} className="p-6 text-center text-text-muted">
-                  {mode === 'LINE' ? '라인을 선택하세요' : '설비를 선택하세요'}
-                </td></tr>
-              )}
-            </tbody>
-          </table>
+        <div className="flex-1 min-h-0">
+          <DataGrid
+            data={targets}
+            columns={targetColumns}
+            pageSize={1000}
+            showFooter={false}
+            enableColumnFilter={false}
+            enableFullscreen={false}
+            enableColumnReordering={false}
+            enableColumnPinning={false}
+            getRowId={(m) => m.machineCode}
+            emptyMessage={mode === 'LINE' ? '라인을 선택하세요' : '설비를 선택하세요'}
+          />
         </div>
 
         {/* 비가동 사유 — 사유가 많아 자리가 모자라면 여기가 줄어들고 스크롤한다 */}

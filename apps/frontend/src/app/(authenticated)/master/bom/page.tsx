@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Calendar, Download, FileSpreadsheet, GitBranch, Layers, RefreshCw, Search, X } from "lucide-react";
 import { Button, Card, CardContent, Input } from "@/components/ui";
 import { useComCodeOptions } from "@/hooks/useComCode";
@@ -69,6 +70,35 @@ export default function BomPage() {
   }, [parents, typeFilter]);
 
   const processes = useMemo(() => routingInfo?.processes ?? [], [routingInfo]);
+
+  /** 선택 품목 라우팅 공정 그리드 컬럼. 공정 API 는 workstageCode/workstageName 으로 내려준다 */
+  const processGridColumns = useMemo<ColumnDef<BomRoutingProcess, unknown>[]>(() => {
+    const workstage = (process: BomRoutingProcess) => process as BomRoutingProcess & { workstageCode: string; workstageName?: string };
+    return [
+      {
+        accessorKey: "seq",
+        header: t("master.routing.seq"),
+        size: 56,
+        meta: { align: "center" },
+        cell: ({ row }) => <span className="font-mono">{row.original.seq}</span>,
+      },
+      {
+        id: "workstageName",
+        accessorFn: (process) => workstage(process).workstageName ?? workstage(process).workstageCode,
+        header: t("master.routing.processName"),
+        size: 160,
+        cell: ({ getValue }) => <span className="font-medium">{getValue() as string}</span>,
+      },
+      {
+        id: "workstageCode",
+        accessorFn: (process) => workstage(process).workstageCode,
+        header: t("master.routing.processCode"),
+        size: 110,
+        meta: { align: "center" },
+        cell: ({ getValue }) => <span className="font-mono">{getValue() as string}</span>,
+      },
+    ];
+  }, [t]);
 
   const fetchParents = useCallback(async () => {
     setLoadingParents(true);
@@ -318,7 +348,7 @@ export default function BomPage() {
           </Card>
         </div>
 
-        {routingPanelOpen && <div className="col-span-4 grid grid-rows-[220px_minmax(0,1fr)] gap-4 min-h-0">
+        {routingPanelOpen && <div className="col-span-4 grid grid-cols-1 grid-rows-[220px_minmax(0,1fr)] gap-4 min-h-0">
           <Card padding="none" className="flex flex-col min-h-0">
             <CardContent className="flex flex-col min-h-0 p-3">
               <div className="flex items-center justify-between mb-2 shrink-0">
@@ -345,50 +375,27 @@ export default function BomPage() {
                   </button>
                 </div>
               </div>
-              {routingInfo && (
-                <div className="mb-2 rounded border border-border bg-surface/60 px-2 py-1.5 text-xs shrink-0">
-                  <div className="font-mono font-semibold text-primary truncate">{routingInfo.routingCode}</div>
-                  <div className="text-text-muted truncate">{routingInfo.routingName}</div>
-                </div>
-              )}
-              <div className="flex-1 overflow-y-auto border border-border rounded-lg min-h-0">
-                {loadingRouting ? (
-                  <div className="flex justify-center py-10">
-                    <RefreshCw className="w-6 h-6 text-primary animate-spin" />
-                  </div>
-                ) : processes.length === 0 ? (
-                  <div className="py-10 text-center text-sm text-text-muted">
-                    {selectedBomItem ? t("master.bom.noRoutingInfo", "등록된 라우팅 정보가 없습니다.") : t("master.bom.selectBomRowPromptDot", "BOM 행을 선택하세요.")}
-                  </div>
-                ) : (
-                  <table className="w-full text-xs">
-                    <thead className="sticky top-0 bg-surface">
-                      <tr className="border-b border-border text-text-muted">
-                        <th className="text-center py-2 w-14">{t("master.routing.seq")}</th>
-                        <th className="text-left py-2">{t("master.routing.processName")}</th>
-                        <th className="text-center py-2 w-28">{t("master.routing.processCode")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {processes.map((process) => {
-                        const isSelected = selectedProcess?.routingCode === process.routingCode && selectedProcess.seq === process.seq;
-                        return (
-                          <tr
-                            key={`${process.routingCode}-${process.seq}`}
-                            onClick={() => handleSelectProcess(process)}
-                            className={`border-b border-border/50 cursor-pointer transition-colors ${
-                              isSelected ? "bg-primary text-white" : "hover:bg-surface-hover text-text"
-                            }`}
-                          >
-                            <td className="py-2 text-center font-mono">{process.seq}</td>
-                            <td className="py-2 font-medium truncate">{(process as BomRoutingProcess & { workstageName?: string }).workstageName ?? (process as BomRoutingProcess & { workstageCode: string }).workstageCode}</td>
-                            <td className="py-2 text-center font-mono">{(process as BomRoutingProcess & { workstageCode: string }).workstageCode}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
+              <div className="flex-1 min-h-0">
+                {/* 라우팅 코드·명은 그리드 툴바 왼쪽에 둔다 (220px 카드에서 공정 행이 더 보이도록) */}
+                <DataGrid
+                  toolbarLeft={routingInfo && (
+                    <div className="min-w-0 truncate text-xs">
+                      <span className="font-mono font-semibold text-primary">{routingInfo.routingCode}</span>
+                      <span className="ml-2 text-text-muted">{routingInfo.routingName}</span>
+                    </div>
+                  )}
+                  data={processes}
+                  columns={processGridColumns}
+                  isLoading={loadingRouting}
+                  emptyMessage={selectedBomItem ? t("master.bom.noRoutingInfo", "등록된 라우팅 정보가 없습니다.") : t("master.bom.selectBomRowPromptDot", "BOM 행을 선택하세요.")}
+                  onRowClick={handleSelectProcess}
+                  getRowId={(process) => `${process.routingCode}-${process.seq}`}
+                  selectedRowId={selectedProcess ? `${selectedProcess.routingCode}-${selectedProcess.seq}` : undefined}
+                  pageSize={100}
+                  enableColumnFilter={false}
+                  enableFullscreen={false}
+                  showFooter={false}
+                />
               </div>
             </CardContent>
           </Card>

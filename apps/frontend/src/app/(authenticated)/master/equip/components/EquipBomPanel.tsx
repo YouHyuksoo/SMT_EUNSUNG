@@ -17,7 +17,9 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Edit2, Trash2, X, RefreshCw } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Button, Input, Select, Modal, ConfirmModal } from "@/components/ui";
+import DataGrid from "@/components/data-grid/DataGrid";
 import { EquipBomItem, BomItemType, BOM_ITEM_TYPE_COLORS } from "../types";
 import api from "@/services/api";
 import { QtyInput } from "@/components/shared";
@@ -98,7 +100,7 @@ export default function EquipBomPanel({ equipCode, equipName, onClose }: EquipBo
     setFormOpen(true);
   }, []);
 
-  const openItemEdit = (item: EquipBomItem) => {
+  const openItemEdit = useCallback((item: EquipBomItem) => {
     setEditingItem(item);
     setItemForm({
       itemCode: item.bomItemCode,
@@ -114,7 +116,7 @@ export default function EquipBomPanel({ equipCode, equipName, onClose }: EquipBo
       useYn: item.useYn,
     });
     setFormOpen(true);
-  };
+  }, []);
 
   const handleSaveItem = async () => {
     try {
@@ -166,6 +168,80 @@ export default function EquipBomPanel({ equipCode, equipName, onClose }: EquipBo
     }
   };
 
+  // ===== 그리드 컬럼 =====
+  const bomColumns = useMemo<ColumnDef<EquipBomItem, unknown>[]>(() => [
+    {
+      id: "actions",
+      header: t("common.actions", "작업"),
+      size: 64,
+      enableSorting: false,
+      meta: { align: "center", filterType: "none" },
+      cell: ({ row }) => (
+        <div className="flex gap-1 justify-center">
+          <button onClick={(e) => { e.stopPropagation(); openItemEdit(row.original); }} className="p-1 hover:bg-surface rounded">
+            <Edit2 className="w-3.5 h-3.5 text-primary" />
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); setDeleteItemTarget(row.original); }} className="p-1 hover:bg-surface rounded">
+            <Trash2 className="w-3.5 h-3.5 text-red-500" />
+          </button>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "bomItemCode",
+      header: t("master.equip.itemCode", "품목코드"),
+      size: 110,
+      meta: { filterType: "text" },
+      cell: ({ row }) => <span className="font-mono">{row.original.bomItemCode}</span>,
+    },
+    {
+      accessorKey: "bomItemName",
+      header: t("master.equip.itemName", "품목명"),
+      size: 160,
+      meta: { filterType: "text" },
+      // 제조사/규격이 있으면 품목명 아래 작게 표시
+      cell: ({ row }) => {
+        const item = row.original;
+        return (
+          <div className="leading-tight">
+            <div>{item.bomItemName}</div>
+            {(item.spec || item.maker) && (
+              <div className="text-[10px] text-text-muted">{[item.maker, item.spec].filter(Boolean).join(" / ")}</div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: "itemType",
+      accessorFn: (item) => bomItemTypeLabels[item.itemType],
+      header: t("master.equip.itemType", "유형"),
+      size: 70,
+      meta: { filterType: "multi" },
+      cell: ({ row }) => (
+        <span className={`px-2 py-0.5 text-[10px] rounded-full ${BOM_ITEM_TYPE_COLORS[row.original.itemType]}`}>
+          {bomItemTypeLabels[row.original.itemType]}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "stockQty",
+      header: t("master.equip.stockQty", "재고"),
+      size: 80,
+      meta: { align: "right", filterType: "number" },
+      // 안전재고 이하이면 빨간 굵은 글씨
+      cell: ({ row }) => {
+        const item = row.original;
+        const isLow = item.stockQty <= item.safetyStock;
+        return (
+          <span className={`font-mono ${isLow ? "text-red-500 font-bold" : ""}`}>
+            {(item.stockQty ?? 0).toLocaleString()} {item.unit}
+          </span>
+        );
+      },
+    },
+  ], [t, bomItemTypeLabels, openItemEdit]);
+
   // ===== 렌더 =====
   return (
     <div className="w-[480px] ml-4 border-l border-border bg-background flex flex-col h-full overflow-hidden shadow-2xl text-xs animate-slide-in-right">
@@ -189,63 +265,17 @@ export default function EquipBomPanel({ equipCode, equipName, onClose }: EquipBo
       </div>
 
       {/* 목록 */}
-      <div className="flex-1 overflow-y-auto">
-        <table className="w-full text-xs">
-          <thead className="sticky top-0 bg-surface z-10">
-            <tr className="text-text-muted border-b border-border">
-              <th className="px-2 py-2 text-center w-16">{t("common.actions", "작업")}</th>
-              <th className="px-2 py-2 text-left">{t("master.equip.itemCode", "품목코드")}</th>
-              <th className="px-2 py-2 text-left">{t("master.equip.itemName", "품목명")}</th>
-              <th className="px-2 py-2 text-left">{t("master.equip.itemType", "유형")}</th>
-              <th className="px-2 py-2 text-right">{t("master.equip.stockQty", "재고")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bomItems.length === 0 && !loading && (
-              <tr>
-                <td colSpan={5} className="px-2 py-8 text-center text-text-muted">
-                  {t("master.equip.noBomItems", "등록된 BOM 품목이 없습니다.")}
-                </td>
-              </tr>
-            )}
-            {bomItems.map((item) => {
-              const isLow = item.stockQty <= item.safetyStock;
-              return (
-                <tr key={item.bomItemCode} className="border-b border-border hover:bg-surface/60">
-                  <td className="px-2 py-1.5">
-                    <div className="flex gap-1 justify-center">
-                      <button onClick={() => openItemEdit(item)} className="p-1 hover:bg-surface rounded">
-                        <Edit2 className="w-3.5 h-3.5 text-primary" />
-                      </button>
-                      <button onClick={() => setDeleteItemTarget(item)} className="p-1 hover:bg-surface rounded">
-                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                      </button>
-                    </div>
-                  </td>
-                  <td className="px-2 py-1.5 font-mono">{item.bomItemCode}</td>
-                  <td className="px-2 py-1.5">
-                    <div className="leading-tight">
-                      <div>{item.bomItemName}</div>
-                      {(item.spec || item.maker) && (
-                        <div className="text-[10px] text-text-muted">{[item.maker, item.spec].filter(Boolean).join(" / ")}</div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <span className={`px-2 py-0.5 text-[10px] rounded-full ${BOM_ITEM_TYPE_COLORS[item.itemType]}`}>
-                      {bomItemTypeLabels[item.itemType]}
-                    </span>
-                  </td>
-                  <td className="px-2 py-1.5 text-right">
-                    <span className={`font-mono ${isLow ? "text-red-500 font-bold" : ""}`}>
-                      {(item.stockQty ?? 0).toLocaleString()} {item.unit}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="flex-1 min-h-0 p-3">
+        <DataGrid
+          data={bomItems}
+          columns={bomColumns}
+          isLoading={loading}
+          emptyMessage={t("master.equip.noBomItems", "등록된 BOM 품목이 없습니다.")}
+          getRowId={(item) => item.bomItemCode}
+          pageSize={100}
+          enableExport
+          exportFileName={t("master.equip.bomPanelTitle", "{{name}} BOM", { name: equipName })}
+        />
       </div>
 
       {/* 등록/수정 폼 모달 */}

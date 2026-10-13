@@ -29,6 +29,8 @@ export interface ExportOptions<T> {
   columns: ColumnDef<T, unknown>[];
   fileName?: string;
   excludeColumns?: string[];
+  /** 표 아래 합계 행 (컬럼 key → 값). 그리드의 footer 를 그대로 내보낸다 */
+  footerRow?: Record<string, unknown>;
 }
 
 /** 타임스탬프 생성 (YYYYMMDD) */
@@ -242,6 +244,7 @@ export function useExport() {
         columns,
         fileName = "export",
         excludeColumns = ["actions", "select"],
+        footerRow,
       }: ExportOptions<T>,
       format: ExportFormat
     ) => {
@@ -250,6 +253,7 @@ export function useExport() {
       const cols = extractColumns(columns, excludeColumns);
       const headers = cols.map((c) => c.header);
       const rows = toRows(data, cols);
+      if (footerRow) rows.push(toRows([footerRow], cols)[0]);
 
       switch (format) {
         case "xlsx":

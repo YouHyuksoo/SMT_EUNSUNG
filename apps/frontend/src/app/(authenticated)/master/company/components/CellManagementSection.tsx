@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Layers3, Pencil, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Button, ConfirmModal, Input, Modal } from "@/components/ui";
+import DataGrid from "@/components/data-grid/DataGrid";
 import UseYnSelect from "@/components/shared/UseYnSelect";
 import api from "@/services/api";
 import { getPlantKey, getPlantPath, Plant } from "../types";
@@ -86,13 +88,80 @@ export default function CellManagementSection({ onDirtyChange }: Props) {
   const nameValid = !!draft?.plantName.trim();
   const canSave = !!editingCell && !!draft && nameValid && sortOrderValid && !saving;
 
-  const openEditor = (cell: Plant) => {
+  const openEditor = useCallback((cell: Plant) => {
     const nextDraft = toCellDraft(cell);
     setEditingCell(cell);
     setDraft(nextDraft);
     initialDraftRef.current = nextDraft;
     setAttempted(false);
-  };
+  }, []);
+
+  /** CELL 목록 그리드 컬럼. CELL 코드 아래에 공장동 > 라인을 작게 표시한다 */
+  const cellColumns = useMemo<ColumnDef<Plant, unknown>[]>(() => [
+    {
+      id: "actions",
+      header: t("common.actions"),
+      size: 50,
+      enableSorting: false,
+      meta: { align: "center", filterType: "none" },
+      cell: ({ row }) => (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); openEditor(row.original); }}
+          className="inline-flex items-center justify-center rounded p-1 text-primary hover:bg-primary/10"
+          aria-label={`${t("master.company.cellEdit", "수정")}: ${row.original.cellCode || "-"}`}
+          title={t("master.company.cellEdit", "수정")}
+        >
+          <Pencil className="w-3.5 h-3.5" />
+        </button>
+      ),
+    },
+    {
+      accessorKey: "cellCode",
+      header: t("master.company.cellCode", "CELL 코드"),
+      size: 100,
+      meta: { filterType: "text" },
+      cell: ({ row }) => {
+        const cell = row.original;
+        return (
+          <div className="font-mono font-medium text-text">
+            <div>{cell.cellCode || "-"}</div>
+            <div className="text-[10px] font-sans font-normal text-text-muted">
+              {cell.shopCode || "-"} &gt; {cell.lineCode || "-"}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "plantName",
+      header: t("master.company.cellName", "CELL 명칭"),
+      size: 160,
+      meta: { filterType: "text" },
+      cell: ({ row }) => <span title={row.original.plantName}>{row.original.plantName}</span>,
+    },
+    {
+      accessorKey: "useYn",
+      header: t("master.company.cellUseYn", "사용"),
+      size: 70,
+      meta: { align: "center", filterType: "multi" },
+      cell: ({ row }) => {
+        const used = row.original.useYn === "Y";
+        return (
+          <span className={`inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium ${used ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"}`}>
+            {used ? t("common.useY", "사용") : t("common.useN", "미사용")}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: "sortOrder",
+      header: t("master.company.cellSortOrder", "순서"),
+      size: 60,
+      meta: { align: "right", filterType: "number" },
+      cell: ({ row }) => <span className="tabular-nums">{row.original.sortOrder}</span>,
+    },
+  ], [t, openEditor]);
 
   const closeEditor = useCallback(() => {
     if (saving) return;
@@ -165,73 +234,24 @@ export default function CellManagementSection({ onDirtyChange }: Props) {
         </button>
       </div>
 
-      {loading ? (
-        <div className="rounded-lg border border-dashed border-border bg-surface py-4 text-center text-text-muted" role="status">
-          {t("master.company.cellLoading", "CELL 목록을 불러오는 중...")}
-        </div>
-      ) : loadError ? (
+      {!loading && loadError ? (
         <div className="rounded-lg border border-red-200 dark:border-red-900/40 bg-red-50/60 dark:bg-red-900/10 px-3 py-3 text-center" role="alert">
           <p className="text-red-600 dark:text-red-300">{t("master.company.cellLoadError", "CELL 목록을 불러오지 못했습니다.")}</p>
           <Button size="sm" variant="secondary" onClick={() => void fetchCells()} className="mt-2">
             {t("master.company.cellRetry", "다시 시도")}
           </Button>
         </div>
-      ) : cells.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border bg-surface py-4 text-center text-text-muted">
-          {t("master.company.cellEmpty", "등록된 CELL이 없습니다.")}
-        </div>
       ) : (
-        <div className="border border-border rounded-lg overflow-hidden">
-          <table className="w-full table-fixed text-xs">
-            <thead className="bg-surface">
-              <tr>
-                <th className="w-[23%] text-left px-2 py-1.5 text-text-muted font-medium">
-                  {t("master.company.cellCode", "CELL 코드")}
-                </th>
-                <th className="text-left px-2 py-1.5 text-text-muted font-medium">
-                  {t("master.company.cellName", "CELL 명칭")}
-                </th>
-                <th className="w-[18%] text-center px-1 py-1.5 text-text-muted font-medium">
-                  {t("master.company.cellUseYn", "사용")}
-                </th>
-                <th className="w-[14%] text-right px-1 py-1.5 text-text-muted font-medium">
-                  {t("master.company.cellSortOrder", "순서")}
-                </th>
-                <th className="w-10 px-1 py-1.5" aria-label={t("master.company.cellEdit", "수정")} />
-              </tr>
-            </thead>
-            <tbody>
-              {cells.map((cell) => (
-                <tr key={getPlantKey(cell)} className="border-t border-border hover:bg-surface/50">
-                  <td className="px-2 py-1.5 font-mono font-medium text-text">
-                    <div>{cell.cellCode || "-"}</div>
-                    <div className="text-[10px] font-sans font-normal text-text-muted">
-                      {cell.shopCode || "-"} &gt; {cell.lineCode || "-"}
-                    </div>
-                  </td>
-                  <td className="px-2 py-1.5 text-text truncate" title={cell.plantName}>{cell.plantName}</td>
-                  <td className="px-1 py-1.5 text-center">
-                    <span className={`inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium ${cell.useYn === "Y" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"}`}>
-                      {cell.useYn === "Y" ? t("common.useY", "사용") : t("common.useN", "미사용")}
-                    </span>
-                  </td>
-                  <td className="px-1 py-1.5 text-right tabular-nums text-text">{cell.sortOrder}</td>
-                  <td className="px-1 py-1.5 text-center">
-                    <button
-                      type="button"
-                      onClick={() => openEditor(cell)}
-                      className="inline-flex items-center justify-center rounded p-1 text-primary hover:bg-primary/10"
-                      aria-label={`${t("master.company.cellEdit", "수정")}: ${cell.cellCode || "-"}`}
-                      title={t("master.company.cellEdit", "수정")}
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataGrid
+          data={cells}
+          columns={cellColumns}
+          isLoading={loading}
+          emptyMessage={t("master.company.cellEmpty", "등록된 CELL이 없습니다.")}
+          getRowId={getPlantKey}
+          maxHeight="320px"
+          enableExport
+          exportFileName={t("master.company.cellSection", "2F > PROD2 > CELL 관리")}
+        />
       )}
 
       <Modal

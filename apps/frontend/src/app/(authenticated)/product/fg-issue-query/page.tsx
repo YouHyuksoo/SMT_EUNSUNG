@@ -30,7 +30,7 @@ import {
   TruncationNotice,
   useTruncation,
 } from '../../report/components/TruncationNotice';
-import { CrosstabGrid, type CrosstabSpec } from '../../report/components/CrosstabGrid';
+import { useCrosstab, type CrosstabSpec } from '../../report/components/crosstab';
 import {
   fgIssueColumns,
   fgIssueCustomerSummaryColumns,
@@ -120,16 +120,17 @@ export default function FgIssueQueryPage() {
   const crosstabSpec = useMemo<CrosstabSpec<FgIssueCrosstabRow>>(() => ({
     rowKey: (r) => [r.modelName, r.modelSuffix, r.customerCode, r.locationCode].join('|'),
     rowLabels: [
-      { header: '모델', value: (r) => r.modelName ?? '', width: 140 },
-      { header: '모델 SFX', value: (r) => r.modelSuffix ?? '' },
-      { header: '고객', value: (r) => r.customerCode ?? '' },
-      { header: '위치', value: (r) => r.locationCode ?? '' },
+      { id: 'modelName', header: '모델', value: (r) => r.modelName ?? '', width: 220 },
+      { id: 'modelSuffix', header: '모델 SFX', value: (r) => r.modelSuffix ?? '', width: 90 },
+      { id: 'customerCode', header: '고객', value: (r) => r.customerCode ?? '', width: 90 },
+      { id: 'locationCode', header: '위치', value: (r) => r.locationCode ?? '', width: 90 },
     ],
     colKey: (r) => r.issueDate,
     // 'YYYY-MM-DD' 에서 월/일만 보여준다 — 열이 30개면 연도가 자리만 차지한다.
     colHeader: (k) => k.slice(5),
     value: (r) => Number(r.qty ?? 0),
   }), []);
+  const crosstabGrid = useCrosstab(crosstab, crosstabSpec);
 
   const headline = (() => {
     if (!searched) return '조회하세요';
@@ -210,11 +211,17 @@ export default function FgIssueQueryPage() {
               emptyMessage={searched ? '이 기간에 출하 내역이 없습니다.' : '조회하세요.'}
             />
           ) : tab === 'crosstab' ? (
-            <CrosstabGrid
-              rows={crosstab}
-              spec={crosstabSpec}
+            <DataGrid
+              key={crosstabGrid.gridKey}
+              data={crosstabGrid.data}
+              columns={crosstabGrid.columns}
               isLoading={loading}
+              pageSize={100}
+              enableColumnFilter
+              enableExport
               exportFileName="제품출하_일자별모델"
+              enableColumnPinning
+              defaultPinnedColumns={crosstabGrid.pinned}
               emptyMessage={searched ? '이 기간에 출하가 없습니다.' : '조회하세요.'}
             />
           ) : isSummaryTab(tab) && (

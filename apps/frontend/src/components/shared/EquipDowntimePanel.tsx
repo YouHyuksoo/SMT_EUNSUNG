@@ -15,10 +15,12 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
 import { useActiveInterval } from '@/hooks/useTabActive';
 import { Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Input, Modal } from '@/components/ui';
+import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
 
 export interface DowntimeMachine {
@@ -33,6 +35,42 @@ interface DowntimeRow {
   startTime: string | null; startAt: string | null; endTime: string | null;
   memo: string | null; worker: string | null;
 }
+
+// 이력 표 공용 컬럼 — 사유 · 시작 · 종료 · 상태
+const reasonColumn: ColumnDef<DowntimeRow> = { id: 'reason', header: '사유', accessorFn: (d) => d.reasonName ?? d.reasonCode ?? '-' };
+const timeColumns: ColumnDef<DowntimeRow>[] = [
+  { accessorKey: 'startTime', header: '시작', cell: ({ row }) => <span className="font-mono">{row.original.startTime ?? '-'}</span> },
+  {
+    // 종료가 없으면 진행중 — 필터·내보내기에도 같은 글자가 나가도록 값으로 만든다
+    id: 'endTime',
+    header: '종료',
+    accessorFn: (d) => d.endTime ?? '진행중',
+    cell: ({ row }) => <span className="font-mono">{row.original.endTime ?? <span className="text-red-500 font-sans">진행중</span>}</span>,
+  },
+  {
+    id: 'status',
+    header: '상태',
+    accessorFn: (d) => (d.endTime ? '완료' : '진행중'),
+    meta: { align: 'center', filterType: 'select' },
+    cell: ({ row }) => (row.original.endTime
+      ? <span className="px-2 py-0.5 rounded bg-blue-500 text-white text-xs">완료</span>
+      : <span className="px-2 py-0.5 rounded bg-amber-500 text-white text-xs">진행중</span>),
+  },
+];
+/** 최신 1건 */
+const latestColumns: ColumnDef<DowntimeRow>[] = [reasonColumn, ...timeColumns];
+/** 전체 이력 팝업 — 순번 · 작업지시가 더 붙는다 */
+const historyColumns: ColumnDef<DowntimeRow>[] = [
+  { accessorKey: 'dtSeq', header: '순번', meta: { align: 'center' }, cell: ({ row }) => <span className="font-mono">{row.original.dtSeq}</span> },
+  {
+    id: 'runNo',
+    header: '작업지시',
+    accessorFn: (d) => d.runNo ?? '없음',
+    cell: ({ row }) => <span className="font-mono">{row.original.runNo ?? <span className="text-text-muted font-sans">없음</span>}</span>,
+  },
+  reasonColumn,
+  ...timeColumns,
+];
 
 /** 'YYYY-MM-DD HH:MM:SS' 를 로컬 시각으로 파싱 (브라우저별 문자열 파싱 차이 회피) */
 export function parseLocalTime(s: string): number | null {
@@ -173,18 +211,9 @@ export default function EquipDowntimePanel({ machine, selectableMachines = [], r
     }
   }
 
-  const row = (d: DowntimeRow) => (
-    <tr key={d.dtSeq} className="border-t border-border">
-      <td className="p-1.5">{d.reasonName ?? d.reasonCode ?? '-'}</td>
-      <td className="p-1.5 font-mono">{d.startTime ?? '-'}</td>
-      <td className="p-1.5 font-mono">{d.endTime ?? <span className="text-red-500">진행중</span>}</td>
-      <td className="p-1.5 text-center">
-        {d.endTime
-          ? <span className="px-2 py-0.5 rounded bg-blue-500 text-white text-xs">완료</span>
-          : <span className="px-2 py-0.5 rounded bg-amber-500 text-white text-xs">진행중</span>}
-      </td>
-    </tr>
-  );
+  // 최신 1건 표 / 전체 이력 팝업 (팝업은 최신이 위로 오게 뒤집는다)
+  const latestRows = useMemo(() => (latest ? [latest] : []), [latest]);
+  const historyRows = useMemo(() => [...downtimes].reverse(), [downtimes]);
 
   return (
     <div className="space-y-4">
@@ -212,14 +241,19 @@ export default function EquipDowntimePanel({ machine, selectableMachines = [], r
             이력보기{downtimes.length > 1 ? ` (${downtimes.length})` : ''}
           </button>
         </div>
-        <table className="w-full text-xs border border-border mt-1">
-          <thead><tr className="bg-surface text-text-muted"><th className="p-1.5">사유</th><th className="p-1.5">시작</th><th className="p-1.5">종료</th><th className="p-1.5 text-center">상태</th></tr></thead>
-          <tbody>
-            {latest
-              ? row(latest)
-              : <tr><td colSpan={4} className="p-3 text-center text-text-muted">{machineCode ? '비가동 이력이 없습니다' : '설비를 먼저 선택하세요'}</td></tr>}
-          </tbody>
-        </table>
+        <div className="mt-1">
+          <DataGrid
+            data={latestRows}
+            columns={latestColumns}
+            showFooter={false}
+            enableColumnFilter={false}
+            enableFullscreen={false}
+            enableColumnReordering={false}
+            enableColumnPinning={false}
+            getRowId={(d) => String(d.dtSeq)}
+            emptyMessage={machineCode ? '비가동 이력이 없습니다' : '설비를 먼저 선택하세요'}
+          />
+        </div>
       </div>
 
       {/* 비가동 시작/종료 버튼 */}
@@ -290,27 +324,18 @@ export default function EquipDowntimePanel({ machine, selectableMachines = [], r
       )}
 
       {/* 비가동 이력 상세 (전체 이력) */}
-      <Modal isOpen={historyOpen} onClose={() => setHistoryOpen(false)} title="비가동 이력 상세" size="lg">
-        <table className="w-full text-xs border border-border">
-          <thead><tr className="bg-surface text-text-muted"><th className="p-1.5 text-center">순번</th><th className="p-1.5">작업지시</th><th className="p-1.5">사유</th><th className="p-1.5">시작</th><th className="p-1.5">종료</th><th className="p-1.5 text-center">상태</th></tr></thead>
-          <tbody>
-            {[...downtimes].reverse().map((d) => (
-              <tr key={d.dtSeq} className="border-t border-border">
-                <td className="p-1.5 text-center font-mono">{d.dtSeq}</td>
-                <td className="p-1.5 font-mono">{d.runNo ?? <span className="text-text-muted font-sans">없음</span>}</td>
-                <td className="p-1.5">{d.reasonName ?? d.reasonCode ?? '-'}</td>
-                <td className="p-1.5 font-mono">{d.startTime ?? '-'}</td>
-                <td className="p-1.5 font-mono">{d.endTime ?? <span className="text-red-500">진행중</span>}</td>
-                <td className="p-1.5 text-center">
-                  {d.endTime
-                    ? <span className="px-2 py-0.5 rounded bg-blue-500 text-white text-xs">완료</span>
-                    : <span className="px-2 py-0.5 rounded bg-amber-500 text-white text-xs">진행중</span>}
-                </td>
-              </tr>
-            ))}
-            {!downtimes.length && <tr><td colSpan={6} className="p-3 text-center text-text-muted">비가동 이력이 없습니다</td></tr>}
-          </tbody>
-        </table>
+      <Modal isOpen={historyOpen} onClose={() => setHistoryOpen(false)} title="비가동 이력 상세" size="2xl">
+        <DataGrid
+          data={historyRows}
+          columns={historyColumns}
+          pageSize={100}
+          maxHeight="60vh"
+          enableFullscreen={false}
+          enableExport
+          exportFileName={`비가동이력_${machineCode}`}
+          getRowId={(d) => String(d.dtSeq)}
+          emptyMessage="비가동 이력이 없습니다"
+        />
       </Modal>
     </div>
   );

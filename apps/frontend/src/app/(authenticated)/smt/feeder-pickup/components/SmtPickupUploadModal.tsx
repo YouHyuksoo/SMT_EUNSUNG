@@ -18,7 +18,9 @@ import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import { Upload } from 'lucide-react';
+import type { ColumnDef } from '@tanstack/react-table';
 import { Button, Input, Modal } from '@/components/ui';
+import DataGrid from '@/components/data-grid/DataGrid';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import api from '@/services/api';
 import { SmtModelSelect } from '../../components/SmtSelects';
@@ -39,6 +41,20 @@ interface Props {
   onClose: () => void;
   onDone: () => void;
 }
+
+/** 미리보기 그리드 컬럼 — 에러율은 흡착에러 / 이송 (이송 0 이면 0%) */
+const previewColumns: ColumnDef<ParsedRow>[] = [
+  { accessorKey: 'feederId', header: '피더 ID', size: 140,
+    cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
+  { accessorKey: 'feederType', header: '유형', size: 100 },
+  { accessorKey: 'transferCount', header: '이송', size: 90, meta: { align: 'right' },
+    cell: ({ getValue }) => <span className="font-mono">{Number(getValue()).toLocaleString()}</span> },
+  { accessorKey: 'adsorptionErrorCount', header: '흡착에러', size: 90, meta: { align: 'right' },
+    cell: ({ getValue }) => <span className="font-mono">{Number(getValue()).toLocaleString()}</span> },
+  { id: 'errorRate', header: '에러율', size: 80, meta: { align: 'right' },
+    accessorFn: (row) => (row.transferCount === 0 ? 0 : (row.adsorptionErrorCount / row.transferCount) * 100),
+    cell: ({ getValue }) => <span className="font-mono">{`${Number(getValue()).toFixed(1)}%`}</span> },
+];
 
 const toNumber = (value: unknown) => {
   const n = Number(String(value ?? '').replace(/,/g, '').trim());
@@ -113,7 +129,7 @@ export default function SmtPickupUploadModal({ defaultLineCode, onClose, onDone 
   };
 
   return (
-    <Modal isOpen onClose={onClose} title="마운터 픽업 엑셀 업로드">
+    <Modal isOpen onClose={onClose} title="마운터 픽업 엑셀 업로드" size="xl">
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
@@ -160,34 +176,10 @@ export default function SmtPickupUploadModal({ defaultLineCode, onClose, onDone 
             <div className="text-text">
               읽은 줄 {parsed.length.toLocaleString()}건 · 같은 생산일·라인의 기존 적재는 대체됩니다
             </div>
-            <table className="mt-2 w-full text-left text-xs">
-              <thead className="text-text-muted">
-                <tr>
-                  <th className="py-1">피더 ID</th>
-                  <th className="py-1">유형</th>
-                  <th className="py-1 text-right">이송</th>
-                  <th className="py-1 text-right">흡착에러</th>
-                  <th className="py-1 text-right">에러율</th>
-                </tr>
-              </thead>
-              <tbody className="font-mono text-text">
-                {parsed.slice(0, 5).map((row) => (
-                  <tr key={row.feederId}>
-                    <td className="py-0.5">{row.feederId}</td>
-                    <td className="py-0.5">{row.feederType ?? ''}</td>
-                    <td className="py-0.5 text-right">{row.transferCount.toLocaleString()}</td>
-                    <td className="py-0.5 text-right">
-                      {row.adsorptionErrorCount.toLocaleString()}
-                    </td>
-                    <td className="py-0.5 text-right">
-                      {row.transferCount === 0
-                        ? '0.0%'
-                        : `${((row.adsorptionErrorCount / row.transferCount) * 100).toFixed(1)}%`}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="mt-2">
+              <DataGrid data={parsed.slice(0, 5)} columns={previewColumns} enableColumnFilter={false}
+                enableColumnReordering={false} enableFullscreen={false} showFooter={false} />
+            </div>
             {parsed.length > 5 && (
               <div className="mt-1 text-text-muted">… 앞 5줄만 보여줍니다</div>
             )}

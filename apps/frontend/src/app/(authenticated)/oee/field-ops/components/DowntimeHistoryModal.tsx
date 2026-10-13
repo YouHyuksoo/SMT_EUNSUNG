@@ -5,7 +5,9 @@
  * @description 비가동 이력(이전 30일) 팝업 — 설비 운영 현황의 우측 목록을 그대로 옮겨 담는다.
  */
 import { Modal } from '@/components/ui';
+import DataGrid from '@/components/data-grid/DataGrid';
 import type { RecentRow } from '../../equip-ops-status/types';
+import { recentColumns } from '../../equip-ops-status/components/downtime-columns';
 
 interface Props {
   isOpen: boolean;
@@ -24,31 +26,17 @@ export default function DowntimeHistoryModal({ isOpen, onClose, scopeLabel, rece
           <span className="font-semibold text-text"> {recent.totalMinutes.toLocaleString()}</span>분
         </span>
       </div>
-      <div className="max-h-[60vh] overflow-auto border border-border rounded">
-        <table className="w-full text-xs">
-          <thead className="sticky top-0 bg-surface text-text-muted">
-            <tr><th className="p-1.5 text-center font-medium">설비</th><th className="p-1.5 text-center font-medium">시작</th><th className="p-1.5 text-center font-medium">종료</th><th className="p-1.5 text-center font-medium">소요</th></tr>
-          </thead>
-          <tbody>
-            {recent.list.map((d) => (
-              <tr key={d.dtSeq} className="border-t border-border">
-                <td className="p-1.5 text-center font-mono">
-                  {d.machineCode}
-                  {d.causeYn === 'Y' && (
-                    <span className="ml-1 px-1 py-0.5 rounded bg-amber-500/15 text-amber-600 text-[10px] font-sans" title="라인 정지의 원인설비">원인</span>
-                  )}
-                </td>
-                <td className="p-1.5 text-center font-mono">{d.startTime ?? '-'}</td>
-                <td className="p-1.5 text-center font-mono">{d.endTime ?? <span className="text-red-500">진행중</span>}</td>
-                <td className="p-1.5 text-center font-mono tabular-nums">{d.durationMin.toLocaleString()}분</td>
-              </tr>
-            ))}
-            {!recent.list.length && (
-              <tr><td colSpan={4} className="p-6 text-center text-text-muted">이전 30일 비가동 이력이 없습니다</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataGrid
+        data={recent.list}
+        columns={recentColumns}
+        pageSize={100}
+        maxHeight="60vh"
+        enableFullscreen={false}
+        enableExport
+        exportFileName="비가동이력_30일"
+        getRowId={(d) => String(d.dtSeq)}
+        emptyMessage="이전 30일 비가동 이력이 없습니다"
+      />
     </Modal>
   );
 }

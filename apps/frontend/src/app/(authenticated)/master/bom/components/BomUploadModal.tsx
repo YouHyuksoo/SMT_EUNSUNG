@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import { Button } from "@/components/ui";
+import DataGrid from "@/components/data-grid/DataGrid";
 import api from "@/services/api";
 
 interface UploadResult {
@@ -122,6 +124,94 @@ export default function BomUploadModal({ isOpen, onClose, onComplete }: BomUploa
     }
   };
 
+  /** 미리보기 행 그리드 컬럼. 상태는 좁은 모달에서도 보이도록 행 번호 바로 뒤에 두고, 화면 라벨로 정렬·필터한다 */
+  const previewColumns = useMemo<ColumnDef<PreviewRow, unknown>[]>(() => [
+    {
+      accessorKey: "row",
+      header: t("master.bom.colRow", "행"),
+      size: 56,
+      meta: { align: "center", filterType: "number" },
+      cell: ({ row }) => <span className="font-mono text-text-muted">{row.original.row}</span>,
+    },
+    {
+      id: "status",
+      accessorFn: (r) => t(STATUS_STYLES[r.status].labelKey, STATUS_STYLES[r.status].labelFallback),
+      header: t("common.status", "상태"),
+      size: 90,
+      meta: { align: "center", filterType: "multi" },
+      cell: ({ row }) => {
+        const s = STATUS_STYLES[row.original.status];
+        return (
+          <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium ${s.bg}`} title={row.original.message}>
+            {s.icon}{t(s.labelKey, s.labelFallback)}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: "parentItemCode",
+      header: t("master.bom.colParentItem", "상위품목"),
+      size: 130,
+      meta: { filterType: "text" },
+      cell: ({ row }) => <span className="font-mono">{row.original.parentItemCode}</span>,
+    },
+    {
+      accessorKey: "childItemCode",
+      header: t("master.bom.colChildItem", "하위품목"),
+      size: 130,
+      meta: { filterType: "text" },
+      cell: ({ row }) => <span className="font-mono">{row.original.childItemCode}</span>,
+    },
+    {
+      accessorKey: "ownerItemCode",
+      header: t("master.bom.colOwnerItem", "소속 BOM"),
+      size: 130,
+      meta: { filterType: "text" },
+      cell: ({ row }) => (
+        <span className="font-mono text-text-muted" title={t("master.bom.colOwnerItemHint", "이 행이 등록될 BOM의 최상위 제품")}>
+          {row.original.ownerItemCode ?? "-"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "validFrom",
+      header: t("master.bom.colValidFrom", "적용일자"),
+      size: 96,
+      meta: { align: "center", filterType: "text" },
+      cell: ({ row }) => <span className="text-text-muted">{row.original.validFrom ?? "-"}</span>,
+    },
+    {
+      accessorKey: "validTo",
+      header: t("master.bom.colValidTo", "완료일자"),
+      size: 96,
+      meta: { align: "center", filterType: "text" },
+      cell: ({ row }) => <span className="text-text-muted">{row.original.validTo ?? "-"}</span>,
+    },
+    {
+      accessorKey: "qtyPer",
+      header: t("common.quantity", "수량"),
+      size: 64,
+      meta: { align: "center", filterType: "number" },
+      cell: ({ row }) => row.original.qtyPer ?? "-",
+    },
+  ], [t]);
+
+  /** 업로드 결과 에러 그리드 컬럼 */
+  const errorColumns = useMemo<ColumnDef<UploadResult["errors"][number], unknown>[]>(() => [
+    {
+      accessorKey: "row",
+      header: t("master.bom.colRow", "행"),
+      size: 70,
+      cell: ({ row }) => <span className="font-mono">{row.original.row}</span>,
+    },
+    {
+      accessorKey: "message",
+      header: t("master.bom.colMessage", "메시지"),
+      size: 420,
+      cell: ({ row }) => <span className="text-red-600 dark:text-red-400">{row.original.message}</span>,
+    },
+  ], [t]);
+
   const hasDuplicates = (preview?.duplicateCount ?? 0) > 0;
   const canUpload = stage === "previewed" && !hasDuplicates && (preview?.errorCount ?? 0) < (preview?.rows.length ?? 0);
 
@@ -130,7 +220,7 @@ export default function BomUploadModal({ isOpen, onClose, onComplete }: BomUploa
       isOpen={isOpen}
       onClose={handleClose}
       title={t("master.bom.excelUploadTitle", "BOM 엑셀 업로드")}
-      size="xl"
+      size="2xl"
       footer={
         <>
           {stage === "previewed" && !hasDuplicates && (
@@ -190,45 +280,14 @@ export default function BomUploadModal({ isOpen, onClose, onComplete }: BomUploa
           )}
 
           {/* 행 목록 */}
-          <div className="border border-border rounded-lg overflow-hidden">
-            <div className="max-h-64 overflow-y-auto min-h-0">
-              <table className="w-full text-xs">
-                <thead className="sticky top-0 bg-surface dark:bg-gray-800 border-b border-border">
-                  <tr className="text-text-muted">
-                    <th className="px-2 py-2 text-center w-12">{t("master.bom.colRow", "행")}</th>
-                    <th className="px-2 py-2 text-left">{t("master.bom.colParentItem", "상위품목")}</th>
-                    <th className="px-2 py-2 text-left">{t("master.bom.colChildItem", "하위품목")}</th>
-                    <th className="px-2 py-2 text-left" title={t("master.bom.colOwnerItemHint", "이 행이 등록될 BOM의 최상위 제품")}>{t("master.bom.colOwnerItem", "소속 BOM")}</th>
-                    <th className="px-2 py-2 text-center w-24">{t("master.bom.colValidFrom", "적용일자")}</th>
-                    <th className="px-2 py-2 text-center w-24">{t("master.bom.colValidTo", "완료일자")}</th>
-                    <th className="px-2 py-2 text-center w-8">{t("common.quantity", "수량")}</th>
-                    <th className="px-2 py-2 text-center w-20">{t("common.status", "상태")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {preview.rows.map((r) => {
-                    const s = STATUS_STYLES[r.status];
-                    return (
-                      <tr key={r.row} className="border-t border-border/50">
-                        <td className="px-2 py-1.5 text-center font-mono text-text-muted">{r.row}</td>
-                        <td className="px-2 py-1.5 font-mono truncate max-w-[120px]" title={r.parentItemCode}>{r.parentItemCode}</td>
-                        <td className="px-2 py-1.5 font-mono truncate max-w-[120px]" title={r.childItemCode}>{r.childItemCode}</td>
-                        <td className="px-2 py-1.5 font-mono truncate max-w-[120px] text-text-muted" title={r.ownerItemCode}>{r.ownerItemCode ?? "-"}</td>
-                        <td className="px-2 py-1.5 text-center text-text-muted">{r.validFrom ?? "-"}</td>
-                        <td className="px-2 py-1.5 text-center text-text-muted">{r.validTo ?? "-"}</td>
-                        <td className="px-2 py-1.5 text-center">{r.qtyPer ?? "-"}</td>
-                        <td className="px-2 py-1.5 text-center">
-                          <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium ${s.bg}`} title={r.message}>
-                            {s.icon}{t(s.labelKey, s.labelFallback)}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <DataGrid
+            data={preview.rows}
+            columns={previewColumns}
+            getRowId={(r) => String(r.row)}
+            pageSize={500}
+            maxHeight="16rem"
+            enableFullscreen={false}
+          />
         </div>
       )}
 
@@ -245,23 +304,15 @@ export default function BomUploadModal({ isOpen, onClose, onComplete }: BomUploa
               <div className="flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm font-medium">
                 <AlertCircle className="w-4 h-4" />{t("master.bom.errorDetail", "에러 상세")}
               </div>
-              <div className="max-h-48 overflow-y-auto min-h-0">
-                <table className="w-full text-sm">
-                  <thead className="bg-surface sticky top-0">
-                    <tr>
-                      <th className="px-3 py-1.5 text-left text-text-muted font-medium w-20">{t("master.bom.colRow", "행")}</th>
-                      <th className="px-3 py-1.5 text-left text-text-muted font-medium">{t("master.bom.colMessage", "메시지")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.errors.map((err, i) => (
-                      <tr key={i} className="border-t border-border">
-                        <td className="px-3 py-1.5 font-mono">{err.row}</td>
-                        <td className="px-3 py-1.5 text-red-600 dark:text-red-400">{err.message}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="p-2">
+                <DataGrid
+                  data={result.errors}
+                  columns={errorColumns}
+                  pageSize={500}
+                  maxHeight="12rem"
+                  enableColumnFilter={false}
+                  enableFullscreen={false}
+                />
               </div>
             </div>
           )}

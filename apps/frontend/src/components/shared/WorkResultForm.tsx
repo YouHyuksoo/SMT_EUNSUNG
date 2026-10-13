@@ -20,7 +20,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
+import type { ColumnDef } from '@tanstack/react-table';
 import api from '@/services/api';
+import DataGrid from '@/components/data-grid/DataGrid';
 import NumberKeypadModal from './NumberKeypadModal';
 
 /** 실적 등록에 필요한 작업지시 정보. 목록 행(RunRow)의 부분집합이다. */
@@ -46,6 +48,32 @@ interface ResultRow {
   /** 센서 누적 반영 여부. 진행(WIP)은 호출하지 않으므로 'N'이지만 실패가 아니다 */
   sensorApplyYn?: string; sensorApplyMsg?: string | null;
 }
+
+/** 완료인데 센서에 아직 반영되지 않은 실적 — 처리구분을 빨간색으로 표기한다 */
+function isSensorPending(h: ResultRow) {
+  return h.resultStatus === 'DONE' && (h.sensorApplyYn ?? 'N') !== 'Y';
+}
+
+/** 실적 이력 그리드 컬럼 — 처리구분 값은 완료/진행 이름으로 둬서 필터·내보내기에도 이름이 나온다 */
+const historyColumns: ColumnDef<ResultRow>[] = [
+  { accessorKey: 'seqNo', header: '일련', size: 60, meta: { align: 'center' },
+    cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
+  { id: 'item', header: '품번/품명', size: 240,
+    accessorFn: (h) => `${h.itemCode ?? ''} ${h.modelName ?? ''}`.trim(),
+    cell: ({ row }) => <><span className="font-mono">{row.original.itemCode}</span> {row.original.modelName}</> },
+  { accessorKey: 'resultQty', header: '실적수량', size: 90, meta: { align: 'right' },
+    cell: ({ row }) => <span className="font-mono">{row.original.resultQty?.toLocaleString()}</span> },
+  { id: 'resultStatus', header: '처리구분', size: 80, meta: { align: 'center' },
+    accessorFn: (h) => (h.resultStatus === 'DONE' ? '완료' : '진행'),
+    cell: ({ row }) => {
+      const h = row.original;
+      if (h.resultStatus !== 'DONE') return '진행';
+      return isSensorPending(h)
+        // 센서 미반영 — 빨간색으로 구분하고 사유는 title로 보여준다
+        ? <span className="text-red-600 font-semibold" title={h.sensorApplyMsg ?? '센서 실적에 반영되지 않았습니다'}>완료</span>
+        : <span className="text-blue-600 font-semibold">완료</span>;
+    } },
+];
 
 interface ResultForm {
   seqNo: string | null; machineCode: string; machineName: string;
@@ -152,11 +180,6 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
   // 이미 저장된 상태가 '완료'인 실적만 잠금(수정불가).
   const readOnly = form?.savedStatus === 'DONE';
 
-  /** 완료인데 센서에 아직 반영되지 않은 실적 — 처리구분을 빨간색으로 표기한다 */
-  function isSensorPending(h: ResultRow) {
-    return h.resultStatus === 'DONE' && (h.sensorApplyYn ?? 'N') !== 'Y';
-  }
-
   // [실적반영]은 선택한 실적이 '완료 + 미반영'일 때만 누를 수 있다. 이미 반영된 건을 다시
   // 부르면 센서 수량이 가산되므로 서버도 거부한다.
   const selectedRow = history.find((h) => h.seqNo === form?.seqNo);
@@ -243,29 +266,21 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
             <button onClick={() => setForm(newResultForm())} className="text-xs border border-primary text-primary rounded px-2 py-1 hover:bg-surface flex items-center gap-1"><Plus className="w-3 h-3" />신규 실적</button>
           )}
         </div>
-        <div className={fieldMode && historyOpen ? 'max-h-[132px] overflow-y-auto border border-border rounded' : ''}>
-        <table className="w-full text-xs border border-border">
-          <thead><tr className="bg-surface text-text-muted"><th className="p-1.5 text-center">일련</th><th className="p-1.5 text-left">품번/품명</th><th className="p-1.5 text-right">실적수량</th><th className="p-1.5 text-center">처리구분</th></tr></thead>
-          <tbody>
-            {(fieldMode && !historyOpen ? history.slice(0, 1) : history).map((h) => (
-              <tr key={h.seqNo} onClick={() => selectHistory(h)} className={`border-t border-border cursor-pointer hover:bg-surface ${form?.seqNo === h.seqNo ? 'bg-primary/10' : ''}`}>
-                <td className="p-1.5 text-center font-mono">{h.seqNo}</td>
-                <td className="p-1.5"><span className="font-mono">{h.itemCode}</span> {h.modelName}</td>
-                <td className="p-1.5 text-right font-mono">{h.resultQty?.toLocaleString()}</td>
-                <td className="p-1.5 text-center">
-                  {h.resultStatus === 'DONE'
-                    ? isSensorPending(h)
-                      // 센서 미반영 — 빨간색으로 구분하고 사유는 title로 보여준다
-                      ? <span className="text-red-600 font-semibold" title={h.sensorApplyMsg ?? '센서 실적에 반영되지 않았습니다'}>완료</span>
-                      : <span className="text-blue-600 font-semibold">완료</span>
-                    : '진행'}
-                </td>
-              </tr>
-            ))}
-            {!history.length && <tr><td colSpan={4} className="p-3 text-center text-text-muted">등록된 실적이 없습니다. [신규 실적]으로 등록하세요.</td></tr>}
-          </tbody>
-        </table>
-        </div>
+        {/* 현장 모드에서 이전 이력을 펼치면 높이를 묶고 그리드 안에서 스크롤한다 */}
+        <DataGrid
+          data={fieldMode && !historyOpen ? history.slice(0, 1) : history}
+          columns={historyColumns}
+          onRowClick={selectHistory}
+          getRowId={(h) => String(h.seqNo)}
+          selectedRowId={form?.seqNo != null ? String(form.seqNo) : undefined}
+          maxHeight={fieldMode && historyOpen ? '132px' : undefined}
+          pageSize={1000}
+          enableColumnFilter={false}
+          enableColumnReordering={false}
+          enableFullscreen={false}
+          showFooter={false}
+          emptyMessage="등록된 실적이 없습니다. [신규 실적]으로 등록하세요."
+        />
       </div>
 
       {/* 실적 상세 입력 */}

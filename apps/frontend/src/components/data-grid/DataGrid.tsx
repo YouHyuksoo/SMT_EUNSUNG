@@ -11,6 +11,7 @@
  * 4. **컬럼 크기 조절**: 헤더 경계를 드래그하여 컬럼 너비 조절
  * 5. **컬럼 위치 조정**: 헤더를 드래그하여 컬럼 순서 변경
  * 6. **자동 정렬**: 숫자(우측), 날짜(중앙), 문자(좌측)
+ * 7. **합계 행**: 컬럼에 `footer` 를 주면 표 아래에 고정된 합계 행이 생긴다.
  */
 import {
   useReactTable,
@@ -294,6 +295,7 @@ function DataGrid<T>({
   const visibleStart = windowed ? Math.min(rowWindow.start, pageRows.length) : 0;
   const visibleEnd = windowed ? Math.min(rowWindow.end, pageRows.length) : pageRows.length;
   const spacerColSpan = table.getVisibleLeafColumns().length;
+  const hasFooter = table.getVisibleLeafColumns().some((col) => col.columnDef.footer != null);
 
   const handleExport = useCallback(async (format: ExportFormat) => {
     setIsExporting(true);
@@ -301,12 +303,20 @@ function DataGrid<T>({
       const exportRows = activeFilterCount > 0
         ? table.getPrePaginationRowModel().rows.map(r => r.original)
         : data;
-      await exportData({ data: exportRows, columns, fileName: exportFileName, excludeColumns: exportExcludeColumns }, format);
+      // 합계 행이 있으면 화면과 같은 값으로 마지막 줄에 붙인다 (문자·숫자 footer 만)
+      const footerRow = hasFooter
+        ? Object.fromEntries((table.getFooterGroups().at(-1)?.headers ?? []).map((header) => {
+          const footer = header.column.columnDef.footer;
+          const value = typeof footer === 'function' ? footer(header.getContext()) : footer;
+          return [header.column.id, typeof value === 'string' || typeof value === 'number' ? value : ''];
+        }))
+        : undefined;
+      await exportData({ data: exportRows, columns, fileName: exportFileName, excludeColumns: exportExcludeColumns, footerRow }, format);
     } finally {
       setIsExporting(false);
       setMenuOpen(false);
     }
-  }, [activeFilterCount, table, data, columns, exportFileName, exportExcludeColumns, exportData]);
+  }, [activeFilterCount, table, data, columns, exportFileName, exportExcludeColumns, exportData, hasFooter]);
 
   // 컬럼 순서 초기화
   useEffect(() => {
@@ -743,6 +753,35 @@ function DataGrid<T>({
               </>
             )}
           </tbody>
+
+          {/* 합계 행 — 컬럼에 footer 를 준 그리드만. 값은 footer 함수가 정한다(보통 필터된 전체 행 합계) */}
+          {hasFooter && pageRows.length > 0 && (
+            <tfoot className="sticky bottom-0 z-20">
+              {table.getFooterGroups().map((footerGroup) => (
+                <tr key={footerGroup.id}>
+                  {footerGroup.headers.map((header) => {
+                    const pinned = header.column.getIsPinned();
+                    const isLastLeftPinned = pinned === 'left' && header.column.getIsLastColumn('left');
+                    const isFirstRightPinned = pinned === 'right' && header.column.getIsFirstColumn('right');
+                    return (
+                      <td
+                        key={header.id}
+                        className={`px-3 py-2 whitespace-nowrap font-semibold text-text bg-slate-100 dark:bg-slate-800 border-t border-border ${getAlignmentClass(header.column.columnDef.meta?.align ?? 'left')} ${pinned || isSized ? 'overflow-hidden text-ellipsis' : ''} ${showColumnBorder ? 'border-r last:border-r-0' : ''}`}
+                        style={{
+                          width: isSized ? header.getSize() : 'auto',
+                          minWidth: isSized ? undefined : header.column.columnDef.minSize ?? 50,
+                          ...pinnedWidthStyle(pinned, header.getSize()),
+                          ...getPinnedStyle(pinned, header.column.getStart('left'), header.column.getAfter('right'), isLastLeftPinned, isFirstRightPinned, 12),
+                        }}
+                      >
+                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.footer, header.getContext())}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tfoot>
+          )}
         </table>
         </div>
       </div>
