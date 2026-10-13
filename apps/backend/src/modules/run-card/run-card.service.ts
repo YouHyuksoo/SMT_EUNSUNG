@@ -41,6 +41,8 @@ export interface RunCardRow {
 export interface RunCardSearch {
   fromDate: string; toDate: string;
   runNo?: string; modelName?: string; lineCode?: string; lotNo?: string;
+  /** 모델마스터의 고객 (PB 조회조건 Customer Code) */
+  customerCode?: string;
 }
 
 @Injectable()
@@ -73,6 +75,11 @@ export class RunCardService {
     if (search.lineCode) {
       params.push(search.lineCode);
       where += ` AND r.LINE_CODE = :${params.length}`;
+    }
+    if (search.customerCode) {
+      params.push(search.customerCode);
+      where += ` AND r.MODEL_NAME IN (SELECT m.MODEL_NAME FROM IP_PRODUCT_MODEL_MASTER m
+                  WHERE m.CUSTOMER_CODE = :${params.length} AND m.ORGANIZATION_ID = r.ORGANIZATION_ID)`;
     }
 
     const rows = await this.q(this.selectSql(where), params);

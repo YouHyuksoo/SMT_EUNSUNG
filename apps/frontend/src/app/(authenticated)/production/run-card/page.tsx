@@ -2,19 +2,22 @@
 
 /**
  * @file (authenticated)/production/run-card/page.tsx
- * @description 작업지시관리 — IP_PRODUCT_RUN_CARD 조회·등록·수정·삭제 (실 DB 연결)
+ * @description 작업지시관리(롯트카드관리) — PB w_product_run_card_duckil
  *
- * PowerBuilder 원본 w_product_run_card 를 참조한다.
- *  - 검색 조건은 PB 의 Where Condition(기간 + Run No/Model/Line/Lot)과 동일
- *  - 작업지시번호(RUN_NO)는 서버가 F_GET_NEW_RUN_NO 로 채번하므로 입력받지 않는다
- *  - 삭제는 PID·작업실적·런카드상세가 있으면 서버가 409 로 차단한다
+ * 초보자 가이드:
+ * 1. **롯트카드는 [계획에서 생성]으로 만든다.** 계획의 남은 수량·제조번호(LOT_NO)·근무조가 그대로 들어가고
+ *    투입 자재(상세)도 함께 생긴다. [직접 등록]은 계획 없이 한 장을 손으로 넣는 예외 경로다.
+ * 2. **행을 누르면 그 롯트카드가 '현재 행'이 된다.** 상세 생성·PID 생성·PID 라벨·마킹기 파일은 현재 행에,
+ *    롯트카드 출력·출고계획은 체크한 행들(없으면 현재 행)에 적용된다.
+ * 3. 삭제는 PID·작업실적·상세가 있으면 막히고, 강제삭제는 PID·상세를 함께 지운다 (QC 검사·공정실적이 있으면 거부).
  *
- * API(글로벌 prefix /api → 백엔드 /api/v1):
- *   GET /production/run-card , POST/PUT /production/run-card , DELETE /production/run-card/:runNo
+ * API: /production/run-card (목록·수정·삭제), /production/lot-card (PB 버튼 기능)
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Edit2, Plus, Search, Trash2 } from 'lucide-react';
+import {
+  Barcode, Edit2, FileDown, ListTree, Plus, Printer, QrCode, Search, Tags, Trash2,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '@/components/ui/Modal';
 import { Button, Card, CardContent, Input } from '@/components/ui';
@@ -29,6 +32,13 @@ import { useComCodeMap } from '@/hooks/useComCode';
 import api from '@/services/api';
 import { getTodayLocal } from '@/utils/date';
 import PartSearchField from '@/components/shared/PartSearchField';
+import CustomerSelect from '@/components/shared/CustomerSelect';
+import PlanPickerModal from './components/PlanPickerModal';
+import PrintPreviewModal from './components/PrintPreviewModal';
+import {
+  IssuePlanSheets, PidLabels, RunCardSheets,
+  type IssuePlanRow, type LotCardPrintRow, type PidRow,
+} from './components/LotCardSheets';
 
 /** 목록 행 — 백엔드 RunCardRow 와 1:1 */
 interface RunCard {
@@ -54,6 +64,17 @@ interface EditForm {
 }
 
 const today = () => getTodayLocal();
+
+
+type PrintState =
+  | { kind: 'card'; rows: LotCardPrintRow[] }
+  | { kind: 'issue'; rows: IssuePlanRow[] }
+  | { kind: 'label'; rows: PidRow[]; runNo: string };
+
+/** 라벨 미리보기 한 번에 그리는 장수 — QR 을 장마다 그리므로 너무 많으면 브라우저가 멈춘다 */
+const LABEL_CHUNK = 1000;
+
+
 
 const emptyForm = (): EditForm => ({
   isEdit: false, runNo: '', runDate: today(), lotNo: '', itemCode: '', modelName: '',
@@ -85,6 +106,19 @@ export default function RunCardPage() {
   const [deleteTarget, setDeleteTarget] = useState<RunCard | null>(null);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
 
+  // 현재 행(행 클릭) · 체크한 행(출력 대상)
+  const [active, setActive] = useState<RunCard | null>(null);
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+
+  const [planOpen, setPlanOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [pidOpen, setPidOpen] = useState(false);
+  const [startSerial, setStartSerial] = useState('');
+  const [regenerate, setRegenerate] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [print, setPrint] = useState<PrintState | null>(null);
+  const [labelFrom, setLabelFrom] = useState(1);
+
   // 검색 조건 — PB Where Condition 과 동일
   const [fromDate, setFromDate] = useState(today());
   const [toDate, setToDate] = useState(today());
@@ -92,6 +126,7 @@ export default function RunCardPage() {
   const [modelName, setModelName] = useState('');
   const [lineCode, setLineCode] = useState('');
   const [lotNo, setLotNo] = useState('');
+  const [customerCode, setCustomerCode] = useState('');
 
   const statusMap = useComCodeMap('RUN STATUS');
   const runTypeMap = useComCodeMap('PRODUCT RUN TYPE');
@@ -100,17 +135,118 @@ export default function RunCardPage() {
     setLoading(true);
     try {
       const res = await api.get('/production/run-card', {
-        params: { fromDate, toDate, runNo, modelName, lineCode, lotNo },
+        params: { fromDate, toDate, runNo, modelName, lineCode, lotNo, customerCode },
       });
-      setRows(res.data?.data?.list ?? []);
+      const list: RunCard[] = res.data?.data?.list ?? [];
+      setRows(list);
+      setChecked((prev) => new Set([...prev].filter((key) => list.some((r) => r.runNo === key))));
+      setActive((prev) => (prev ? list.find((r) => r.runNo === prev.runNo) ?? null : null));
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : '작업지시 조회에 실패했습니다.');
     } finally {
       setLoading(false);
     }
-  }, [fromDate, toDate, runNo, modelName, lineCode, lotNo]);
+  }, [fromDate, toDate, runNo, modelName, lineCode, lotNo, customerCode]);
 
   useEffect(() => { void search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+
+  /** 출력 대상 — 체크한 행, 없으면 현재 행 */
+  const targets = useMemo(() => {
+    if (checked.size > 0) return rows.filter((r) => checked.has(r.runNo)).map((r) => r.runNo);
+    return active ? [active.runNo] : [];
+  }, [checked, rows, active]);
+
+  const generateDetail = async (source: 'BOM' | 'FEEDER') => {
+    if (!active) return;
+    setBusy(true);
+    try {
+      const res = await api.post(`/production/lot-card/${encodeURIComponent(active.runNo)}/detail`, { source });
+      toast.success(`${active.runNo} 상세를 ${source === 'BOM' ? '설계 BOM' : '피더 레이아웃'}으로 ${res.data?.data?.count ?? 0}건 만들었습니다.`);
+      setDetailOpen(false);
+    } catch {
+      // 원인은 api 인터셉터의 오류 창이 보여 준다.
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const openPid = () => {
+    setStartSerial('');
+    setRegenerate(false);
+    setPidOpen(true);
+  };
+
+  const createPids = async () => {
+    if (!active) return;
+    setBusy(true);
+    try {
+      const res = await api.post(`/production/lot-card/${encodeURIComponent(active.runNo)}/pids`, {
+        regenerate: active.pidCount > 0 ? regenerate : false,
+        startSerial: startSerial ? Number(startSerial) : undefined,
+      });
+      const d = res.data?.data ?? {};
+      toast.success(`PID ${Number(d.count ?? 0).toLocaleString()}개를 만들었습니다 (${d.firstSerial} ~ ${d.lastSerial}).`);
+      setPidOpen(false);
+      await search();
+    } catch {
+      // 원인은 api 인터셉터의 오류 창이 보여 준다.
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const openPrint = async (kind: 'card' | 'issue') => {
+    if (targets.length === 0) return;
+    setBusy(true);
+    try {
+      const res = await api.get(`/production/lot-card/${kind === 'card' ? 'print' : 'issue-plan'}`, {
+        params: { runNos: targets.join(',') },
+      });
+      const data = res.data?.data ?? [];
+      if (data.length === 0) {
+        toast.error(kind === 'card' ? '출력할 롯트카드가 없습니다.' : '투입 자재(상세)가 없습니다. [상세 생성]을 먼저 하세요.');
+        return;
+      }
+      setPrint(kind === 'card' ? { kind: 'card', rows: data } : { kind: 'issue', rows: data });
+    } catch {
+      // 원인은 api 인터셉터의 오류 창이 보여 준다.
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const openLabels = async () => {
+    if (!active) return;
+    if (active.pidCount === 0) { toast.error('PID 가 없습니다. [PID 생성]을 먼저 하세요.'); return; }
+    setBusy(true);
+    try {
+      const res = await api.get(`/production/lot-card/${encodeURIComponent(active.runNo)}/pids`);
+      setLabelFrom(1);
+      setPrint({ kind: 'label', rows: res.data?.data ?? [], runNo: active.runNo });
+    } catch {
+      // 원인은 api 인터셉터의 오류 창이 보여 준다.
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** 마킹기 파일 — PB 처럼 <RUN_NO>.JOB (머리글 없는 CSV 한 줄) 로 내려받는다 */
+  const downloadMarkingFile = async () => {
+    if (!active) return;
+    try {
+      const res = await api.get(`/production/lot-card/${encodeURIComponent(active.runNo)}/marking-file`);
+      const { fileName, content } = res.data?.data ?? {};
+      const url = URL.createObjectURL(new Blob([content ?? ''], { type: 'text/plain' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName ?? `${active.runNo}.JOB`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // 원인은 api 인터셉터의 오류 창이 보여 준다.
+    }
+  };
 
   const set = (key: keyof EditForm, value: string) =>
     setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
@@ -198,6 +334,7 @@ export default function RunCardPage() {
     }
   };
 
+  const allChecked = rows.length > 0 && rows.every((r) => checked.has(r.runNo));
   const columns = useMemo<ColumnDef<RunCard>[]>(() => [
     {
       id: 'actions', header: '작업', size: 80, enableSorting: false, meta: { filterType: 'none' as const },
@@ -216,6 +353,23 @@ export default function RunCardPage() {
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
+      ),
+    },
+    {
+      id: 'select', size: 40, enableSorting: false, meta: { filterType: 'none' as const },
+      header: () => (
+        <input type="checkbox" aria-label="전체 선택" checked={allChecked}
+          onChange={() => setChecked(allChecked ? new Set() : new Set(rows.map((r) => r.runNo)))} />
+      ),
+      cell: ({ row }) => (
+        <input type="checkbox" aria-label="선택" checked={checked.has(row.original.runNo)}
+          onClick={(e) => e.stopPropagation()}
+          onChange={() => setChecked((prev) => {
+            const next = new Set(prev);
+            if (next.has(row.original.runNo)) next.delete(row.original.runNo);
+            else next.add(row.original.runNo);
+            return next;
+          })} />
       ),
     },
     { accessorKey: 'itemCode', header: '품목코드', size: 140, meta: { filterType: 'text' } },
@@ -244,7 +398,7 @@ export default function RunCardPage() {
     { accessorKey: 'resultCount', header: '실적', size: 80, meta: { filterType: 'number', align: 'right' } },
     { accessorKey: 'updatedBy', header: '수정자', size: 90, meta: { filterType: 'text' } },
     { accessorKey: 'updatedAt', header: '수정일시', size: 140, meta: { filterType: 'text' } },
-  ], [statusMap, runTypeMap]);
+  ], [statusMap, runTypeMap, checked, allChecked, rows]);
 
   return (
     <div className="h-full flex flex-col overflow-hidden p-6 gap-4">
@@ -252,13 +406,35 @@ export default function RunCardPage() {
         <div>
           <h1 className="text-xl font-bold text-text">작업지시관리</h1>
           <p className="text-text-muted mt-1 text-sm">
-            생산 작업지시(런카드)를 조회·등록·수정·삭제합니다. 작업지시번호는 저장 시 자동 채번됩니다.
+            생산계획으로 롯트카드를 만들고 상세·PID·출력물을 만듭니다 ·{' '}
+            {active ? `현재 ${active.runNo}` : '행을 누르면 현재 롯트카드가 됩니다'}
+            {checked.size > 0 ? ` · 체크 ${checked.size}장` : ''}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button size="sm" onClick={() => setForm(emptyForm())}>
-            <Plus className="w-4 h-4 mr-1" />
-            등록
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={() => setPlanOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" />계획에서 생성
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => setForm(emptyForm())}>
+            <Plus className="w-4 h-4 mr-1" />직접 등록
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!active || busy} onClick={() => setDetailOpen(true)}>
+            <ListTree className="w-4 h-4 mr-1" />상세 생성
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!active || busy} onClick={openPid}>
+            <QrCode className="w-4 h-4 mr-1" />PID 생성
+          </Button>
+          <Button size="sm" variant="secondary" disabled={targets.length === 0 || busy} onClick={() => void openPrint('card')}>
+            <Printer className="w-4 h-4 mr-1" />롯트카드 출력
+          </Button>
+          <Button size="sm" variant="secondary" disabled={targets.length === 0 || busy} onClick={() => void openPrint('issue')}>
+            <Printer className="w-4 h-4 mr-1" />출고계획 출력
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!active || busy} onClick={() => void openLabels()}>
+            <Tags className="w-4 h-4 mr-1" />PID 라벨 출력
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!active || busy} onClick={() => void downloadMarkingFile()}>
+            <FileDown className="w-4 h-4 mr-1" />마킹기 파일
           </Button>
         </div>
       </div>
@@ -272,7 +448,8 @@ export default function RunCardPage() {
             enableColumnFilter
             enableExport
             getRowId={(r) => r.runNo}
-            onRowClick={(r) => setForm(toForm(r))}
+            selectedRowId={active?.runNo}
+            onRowClick={(r) => setActive(r)}
             toolbarLeft={
               <div className="flex flex-wrap items-center gap-2">
                 <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
@@ -282,6 +459,7 @@ export default function RunCardPage() {
                 <ModelSearchField placeholder="모델명" value={modelName} className="w-44" onChange={(v) => setModelName(v)} />
                 <Input placeholder="LOT번호" value={lotNo} onChange={(e) => setLotNo(e.target.value)} />
                 <ProdLineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} />
+                <CustomerSelect includeAll value={customerCode} onChange={setCustomerCode} className="w-48" />
                 <Button size="sm" onClick={() => void search()}>
                   <Search className="w-4 h-4 mr-1" />
                   조회
@@ -291,6 +469,82 @@ export default function RunCardPage() {
           />
         </CardContent>
       </Card>
+
+
+      <PlanPickerModal
+        isOpen={planOpen}
+        onClose={() => setPlanOpen(false)}
+        onCreated={(newRunNo) => {
+          setPlanOpen(false);
+          toast(`${newRunNo} 는 계획일자로 만들어집니다. 조회 기간에 그 날짜가 들어 있어야 목록에 보입니다.`);
+          void search();
+        }}
+      />
+
+      {/* 상세 생성 */}
+      <Modal isOpen={detailOpen} onClose={() => setDetailOpen(false)} title={`상세 생성 — ${active?.runNo ?? ''}`} size="sm">
+        <div className="space-y-4 text-sm">
+          <p className="text-text">투입 자재 목록을 지우고 다시 만듭니다.</p>
+          <ul className="list-disc space-y-1 pl-5 text-text-muted">
+            <li><b className="text-text">설계 BOM</b>: 롯트카드 품목의 BOM 을 끝까지 전개합니다.</li>
+            <li><b className="text-text">피더 레이아웃</b>: 이 라인·모델의 피더 배치 자재로 만듭니다.</li>
+          </ul>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setDetailOpen(false)}>취소</Button>
+            <Button variant="secondary" disabled={busy} onClick={() => void generateDetail('FEEDER')}>피더 레이아웃</Button>
+            <Button disabled={busy} onClick={() => void generateDetail('BOM')}>설계 BOM</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* PID 생성 */}
+      <Modal isOpen={pidOpen} onClose={() => setPidOpen(false)} title={`PID 생성 — ${active?.runNo ?? ''}`} size="sm">
+        {active && (
+          <div className="space-y-4 text-sm">
+            <p className="text-text">
+              지시수량 <b>{active.lotSize.toLocaleString()}</b>개만큼 PID 를 만듭니다. 번호와 라벨 문자열은 모델 규칙(DB 함수)을 따릅니다.
+            </p>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-text-muted">시작 일련번호 (비우면 같은 날 마지막 번호 다음부터)</span>
+              <Input type="number" min={0} max={9999} value={startSerial} onChange={(e) => setStartSerial(e.target.value)} />
+            </label>
+            {active.pidCount > 0 && (
+              <label className="flex items-start gap-2 rounded border border-red-300 bg-red-50 p-2 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
+                <input type="checkbox" checked={regenerate} onChange={(e) => setRegenerate(e.target.checked)} className="mt-0.5" />
+                <span>이미 PID {active.pidCount.toLocaleString()}개가 있습니다. 지우고 다시 만들기 — 공정에 투입된 PID 가 있으면 거부됩니다.</span>
+              </label>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setPidOpen(false)}>취소</Button>
+              <Button disabled={busy || (active.pidCount > 0 && !regenerate)} onClick={() => void createPids()}>
+                <Barcode className="mr-1 h-4 w-4" />PID 생성
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* 출력 미리보기 */}
+      {print && (
+        <PrintPreviewModal
+          isOpen
+          onClose={() => setPrint(null)}
+          title={print.kind === 'card' ? '롯트카드 출력' : print.kind === 'issue' ? '출고계획 출력' : `PID 라벨 출력 — ${print.runNo}`}
+          pageSize={print.kind === 'label' ? '9mm 12mm' : 'A4 portrait'}
+          summary={print.kind === 'label' ? (
+            <span className="flex flex-wrap items-center gap-2">
+              전체 {print.rows.length.toLocaleString()}장 중
+              <Input type="number" min={1} max={print.rows.length} value={labelFrom} className="w-24"
+                onChange={(e) => setLabelFrom(Math.max(1, Math.min(print.rows.length, Number(e.target.value) || 1)))} />
+              번부터 {Math.min(LABEL_CHUNK, print.rows.length - labelFrom + 1).toLocaleString()}장 (한 번에 {LABEL_CHUNK.toLocaleString()}장까지)
+            </span>
+          ) : print.kind === 'card' ? `${new Set(print.rows.map((r) => r.runNo)).size}장` : `자재 ${print.rows.length}종`}
+        >
+          {print.kind === 'card' && <RunCardSheets rows={print.rows} />}
+          {print.kind === 'issue' && <IssuePlanSheets rows={print.rows} />}
+          {print.kind === 'label' && <PidLabels rows={print.rows.slice(labelFrom - 1, labelFrom - 1 + LABEL_CHUNK)} />}
+        </PrintPreviewModal>
+      )}
 
       {/* 등록/수정 */}
       <Modal

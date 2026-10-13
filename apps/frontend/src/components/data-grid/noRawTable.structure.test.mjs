@@ -23,6 +23,7 @@ const ALLOWED = {
   "app/(authenticated)/master/routing/components/RoutingMaterialEditor.tsx": "줄마다 체크·수량·선택을 바로 고치는 편집 표",
   "app/(authenticated)/system/inventory-close-date/page.tsx": "줄마다 날짜를 고쳐 저장하는 편집 표",
   "app/(authenticated)/production/smd-plan-board/components/LineBlock.tsx": "rowSpan 으로 두 줄을 묶는 계획판",
+  "app/(authenticated)/production/run-card/components/LotCardSheets.tsx": "종이에 찍는 롯트카드·출고계획 양식",
   "components/display/screens/product-line/ProductionLineTable.tsx": "모니터링 디스플레이 화면",
   "components/display/screens/smd-status/SmdCheckItems.tsx": "모니터링 디스플레이 화면",
   "components/help/MarkdownRenderer.tsx": "도움말 마크다운의 표",
