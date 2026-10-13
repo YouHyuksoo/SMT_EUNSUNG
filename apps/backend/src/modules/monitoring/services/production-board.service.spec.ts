@@ -38,9 +38,9 @@ describe('ProductionBoardService', () => {
   function answer(sql: string) {
     if (sql.includes('F_GET_WORK_ACTUAL_DATE')) return [{ day: '2026-10-06', startFrac: 0.354 }];
     if (sql.includes('FROM IP_PRODUCT_SMD_PLAN')) return smdRows;
-    if (sql.includes('FROM IP_PRODUCT_MI_PLAN')) return miRows;
+    if (sql.includes('FROM IP_PRODUCT_RUN_CARD r') && sql.includes('"planSequence"')) return miRows;
+    if (sql.includes('FROM IP_PRODUCT_WORK_RESULT wr') && sql.includes('"hhmm"')) return [{ hhmm: '0840', qty: '7' }, { hhmm: '0800', qty: 3 }];
     if (sql.includes('FROM IP_ASSEMBLY_ACTUAL_TIME_V v')) return slotSum([10, 20, 0, 0, 0, 0, 5, 0, 0, 0]);
-    if (sql.includes('FROM IP_PRODUCT_ACTUAL_TIME_V v')) return slotSum([1, 2, 3, 0, 0, 0, 0, 0, 0, 0]);
     if (sql.includes('FROM IP_PRODUCT_WORK_QC')) return [{ hhmm: '0900', cnt: '2' }, { hhmm: '2300', cnt: 1 }];
     if (sql.includes('FROM ICOM_WORKTIME_RANGES')) return [];
     return [];
@@ -78,12 +78,12 @@ describe('ProductionBoardService', () => {
       expect(nos).toContain('WO2-MI3');
     });
 
-    it('KPI: 계획 합은 행 합, 실적 합은 두 뷰의 시간대 합, 불량은 QC 건수 합', async () => {
+    it('KPI: 계획 합은 행 합, 실적 합은 SMD 시간대 합 + 후공정 지시 실적 합, 불량은 QC 건수 합', async () => {
       const { kpi } = await target.getBoard();
       expect(kpi.planQty).toBe(1800);
-      expect(kpi.goodQty).toBe(10 + 20 + 5 + 1 + 2 + 3);
+      expect(kpi.goodQty).toBe(10 + 20 + 5 + 7 + 3);
       expect(kpi.defectQty).toBe(3);
-      expect(kpi.achieveRate).toBe(2.3);
+      expect(kpi.achieveRate).toBe(2.5);
       expect(kpi.runningCount).toBe(1);
       expect(kpi.totalCount).toBe(4);
     });
@@ -91,10 +91,25 @@ describe('ProductionBoardService', () => {
     it('hourly 는 항상 10칸이고 hour/label 이 칸 시작·범위 시각이다', async () => {
       const { hourly } = await target.getBoard();
       expect(hourly).toHaveLength(10);
-      expect(hourly[0]).toEqual({ hour: '08:30', label: '08:30~10:30', goodQty: 11, defectQty: 2 });
-      expect(hourly[1].goodQty).toBe(22);
+      expect(hourly[0]).toEqual({ hour: '08:30', label: '08:30~10:30', goodQty: 17, defectQty: 2 });
+      expect(hourly[1].goodQty).toBe(20);
       // 22:30~00:30 칸(G): 실적 5, 불량 23:00 한 건
       expect(hourly[6]).toMatchObject({ hour: '22:30', goodQty: 5, defectQty: 1 });
+    });
+
+    it('제품 행은 당일 작업일에 발행된 후공정 런카드다 (공정 통과 뷰를 읽지 않는다)', async () => {
+      await target.getBoard();
+      const sqls = mockDataSource.query.mock.calls.map(([q]) => String(q));
+      const mi = sqls.find((q) => q.includes('FROM IP_PRODUCT_RUN_CARD r'))!;
+      expect(mi).toContain('r.RUN_DATE >= wd.day AND r.RUN_DATE < wd.day + 1');
+      expect(mi).toContain('FROM IP_PRODUCT_MI_PLAN');
+      expect(sqls.some((q) => q.includes('IP_PRODUCT_ACTUAL_TIME_V'))).toBe(false);
+    });
+
+    it('후공정 실적은 입력 시각으로 칸에 넣는다 (08:40 → A, 다음날 08:00 → J)', async () => {
+      const { hourly } = await target.getBoard();
+      expect(hourly[0].goodQty).toBe(10 + 7);
+      expect(hourly[9].goodQty).toBe(3);
     });
 
     it('칸 정의 조회가 비어 있으면 기본 10칸을 쓴다', async () => {

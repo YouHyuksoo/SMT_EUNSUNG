@@ -3,9 +3,8 @@
  * @description 생산 보드(TV) 집계 서비스 — 작업일 기준 생산계획 행 + 시간대별 실적
  *
  * 초보자 가이드:
- * 1. 은성에는 작업지시 테이블이 없어서 "계획 행"이 보드의 한 줄(order)이다.
- *    SMD 계획(IP_PRODUCT_SMD_PLAN)과 제품 계획(IP_PRODUCT_MI_PLAN)을 합쳐 내려준다.
- *    - orderNo     : 계획의 WORK_ORDER_NO (없으면 'SMD-순번'/'MI-순번')
+ * 1. SMD 는 계획 행(IP_PRODUCT_SMD_PLAN), 제품은 당일 작업일에 발행된 후공정 생산지시(런카드)가 보드의 한 줄(order)이다.
+ *    - orderNo     : 계획의 WORK_ORDER_NO (없으면 'SMD-순번'/'MI-런카드번호')
  *    - processCode : 'SMD' | 'MI' (어느 계획 테이블 행인지)
  *    - equipCode   : 라인코드 (은성은 설비가 아니라 라인 단위로 계획한다)
  * 2. "오늘" = 작업일. 은성 작업일은 08:30 에 시작하므로(ICOM_WORKTIME_RANGES SMTWORKTIME 'A' 시작)
@@ -13,7 +12,8 @@
  *    바인드로 쓴다(WHERE 안에서 직접 부르면 뷰 인덱스를 못 타 10초 걸린다).
  * 3. 실적은 시간대 뷰의 A~J 10칸 합이다 (계획 테이블 ACTUAL_QTY 는 갱신되지 않아 0).
  *    - SMD: IP_ASSEMBLY_ACTUAL_TIME_V (날짜·라인·모델·서픽스·PCB 면으로 계획과 맞춘다)
- *    - 제품: IP_PRODUCT_ACTUAL_TIME_V (날짜·라인·모델·공정으로 맞춘다 — 계획 화면의 PB 조인과 동일)
+ *    - 제품: 런카드의 IP_PRODUCT_WORK_RESULT 확정(DONE) 실적 합. 시간대는 실적 입력 시각으로 칸에 넣는다.
+ *      공정 통과 이력은 실적이 아니다 (planning/order-result.sql.ts).
  *    같은 키의 계획이 여러 줄이면 실적은 우선순위·순번이 가장 앞선 한 줄에만 붙인다(이중 집계 방지).
  * 4. KPI 의 계획/실적 합은 대시보드(getSummary)와 같은 정의다 — 실적은 계획과 못 맞춘 뷰 행도 포함한다.
  * 5. 상태(status)는 계획 테이블 PLAN_STATUS 가 항상 'W' 라 쓸 수 없어서 실적 대비로 파생한다.
@@ -29,6 +29,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { namedBinds } from '../../../common/utils/named-binds.util';
 import { DASHBOARD_ACTUAL_SUM } from '../../dashboard/dashboard-insights.sql';
+import { MI_ORDER_EXISTS, MI_ORDER_RESULTS_SQL } from '../../planning/order-result.sql';
 
 export interface ProductionBoardOrder {
   orderNo: string;
@@ -85,6 +86,11 @@ interface SlotSumRow {
 interface QcMinuteRow {
   hhmm: string;
   cnt: Num;
+}
+
+interface ResultMinuteRow {
+  hhmm: string;
+  qty: Num;
 }
 
 const ORG = 1;
@@ -193,30 +199,38 @@ export const SMD_PLAN_SQL = `
     LEFT JOIN ID_ITEM i ON i.ITEM_CODE = p.ITEM_CODE AND i.ORGANIZATION_ID = ${ORG}
    ORDER BY p.LINE_CODE, p.PLAN_PRIORITY, p.PLAN_SEQUENCE`;
 
-export const MI_PLAN_SQL = `
-  WITH wd AS (SELECT ${WORK_DAY} AS day FROM DUAL),
-  act AS (
-    SELECT v.LINE_CODE, v.MODEL_NAME, NVL(v.WORKSTAGE_CODE, '*') AS WORKSTAGE_CODE, SUM(${DASHBOARD_ACTUAL_SUM}) AS QTY
-      FROM IP_PRODUCT_ACTUAL_TIME_V v, wd
-     WHERE v.ACTUAL_DATE >= wd.day AND v.ACTUAL_DATE < wd.day + 1
-     GROUP BY v.LINE_CODE, v.MODEL_NAME, NVL(v.WORKSTAGE_CODE, '*')
-  ), plan AS (
-    SELECT p.PLAN_SEQUENCE, p.WORK_ORDER_NO, p.PLAN_PRIORITY, p.LINE_CODE, p.ITEM_CODE, p.MODEL_NAME,
-           NVL(p.WORKSTAGE_CODE, '*') AS WORKSTAGE_CODE, NVL(p.PLAN_QTY, 0) AS PLAN_QTY,
-           ROW_NUMBER() OVER (PARTITION BY p.LINE_CODE, p.MODEL_NAME, NVL(p.WORKSTAGE_CODE, '*')
-                              ORDER BY p.PLAN_PRIORITY, p.PLAN_SEQUENCE) AS RN_ACT
-      FROM IP_PRODUCT_MI_PLAN p, wd
-     WHERE p.ORGANIZATION_ID = ${ORG} AND p.PLAN_DATE >= wd.day AND p.PLAN_DATE < wd.day + 1
-  )
-  SELECT p.PLAN_SEQUENCE AS "planSequence", p.WORK_ORDER_NO AS "workOrderNo", p.PLAN_PRIORITY AS "priority",
-         p.LINE_CODE AS "lineCode", p.ITEM_CODE AS "itemCode", NVL(i.ITEM_NAME, p.MODEL_NAME) AS "itemName",
-         p.MODEL_NAME AS "modelName", p.PLAN_QTY AS "planQty",
-         CASE WHEN p.RN_ACT = 1 THEN NVL(a.QTY, 0) ELSE 0 END AS "goodQty",
-         0 AS "defectQty", CAST(NULL AS DATE) AS "lastResultAt"
-    FROM plan p
-    LEFT JOIN act a ON a.LINE_CODE = p.LINE_CODE AND a.MODEL_NAME = p.MODEL_NAME AND a.WORKSTAGE_CODE = p.WORKSTAGE_CODE
-    LEFT JOIN ID_ITEM i ON i.ITEM_CODE = p.ITEM_CODE AND i.ORGANIZATION_ID = ${ORG}
-   ORDER BY p.LINE_CODE, p.PLAN_PRIORITY, p.PLAN_SEQUENCE`;
+/** 제품 행 = 당일 작업일에 발행된 후공정 생산지시(런카드). 실적은 그 런카드의 확정 실적 합 */
+export const MI_ORDER_SQL = `
+  WITH wd AS (SELECT ${WORK_DAY} AS day FROM DUAL)
+  SELECT r.RUN_NO AS "planSequence",
+         (SELECT MAX(p.WORK_ORDER_NO) FROM IP_PRODUCT_MI_PLAN p
+           WHERE p.MFS = r.LOT_NO AND p.ORGANIZATION_ID = r.ORGANIZATION_ID) AS "workOrderNo",
+         5 AS "priority", r.LINE_CODE AS "lineCode", r.ITEM_CODE AS "itemCode",
+         NVL(i.ITEM_NAME, r.MODEL_NAME) AS "itemName", r.MODEL_NAME AS "modelName",
+         r.LOT_SIZE AS "planQty",
+         NVL((SELECT SUM(wr.RESULT_QTY) FROM IP_PRODUCT_WORK_RESULT wr
+               WHERE wr.RUN_NO = r.RUN_NO AND wr.ORGANIZATION_ID = r.ORGANIZATION_ID
+                 AND wr.RESULT_STATUS = 'DONE'), 0) AS "goodQty",
+         0 AS "defectQty",
+         (SELECT MAX(wr.ENTER_DATE) FROM IP_PRODUCT_WORK_RESULT wr
+           WHERE wr.RUN_NO = r.RUN_NO AND wr.ORGANIZATION_ID = r.ORGANIZATION_ID
+             AND wr.RESULT_STATUS = 'DONE') AS "lastResultAt"
+    FROM IP_PRODUCT_RUN_CARD r
+    CROSS JOIN wd
+    LEFT JOIN ID_ITEM i ON i.ITEM_CODE = r.ITEM_CODE AND i.ORGANIZATION_ID = ${ORG}
+   WHERE r.ORGANIZATION_ID = ${ORG}
+     AND r.RUN_DATE >= wd.day AND r.RUN_DATE < wd.day + 1
+     AND ${MI_ORDER_EXISTS('r')}
+   ORDER BY r.LINE_CODE, r.RUN_NO`;
+
+/** 작업일 창(08:30~다음날 08:30)의 후공정 확정 실적을 분(HHMM) 단위로 — 칸 배정은 JS(slotIndexOf) */
+export const MI_RESULT_MINUTE_SQL = `
+  SELECT TO_CHAR(x.ENTER_DATE, 'HH24MI') AS "hhmm", SUM(x.RESULT_QTY) AS "qty"
+    FROM (${MI_ORDER_RESULTS_SQL}) x
+   WHERE x.ORGANIZATION_ID = ${ORG}
+     AND x.ENTER_DATE >= ${WORK_DAY} + ${WORK_START_FRACTION}
+     AND x.ENTER_DATE < ${WORK_DAY} + 1 + ${WORK_START_FRACTION}
+   GROUP BY TO_CHAR(x.ENTER_DATE, 'HH24MI')`;
 
 /** 작업일 총계: 계획 합(SMD+제품)·시간대별 실적 합(두 뷰, 계획과 못 맞춘 행 포함) */
 export const SLOT_SUM_SQL = (view: string, dateCol: string) => `
@@ -256,22 +270,26 @@ export class ProductionBoardService {
     // 1묶음: 계획 행 2개 쿼리
     const [smdRows, miRows] = await Promise.all([
       this.dataSource.query(SMD_PLAN_SQL, dayStartBind) as Promise<PlanRow[]>,
-      this.dataSource.query(MI_PLAN_SQL, dayBind) as Promise<PlanRow[]>,
+      this.dataSource.query(MI_ORDER_SQL, dayBind) as Promise<PlanRow[]>,
     ]);
     // 2묶음: 시간대 총계·불량·칸 정의 (커넥션 풀 보호를 위해 묶음을 나눈다)
-    const [smdSlots, miSlots, qcRows, slotRows] = await Promise.all([
+    const [smdSlots, miMinutes, qcRows, slotRows] = await Promise.all([
       this.dataSource.query(SLOT_SUM_SQL('IP_ASSEMBLY_ACTUAL_TIME_V', 'RECEIPT_DATE'), dayBind) as Promise<SlotSumRow[]>,
-      this.dataSource.query(SLOT_SUM_SQL('IP_PRODUCT_ACTUAL_TIME_V', 'ACTUAL_DATE'), dayBind) as Promise<SlotSumRow[]>,
+      this.dataSource.query(MI_RESULT_MINUTE_SQL, dayStartBind) as Promise<ResultMinuteRow[]>,
       this.dataSource.query(QC_MINUTE_SQL, dayStartBind) as Promise<QcMinuteRow[]>,
       this.dataSource.query(SLOT_RANGE_SQL) as Promise<SlotRange[]>,
     ]);
 
     const orders = this.buildOrders(smdRows, miRows, now);
 
-    const smdSum = slotValues(smdSlots[0]);
-    const miSum = slotValues(miSlots[0]);
-    const goodBySlot = smdSum.map((v, i) => v + miSum[i]);
     const slots = this.normalizeSlots(slotRows);
+    const smdSum = slotValues(smdSlots[0]);
+    const miSum = SLOT_KEYS.map(() => 0);
+    for (const r of miMinutes) {
+      const idx = slotIndexOf(String(r.hhmm), slots);
+      if (idx >= 0) miSum[idx] += n(r.qty);
+    }
+    const goodBySlot = smdSum.map((v, i) => v + miSum[i]);
 
     const defectBySlot = SLOT_KEYS.map(() => 0);
     let defectTotal = 0;
