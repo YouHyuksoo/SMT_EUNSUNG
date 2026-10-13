@@ -2,10 +2,10 @@
 
 /**
  * @file (authenticated)/oee/master/standard-time/page.tsx
- * @description 표준시간 관리 — 품목(모델) 기준 ST/CT/NT/TT 표준시간 등록·조회 (IP_PRODUCT_ST_MASTER 실 DB 연결)
+ * @description 표준시간 관리 — 모델명 기준 ST/CT/NT/TT 표준시간 등록·조회 (IP_PRODUCT_ST_MASTER 실 DB 연결)
  *
  * API(글로벌 prefix /api → 백엔드 /api/v1):
- *   GET/POST/PUT/DELETE /oee/standard-time , GET /oee/standard-time/items (모델선택)
+ *   GET/POST/PUT/DELETE /oee/standard-time (키: 모델명+설비코드+적용시작일)
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -31,8 +31,8 @@ const OPEN_END = '9999-12-31';
 const periodText = (f: string, t: string) => `${f} ~ ${t === OPEN_END ? '현재 적용' : t}`;
 
 interface StdTimeRecord {
-  id: string;            // itemCode__machineCode__validFrom (행 키)
-  modelCode: string;     // 품목코드(모델코드)
+  id: string;            // modelName__machineCode__validFrom (행 키)
+  modelCode: string;     // 모델코드(IP_PRODUCT_MODEL_MASTER.PART_NO, 표시용)
   modelName: string;
   machineCode: string;   // 설비코드
   machineName: string;
@@ -44,7 +44,7 @@ interface StdTimeRecord {
   updatedAt: string;
 }
 interface EditForm {
-  originalItemCode: string | null; // 수정 시 원본 키
+  originalModelName: string | null; // 수정 시 원본 키
   originalMachineCode: string | null;
   originalValidFrom: string | null;
   modelCode: string;
@@ -58,10 +58,10 @@ interface EditForm {
   registeredBy: string; // 편집 시 표시용(읽기전용)
   updatedAt: string;    // 편집 시 표시용(읽기전용)
 }
-const emptyForm = (): EditForm => ({ originalItemCode: null, originalMachineCode: null, originalValidFrom: null, modelCode: '', modelName: '', machineCode: '', machineName: '', validFrom: '', validTo: OPEN_END, times: emptyTimes(), remark: '', registeredBy: '', updatedAt: '' });
+const emptyForm = (): EditForm => ({ originalModelName: null, originalMachineCode: null, originalValidFrom: null, modelCode: '', modelName: '', machineCode: '', machineName: '', validFrom: '', validTo: OPEN_END, times: emptyTimes(), remark: '', registeredBy: '', updatedAt: '' });
 
 // API 응답 타입
-interface ApiStdRow { itemCode: string; modelName: string | null; machineCode: string | null; machineName: string | null; validFrom: string; validTo: string; st: number | null; ct: number | null; nt: number | null; tt: number | null; remark: string | null; registeredBy: string | null; updatedAt: string | null; }
+interface ApiStdRow { modelName: string; modelCode: string | null; machineCode: string | null; machineName: string | null; validFrom: string; validTo: string; st: number | null; ct: number | null; nt: number | null; tt: number | null; remark: string | null; registeredBy: string | null; updatedAt: string | null; }
 
 export default function StandardTimeMasterPage() {
   const [records, setRecords] = useState<StdTimeRecord[]>([]);
@@ -77,9 +77,9 @@ export default function StandardTimeMasterPage() {
       const res = await api.get('/oee/standard-time');
       const list: ApiStdRow[] = res.data?.data?.list ?? [];
       setRecords(list.map((r) => ({
-        id: `${r.itemCode}__${r.machineCode ?? ''}__${r.validFrom}`,
-        modelCode: r.itemCode,
-        modelName: r.modelName ?? '',
+        id: `${r.modelName}__${r.machineCode ?? ''}__${r.validFrom}`,
+        modelCode: r.modelCode ?? '',
+        modelName: r.modelName,
         machineCode: r.machineCode ?? '',
         machineName: r.machineName ?? '',
         validFrom: r.validFrom,
@@ -136,7 +136,7 @@ export default function StandardTimeMasterPage() {
   function openCreate() { setForm(emptyForm()); }
   function openEdit(r: StdTimeRecord) {
     setForm({
-      originalItemCode: r.modelCode, originalMachineCode: r.machineCode, originalValidFrom: r.validFrom,
+      originalModelName: r.modelName, originalMachineCode: r.machineCode, originalValidFrom: r.validFrom,
       modelCode: r.modelCode, modelName: r.modelName, machineCode: r.machineCode, machineName: r.machineName,
       validFrom: r.validFrom, validTo: r.validTo,
       times: { ...r.times }, remark: r.remark,
@@ -147,21 +147,21 @@ export default function StandardTimeMasterPage() {
 
   async function save() {
     if (!form) return;
-    if (!form.modelCode) return toast.error('모델을 선택하세요');
+    if (!form.modelName) return toast.error('모델을 선택하세요');
     if (!form.machineCode) return toast.error('설비를 선택하세요');
     if (!form.validFrom) return toast.error('적용 시작일을 입력하세요');
     if (form.validTo !== OPEN_END && form.validTo < form.validFrom) return toast.error('적용 종료일은 적용 시작일보다 빠를 수 없습니다');
     if (!TIME_CATEGORIES.some((c) => form.times[c.code] > 0)) return toast.error('분류별 표준시간을 1개 이상 입력하세요');
 
     const payload = {
-      itemCode: form.modelCode, machineCode: form.machineCode, validFrom: form.validFrom, validTo: form.validTo,
+      modelName: form.modelName, machineCode: form.machineCode, validFrom: form.validFrom, validTo: form.validTo,
       st: form.times.ST, ct: form.times.CT, nt: form.times.NT, tt: form.times.TT, remark: form.remark,
     };
     try {
-      if (form.originalItemCode == null) {
+      if (form.originalModelName == null) {
         await api.post('/oee/standard-time', payload);
       } else {
-        await api.put('/oee/standard-time', { ...payload, originalItemCode: form.originalItemCode, originalMachineCode: form.originalMachineCode, originalValidFrom: form.originalValidFrom });
+        await api.put('/oee/standard-time', { ...payload, originalModelName: form.originalModelName, originalMachineCode: form.originalMachineCode, originalValidFrom: form.originalValidFrom });
       }
       toast.success('저장되었습니다');
       setForm(null);
@@ -182,7 +182,7 @@ export default function StandardTimeMasterPage() {
         <div className="flex items-center justify-between flex-shrink-0">
           <div>
             <h1 className="text-xl font-bold text-text">표준시간 관리</h1>
-            <p className="text-sm text-text-muted mt-1">품목(모델) 기준 ST/CT/NT/TT 표준시간 · 적용기간 리비전 관리</p>
+            <p className="text-sm text-text-muted mt-1">모델명 기준 ST/CT/NT/TT 표준시간 · 적용기간 리비전 관리</p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={search} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
@@ -218,7 +218,7 @@ export default function StandardTimeMasterPage() {
       {form && (
         <div className="w-[540px] flex-shrink-0 border-l border-border bg-background flex flex-col h-full overflow-hidden shadow-2xl animate-slide-in-right">
           <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
-            <h2 className="text-sm font-bold text-text">{form.originalItemCode == null ? '표준시간 등록' : '표준시간 수정'}</h2>
+            <h2 className="text-sm font-bold text-text">{form.originalModelName == null ? '표준시간 등록' : '표준시간 수정'}</h2>
             <div className="flex items-center gap-2">
               <button onClick={() => setForm(null)} className="px-3 py-2 rounded border border-border text-text-muted text-sm">취소</button>
               <button onClick={save} className="px-4 py-2 rounded bg-primary text-white text-sm">저장</button>
@@ -281,8 +281,8 @@ export default function StandardTimeMasterPage() {
             </label>
 
             <div className="flex gap-6 text-sm text-text-muted border-t border-border pt-4">
-              <span>등록자 <b className="text-text">{form.originalItemCode == null ? '저장 시 자동(로그인 사용자)' : (form.registeredBy || '-')}</b></span>
-              <span>업데이트일시 <b className="text-text">{form.originalItemCode == null ? '저장 시 자동 기록' : (form.updatedAt || '-')}</b></span>
+              <span>등록자 <b className="text-text">{form.originalModelName == null ? '저장 시 자동(로그인 사용자)' : (form.registeredBy || '-')}</b></span>
+              <span>업데이트일시 <b className="text-text">{form.originalModelName == null ? '저장 시 자동 기록' : (form.updatedAt || '-')}</b></span>
             </div>
           </div>
           <div className="flex-shrink-0 border-t border-border" />

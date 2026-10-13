@@ -87,7 +87,7 @@ ESDBext 실측(2026-10-13):
 | 비가동 손실분 | 같은 원장 ⋈ 사유 `REASON_TYPE='UNPLAN'` AND `OEE_REFLECT_YN='Y'` | 4.4 |
 | 생산수량 | `IP_PRODUCT_SENSOR_ACTUAL_TIME.PRODUCT_ACTUAL_QTY` (`LINE_CODE`, `RECEIPT_DATE`, `MODEL_NAME`) | SMT·ASSY 공통 단일 원천. ASSY 완료(DONE) 실적은 `P_INTERLOCK_SENSOR_ACTUAL_NEO`가 이미 이 테이블에 쌓으므로 `IP_PRODUCT_WORK_RESULT`는 더하지 않는다(이중집계 방지). WIP는 제외된다 |
 | 불량수량 | `IP_PRODUCT_WORK_QC`의 `QC_RESULT='N'`(진성) 건수(`LINE_CODE`, `QC_DATE` 창) + `IP_PRODUCT_WORK_DEFECT.BAD_QTY`(`RUN_NO` → 런카드 `LINE_CODE`, `ENTER_DATE` 창) | 서로 다른 입력 경로라 중복이 없다 |
-| 이상 C/T(초) | `IP_PRODUCT_ST_MASTER.CT_VALUE`. 경로: 모델명 → `IP_PRODUCT_MODEL_MASTER.ITEM_CODE` → 표준시간 마스터. 조건 `DATESET <= 업무일 < DATEEND`(DATEEND NULL이면 무기한) | 같은 품목에 설비별 행이 여럿이면 **MAX**를 라인 C/T로 쓴다(라인 속도는 가장 느린 설비가 정한다) |
+| 이상 C/T(초) | `IP_PRODUCT_ST_MASTER.CT_VALUE` 하나뿐이다. 생산실적의 `MODEL_NAME`으로 바로 찾는다(9장 REV1). 조건 `DATESET <= 업무일 <= DATEEND`(종료일 포함, DATEEND NULL이면 무기한) | 같은 품목에 설비별 행이 여럿이면 **MAX**를 라인 C/T로 쓴다(라인 속도는 가장 느린 설비가 정한다) |
 | 계획수량 | SMT `IP_PRODUCT_SMD_PLAN`, ASSY `IP_PRODUCT_MI_PLAN`의 `PLAN_QTY` (`PLAN_DATE`, `LINE_CODE`) | 계획 테이블의 `ACTUAL_QTY`는 갱신되지 않으므로 쓰지 않는다 |
 | 픽업률(SMT) | `IQ_MACHINE_INSPECT_PICKUP_RATE` (`ITEM_CODE='HEAD'`) | 픽업률 리포트(`production-report.service.ts`)와 같은 누적차(LAG) 계산식 `(1 − (M+R)/T) × 100`. 기존 함수를 재사용한다 |
 
@@ -163,3 +163,10 @@ ESDB와 ESDBext는 같은 운영 DB다. 배포된 백엔드가 아직 OEE_를 �
   - 다만 설비별 사유 연계는 계속 전체 사유로 대체된다. 사용자 답을 받은 뒤 별도로 정리한다.
 - **C/T 단위**: `CT_VALUE`를 PCS당 초로 가정한다. 센서 수량은 PCS 단위(캐리어 수 곱)다. 구현 중 표본 라인 한 곳의 UPH 대비 성능률로 타당성을 확인한다.
 - **C/T 매칭 커버리지**: 최근 30일 생산 모델 50개 중 44개가 매칭된다. 6개는 미산출 대상이고 화면에 목록으로 노출한다.
+
+## 9. 개정 기록
+
+- **REV1 (2026-10-13)**: 사용자 지시 "MODEL_NAME으로 통일. 반제품·제품은 전부 모델명으로 관리한다".
+  - 시간대별 생산실적에 `ITEM_CODE`를 넣었던 시도(같은 날)는 되돌렸다. 컬럼을 지우고 `P_INTERLOCK_SENSOR_ACTUAL_NEO`를 원래 본으로 재배포했다.
+  - `IP_PRODUCT_ST_MASTER`의 키를 `MODEL_NAME + MACHINE_CODE + DATESET + 조직`으로 바꿨다(`apps/backend/src/migrations/2026-10-13_st_master_model_name.sql`).
+  - OEE 계산은 생산실적의 `MODEL_NAME`으로 표준시간 마스터를 바로 조회한다. 같은 모델에 설비별 행이 여럿이면 MAX를 쓴다.
