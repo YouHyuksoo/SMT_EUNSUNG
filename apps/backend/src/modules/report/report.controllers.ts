@@ -165,9 +165,15 @@ export class PickupRateReportController {
   }
 
   @Get('amount')
-  @ApiOperation({ summary: '344 라인·일자별 미스 금액 집계 (PPM 포함)' })
+  @ApiOperation({ summary: '344 라인·일자별 미스 금액 집계' })
   async amount(@Query() query: PickupRateQueryDto) {
     return paged(await this.service.findPickupAmount(query));
+  }
+
+  @Get('head')
+  @ApiOperation({ summary: '344 라인 시간대 집계 — HEAD 집어올림·미스·인식오류·릴교체 (주간 A~E, 야간 F~J)' })
+  async head(@Query() query: PickupRateQueryDto) {
+    return paged(await this.service.findPickupHead(query));
   }
 }
 

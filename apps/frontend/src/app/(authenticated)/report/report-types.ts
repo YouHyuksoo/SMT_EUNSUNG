@@ -144,12 +144,19 @@ export interface PickupAmountRow {
   lineCode: string | null;
   lineName: string | null;
   actualDate: string | null;
-  takeupQty: number | null;
   missQty: number | null;
   recogQty: number | null;
   missAmount: number | null;
-  ppm: number | null;
 }
+
+/** 344 라인 시간대 집계 — 시간대 A~J 마다 집어올림(take)·미스(miss)·인식오류(reco)·금액(amt) */
+export type PickupSlot = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J';
+export type PickupHeadRow = {
+  actualDate: string;
+  lineCode: string;
+  lineName: string | null;
+  reelChange: number | null;
+} & Record<`${'take' | 'miss' | 'reco' | 'amt'}${PickupSlot}`, number>;
 
 /**
  * 346 생산계획 한 줄. `slot01`~`slot10` 이 시간대 10칸이다

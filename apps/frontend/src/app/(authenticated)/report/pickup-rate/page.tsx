@@ -11,6 +11,9 @@
  * 3. **단가 하한을 걸 수 있다.** PB 가 비싼 자재만 보려고 둔 조건을 그대로 옮겼다.
  * 4. **기간이 필수다.** 구동 표(IQ_MACHINE_INSPECT_PICKUP_QRY, 97만행)의 인덱스가
  *    ACTUAL_DATE 뿐이라 기간 없이는 전체를 훑는다.
+ * 5. **라인 집어올림·픽업률은 [라인 시간대] 탭에서 본다.** PB SMT Pickup Inquiry(HEAD) 와 같은 집계로
+ *    주간 A~E·야간 F~J 시간대와 릴교체를 함께 낸다. 금액 집계 표의 집어올림은 피더 줄마다 설비 값이
+ *    되풀이돼 있어 더하지 않는다. 라인 시간대는 하루씩 집계해 7일까지 조회한다.
  */
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -22,8 +25,8 @@ import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
-import { pickupAmountColumns, pickupDetailColumns } from '../report-columns';
-import type { PickupAmountRow, PickupDetailRow } from '../report-types';
+import { pickupAmountColumns, pickupDetailColumns, pickupHeadColumns } from '../report-columns';
+import type { PickupAmountRow, PickupDetailRow, PickupHeadRow } from '../report-types';
 import PartSearchField from '@/components/shared/PartSearchField';
 
 import { getTodayLocal } from '@/utils/date';
@@ -33,7 +36,9 @@ const daysAgo = (n: number) => {
   return getTodayLocal(d);
 };
 
-type Tab = 'amount' | 'detail';
+type Tab = 'head' | 'amount' | 'detail';
+/** 라인 시간대 집계 최대 일수 (백엔드 PICKUP_HEAD_MAX_DAYS 와 같다) */
+const HEAD_MAX_DAYS = 7;
 
 export default function PickupRateReportPage() {
   const [dateFrom, setDateFrom] = useState(daysAgo(0));
@@ -42,7 +47,8 @@ export default function PickupRateReportPage() {
   const [itemCode, setItemCode] = useState('');
   const [minUnitPrice, setMinUnitPrice] = useState('0');
 
-  const [tab, setTab] = useState<Tab>('amount');
+  const [tab, setTab] = useState<Tab>('head');
+  const [head, setHead] = useState<PickupHeadRow[]>([]);
   const [amount, setAmount] = useState<PickupAmountRow[]>([]);
   const [detail, setDetail] = useState<PickupDetailRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -59,13 +65,19 @@ export default function PickupRateReportPage() {
         itemCode: itemCode || undefined,
         minUnitPrice: Number(minUnitPrice) > 0 ? Number(minUnitPrice) : undefined,
       };
-      const [a, d] = await Promise.all([
+      // 라인 시간대는 하루씩 집계해 7일까지만 받는다 — 넘으면 그 탭만 비운다.
+      const days = (Date.parse(dateTo) - Date.parse(dateFrom)) / 86400000 + 1;
+      const headAllowed = days <= HEAD_MAX_DAYS;
+      const [h, a, d] = await Promise.all([
+        headAllowed ? api.get('/report/pickup-rate/head', { params }) : Promise.resolve({ data: { data: [] } }),
         api.get('/report/pickup-rate/amount', { params }),
         api.get('/report/pickup-rate/detail', { params }),
       ]);
+      setHead(h.data?.data ?? []);
+      if (!headAllowed) toast(`라인 시간대 집계는 ${HEAD_MAX_DAYS}일까지 봅니다. 기간을 줄이면 나옵니다.`);
       setAmount(a.data?.data ?? []);
       setDetail(d.data?.data ?? []);
-      mark(a, d);
+      mark(h, a, d);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -116,6 +128,7 @@ export default function PickupRateReportPage() {
 
       <ScreenTabs
         tabs={[
+          { key: 'head', label: '라인 시간대', count: head.length },
           { key: 'amount', label: '금액 집계', count: amount.length },
           { key: 'detail', label: '상세', count: detail.length },
         ]}
@@ -125,7 +138,20 @@ export default function PickupRateReportPage() {
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">
-          {tab === 'amount' ? (
+          {tab === 'head' ? (
+            <DataGrid
+              data={head}
+              columns={pickupHeadColumns}
+              isLoading={loading}
+              pageSize={100}
+              enableColumnFilter
+              enableExport
+              exportFileName="PICKUP라인시간대"
+              enableColumnPinning
+              defaultPinnedColumns={{ left: ['actualDate', 'lineName'] }}
+              emptyMessage={searched ? '기간에 HEAD 픽업 실적이 없습니다.' : '조회하세요.'}
+            />
+          ) : tab === 'amount' ? (
             <DataGrid
               data={amount}
               columns={pickupAmountColumns}
