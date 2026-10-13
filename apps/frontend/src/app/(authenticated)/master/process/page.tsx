@@ -11,7 +11,7 @@
  */
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Workflow, RefreshCw, Upload } from "lucide-react";
+import { Workflow, RefreshCw, Upload, Plus } from "lucide-react";
 import { Button, Modal, Select, ConfirmModal } from "@/components/ui";
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
 import api from "@/services/api";
@@ -361,6 +361,10 @@ export default function ProcessPage() {
             <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />
             {t("common.refresh")}
           </Button>
+          <Button size="sm" onClick={handleAdd}>
+            <Plus className="w-4 h-4 mr-1" />
+            {t("master.process.addProcess")}
+          </Button>
         </div>
       </div>
       <ProcessUploadModal isOpen={uploadModalOpen} onClose={() => setUploadModalOpen(false)} onComplete={fetchProcesses} />
@@ -375,7 +379,6 @@ export default function ProcessPage() {
               onSelect={setSelectedCode}
               isLoading={loading}
               equipCounts={allEquipCounts}
-              onAdd={handleAdd}
               onEdit={handleEdit}
               onDelete={setDeleteTarget}
             />

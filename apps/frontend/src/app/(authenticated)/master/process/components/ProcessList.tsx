@@ -8,13 +8,15 @@
  * 1. DataGrid로 공정 목록 표시, 행 클릭 시 우측에 배치 설비 표시
  * 2. 선택된 행 하이라이트 (selectedRowId)
  * 3. 수정/삭제 액션 버튼 포함
+ * 4. 툴바 검색어·공정유형·코드그룹으로 화면에서 걸러 본다
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Edit2, Trash2, Plus } from "lucide-react";
-import { Card, CardContent, ComCodeBadge, Button } from "@/components/ui";
+import { Edit2, Trash2, Search } from "lucide-react";
+import { Card, CardContent, ComCodeBadge, Input } from "@/components/ui";
 import DataGrid from "@/components/data-grid/DataGrid";
 import StatusHeaderHelp from "@/components/shared/StatusHeaderHelp";
+import ComCodeSelect from "@/components/shared/ComCodeSelect";
 import { useComCodeOptions } from "@/hooks/useComCode";
 import { ColumnDef } from "@tanstack/react-table";
 import type { Process } from "../types";
@@ -27,7 +29,6 @@ interface ProcessListProps {
   onSelect: (code: string) => void;
   isLoading: boolean;
   equipCounts: Record<string, number>;
-  onAdd: () => void;
   onEdit: (item: Process) => void;
   onDelete: (item: Process) => void;
 }
@@ -38,13 +39,24 @@ export default function ProcessList({
   onSelect,
   isLoading,
   equipCounts,
-  onAdd,
   onEdit,
   onDelete,
 }: ProcessListProps) {
   const { t } = useTranslation();
 
   const codeGroupOptions = useComCodeOptions("WORKSTAGE CODE GROUP");
+  const [searchText, setSearchText] = useState("");
+  const [processType, setProcessType] = useState("");
+  const [codeGroup, setCodeGroup] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = searchText.trim().toLowerCase();
+    return processes.filter((p) =>
+      (!q || p.processCode.toLowerCase().includes(q) || (p.processName ?? "").toLowerCase().includes(q))
+      && (!processType || p.processType === processType)
+      && (!codeGroup || p.codeGroup === codeGroup),
+    );
+  }, [processes, searchText, processType, codeGroup]);
 
   const columns = useMemo<ColumnDef<Process>[]>(
     () => [
@@ -179,7 +191,7 @@ export default function ProcessList({
     <Card padding="none" className="flex-1 flex flex-col min-w-0 min-h-0 w-full max-w-full overflow-hidden">
       <CardContent className="flex-1 min-w-0 min-h-0 overflow-hidden px-4 py-3">
         <DataGrid
-          data={processes}
+          data={filtered}
           columns={columns}
           isLoading={isLoading}
           enableColumnFilter
@@ -189,10 +201,19 @@ export default function ProcessList({
           selectedRowId={selectedCode}
           getRowId={(row) => row.processCode}
           toolbarLeft={
-            <Button size="sm" onClick={onAdd}>
-              <Plus className="w-4 h-4 mr-1" />
-              {t("master.process.addProcess")}
-            </Button>
+            <div className="flex flex-wrap gap-3 flex-1 min-w-0">
+              <div className="flex-1 min-w-[14rem] max-w-sm">
+                <Input placeholder="공정코드·공정명 검색" aria-label="공정 검색" value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  leftIcon={<Search className="w-4 h-4" />} fullWidth />
+              </div>
+              <div className="w-44 flex-shrink-0">
+                <ComCodeSelect groupCode="WORKSTAGE TYPE" value={processType} onChange={setProcessType} labelPrefix={t("master.process.processType")} fullWidth />
+              </div>
+              <div className="w-44 flex-shrink-0">
+                <ComCodeSelect groupCode="WORKSTAGE CODE GROUP" value={codeGroup} onChange={setCodeGroup} labelPrefix={t("master.process.codeGroup")} fullWidth />
+              </div>
+            </div>
           }
           sqlQuery={`SELECT *\nFROM IP_PRODUCT_WORKSTAGE\nWHERE ORGANIZATION_ID = :organizationId\nORDER BY WORKSTAGE_SORT_ORDER, WORKSTAGE_CODE`}
         />
