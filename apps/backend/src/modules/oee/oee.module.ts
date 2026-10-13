@@ -8,7 +8,6 @@ import { OeeResource } from '../../entities/oee-resource.entity';
 import { OeeDowntimeReason } from '../../entities/oee-downtime-reason.entity';
 import { OeeOperationLog } from '../../entities/oee-operation-log.entity';
 import { OeeDowntimeEvent } from '../../entities/oee-downtime-event.entity';
-import { WorktimeRange } from '../../entities/worktime-range.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { IsysOrganization } from '../../entities/isys-organization.entity';
 import { ComCode } from '../../entities/com-code.entity';
@@ -31,7 +30,6 @@ import { SmtCloseRunPreviewService } from './smt-close-run-preview.service';
       OeeDowntimeReason,
       OeeOperationLog,
       OeeDowntimeEvent,
-      WorktimeRange,
       IsysUser,
       IsysOrganization,
       ComCode,

@@ -3,9 +3,8 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
-import { WorktimeRange } from '../../entities/worktime-range.entity';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { OeeMobileService } from './oee-mobile.service';
 import {
   OEE_MULTI_ENTRY_PROCESS_CODES,
@@ -14,10 +13,7 @@ import {
   OeeMultiEntryProcessCode,
   OeeMultiEntryStartDto,
 } from './oee-multi-entry.dto';
-import { resolveOeeMobileWorkContext } from './oee-mobile-worktime';
-
-const BUSINESS_DAY_START_HOUR = 8;
-const BUSINESS_DAY_START_MINUTE = 30;
+import { findDbNow, findOeeWorkContext } from './oee-mobile-worktime';
 
 const EFFECTIVE_LINE_SQL =
   'NVL(d.LINE_CODE, (SELECT m.LINE_CODE FROM IMCN_MACHINE m WHERE m.ORGANIZATION_ID = d.ORGANIZATION_ID AND m.MACHINE_CODE = d.MACHINE_CODE))';
@@ -70,8 +66,6 @@ export class OeeMultiEntryService {
   constructor(
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly mobileService: OeeMobileService,
-    @InjectRepository(WorktimeRange)
-    private readonly worktimeRepository: Repository<WorktimeRange>,
   ) {}
 
   async getStatus(
@@ -100,12 +94,9 @@ export class OeeMultiEntryService {
     );
     this.assertKnownLineCodes([lineCode], resources, processCode);
 
-    const context = await this.resolveCurrentWorkContext(
-      processCode,
-      organization,
-      new Date(),
-    );
-    const workdayStart = this.toBusinessDayStart(context.workDate);
+    // 업무일·근무구간·업무일 시작시각은 DB 기준이다 (oee-mobile-worktime.ts)
+    const context = await findOeeWorkContext(this.dataSource, processCode, organization);
+    const workdayStart = context.workStart;
     const nextWorkdayStart = new Date(
       workdayStart.getTime() + 24 * 60 * 60 * 1000,
     );
@@ -195,7 +186,7 @@ export class OeeMultiEntryService {
         );
       }
 
-      const now = this.serverSecond();
+      const now = await findDbNow(manager);
       const createdItems: OeeMultiEntryEndItemDto[] = [];
       for (const lineCode of lineCodes) {
         const dtSeq = await this.nextDtSeq(manager);
@@ -285,7 +276,7 @@ export class OeeMultiEntryService {
       } else {
         await this.validateRequiredReason(dto.reasonCode, organization);
       }
-      const now = this.serverSecond();
+      const now = await findDbNow(manager);
       this.assertEndTimeNotBeforeStart(targetRows, now);
 
       for (const item of dto.items) {
@@ -429,26 +420,6 @@ export class OeeMultiEntryService {
     }
   }
 
-  private async resolveCurrentWorkContext(
-    processCode: OeeMultiEntryProcessCode,
-    organization: number,
-    serverTime: Date,
-  ) {
-    const rangeType = processCode === 'SMT' ? 'SMTWORKTIME' : 'WORKTIME';
-    const rows = await this.worktimeRepository.find({
-      where: { organizationId: organization, rangeType },
-      order: { workType: 'ASC' },
-    });
-    if (rows.length === 0)
-      throw new BadRequestException('현재 업무시간 구간이 없습니다.');
-
-    try {
-      return resolveOeeMobileWorkContext(serverTime, rows);
-    } catch (error: unknown) {
-      if (error instanceof Error) throw new BadRequestException(error.message);
-      throw error;
-    }
-  }
 
   private assertExactOpenTargets(
     targetRows: SqlRow[],
@@ -565,20 +536,7 @@ export class OeeMultiEntryService {
     return `${lineCode}\u0000${dtSeq}`;
   }
 
-  private serverSecond(): Date {
-    const now = new Date();
-    now.setMilliseconds(0);
-    return now;
-  }
 
-  private toBusinessDayStart(workDate: string): Date {
-    const result = new Date(
-      `${workDate}T${String(BUSINESS_DAY_START_HOUR).padStart(2, '0')}:${String(BUSINESS_DAY_START_MINUTE).padStart(2, '0')}:00+09:00`,
-    );
-    if (Number.isNaN(result.getTime()))
-      throw new BadRequestException('업무일을 해석할 수 없습니다.');
-    return result;
-  }
 
   private assertKnownLineCodes(
     lineCodes: string[],

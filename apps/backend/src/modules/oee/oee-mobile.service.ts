@@ -9,7 +9,6 @@ import { DataSource, IsNull, Repository } from 'typeorm';
 import { EquipDowntimeReason } from '../../entities/equip-downtime-reason.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { OeeDowntimeEvent } from '../../entities/oee-downtime-event.entity';
-import { WorktimeRange } from '../../entities/worktime-range.entity';
 import {
   OEE_MOBILE_PROCESS_CODES,
   OEE_MOBILE_REASON_TYPES,
@@ -22,7 +21,8 @@ import {
   OeeMobileResourceType,
   OeeMobileStartDowntimeDto,
 } from './oee-mobile.dto';
-import { resolveOeeMobileWorkContext } from './oee-mobile-worktime';
+import { findDbNow, findOeeWorkContext } from './oee-mobile-worktime';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 // Keep the mobile response numeric while retaining null DISPLAY_ORDER rows at the end.
 const NULL_DISPLAY_ORDER = Number.MAX_SAFE_INTEGER;
@@ -67,8 +67,6 @@ export class OeeMobileService {
     private readonly reasonRepository: Repository<EquipDowntimeReason>,
     @InjectRepository(OeeDowntimeEvent)
     private readonly eventRepository: Repository<OeeDowntimeEvent>,
-    @InjectRepository(WorktimeRange)
-    private readonly worktimeRepository: Repository<WorktimeRange>,
   ) {}
 
   async listResources(
@@ -165,15 +163,14 @@ export class OeeMobileService {
       company,
       plantCd,
     );
-    const now = new Date();
-    const context = await this.resolveCurrentWorkContext(processCode, organization, now);
+    const context = await findOeeWorkContext(this.dataSource, processCode, organization);
     const events = await this.findCurrentEvents(
       organization,
       processCode,
       resource.resourceType,
       resource.lineCode,
       resource.parentLineCode,
-      context.workDate,
+      context.workDay,
     );
     const openEvent = await this.findOpenEvent(
       organization,
@@ -228,8 +225,9 @@ export class OeeMobileService {
     const reason = await this.findReason(organization, dto.reasonCode);
     if (!reason) throw new NotFoundException('비가동 사유를 찾을 수 없습니다.');
 
-    const now = new Date();
-    const context = await this.resolveCurrentWorkContext(dto.processCode, organization, now);
+    // 지금 시각·업무일·근무구간은 DB 기준이다 (oee-mobile-worktime.ts)
+    const context = await findOeeWorkContext(this.dataSource, dto.processCode, organization);
+    const { now } = context;
     const normalizedParentLineCode = resource.parentLineCode;
     const openEvent = await this.eventRepository.findOne({
       where: {
@@ -249,7 +247,7 @@ export class OeeMobileService {
       resourceCode: resource.lineCode,
       parentLineCode: normalizedParentLineCode,
       processCode: dto.processCode,
-      workDate: this.toKstMidnight(context.workDate),
+      workDate: context.workDay,
       workSegment: context.workSegment,
       startTime: now,
       endTime: null,
@@ -303,7 +301,7 @@ export class OeeMobileService {
     if (!event) throw new NotFoundException('비가동 이벤트를 찾을 수 없습니다.');
     if (event.endTime != null) throw new ConflictException('이미 종료된 비가동 이벤트입니다.');
 
-    const now = new Date();
+    const now = await findDbNow(this.dataSource);
     let updateResult;
     try {
       updateResult = await this.eventRepository.update(
@@ -367,7 +365,7 @@ export class OeeMobileService {
         WHERE v.ORGANIZATION_ID = :organizationId
           AND v.PROCESS_CODE = :processCode
         ORDER BY v.SORT_ORDER ASC NULLS LAST, v.LINE_CODE ASC`,
-      { organizationId, processCode } as unknown as unknown[],
+      namedBinds({ organizationId, processCode }),
     )) as Array<{
       processCode: OeeMobileProcessCode;
       resourceType: OeeMobileResourceType;
@@ -446,33 +444,13 @@ export class OeeMobileService {
     return reason;
   }
 
-  private async resolveCurrentWorkContext(
-    processCode: OeeMobileProcessCode,
-    organizationId: number,
-    serverTime: Date,
-  ) {
-    const rangeType = processCode === 'SMT' ? 'SMTWORKTIME' : 'WORKTIME';
-    const rows = await this.worktimeRepository.find({
-      where: { organizationId, rangeType },
-      order: { workType: 'ASC' },
-    });
-    if (rows.length === 0) throw new BadRequestException('현재 업무시간 구간이 없습니다.');
-
-    try {
-      return resolveOeeMobileWorkContext(serverTime, rows);
-    } catch (error: unknown) {
-      if (error instanceof Error) throw new BadRequestException(error.message);
-      throw error;
-    }
-  }
-
   private async findCurrentEvents(
     organizationId: number,
     processCode: OeeMobileProcessCode,
     resourceType: OeeMobileResourceType,
     resourceCode: string,
     parentLineCode: string,
-    workDate: string,
+    workDate: Date,
   ): Promise<OeeDowntimeEvent[]> {
     return this.eventRepository.find({
       where: {
@@ -481,7 +459,7 @@ export class OeeMobileService {
         resourceType,
         resourceCode,
         parentLineCode,
-        workDate: this.toKstMidnight(workDate),
+        workDate,
       },
       order: { startTime: 'ASC' },
     });
@@ -574,15 +552,6 @@ export class OeeMobileService {
     if (event.eventId !== dto.eventId) {
       throw new ConflictException('동일한 종료 요청 ID가 다른 이벤트에 사용되었습니다.');
     }
-  }
-
-  private toKstMidnight(workDate: string): Date {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(workDate)) {
-      throw new BadRequestException('업무일 형식이 올바르지 않습니다.');
-    }
-    const result = new Date(`${workDate}T00:00:00+09:00`);
-    if (Number.isNaN(result.getTime())) throw new BadRequestException('업무일을 해석할 수 없습니다.');
-    return result;
   }
 
   private assertTenant(organizationId?: number, company?: string, plantCd?: string): void {

@@ -1,12 +1,44 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
-import { DataSource, EntityManager, Repository } from 'typeorm';
-import { WorktimeRange } from '../../entities/worktime-range.entity';
+import { DataSource, EntityManager } from 'typeorm';
 import { OeeMobileService } from './oee-mobile.service';
 import {
   OeeMultiEntryEndDto,
   OeeMultiEntryStartDto,
 } from './oee-multi-entry.dto';
 import { OeeMultiEntryService } from './oee-multi-entry.service';
+
+import { findDbNow, findOeeWorkContext, type OeeMobileWorkContext } from './oee-mobile-worktime';
+
+// 업무일·근무구간·지금 시각은 DB 가 정한다(oee-mobile-worktime.ts). 여기서는 가짜 시계를 DB 시각으로 본다.
+jest.mock('./oee-mobile-worktime', () => ({
+  ...jest.requireActual('./oee-mobile-worktime'),
+  findOeeWorkContext: jest.fn(),
+  findDbNow: jest.fn(),
+}));
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const KST_MS = 9 * 60 * 60 * 1000;
+/** 테스트용 DB 시각 — 가짜 시계를 초 단위로 자른다 (SYSDATE 와 같은 정밀도) */
+function dbClock(): Date {
+  const now = new Date();
+  now.setMilliseconds(0);
+  return now;
+}
+/** 실제 SQL 과 같은 규칙: 08:30 전이면 전날 업무일, 08:30~20:30 주간 */
+function workContextAt(now: Date): OeeMobileWorkContext {
+  const kst = new Date(now.getTime() + KST_MS);
+  const minutes = kst.getUTCHours() * 60 + kst.getUTCMinutes();
+  const day = new Date(Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate()) - (minutes < 510 ? DAY_MS : 0));
+  const workDate = day.toISOString().slice(0, 10);
+  const workDay = new Date(day.getTime() - KST_MS);
+  return {
+    workDate,
+    workDay,
+    workSegment: minutes >= 510 && minutes < 1230 ? 'DAY' : 'NIGHT',
+    now,
+    workStart: new Date(workDay.getTime() + 510 * 60 * 1000),
+  };
+}
 
 type Query = (sql: string, parameters?: unknown[]) => Promise<unknown>;
 
@@ -28,7 +60,6 @@ describe('OeeMultiEntryService', () => {
     getWorker: jest.Mock;
     listReasons: jest.Mock;
   };
-  let worktimeRepository: { find: jest.Mock };
   let sequence = 100;
   let rolledBack = false;
 
@@ -79,6 +110,8 @@ describe('OeeMultiEntryService', () => {
   ];
 
   beforeEach(() => {
+    jest.mocked(findDbNow).mockImplementation(async () => dbClock());
+    jest.mocked(findOeeWorkContext).mockImplementation(async () => workContextAt(dbClock()));
     jest.clearAllMocks();
     sequence = 100;
     rolledBack = false;
@@ -104,7 +137,6 @@ describe('OeeMultiEntryService', () => {
         },
       ]),
     };
-    worktimeRepository = { find: jest.fn() };
     manager.query.mockImplementation(async (sql: string) => {
       if (sql.includes('FROM IP_PRODUCT_LINE')) {
         return resources.map((resource) => ({
@@ -144,7 +176,6 @@ describe('OeeMultiEntryService', () => {
     target = new OeeMultiEntryService(
       dataSource as unknown as DataSource,
       mobileService as unknown as OeeMobileService,
-      worktimeRepository as unknown as Repository<WorktimeRange>,
     );
   });
 
@@ -1165,17 +1196,6 @@ describe('OeeMultiEntryService', () => {
   });
 
   it('returns business-day history and an open row without reading the old event ledger', async () => {
-    worktimeRepository.find.mockResolvedValue([
-      {
-        organizationId: 7,
-        rangeType: 'SMTWORKTIME',
-        workType: 'A',
-        startTime: '083000',
-        endTime: '173000',
-        attribute01: null,
-        attribute02: null,
-      },
-    ] as WorktimeRange[]);
     const history = [
       { ...readbackEvents[0], endTime: new Date('2026-09-10T02:00:00Z') },
     ];
@@ -1197,10 +1217,7 @@ describe('OeeMultiEntryService', () => {
         events: history,
         openEvents: [open[0]],
       });
-      expect(worktimeRepository.find).toHaveBeenCalledWith({
-        where: { organizationId: 7, rangeType: 'SMTWORKTIME' },
-        order: { workType: 'ASC' },
-      });
+      expect(findOeeWorkContext).toHaveBeenCalledWith(dataSource, 'SMT', 7);
       expect(
         dataSource.query.mock.calls.every(([sql]) =>
           sql.includes('IP_EQUIP_DOWNTIME_RESULT'),
@@ -1223,17 +1240,6 @@ describe('OeeMultiEntryService', () => {
   });
 
   it('returns all effective-line open rows when status finds multiple open rows', async () => {
-    worktimeRepository.find.mockResolvedValue([
-      {
-        organizationId: 7,
-        rangeType: 'SMTWORKTIME',
-        workType: 'A',
-        startTime: '083000',
-        endTime: '173000',
-        attribute01: null,
-        attribute02: null,
-      },
-    ] as WorktimeRange[]);
     dataSource.query.mockImplementation(async (sql: string) => {
       if (sql.includes('START_TIME >=') && sql.includes('START_TIME <'))
         return [];
