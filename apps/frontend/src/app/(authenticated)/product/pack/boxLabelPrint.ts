@@ -36,6 +36,12 @@ export function saveBoxLabelSettings(settings: BoxLabelSettings) {
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* 저장 못 해도 이번 화면에서는 쓴다 */ }
 }
 
+/** http 이면서 localhost 가 아닌 페이지 — 브라우저가 로컬 에이전트 요청을 막는 경우 */
+function isInsecureRemotePage() {
+  const { protocol, hostname } = window.location;
+  return protocol === "http:" && hostname !== "localhost" && hostname !== "127.0.0.1";
+}
+
 interface BoxLabelPayload {
   packBarcode: string;
   modelName: string;
@@ -65,6 +71,10 @@ export async function printBoxLabel(packBarcode: string, copies: number, printer
     });
   } catch (error: unknown) {
     if (error instanceof PrintAgentUnavailableError) {
+      // 브라우저(Chrome/Edge)는 http 공인 주소 페이지가 PC 의 127.0.0.1 로 요청하는 것을 막는다 (2026-10-13 실측, Chrome 153)
+      if (isInsecureRemotePage()) {
+        throw new Error(`이 주소(${window.location.origin})에서는 브라우저가 PC 의 출력 에이전트 연결을 막습니다. MES 를 https 주소로 열어야 박스라벨을 찍을 수 있습니다.`);
+      }
       throw new Error("이 PC 에서 출력 에이전트가 실행 중이 아닙니다. 화면 위쪽 프린터 아이콘에서 Print Agent 를 설치·실행하세요.");
     }
     throw new Error(`BarTender 출력 실패: ${error instanceof Error ? error.message : String(error)}`);
