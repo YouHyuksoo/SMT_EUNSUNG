@@ -374,7 +374,7 @@
     "production.repair": "Repair Management",
     "quality": "Quality",
     "quality.iqc": "IQC",
-    "quality.repairQuery": "Process Repair Summary",
+    "quality.repairQuery": "Process Repair Analysis",
     "quality.iqcHistory": "IQC History Entry",
     "quality.pidIssueScan": "PCB Issue Scan",
     "quality.pidHolding": "PID Holding",

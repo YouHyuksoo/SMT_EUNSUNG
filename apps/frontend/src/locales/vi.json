@@ -374,7 +374,7 @@
     "production.repair": "Quản lý sửa chữa",
     "quality": "Quản lý chất lượng",
     "quality.iqc": "Quản lý IQC",
-    "quality.repairQuery": "Tổng hợp sửa chữa công đoạn",
+    "quality.repairQuery": "Phân tích sửa chữa công đoạn",
     "quality.iqcHistory": "Đăng ký lịch sử IQC",
     "quality.pidIssueScan": "Quét sự cố PCB",
     "quality.pidHolding": "Giữ PID",

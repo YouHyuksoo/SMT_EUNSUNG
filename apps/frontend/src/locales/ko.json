@@ -374,7 +374,7 @@
     "production.repair": "수리관리",
     "quality": "품질관리",
     "quality.iqc": "IQC 관리",
-    "quality.repairQuery": "공정수리이력조회",
+    "quality.repairQuery": "공정수리이력분석",
     "quality.iqcHistory": "IQC 이력등록관리",
     "quality.pidIssueScan": "PCB 이슈발생스캔",
     "quality.pidHolding": "PID 홀딩관리",

@@ -2,7 +2,7 @@
 
 /**
  * @file src/app/(authenticated)/quality/repair-query/page.tsx
- * @description 281 공정수리이력조회 — PB w_pln_product_pcb_repair_query 이식 (조회 전용)
+ * @description 281 공정수리이력분석 — PB w_pln_product_pcb_repair_query 이식 (조회 전용)
  *
  * 초보자 가이드:
  * 1. **공정에서 난 불량이 언제·어디서 얼마나 났는지 모아 보는 화면이다.**
@@ -76,7 +76,7 @@ export default function RepairQueryPage() {
   return (
     <div className="flex h-full flex-col gap-4 p-6">
       <header>
-        <h1 className="text-xl font-bold text-text">공정수리이력조회</h1>
+        <h1 className="text-xl font-bold text-text">공정수리이력분석</h1>
         <p className="mt-1 text-sm text-text-muted">
           공정 불량을 날짜별·위치별로 모아 봅니다 ·{' '}
           {searched
