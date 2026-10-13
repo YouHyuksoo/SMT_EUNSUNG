@@ -50,10 +50,10 @@ const PLAN_SELECT = {
            p.MFS AS "mfsGroupNo", 'A' AS "shiftCode", 'P' AS "productionType",
            p.CUSTOMER_CODE AS "customerCode", NVL(p.PLAN_STATUS, 'W') AS "planStatus",
            p.PLAN_QTY AS "planQty", p.PLAN_QTY AS "lotQty",
-           -- 후공정 지시는 공정마다 따로 내린다 — 남은 수량은 고른 공정의 런카드만 뺀다 (공정 미선택이면 전체)
+           -- 후공정 지시는 공정마다 따로 내린다 — 남은 수량은 고른 공정의 런카드와 공정 미지정(예전) 런카드를 뺀다 (공정 미선택이면 전체)
            p.PLAN_QTY - NVL((SELECT SUM(rc.LOT_SIZE) FROM IP_PRODUCT_RUN_CARD rc
              WHERE rc.LOT_NO = p.MFS AND rc.ORGANIZATION_ID = p.ORGANIZATION_ID
-               AND (:workstageCode IS NULL OR rc.WORKSTAGE_CODE = :workstageCode)), 0) AS "remainQty"
+               AND (:workstageCode IS NULL OR rc.WORKSTAGE_CODE = :workstageCode OR rc.WORKSTAGE_CODE IS NULL)), 0) AS "remainQty"
       FROM IP_PRODUCT_MI_PLAN p, ID_ITEM i
      WHERE p.ITEM_CODE = i.ITEM_CODE(+) AND p.ORGANIZATION_ID = i.ORGANIZATION_ID(+)
        AND p.ORGANIZATION_ID = :organizationId`,
@@ -401,12 +401,21 @@ export class LotCardService {
         );
       }
 
-      // 후공정 지시는 공정마다 따로 내려가 한 계획(LOT_NO)에 런카드가 여럿이다. PID 는 제품마다 한 벌이라
-      // 같은 계획의 다른 런카드에 이미 있으면 만들지 않는다 (PID_INSERT 가 LOT_NO 를 같이 넣는다).
+      // 후공정 지시는 공정마다 따로 내려가 한 계획(LOT_NO)에 런카드가 공정 수만큼 있다. PID 는 제품마다 한 벌이라
+      // 같은 계획의 다른 공정 런카드에 이미 있으면 만들지 않는다. SMD 와 같은 공정 분할 런카드는 대상이 아니다.
+      // PID 표(1.8억 행)는 LOT_NO 인덱스가 없어 런카드에서 형제를 찾고 RUN_NO 인덱스로 PID 유무만 본다.
       const sibling = await m.query(
-        `SELECT MIN(b.RUN_NO) AS "runNo" FROM IP_PRODUCT_2D_BARCODE b
-          WHERE b.LOT_NO = :lotNo AND b.RUN_NO <> :runNo AND b.ORGANIZATION_ID = :organizationId`,
-        namedBinds({ lotNo: card.lotNo, runNo, organizationId }),
+        `SELECT MIN(rc.RUN_NO) AS "runNo"
+           FROM IP_PRODUCT_RUN_CARD me
+           JOIN IP_PRODUCT_RUN_CARD rc
+             ON rc.LOT_NO = me.LOT_NO AND rc.ORGANIZATION_ID = me.ORGANIZATION_ID
+            AND rc.RUN_NO <> me.RUN_NO AND rc.WORKSTAGE_CODE <> me.WORKSTAGE_CODE
+          WHERE me.RUN_NO = :runNo AND me.ORGANIZATION_ID = :organizationId
+            AND EXISTS (SELECT 1 FROM IP_PRODUCT_MI_PLAN mp
+                         WHERE mp.MFS = me.LOT_NO AND mp.ORGANIZATION_ID = me.ORGANIZATION_ID)
+            AND EXISTS (SELECT 1 FROM IP_PRODUCT_2D_BARCODE b
+                         WHERE b.RUN_NO = rc.RUN_NO AND b.ORGANIZATION_ID = rc.ORGANIZATION_ID)`,
+        namedBinds({ runNo, organizationId }),
       ) as Array<{ runNo: string | null }>;
       if (sibling[0]?.runNo) {
         throw new ConflictException(`같은 계획의 다른 공정 지시(${sibling[0].runNo})에 PID 가 이미 있습니다. PID 는 계획당 한 번만 만듭니다.`);
