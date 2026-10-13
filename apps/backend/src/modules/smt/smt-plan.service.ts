@@ -27,6 +27,7 @@ import {
   SmtPlanDeployDto,
   SmtPlanQueryDto,
   SmtPlanSetActiveDto,
+  SmtPlanSummaryQueryDto,
 } from './smt-plan.dto';
 import { namedBinds } from '../../common/utils/named-binds.util';
 
@@ -132,6 +133,42 @@ export class SmtPlanService {
           AND l.LINE_DIVISION = 'D'
         ORDER BY l.MES_DISPLAY_SEQUENCE, l.LINE_NAME`,
       namedBinds({ organizationId }),
+    )) as Record<string, unknown>[];
+  }
+
+  /**
+   * 배포 요약(Summary) — PB d_smt_plandata_lst 와 같이 라인·모델·PCB면(·SMT모델)별로 묶는다.
+   * 이 행을 고르면 아래 피더 배치(find)를 라인·모델·면·피더축으로 읽는다.
+   * PB 는 조직 조건이 없었다 — 여기서는 조직으로 거른다.
+   */
+  async findSummary(query: SmtPlanSummaryQueryDto, organizationId: number) {
+    const lineCode = (query.lineCode ?? '').trim();
+    const modelName = (query.modelName ?? '').trim();
+    if (!lineCode && !modelName) throw new BadRequestException('라인이나 모델 중 하나는 골라야 합니다.');
+    return (await this.dataSource.query(
+      `SELECT MAX(d.ACTIVE_YN) AS "activeYn",
+              MAX(d.PLAN_DATE) AS "planDate",
+              d.MODEL_NAME AS "modelName",
+              d.LINE_CODE AS "lineCode",
+              MAX(m.MODEL_SPEC) AS "modelSpec",
+              MAX(d.MODEL_SUFFIX) AS "modelSuffix",
+              d.PCB_ITEM AS "pcbItem",
+              MAX(d.FEEDER_SHAFT) AS "feederShaft",
+              m.SMT_MODEL_NAME AS "masterSmtModelName",
+              d.SMT_MODEL_NAME AS "smtModelName",
+              MAX(d.REVISION) AS "revision",
+              -- 모델마스터에 같은 SMT 모델이 여러 행이면 조인으로 늘어나므로 계획 행을 따로 센다
+              COUNT(DISTINCT d.ROWID) AS "planRows"
+         FROM IB_PRODUCT_PLANDATA d
+         LEFT JOIN IP_PRODUCT_MODEL_MASTER m
+                ON m.SMT_MODEL_NAME = d.SMT_MODEL_NAME AND m.ORGANIZATION_ID = d.ORGANIZATION_ID
+        WHERE d.ORGANIZATION_ID = :organizationId
+          AND (:lineCode IS NULL OR d.LINE_CODE = :lineCode)
+          AND (:modelName IS NULL OR d.MODEL_NAME = :modelName)
+          AND NVL(d.REVISION, '0000') LIKE :revision
+        GROUP BY d.MODEL_NAME, d.LINE_CODE, d.PCB_ITEM, m.SMT_MODEL_NAME, d.SMT_MODEL_NAME
+        ORDER BY MAX(d.ACTIVE_YN) DESC, d.LINE_CODE, d.MODEL_NAME, d.PCB_ITEM, MAX(d.FEEDER_SHAFT)`,
+      namedBinds({ organizationId, lineCode: lineCode || null, modelName: modelName || null, revision: this.like(query.revision) }),
     )) as Record<string, unknown>[];
   }
 

@@ -37,6 +37,21 @@ export class SmtPlanQueryDto {
   activeYn?: 'Y' | 'N';
 }
 
+/** 라인별 배포 요약(Summary) — PB d_smt_plandata_lst. 라인이나 모델 중 하나는 받는다. */
+export class SmtPlanSummaryQueryDto {
+  @ApiPropertyOptional({ description: '라인코드 (등호)' })
+  @IsOptional() @IsString() @Length(0, 30)
+  lineCode?: string;
+
+  @ApiPropertyOptional({ description: '모델명 (등호). 비우면 그 라인의 전 모델' })
+  @IsOptional() @IsString() @Length(0, 100)
+  modelName?: string;
+
+  @ApiPropertyOptional({ description: '리비전 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 10)
+  revision?: string;
+}
+
 /** 배포 — PKG_MES_SMT.SP_SMT_PLAN_DEPLOY. PCB 면은 등호 조건이라 필수다. */
 export class SmtPlanDeployDto {
   @ApiProperty() @IsString() @Length(1, 30)

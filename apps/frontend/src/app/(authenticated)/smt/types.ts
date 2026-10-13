@@ -168,6 +168,22 @@ export interface SmtPlanRow {
 }
 
 /** 라인별 배포 요약 (IP_PRODUCT_LINE 기준) */
+/** 배포 요약 (PB d_smt_plandata_lst) — 라인·모델·PCB면별 한 줄 */
+export interface SmtPlanSummaryRow {
+  activeYn: string | null;
+  planDate: string | null;
+  modelName: string;
+  lineCode: string;
+  modelSpec: string | null;
+  modelSuffix: string | null;
+  pcbItem: string | null;
+  feederShaft: string | null;
+  masterSmtModelName: string | null;
+  smtModelName: string | null;
+  revision: string | null;
+  planRows: number;
+}
+
 export interface SmtPlanLineRow {
   lineCode: string;
   lineName: string | null;

@@ -8,6 +8,7 @@ import {
   SmtPlanDeployDto,
   SmtPlanQueryDto,
   SmtPlanSetActiveDto,
+  SmtPlanSummaryQueryDto,
 } from './smt-plan.dto';
 import { SmtPlanService } from './smt-plan.service';
 
@@ -32,6 +33,14 @@ export class SmtPlanController {
   })
   async findLineSummary(@OrganizationId() organizationId: number) {
     return ResponseUtil.success(await this.service.findLineSummary(organizationId));
+  }
+
+  @Get('summary')
+  @ApiOperation({
+    summary: '라인·모델·PCB면별 배포 요약 (PB d_smt_plandata_lst, 화면 오른쪽 위 Summary). 라인이나 모델 필수',
+  })
+  async findSummary(@Query() query: SmtPlanSummaryQueryDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.findSummary(query, organizationId));
   }
 
   @Post('deploy')
