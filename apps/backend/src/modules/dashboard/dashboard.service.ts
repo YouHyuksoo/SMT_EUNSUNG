@@ -27,6 +27,7 @@ import { sqlMslNgCount, sqlSolderNgCount } from '@smt/shared';
 import { OracleService } from '../../common/services/oracle.service';
 import { namedBinds } from '../../common/utils/named-binds.util';
 import { DASHBOARD_ACTUAL_SUM, DASHBOARD_INSIGHTS_SQL } from './dashboard-insights.sql';
+import { MI_ORDER_RESULTS_SQL } from '../planning/order-result.sql';
 
 const PKG = 'PKG_DASHBOARD';
 const ORG = 1;
@@ -110,8 +111,10 @@ export class DashboardService {
                   WHERE v.RECEIPT_DATE = ${day}) AS "smdActual",
                 (SELECT NVL(SUM(p.PLAN_QTY), 0) FROM IP_PRODUCT_MI_PLAN p
                   WHERE p.ORGANIZATION_ID = ${ORG} AND p.PLAN_DATE = ${day}) AS "miPlan",
-                (SELECT NVL(SUM(${ACTUAL_SUM}), 0) FROM IP_PRODUCT_ACTUAL_TIME_V v
-                  WHERE v.ACTUAL_DATE = ${day}) AS "miActual"
+                (SELECT NVL(SUM(x.RESULT_QTY), 0) FROM (${MI_ORDER_RESULTS_SQL}) x
+                  WHERE x.ORGANIZATION_ID = ${ORG}
+                    AND x.ENTER_DATE >= ${day} - 1 AND x.ENTER_DATE < ${day} + 2
+                    AND F_GET_WORK_ACTUAL_DATE(x.ENTER_DATE, 'A') = ${day}) AS "miActual"
            FROM DUAL`,
         { day: date },
       ),
