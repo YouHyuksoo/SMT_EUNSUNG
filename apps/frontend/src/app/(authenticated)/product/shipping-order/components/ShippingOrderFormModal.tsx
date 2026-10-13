@@ -101,7 +101,7 @@ export default function ShippingOrderFormModal({ isOpen, order, onClose, onSaved
           <label className="text-sm text-text-muted" htmlFor="ship-plan-date">납기일</label>
           <Input id="ship-plan-date" type="date" value={planDate} onChange={(e) => setPlanDate(e.target.value)} />
           <span className="text-sm text-text-muted">고객</span>
-          <CustomerSelect aria-label="고객" value={customerCode} onChange={setCustomerCode} fullWidth />
+          <CustomerSelect aria-label="고객" placeholder="고객 선택" value={customerCode} onChange={setCustomerCode} fullWidth />
           <span className="text-sm text-text-muted">모델</span>
           <ModelSearchField aria-label="모델" value={modelName} onChange={(v) => setModelName(v)} disabled={shipped} />
           <label className="text-sm text-text-muted" htmlFor="ship-plan-qty">수량</label>
