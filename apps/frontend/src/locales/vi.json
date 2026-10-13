@@ -481,7 +481,7 @@
     "oee.equipOpsAnalysis": "Tình trạng & phân tích vận hành thiết bị",
     "oee.equipDowntimeMobile": "Quét dừng máy (Mock)",
     "oee.standardTime": "Quản lý thời gian tiêu chuẩn",
-    "oee.idleReason": "Mã lý do dừng thiết bị",
+    "oee.idleReason": "Danh mục lý do dừng máy",
     "oee.equipReason": "Liên kết lý do dừng theo thiết bị",
     "oee.resource": "Quản lý tài nguyên OEE",
     "production.runCard": "Quản lý lệnh sản xuất",

@@ -476,7 +476,7 @@
     "oee.multiEntry": "OEE 비가동 입력",
     "oee.resultEntry": "OEE 실적 입력",
     "oee.standardTime": "표준시간 관리",
-    "oee.idleReason": "설비 비가동 사유코드",
+    "oee.idleReason": "비가동사유마스터",
     "oee.equipReason": "설비별 비가동 사유 연계",
     "oee.resource": "OEE 라인 관리",
     "oee.equipWorkResult": "설비별 작업 실적관리",

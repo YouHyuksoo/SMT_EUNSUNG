@@ -476,7 +476,7 @@
     "oee.multiEntry": "OEE Downtime Entry",
     "oee.resultEntry": "Tablet Result Entry",
     "oee.standardTime": "Standard Time",
-    "oee.idleReason": "Equipment Downtime Reason",
+    "oee.idleReason": "Downtime Reason Master",
     "oee.equipReason": "Equipment-Downtime Reason Mapping",
     "oee.resource": "OEE Resource Management",
     "oee.equipWorkResult": "Equipment Work Result",
