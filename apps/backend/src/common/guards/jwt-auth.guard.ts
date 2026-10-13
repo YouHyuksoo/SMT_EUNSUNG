@@ -62,51 +62,31 @@ export class JwtAuthGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (isPublic) return true;
-
     const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractTokenFromHeader(request); // = USER_ID
+
+    // @Public 라우트는 인증을 요구하지 않지만, 토큰이 오면 사용자를 채워 둔다.
+    // 그래야 ADMIN 의 GET 응답에 그리드 SQL 조회문(meta.debugSql)이 붙는다. 실패는 무시한다.
+    if (isPublic) {
+      if (token) {
+        try {
+          const publicUser = await this.resolveUser(request, token);
+          if (publicUser?.organizationId != null) setRequestUser(request, publicUser);
+        } catch (error) {
+          this.logger.debug(`Public route user lookup skipped: ${getErrorMessage(error)}`);
+        }
+      }
+      return true;
+    }
 
     if (!token) {
       throw new UnauthorizedException('인증 토큰이 필요합니다.');
     }
 
     try {
-      const companyHeader = request.headers['x-company'] as string | undefined;
-      const plantHeader = request.headers['x-plant'] as string | undefined;
-      const cacheKey = `${token}|${companyHeader ?? ''}|${plantHeader ?? ''}`;
-      const now = Date.now();
-      const cached = this.cache.get(cacheKey);
-
-      let resolvedUser: RequestUser;
-      if (cached && cached.expiresAt > now) {
-        resolvedUser = cached.user;
-      } else {
-        const user = await this.userRepository.findOne({ where: { userId: token } });
-        if (!user) {
-          this.cache.delete(cacheKey);
-          throw new UnauthorizedException('유효하지 않은 토큰입니다.');
-        }
-        const org = await this.orgRepository.findOne({
-          where: { organizationId: user.organizationId },
-        });
-        const company = companyHeader || org?.companyCode || '';
-        const plant = plantHeader || String(user.organizationId);
-
-        resolvedUser = {
-          id: user.userId,
-          email: user.emailAddress || user.userId,
-          role: this.roleFromLevel(user.userLevel),
-          organizationId: user.organizationId,
-          company,
-          plant,
-        };
-        this.cache.set(cacheKey, { user: resolvedUser, expiresAt: now + USER_CACHE_TTL_MS });
-        if (this.cache.size > 500) {
-          for (const [k, v] of this.cache) {
-            if (v.expiresAt <= now) this.cache.delete(k);
-          }
-        }
+      const resolvedUser = await this.resolveUser(request, token);
+      if (!resolvedUser) {
+        throw new UnauthorizedException('유효하지 않은 토큰입니다.');
       }
 
       if (resolvedUser.organizationId == null) {
@@ -129,6 +109,43 @@ export class JwtAuthGuard implements CanActivate {
       this.logger.warn(`Authentication failed: ${getErrorMessage(error)}`);
       throw new UnauthorizedException('유효하지 않은 토큰입니다.');
     }
+  }
+
+  /** 토큰(USER_ID)으로 사용자를 찾는다. 없으면 undefined. 60초 캐시. */
+  private async resolveUser(request: Request, token: string): Promise<RequestUser | undefined> {
+    const companyHeader = request.headers['x-company'] as string | undefined;
+    const plantHeader = request.headers['x-plant'] as string | undefined;
+    const cacheKey = `${token}|${companyHeader ?? ''}|${plantHeader ?? ''}`;
+    const now = Date.now();
+    const cached = this.cache.get(cacheKey);
+    if (cached && cached.expiresAt > now) return cached.user;
+
+    const user = await this.userRepository.findOne({ where: { userId: token } });
+    if (!user) {
+      this.cache.delete(cacheKey);
+      return undefined;
+    }
+    const org = await this.orgRepository.findOne({
+      where: { organizationId: user.organizationId },
+    });
+    const company = companyHeader || org?.companyCode || '';
+    const plant = plantHeader || String(user.organizationId);
+
+    const resolvedUser: RequestUser = {
+      id: user.userId,
+      email: user.emailAddress || user.userId,
+      role: this.roleFromLevel(user.userLevel),
+      organizationId: user.organizationId,
+      company,
+      plant,
+    };
+    this.cache.set(cacheKey, { user: resolvedUser, expiresAt: now + USER_CACHE_TTL_MS });
+    if (this.cache.size > 500) {
+      for (const [k, v] of this.cache) {
+        if (v.expiresAt <= now) this.cache.delete(k);
+      }
+    }
+    return resolvedUser;
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {

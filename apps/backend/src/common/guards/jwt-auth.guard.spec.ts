@@ -70,6 +70,30 @@ describe('JwtAuthGuard', () => {
     expect(userRepository.findOne).not.toHaveBeenCalled();
   });
 
+  it('fills request.user on @Public() handlers when a valid token is sent (그리드 SQL 조회문용)', async () => {
+    const { guard, reflector } = createGuard({ ...operator, userLevel: 9 });
+    reflector.getAllAndOverride.mockReturnValue(true);
+    const { context, request } = createContext('GET');
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect(request.user).toMatchObject({ id: 'USER01', role: 'ADMIN', organizationId: 1 });
+  });
+
+  it('still allows @Public() handlers when the token is unknown or lookup fails', async () => {
+    const unknown = createGuard(null);
+    unknown.reflector.getAllAndOverride.mockReturnValue(true);
+    const first = createContext('GET');
+    await expect(unknown.guard.canActivate(first.context)).resolves.toBe(true);
+    expect(first.request.user).toBeUndefined();
+
+    const failing = createGuard(operator);
+    failing.reflector.getAllAndOverride.mockReturnValue(true);
+    failing.userRepository.findOne.mockRejectedValue(new Error('ORA-12170'));
+    const second = createContext('GET');
+    await expect(failing.guard.canActivate(second.context)).resolves.toBe(true);
+    expect(second.request.user).toBeUndefined();
+  });
+
   it('rejects requests without bearer token', async () => {
     const { guard } = createGuard(operator);
     const { context, request } = createContext('GET');

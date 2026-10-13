@@ -38,8 +38,11 @@ export function recordSqlDebugQuery(sql: string, parameters?: unknown[]): void {
   }
 }
 
+/** 조회문 판정 — 앞쪽 주석·여는 괄호를 건너뛰고 SELECT 또는 WITH(CTE)로 시작하면 조회문이다. */
+const LEADING_SELECT_PATTERN = /^\s*(?:(?:--[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/|\()\s*)*(?:SELECT|WITH)\b/i;
+
 function isSelectSql(sql: string): boolean {
-  return sql.trimStart().toUpperCase().startsWith('SELECT');
+  return LEADING_SELECT_PATTERN.test(sql);
 }
 
 export function extractSqlTables(sql: string): string[] {
