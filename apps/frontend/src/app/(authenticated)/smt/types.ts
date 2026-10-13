@@ -259,6 +259,10 @@ export interface SmtBomExplodeRow {
 
 /** PB IB_MNT_PLANDATA — 적재된 마운터 배치표 */
 export interface SmtNcRow {
+  /** 작업표 행 위치 (ROWID) — 키가 없는 작업표라 한 줄 삭제에 쓴다 */
+  rowKey: string;
+  /** 품번이 품목마스터에 있는가 — 없으면 [적용]이 거부된다 */
+  itemExists: 'Y' | 'N';
   lineCode: string | null;
   machineCode: string | null;
   machineGroup: string | null;

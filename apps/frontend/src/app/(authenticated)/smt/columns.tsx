@@ -344,7 +344,13 @@ export const smtNcColumns: ColumnDef<SmtNcRow>[] = [
   { accessorKey: 'tableId', header: '테이블', size: 80 },
   { accessorKey: 'address', header: '주소', size: 80 },
   { accessorKey: 'position', header: '위치', size: 110 },
-  { accessorKey: 'partName', header: '부품코드', size: 150 },
+  {
+    accessorKey: 'partName', header: '부품코드', size: 150,
+    // 품목마스터에 없는 품번은 [적용]이 거부된다 — 빨갛게 표시해 품번 교체·삭제 대상을 보인다
+    cell: (c) => (c.row.original.itemExists === 'N'
+      ? <span className="font-semibold text-red-500" title="품목마스터에 없는 품번">{String(c.getValue() ?? '')}</span>
+      : String(c.getValue() ?? '')),
+  },
   { accessorKey: 'partItemName', header: '부품명', size: 180 },
   { accessorKey: 'chipName', header: 'CHIP명', size: 130 },
   { accessorKey: 'pcbItem', header: 'PCB면', size: 90 },
