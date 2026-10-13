@@ -5,16 +5,18 @@
  * @description 공정폐기관리 — PB w_pln_product_pcb_destroy_master 이식
  *
  * 초보자 가이드:
- * 1. **폐기등록 모드**: 시리얼을 붙여넣고 불량사유를 고른 뒤 실행하면 시리얼마다
+ * 1. **폐기등록 모드**: 시리얼을 스캔해 목록에 쌓고 불량사유·부서를 고른 뒤 실행하면 시리얼마다
  *    IP_PRODUCT_WORK_QC 에 검사처리 'D'(폐기) 행이 1건 쌓인다. 행 삭제가 아니다.
  * 2. **반품/반품취소**: 폐기 행의 불량구분을 1(입고) ↔ 2(반품) 로 토글한다.
  * 3. **이력조회 모드**: 검사처리 'D' 만 모아 본다.
  */
 import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
-import { RefreshCw, RotateCcw, Search, Trash2 } from 'lucide-react';
+import { RotateCcw, Search, Trash2, X } from 'lucide-react';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import DepartmentSelect from '@/components/shared/DepartmentSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
 import ModelSearchField from '@/components/shared/ModelSearchField';
@@ -35,8 +37,9 @@ export default function ProductDestroyPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   // 폐기등록 모드
-  const [serialText, setSerialText] = useState('');
+  const [serials, setSerials] = useState<string[]>([]);
   const [badReasonCode, setBadReasonCode] = useState('');
+  const [departmentCode, setDepartmentCode] = useState('');
   const [fallbackLineCode, setFallbackLineCode] = useState('');
   const [fallbackWorkstageCode, setFallbackWorkstageCode] = useState('');
   const [destroyList, setDestroyList] = useState<ProductDestroyRow[]>([]);
@@ -56,8 +59,6 @@ export default function ProductDestroyPage() {
   const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
 
-  const serials = parseSerials(serialText);
-
   const loadSerial = useCallback(async (target: string) => {
     if (!target) return;
     try {
@@ -69,6 +70,14 @@ export default function ProductDestroyPage() {
       setIssueList([]);
     }
   }, []);
+
+  // 스캔 한 번에 시리얼 하나가 들어오지만, 여러 개를 붙여넣어도 나눠서 쌓는다
+  const addSerials = useCallback(async (value: string) => {
+    const scanned = parseSerials(value);
+    if (scanned.length === 0) return;
+    setSerials(prev => [...prev, ...scanned.filter(s => !prev.includes(s))]);
+    await loadSerial(scanned[scanned.length - 1]);
+  }, [loadSerial]);
 
   const searchHistory = useCallback(async () => {
     setLoading(true);
@@ -101,6 +110,7 @@ export default function ProductDestroyPage() {
     try {
       const response = await api.post('/quality/product-destroy', {
         badReasonCode,
+        departmentCode,
         fallbackLineCode: fallbackLineCode || undefined,
         fallbackWorkstageCode: fallbackWorkstageCode || undefined,
         serialNos: serials,
@@ -116,7 +126,7 @@ export default function ProductDestroyPage() {
     } finally {
       setRunning(false);
     }
-  }, [badReasonCode, fallbackLineCode, fallbackWorkstageCode, loadSerial, serials]);
+  }, [badReasonCode, departmentCode, fallbackLineCode, fallbackWorkstageCode, loadSerial, serials]);
 
   const toggleIssue = useCallback(async (path: 'issue' | 'issue-cancel', row: ProductDestroyRow | null) => {
     if (!row) return;
@@ -170,34 +180,29 @@ export default function ProductDestroyPage() {
       {mode === 'DESTROY' ? (
         <>
           <Card className="shrink-0" padding="sm">
-            <div className="flex flex-wrap items-start gap-3">
-              <div className="flex min-w-[320px] flex-1 flex-col gap-1">
-                <span className="text-xs text-text-muted">시리얼 목록 (줄바꿈·공백·쉼표 구분) — {serials.length}건</span>
-                <textarea
-                  aria-label="시리얼 목록"
-                  value={serialText}
-                  onChange={e => setSerialText(e.target.value)}
-                  rows={4}
-                  placeholder="시리얼을 붙여넣거나 스캔하세요"
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm text-text"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <ComCodeSelect groupCode="BAD REASON CODE" includeAll={false} aria-label="불량사유" placeholder="불량사유 선택" value={badReasonCode} onChange={value => setBadReasonCode(value)} className="w-52" />
-                <LineSelect aria-label="라인(대체값)" labelPrefix="라인" value={fallbackLineCode} onChange={value => setFallbackLineCode(value)} className="w-52" />
-                <ProcessSelect aria-label="공정(대체값)" labelPrefix="공정" value={fallbackWorkstageCode} onChange={value => setFallbackWorkstageCode(value)} className="w-52" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Button size="sm" onClick={() => setConfirmOpen(true)} disabled={serials.length === 0 || !badReasonCode || running}>
-                  <Trash2 className="mr-1 h-4 w-4" />폐기 실행
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => { setSerialText(''); setOutcome(null); setDestroyList([]); setIssueList([]); }}>
-                  <RotateCcw className="mr-1 h-4 w-4" />초기화
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => loadSerial(serials[0] ?? '')} disabled={serials.length === 0}>
-                  <RefreshCw className="mr-1 h-4 w-4" />현황 조회
-                </Button>
-              </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <BarcodeScanInput aria-label="시리얼 스캔" placeholder="시리얼 스캔" autoClear onScan={addSerials} className="w-52" />
+              <ComCodeSelect groupCode="BAD REASON CODE" includeAll={false} aria-label="불량사유" placeholder="불량사유 선택" value={badReasonCode} onChange={value => setBadReasonCode(value)} className="w-40" />
+              <DepartmentSelect aria-label="부서" placeholder="부서 선택" value={departmentCode} onChange={value => setDepartmentCode(value)} className="w-36" />
+              <LineSelect aria-label="라인(대체값)" labelPrefix="라인" value={fallbackLineCode} onChange={value => setFallbackLineCode(value)} className="w-36" />
+              <ProcessSelect aria-label="공정(대체값)" labelPrefix="공정" value={fallbackWorkstageCode} onChange={value => setFallbackWorkstageCode(value)} className="w-40" />
+              <Button size="sm" onClick={() => setConfirmOpen(true)} disabled={serials.length === 0 || !badReasonCode || !departmentCode || running}>
+                <Trash2 className="mr-1 h-4 w-4" />폐기 실행
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => { setSerials([]); setOutcome(null); setDestroyList([]); setIssueList([]); }}>
+                <RotateCcw className="mr-1 h-4 w-4" />초기화
+              </Button>
+            </div>
+            <div className="mt-2 flex max-h-20 flex-wrap items-center gap-1 overflow-y-auto text-xs">
+              <span className="mr-1 text-text-muted">스캔 {serials.length}건</span>
+              {serials.map(serial => (
+                <span key={serial} className="flex items-center gap-1 rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-text">
+                  <button type="button" data-tooltip="이 시리얼의 폐기·반품 현황 보기" onClick={() => loadSerial(serial)} className="hover:text-primary">{serial}</button>
+                  <button type="button" aria-label={`${serial} 빼기`} onClick={() => setSerials(prev => prev.filter(s => s !== serial))} className="text-text-muted hover:text-red-600">
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
             </div>
             {outcome && (
               <div className="mt-2 flex flex-wrap gap-3 text-sm">

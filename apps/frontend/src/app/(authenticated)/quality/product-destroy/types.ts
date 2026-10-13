@@ -14,6 +14,8 @@ export interface ProductDestroyRow {
   qcResult: string | null;
   receiptDeficit: string | null;
   qcInspectHandling: string | null;
+  departmentCode: string | null;
+  departmentName: string | null;
   badQty: number | null;
   defectQty: number | null;
   qcDate: string | null;

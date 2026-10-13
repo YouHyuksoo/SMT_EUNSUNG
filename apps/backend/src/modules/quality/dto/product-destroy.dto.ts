@@ -24,6 +24,8 @@ export class ProductDestroySerialQueryDto {
 /** 폐기 등록 — PB cb_2(Destroy) 가 시리얼 목록을 순회하며 실행한다 */
 export class ProductDestroyExecuteDto {
   @IsString() @IsNotEmpty() badReasonCode!: string;
+  /** 폐기를 낸 부서 (ISYS_DEPARTMENT.DEPARTMENT_CODE) */
+  @IsString() @IsNotEmpty() departmentCode!: string;
   /** IP_PRODUCT_WORKSTAGE_IO 에 이력이 없을 때 쓰는 대체값 (PB 드롭다운). 없으면 '*' */
   @IsOptional() @IsString() fallbackLineCode?: string;
   @IsOptional() @IsString() fallbackWorkstageCode?: string;

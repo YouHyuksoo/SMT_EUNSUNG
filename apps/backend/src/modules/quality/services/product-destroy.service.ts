@@ -164,7 +164,7 @@ export class ProductDestroyService {
          ITEM_CODE, MODEL_NAME, MODEL_SUFFIX,
          LINE_CODE, WORKSTAGE_CODE, MACHINE_CODE,
          REPAIR_LINE_CODE, REPAIR_WORKSTAGE_CODE, LOCATION_CODE,
-         BAD_REASON_CODE, QC_RESULT, RECEIPT_DEFICIT, QC_INSPECT_HANDLING,
+         BAD_REASON_CODE, QC_RESULT, RECEIPT_DEFICIT, QC_INSPECT_HANDLING, DEPARTMENT_CODE,
          BAD_QTY, DEFECT_QTY, QC_DATE, SHIFT_CODE,
          CHARGER, REPAIR_BY, ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE
        ) VALUES (
@@ -172,14 +172,14 @@ export class ProductDestroyService {
          :itemCode, :modelName, :modelSuffix,
          :lineCode, :workstageCode, '*',
          '*', '*', '* *',
-         :badReasonCode, 'N', '${DEFICIT_RECEIPT}', 'D',
+         :badReasonCode, 'N', '${DEFICIT_RECEIPT}', 'D', :departmentCode,
          1, 1, SYSDATE, NVL(F_GET_WORK_SHIFT_CODE(SYSDATE), '1'),
          :userId, :userId, :userId, SYSDATE, :userId, SYSDATE
        )`,
       namedBinds({
         serialNo, organizationId,
         itemCode: barcode[0].itemCode, modelName: barcode[0].modelName, modelSuffix: barcode[0].modelSuffix,
-        lineCode, workstageCode, badReasonCode: dto.badReasonCode, userId,
+        lineCode, workstageCode, badReasonCode: dto.badReasonCode, departmentCode: dto.departmentCode, userId,
       }),
     );
 
@@ -239,6 +239,9 @@ export class ProductDestroyService {
              qc.QC_RESULT AS "qcResult",
              qc.RECEIPT_DEFICIT AS "receiptDeficit",
              qc.QC_INSPECT_HANDLING AS "qcInspectHandling",
+             qc.DEPARTMENT_CODE AS "departmentCode",
+             (SELECT d.DEPARTMENT_NAME_KOR FROM ISYS_DEPARTMENT d
+               WHERE d.DEPARTMENT_CODE = qc.DEPARTMENT_CODE AND d.ORGANIZATION_ID = qc.ORGANIZATION_ID) AS "departmentName",
              qc.BAD_QTY AS "badQty",
              qc.DEFECT_QTY AS "defectQty",
              qc.QC_DATE AS "qcDate",
