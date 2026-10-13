@@ -3,7 +3,7 @@ sources:
   - packages/shared/src/popups/catalog.ts
   - docs/database/generated/pb-popup-inventory.json
 generator: apps/frontend/scripts/gen-popup-status.mjs
-verifiedCommit: e72c84ab
+verifiedCommit: ddc07c8e
 ---
 
 # PB 팝업 이관 현황 (자동 생성)
@@ -24,7 +24,7 @@ PB 팝업 판정 기준은 파일명이 아니라 호출관계입니다 — 다�
 
 | 분류 | PB 팝업 | 연결가능 | 정의완료 | 제외 | 미착수 |
 |---|---:|---:|---:|---:|---:|
-| 검색선택형 | 92 | 10 | 0 | 0 | 82 |
+| 검색선택형 | 92 | 11 | 0 | 0 | 81 |
 | 조회전용 | 23 | 0 | 0 | 0 | 23 |
 | 복합/폼 | 54 | 0 | 0 | 0 | 54 |
 | 시스템/유틸 | 52 | 0 | 0 | 0 | 52 |
@@ -38,6 +38,7 @@ PB 팝업 판정 기준은 파일명이 아니라 호출관계입니다 — 다�
 | `equip-search` | 연결가능 | 설비검색 | `@/components/shared/EquipSearchModal` | `/equipment/equips` | `w_mcn_master_popup` | PB dataobject 는 d_mcn_machine_popup. |
 | `line-select` | 연결가능 | 라인선택 | `@/components/common/LineSelectModal` | `/api/display/lines` | `w_plan_line_workstage_popup` | display 계열 Next API Route 를 쓴다. 업무화면에서 재사용할 때 엔드포인트 확인 필요. |
 | `supplier-search` | 연결가능 | 공급처검색 | 엔진(SearchSelectModal) | `/popup-search/supplier-search` | `w_com_supplier_popup` | PB d_com_supplier_popup — ARG_SUPPLIER_CODE(앞자리 LIKE) / ARG_SUPPLIER_NAME(부분 LIKE), SUPPLIER_CODE <> '*' 제외 조건 포함. 금형 공급처 팝업은 업종 조건이 달라 별도 엔트리다. |
+| `jig-search` | 연결가능 | 지그검색 | 엔진(SearchSelectModal) | `/popup-search/jig-search` | `w_mcn_jig_popup` | PB d_mcn_jig_popup — IMCN_JIG, ARG_JIG_CODE·ARG_SUPPLIER_CODE(NVL(SUPPLIER_CODE,'*')) LIKE, JIG_CODE <> '*'. 연결: 지그 출고·수리 접수 패널과 수리신청 등록의 지그코드 칸. |
 | `customer-search` | 연결가능 | 고객검색 | 엔진(SearchSelectModal) | `/popup-search/customer-search` | `w_com_customer_popup` | PB d_com_customer_popup — 정렬도 PB 와 같다(BUSINESS_TYPE, CUSTOMER_CODE). CUSTOMER_CODE <> '*' 제외 조건과 NVL(SALE_CHARGE,'*') 비교를 그대로 옮겼다. |
 | `mold-supplier-search` | 연결가능 | 금형 공급처검색 | 엔진(SearchSelectModal) | `/popup-search/mold-supplier-search` | `w_com_mold_supplier_popup` | PB d_com_mold_supplier_popup — 공급처 팝업과 필터는 같지만 BUSINESS_CATEGORY = 'M' 조건이 더 있다. 그래서 공급처검색과 합치지 않았다. 은성 DB 는 현재 모든 공급처의 BUSINESS_CATEGORY 가 NULL 이라 결과가 0건이다. |
 | `mold-search` | 연결가능 | S-PARTS 검색 | 엔진(SearchSelectModal) | `/popup-search/mold-search` | `w_mcn_mold_popup` | PB d_mcn_mold_popup — IMCN_MOLD 기준 좌측 외부조인으로 재고·공급처를 붙인다. PB 의 MOLD_CODE <> '*' 제외 조건을 유지한다. 재고행이 없으면 버전·SET번호가 비어 나온다. 연결: app/(authenticated)/mold/components/MoldCodeField.tsx (S-PARTS 8화면 조회조건 + 주문 등록). |
@@ -62,7 +63,6 @@ PB 팝업 판정 기준은 파일명이 아니라 호출관계입니다 — 다�
 | 3 | `w_mat_item_barcode_inventory_popup` | 복합/폼 | 전역구조체 |  | ID_ITEM, IM_ITEM_ISSUE, IM_ITEM_RECEIPT, IM_ITEM_RECEIPT_BARCODE |
 | 3 | `w_mat_item_inventory_popup` | 검색선택형 | CloseWithReturn | item_code, item_name, item_spec, supplier_code, supplier_name, line_type, item_uom, item_type | IM_ITEM_INVENTORY |
 | 3 | `w_mat_new_item_set_msl_location_popup` | 검색선택형 | CloseWithReturn |  | ID_ITEM |
-| 3 | `w_mcn_jig_popup` | 검색선택형 | CloseWithReturn | jig_code | IMCN_JIG |
 | 3 | `w_pln_smd_plan_popup` | 검색선택형 | CloseWithReturn | item_code, parent_item_code, model_name, work_order_no, pcb_item, master_model_name, mfs_group_no, shift_code, line_code, production_type | IP_PRODUCT_RUN_CARD, IP_PRODUCT_SMD_PLAN |
 | 2 | `w_calendar_popup` | 복합/폼 |  |  |  |
 | 2 | `w_clipboard` | 조회전용 |  |  |  |
