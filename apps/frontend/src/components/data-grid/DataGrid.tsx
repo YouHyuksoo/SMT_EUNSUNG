@@ -121,6 +121,8 @@ export interface DataGridProps<T> {
   initialSorting?: SortingState;
   /** false 면 컬럼을 내용 폭으로만 두고 남는 오른쪽을 비운다 (기본 true: 그리드 폭을 꽉 채움) */
   fillWidth?: boolean;
+  /** 그리드에 포커스가 있을 때 ↑↓ 로 선택 행을 옮기고 onRowClick 을 부른다. selectedRowId·getRowId 가 함께 필요하다 (마스터-상세 화면용) */
+  keyboardRowNavigation?: boolean;
 }
 
 /** 행이 이보다 많으면 화면에 보이는 행만 그린다 */
@@ -159,6 +161,7 @@ function DataGrid<T>({
   sqlFilters,
   initialSorting,
   fillWidth = true,
+  keyboardRowNavigation = false,
 }: DataGridProps<T>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -295,6 +298,27 @@ function DataGrid<T>({
   const visibleStart = windowed ? Math.min(rowWindow.start, pageRows.length) : 0;
   const visibleEnd = windowed ? Math.min(rowWindow.end, pageRows.length) : pageRows.length;
   const spacerColSpan = table.getVisibleLeafColumns().length;
+
+  // ↑↓ 로 선택 행 이동 — 현재 페이지(정렬·필터 반영) 순서를 따른다. 필터 입력칸의 키는 건드리지 않는다
+  const handleRowKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!keyboardRowNavigation || !onRowClick || !getRowId || pageRows.length === 0) return;
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    if ((e.target as HTMLElement).closest('input, select, textarea, [contenteditable="true"]')) return;
+    e.preventDefault();
+    const current = pageRows.findIndex((row) => getRowId(row.original) === selectedRowId);
+    const next = current < 0 ? 0 : Math.min(pageRows.length - 1, Math.max(0, current + (e.key === 'ArrowDown' ? 1 : -1)));
+    if (next === current) return;
+    onRowClick(pageRows[next].original);
+    // 행 높이가 같으므로 위치를 계산해 보이게 한다 (가려 그리는 행도 마찬가지)
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const headHeight = el.querySelector('thead')?.getBoundingClientRect().height ?? 0;
+    const firstRow = el.querySelector<HTMLElement>('tbody tr[data-row]');
+    const h = firstRow?.getBoundingClientRect().height || rowHeightRef.current;
+    const top = headHeight + next * h;
+    if (top < el.scrollTop + headHeight) el.scrollTop = top - headHeight;
+    else if (top + h > el.scrollTop + el.clientHeight) el.scrollTop = top + h - el.clientHeight;
+  };
   const hasFooter = table.getVisibleLeafColumns().some((col) => col.columnDef.footer != null);
 
   const handleExport = useCallback(async (format: ExportFormat) => {
@@ -560,7 +584,9 @@ function DataGrid<T>({
       <div className="relative flex-1 min-h-0 flex flex-col">
         <div
           ref={scrollContainerRef}
-          className="relative overflow-auto rounded-[var(--radius)] border border-border flex-1"
+          tabIndex={keyboardRowNavigation ? 0 : undefined}
+          onKeyDown={keyboardRowNavigation ? handleRowKeyDown : undefined}
+          className="relative overflow-auto rounded-[var(--radius)] border border-border flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           style={maxHeight ? { maxHeight } : undefined}
         >
           {/* 로딩 오버레이 */}

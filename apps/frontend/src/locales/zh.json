@@ -482,7 +482,7 @@
     "oee.equipDowntimeMobile": "设备停机扫描（Mock）",
     "oee.standardTime": "标准时间管理",
     "oee.idleReason": "停机原因主数据",
-    "oee.equipReason": "设备停机原因关联",
+    "oee.equipReason": "设备停机代码管理",
     "oee.resource": "OEE资源管理",
     "production.runCard": "工单管理",
     "production.masterPlan": "产品生产计划",

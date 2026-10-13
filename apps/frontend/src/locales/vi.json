@@ -482,7 +482,7 @@
     "oee.equipDowntimeMobile": "Quét dừng máy (Mock)",
     "oee.standardTime": "Quản lý thời gian tiêu chuẩn",
     "oee.idleReason": "Danh mục lý do dừng máy",
-    "oee.equipReason": "Liên kết lý do dừng theo thiết bị",
+    "oee.equipReason": "Quản lý mã dừng máy theo thiết bị",
     "oee.resource": "Quản lý tài nguyên OEE",
     "production.runCard": "Quản lý lệnh sản xuất",
     "production.masterPlan": "Kế hoạch sản xuất sản phẩm",

@@ -2,7 +2,7 @@
 
 /**
  * @file (authenticated)/oee/master/equip-reason-map/page.tsx
- * @description 설비별 비가동 사유 연계 — 설비마스터(IMCN_MACHINE) × 비가동사유코드(IP_EQUIP_DOWNTIME_REASON) 매핑 등록·조회 (실 DB 연결)
+ * @description 설비별 비가동코드 관리 — 설비마스터(IMCN_MACHINE) × 비가동사유코드(IP_EQUIP_DOWNTIME_REASON) 매핑 등록·조회 (실 DB 연결)
  *
  * API(글로벌 prefix /api → 백엔드 /api/v1):
  *   GET/POST/PUT /oee/equip-reason-map , DELETE /oee/equip-reason-map/:machineCode
@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import Modal from '@/components/ui/Modal';
 import { Card, CardContent, Input } from '@/components/ui';
 import DataGrid from '@/components/data-grid/DataGrid';
+import EquipSearchModal, { type EquipItem } from '@/components/shared/EquipSearchModal';
 import api from '@/services/api';
 
 // 비가동 사유 구분 — 계획/비계획 (소스 고정 코드)
@@ -54,7 +55,6 @@ interface ApiMapRow {
   reasons: Array<{ reasonCode: string; reasonName: string | null; reasonType: string | null; oeeReflect: string | null; useYn: string | null }>;
   updatedBy: string | null; updatedAt: string | null;
 }
-interface ApiEquip { equipCode: string; equipName: string | null; equipType: string | null; lineCode: string | null; processCode: string | null; }
 interface ApiReason { reasonCode: string; reasonName: string | null; reasonType: string | null; oeeReflect: 'Y' | 'N' | null; useYn: 'Y' | 'N' | null; }
 
 interface EditForm extends MachineRef {
@@ -72,8 +72,8 @@ const reasonTailColumns: ColumnDef<MapReason>[] = [
 // 미사용 사유는 흐리게 — td 의 text-inherit 보다 우선하도록 td 에 직접 건다
 const unusedRowClass = (r: MapReason) => (r.useYn === 'N' ? '[&>td]:text-text-muted' : '');
 
-/** 목록 [사유 N건] 팝업 */
-const viewReasonColumns: ColumnDef<MapReason>[] = [
+/** 우측 — 선택한 설비의 비가동코드 */
+const detailReasonColumns: ColumnDef<MapReason>[] = [
   reasonCodeColumn,
   { accessorKey: 'reasonName', header: '사유명' },
   ...reasonTailColumns,
@@ -87,12 +87,9 @@ export default function EquipReasonMapPage() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<EditForm | null>(null);
   const [searchText, setSearchText] = useState('');
-  const [viewCode, setViewCode] = useState<string | null>(null); // 목록 사유 팝업
   const [deleteTarget, setDeleteTarget] = useState<MachineReasonRecord | null>(null);
   const [machinePickerOpen, setMachinePickerOpen] = useState(false);
   const [reasonPickerOpen, setReasonPickerOpen] = useState(false);
-  const [machines, setMachines] = useState<MachineRef[]>([]);
-  const [machineQuery, setMachineQuery] = useState('');
   const [activeReasons, setActiveReasons] = useState<MapReason[]>([]);
   const [pickerChecked, setPickerChecked] = useState<string[]>([]); // 사유선택 팝업 체크
   const [gridChecked, setGridChecked] = useState<string[]>([]); // 등록 그리드 삭제 체크
@@ -126,8 +123,6 @@ export default function EquipReasonMapPage() {
   }, []);
   useEffect(() => { search(); }, [search]);
 
-  const viewRec = useMemo(() => records.find((r) => r.machineCode === viewCode) ?? null, [records, viewCode]);
-
   const filtered = useMemo(() => {
     const q = searchText.trim().toLowerCase();
     if (!q) return records;
@@ -138,45 +133,30 @@ export default function EquipReasonMapPage() {
     });
   }, [records, searchText]);
 
-  const columns = useMemo<ColumnDef<MachineReasonRecord>[]>(
-    () => [
-      {
-        id: 'actions',
-        header: '관리',
-        size: 84,
-        meta: { align: 'center' as const, filterType: 'none' as const },
-        cell: ({ row }) => (
-          <div className="flex gap-1 justify-center">
-            <button onClick={(e) => { e.stopPropagation(); openEdit(row.original); }} className="p-1 hover:bg-surface rounded text-primary" title="편집">
-              <Edit2 className="w-4 h-4" />
-            </button>
-            <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(row.original); }} className="p-1 hover:bg-surface rounded text-red-500" title="삭제">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ),
-      },
-      { accessorKey: 'machineCode', header: '설비코드', cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
-      { accessorKey: 'machineName', header: '설비명' },
-      { accessorKey: 'machineType', header: '설비유형', size: 100, meta: { align: 'center' as const }, cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
-      { accessorKey: 'lineCode', header: '라인', size: 70, meta: { align: 'center' as const }, cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
-      { accessorKey: 'processCode', header: '공정', size: 80, meta: { align: 'center' as const }, cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
-      {
-        id: 'reasons',
-        header: '비가동 사유코드',
-        size: 110,
-        meta: { align: 'center' as const, filterType: 'none' as const },
-        cell: ({ row }) => (
-          <button onClick={(e) => { e.stopPropagation(); setViewCode(row.original.machineCode); }} className="border border-border rounded px-2 py-0.5 text-primary hover:bg-surface text-xs">
-            사유 {row.original.reasons.length}건
-          </button>
-        ),
-      },
-      { accessorKey: 'updatedAt', header: '최종수정일', cell: ({ getValue }) => <span className="font-mono text-text-muted">{String(getValue() ?? '')}</span> },
-      { accessorKey: 'updatedBy', header: '최종수정자' },
-    ],
-    [],
+  // 좌측에서 고른 설비. 검색으로 목록에서 빠지면 첫 설비로 옮긴다
+  const [selectedCode, setSelectedCode] = useState<string | null>(null);
+  const selected = useMemo(
+    () => filtered.find((r) => r.machineCode === selectedCode) ?? filtered[0] ?? null,
+    [filtered, selectedCode],
   );
+
+  const columns = useMemo<ColumnDef<MachineReasonRecord>[]>(() => {
+    const mono = (v: string) => <span className="font-mono">{v}</span>;
+    return [
+      { accessorKey: 'machineCode', header: '설비코드', cell: ({ row }) => mono(row.original.machineCode) },
+      {
+        accessorKey: 'machineName',
+        header: '설비명',
+        cell: ({ row }) => row.original.machineName || <span className="text-red-500">설비마스터에 없는 코드</span>,
+      },
+      { accessorKey: 'machineType', header: '설비유형', size: 100, meta: { align: 'center' as const }, cell: ({ row }) => mono(row.original.machineType) },
+      { accessorKey: 'lineCode', header: '라인', size: 70, meta: { align: 'center' as const }, cell: ({ row }) => mono(row.original.lineCode) },
+      { accessorKey: 'processCode', header: '공정', size: 80, meta: { align: 'center' as const }, cell: ({ row }) => mono(row.original.processCode) },
+      { id: 'reasonCount', header: '비가동코드', size: 90, accessorFn: (r) => r.reasons.length, meta: { align: 'right' as const, filterType: 'number' as const } },
+      { accessorKey: 'updatedAt', header: '최종수정일', cell: ({ row }) => <span className="font-mono text-text-muted">{row.original.updatedAt}</span> },
+      { accessorKey: 'updatedBy', header: '최종수정자' },
+    ];
+  }, []);
 
   function openCreate() {
     setGridChecked([]);
@@ -184,6 +164,7 @@ export default function EquipReasonMapPage() {
   }
   function openEdit(r: MachineReasonRecord) {
     setGridChecked([]);
+    setSelectedCode(r.machineCode);
     setForm({
       isEdit: true,
       machineCode: r.machineCode,
@@ -197,60 +178,15 @@ export default function EquipReasonMapPage() {
     });
   }
 
-  // 설비선택 팝업 — 설비마스터 로드
-  const loadMachines = useCallback(async () => {
-    if (machines.length) return;
-    try {
-      const res = await api.get('/equipment/equips', { params: { limit: 1000 } });
-      const rows: ApiEquip[] = res.data?.data ?? res.data ?? [];
-      setMachines(rows.map((e) => ({
-        machineCode: e.equipCode,
-        machineName: e.equipName ?? '',
-        machineType: e.equipType ?? '',
-        lineCode: e.lineCode ?? '',
-        processCode: e.processCode ?? '',
-      })));
-    } catch {
-      toast.error('설비마스터 조회에 실패했습니다');
-    }
-  }, [machines.length]);
-  function openMachinePicker() { setMachineQuery(''); loadMachines(); setMachinePickerOpen(true); }
-
-  const machineItems = useMemo(() => {
-    const q = machineQuery.trim().toLowerCase();
-    const base = q ? machines.filter((m) => `${m.machineCode} ${m.machineName}`.toLowerCase().includes(q)) : machines;
-    return base.slice(0, 300);
-  }, [machines, machineQuery]);
-
-  // 설비 선택 (단일). 신규 시 이미 연계된 설비면 차단.
-  function pickMachine(m: MachineRef) {
+  // 설비 선택 (공용 설비 검색 모달, 단일). 신규 시 이미 연계된 설비면 차단.
+  function pickMachine(e: EquipItem) {
     if (!form) return;
-    if (!form.isEdit && records.some((r) => r.machineCode === m.machineCode)) {
+    if (!form.isEdit && records.some((r) => r.machineCode === e.equipCode)) {
       toast.error('이미 연계된 설비입니다. 목록에서 수정하세요.');
       return;
     }
-    setForm({ ...form, ...m });
-    setMachinePickerOpen(false);
+    setForm({ ...form, machineCode: e.equipCode, machineName: e.equipName, machineType: e.equipType, lineCode: e.lineCode, processCode: e.processCode });
   }
-
-  // 설비선택 팝업 그리드 — [선택] 버튼으로 1대를 고른다 (pickMachine 이 form·records 를 읽는다)
-  const machinePickerColumns = useMemo<ColumnDef<MachineRef>[]>(() => [
-    { accessorKey: 'machineCode', header: '설비코드', cell: ({ row }) => <span className="font-mono">{row.original.machineCode}</span> },
-    { accessorKey: 'machineName', header: '설비명' },
-    { accessorKey: 'machineType', header: '유형', meta: { align: 'center' as const }, cell: ({ row }) => <span className="font-mono">{row.original.machineType}</span> },
-    { accessorKey: 'lineCode', header: '라인', meta: { align: 'center' as const }, cell: ({ row }) => <span className="font-mono">{row.original.lineCode}</span> },
-    { accessorKey: 'processCode', header: '공정', meta: { align: 'center' as const }, cell: ({ row }) => <span className="font-mono">{row.original.processCode}</span> },
-    {
-      id: 'actions',
-      header: '선택',
-      size: 80,
-      enableSorting: false,
-      meta: { align: 'center' as const, filterType: 'none' as const },
-      cell: ({ row }) => (
-        <button onClick={(e) => { e.stopPropagation(); pickMachine(row.original); }} className="px-3 py-1 rounded border border-primary text-primary hover:bg-surface text-xs whitespace-nowrap">선택</button>
-      ),
-    },
-  ], [form, records]);
 
   // 사유선택 팝업 — 사용중(USE_YN='Y') 사유 로드
   const loadReasons = useCallback(async () => {
@@ -283,7 +219,7 @@ export default function EquipReasonMapPage() {
     setPickerChecked((prev) => (prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]));
   }
 
-  // 등록 패널 사유 그리드 — 체크박스(전체선택) 로 골라 선택삭제
+  // 등록·수정 중 우측 비가동코드 그리드 — 체크박스(전체선택) 로 골라 선택삭제
   const formReasons = form?.reasons;
   const editReasonColumns = useMemo<ColumnDef<MapReason>[]>(() => {
     const list = formReasons ?? [];
@@ -414,64 +350,112 @@ export default function EquipReasonMapPage() {
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden p-6 gap-4">
         <div className="flex items-center justify-between flex-shrink-0">
           <div>
-            <h1 className="text-xl font-bold text-text">설비별 비가동 사유 연계</h1>
-            <p className="text-sm text-text-muted mt-1">설비마스터 × 비가동사유코드 매핑 관리</p>
+            <h1 className="text-xl font-bold text-text">설비별 비가동코드 관리</h1>
+            <p className="text-sm text-text-muted mt-1">설비마다 쓸 수 있는 비가동 사유코드를 지정합니다 · 설비 {filtered.length}대</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={search} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
-            <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded h-10">연계 등록</button>
+            <button onClick={search} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1 whitespace-nowrap"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
+            <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded h-10 whitespace-nowrap">비가동코드 등록</button>
           </div>
         </div>
 
-        {/* 목록 화면 — 설비 비가동 사유코드 관리와 동일한 DataGrid 형식 */}
-        <Card className="flex-1 min-h-0 overflow-hidden" padding="none">
-          <CardContent className="h-full p-4">
-            <DataGrid
-              data={filtered}
-              columns={columns}
-              isLoading={loading}
-              pageSize={50}
-              enableColumnFilter
-              enableExport
-              enableFullscreen
-              exportFileName="설비별비가동사유연계"
-              emptyMessage={records.length ? '조회 결과가 없습니다' : '등록된 연계가 없습니다'}
-              getRowId={(r) => r.machineCode}
-              toolbarLeft={
-                <div className="flex flex-wrap gap-3 flex-1 min-w-0">
-                  <div className="w-96 flex-shrink-0">
-                    <Input placeholder="통합검색 (설비코드·설비명·사유코드·사유명)" value={searchText} onChange={(e) => setSearchText(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
+        {/* 좌측 설비 목록 · 우측 선택 설비의 비가동코드 */}
+        {/* 등록·수정 중에는 설비 목록을 숨기고 비가동코드 그리드를 넓게 쓴다 */}
+        <div className={`flex-1 min-h-0 grid gap-4 ${form ? 'grid-cols-1' : 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'}`}>
+          <Card className={`min-h-0 overflow-hidden ${form ? 'hidden' : ''}`} padding="none">
+            <CardContent className="h-full p-4">
+              <DataGrid
+                data={filtered}
+                columns={columns}
+                isLoading={loading}
+                pageSize={50}
+                enableColumnFilter
+                enableExport
+                enableFullscreen
+                exportFileName="설비별비가동코드_설비"
+                emptyMessage={records.length ? '조회 결과가 없습니다' : '등록된 설비가 없습니다'}
+                getRowId={(r) => r.machineCode}
+                selectedRowId={selected?.machineCode}
+                onRowClick={(r) => setSelectedCode(r.machineCode)}
+                keyboardRowNavigation
+                toolbarLeft={
+                  <div className="flex flex-wrap gap-3 flex-1 min-w-0">
+                    <div className="w-80 flex-shrink-0">
+                      <Input placeholder="통합검색 (설비코드·설비명·사유코드·사유명)" value={searchText} onChange={(e) => setSearchText(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
+                    </div>
                   </div>
-                </div>
-              }
-            />
-          </CardContent>
-        </Card>
-      </div>
+                }
+              />
+            </CardContent>
+          </Card>
 
-      {/* 사유코드 확인 팝업 (목록) — 연계 사유 복수 출력 */}
-      <Modal isOpen={!!viewRec} onClose={() => setViewCode(null)} title={viewRec ? `비가동 사유 — ${viewRec.machineCode} ${viewRec.machineName}` : ''} size="2xl">
-        {viewRec && (
-          <DataGrid
-            data={viewRec.reasons}
-            columns={viewReasonColumns}
-            pageSize={1000}
-            maxHeight="60vh"
-            showFooter={false}
-            enableFullscreen={false}
-            getRowId={(r) => r.reasonCode}
-            rowClassName={unusedRowClass}
-            emptyMessage="연계된 비가동 사유가 없습니다"
-          />
-        )}
-      </Modal>
+          <Card className="min-h-0 overflow-hidden" padding="none">
+            {/* 설비 정보·편집 버튼은 그리드 툴바와 한 줄에 둔다 */}
+            <CardContent className="h-full p-4">
+              {form ? (
+                <DataGrid
+                  key="edit-reasons"
+                  data={form.reasons}
+                  columns={editReasonColumns}
+                  pageSize={1000}
+                  showFooter={false}
+                  enableColumnFilter={false}
+                  enableFullscreen={false}
+                  enableColumnReordering={false}
+                  enableColumnPinning={false}
+                  getRowId={(r) => r.reasonCode}
+                  rowClassName={unusedRowClass}
+                  emptyMessage="사유코드선택으로 비가동 사유를 추가하세요"
+                  toolbarLeft={
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <p className="text-xs text-text-muted truncate flex-1 min-w-0">
+                        {form.machineCode
+                          ? <><span className="font-mono">{form.machineCode}</span> {form.machineName || '설비마스터에 없는 코드'} · {form.reasons.length}건</>
+                          : '설비를 선택하세요'} · 저장해야 반영됩니다
+                      </p>
+                      <button onClick={deleteCheckedReasons} disabled={!gridChecked.length} className="text-sm border border-border rounded px-2 py-1 text-red-500 hover:bg-surface whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed">선택삭제</button>
+                      <button onClick={openReasonPicker} className="text-sm border border-border rounded px-2 py-1 text-primary hover:bg-surface whitespace-nowrap">사유코드선택</button>
+                    </div>
+                  }
+                />
+              ) : (
+                <DataGrid
+                  key="view-reasons"
+                  data={selected?.reasons ?? []}
+                  columns={detailReasonColumns}
+                  pageSize={1000}
+                  showFooter={false}
+                  enableColumnReordering={false}
+                  enableColumnPinning={false}
+                  enableExport
+                  exportFileName={`설비별비가동코드_${selected?.machineCode ?? ''}`}
+                  getRowId={(r) => r.reasonCode}
+                  rowClassName={unusedRowClass}
+                  emptyMessage={selected ? '연계된 비가동코드가 없습니다' : '설비를 선택하세요'}
+                  toolbarLeft={
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <p className="text-xs text-text-muted truncate flex-1 min-w-0">
+                        {selected
+                          ? <><span className="font-mono">{selected.machineCode}</span> {selected.machineName || '설비마스터에 없는 코드'} · {selected.reasons.length}건</>
+                          : '왼쪽에서 설비를 선택하세요'}
+                      </p>
+                      <button onClick={() => selected && openEdit(selected)} disabled={!selected} className="text-sm border border-border rounded px-2 py-1 text-primary hover:bg-surface whitespace-nowrap inline-flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"><Edit2 className="w-3.5 h-3.5" />수정</button>
+                      <button onClick={() => selected && setDeleteTarget(selected)} disabled={!selected} className="text-sm border border-border rounded px-2 py-1 text-red-500 hover:bg-surface whitespace-nowrap inline-flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"><Trash2 className="w-3.5 h-3.5" />삭제</button>
+                    </div>
+                  }
+                />
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* 삭제 확인 팝업 */}
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="연계 삭제" size="sm">
         {deleteTarget && (
           <div className="space-y-4">
             <p className="text-sm text-text">
-              <b className="font-mono">{deleteTarget.machineCode}</b> {deleteTarget.machineName} 설비의 비가동 사유 연계({deleteTarget.reasons.length}건)를 삭제할까요?
+              <b className="font-mono">{deleteTarget.machineCode}</b> {deleteTarget.machineName} 설비의 비가동코드({deleteTarget.reasons.length}건)를 모두 삭제할까요?
             </p>
             <div className="flex justify-end gap-2">
               <button onClick={() => setDeleteTarget(null)} className="px-3 py-2 rounded border border-border text-text-muted text-sm">취소</button>
@@ -486,7 +470,7 @@ export default function EquipReasonMapPage() {
         <div className="w-[560px] flex-shrink-0 border-l border-border bg-background flex flex-col h-full overflow-hidden shadow-2xl animate-slide-in-right">
           {/* 헤더: 취소/저장 (상단) */}
           <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
-            <h2 className="text-sm font-bold text-text">{form.isEdit ? '설비별 비가동 사유 연계 수정' : '설비별 비가동 사유 연계 등록'}</h2>
+            <h2 className="text-sm font-bold text-text">{form.isEdit ? '설비별 비가동코드 수정' : '설비별 비가동코드 등록'}</h2>
             <div className="flex items-center gap-2">
               <button onClick={() => setForm(null)} className="px-3 py-2 rounded border border-border text-text-muted text-sm">취소</button>
               <button onClick={save} className="px-4 py-2 rounded bg-primary text-white text-sm">저장</button>
@@ -498,13 +482,13 @@ export default function EquipReasonMapPage() {
             <div>
               <span className="text-sm font-semibold text-text">설비 <span className="text-red-500">*</span></span>
               <div className="grid grid-cols-2 gap-3 mt-2">
-                <label className="text-sm text-text-muted flex flex-col gap-1">
+                <div className="text-sm text-text-muted flex flex-col gap-1">
                   설비코드
                   <div className="flex items-center gap-2">
-                    <input value={form.machineCode} readOnly placeholder="설비선택" className="border border-border rounded p-2 bg-surface text-text flex-1 min-w-0 font-mono" />
-                    {!form.isEdit && <button onClick={openMachinePicker} className="border border-border rounded px-3 py-2 text-primary hover:bg-surface text-sm whitespace-nowrap">설비선택</button>}
+                    <input value={form.machineCode} readOnly placeholder="설비선택" aria-label="설비코드" className="border border-border rounded p-2 bg-surface text-text flex-1 min-w-0 font-mono" />
+                    {!form.isEdit && <button onClick={() => setMachinePickerOpen(true)} className="border border-border rounded px-3 py-2 text-primary hover:bg-surface text-sm whitespace-nowrap">설비선택</button>}
                   </div>
-                </label>
+                </div>
                 <label className="text-sm text-text-muted flex flex-col gap-1">
                   설비명
                   <input value={form.machineName} readOnly className="border border-border rounded p-2 bg-surface text-text" />
@@ -520,28 +504,9 @@ export default function EquipReasonMapPage() {
               </div>
             </div>
 
-            {/* 비가동사유코드 선택 — 그리드(체크박스 삭제, 중복 1건) */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-text">비가동 사유코드 <span className="text-red-500">*</span></span>
-                <div className="flex items-center gap-2">
-                  <button onClick={deleteCheckedReasons} disabled={!gridChecked.length} className="text-sm border border-border rounded px-2 py-1 text-red-500 hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed">선택삭제</button>
-                  <button onClick={openReasonPicker} className="text-sm border border-border rounded px-2 py-1 text-primary hover:bg-surface">사유코드선택</button>
-                </div>
-              </div>
-              <DataGrid
-                data={form.reasons}
-                columns={editReasonColumns}
-                pageSize={1000}
-                showFooter={false}
-                enableColumnFilter={false}
-                enableFullscreen={false}
-                enableColumnReordering={false}
-                enableColumnPinning={false}
-                getRowId={(r) => r.reasonCode}
-                rowClassName={unusedRowClass}
-                emptyMessage="사유코드선택으로 비가동 사유를 추가하세요"
-              />
+            {/* 비가동코드 — 편집은 화면의 비가동코드 그리드에서 한다 */}
+            <div className="text-sm text-text-muted">
+              비가동 사유코드 <span className="text-red-500">*</span> <b className="text-text">{form.reasons.length}건</b> · 왼쪽 비가동코드 목록에서 추가·삭제합니다
             </div>
 
             {/* 최종수정자/일 — 자동 */}
@@ -555,23 +520,8 @@ export default function EquipReasonMapPage() {
         </div>
       )}
 
-      {/* 설비선택 팝업 — 설비마스터(IMCN_MACHINE) 참조, 단일 선택 */}
-      <Modal isOpen={machinePickerOpen} onClose={() => setMachinePickerOpen(false)} title="설비 선택" size="2xl">
-        <div className="space-y-2">
-          <Input placeholder="설비코드/설비명 검색" value={machineQuery} onChange={(e) => setMachineQuery(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
-          <DataGrid
-            data={machineItems}
-            columns={machinePickerColumns}
-            pageSize={300}
-            maxHeight="50vh"
-            showFooter={false}
-            enableFullscreen={false}
-            getRowId={(m) => m.machineCode}
-            emptyMessage="설비가 없습니다"
-          />
-          <p className="text-[11px] text-text-muted">최대 300건 표시. 검색으로 좁혀 선택하세요.</p>
-        </div>
-      </Modal>
+      {/* 설비선택 — 공용 설비 검색 모달 (설비마스터 IMCN_MACHINE) */}
+      <EquipSearchModal isOpen={machinePickerOpen} onClose={() => setMachinePickerOpen(false)} onSelect={pickMachine} />
 
       {/* 사유코드선택 팝업 — 설비 비가동 사유코드(사용중) 참조, 복수 선택 */}
       <Modal isOpen={reasonPickerOpen} onClose={() => setReasonPickerOpen(false)} title="비가동 사유코드 선택 (복수)" size="2xl">
