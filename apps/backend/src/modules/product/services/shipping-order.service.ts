@@ -40,8 +40,8 @@ export class ShippingOrderService {
     private readonly tx: TransactionService,
   ) {}
 
-  async list(query: ShippingOrderQueryDto, organizationId: number) {
-    return this.dataSource.query(
+  async list(query: ShippingOrderQueryDto, organizationId: number): Promise<Row[]> {
+    const result: Row[] = await this.dataSource.query(
       `SELECT d.MFS AS "shipOrderNo", TO_CHAR(d.PLAN_DATE, 'YYYY-MM-DD') AS "planDate", d.PLAN_SEQUENCE AS "planSequence",
               d.CUSTOMER_CODE AS "customerCode", cu.CUSTOMER_NAME AS "customerName",
               d.MODEL_NAME AS "modelName", d.MODEL_SUFFIX AS "modelSuffix", d.ITEM_CODE AS "itemCode",
@@ -62,7 +62,8 @@ export class ShippingOrderService {
         customerCode: query.customerCode?.trim() || '%',
         modelName: query.modelName?.trim() ? `%${query.modelName.trim()}%` : '%',
       }),
-    ) as Promise<Row[]>;
+    );
+    return result;
   }
 
   async create(dto: ShippingOrderUpsertDto, organizationId: number, userId: string) {
