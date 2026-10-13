@@ -67,14 +67,65 @@ describe('LotCardService.createPids guards', () => {
     const query = jest.fn()
       .mockResolvedValueOnce(run)
       .mockResolvedValueOnce([{ cnt: 0 }])
+      .mockResolvedValueOnce([{ runNo: null }])
       .mockResolvedValueOnce([{ productClass: 'DN8', customerCode: 'TS' }])
       .mockResolvedValueOnce([{ next: 5 }])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ count: 10, firstSerial: 'A', lastSerial: 'B' }]);
     const result = await serviceWith(query).createPids('R1', {}, 1, 'U');
-    const insert = query.mock.calls[4];
+    const insert = query.mock.calls[5];
     expect(String(insert[0])).toContain('F_GET_PCB_BARCODE_SERIAL');
     expect(insert[1]).toMatchObject({ runNo: 'R1', serial: 5, lotSize: 10, userId: 'U', organizationId: 1 });
     expect(result).toMatchObject({ count: 10, startSerial: 5 });
+  });
+});
+
+describe('LotCardService per-process run cards', () => {
+  function serviceWith(query: jest.Mock) {
+    const transaction = jest.fn(async (callback: (m: { query: jest.Mock }) => unknown) => callback({ query }));
+    return new LotCardService({ transaction, query, manager: { query } } as never);
+  }
+  const miPlan = {
+    planType: 'MI', mfs: 'MI20261014001', planDate: '2026-10-14', planSequence: 1, lineCode: '34',
+    modelName: 'M', itemCode: 'I', itemName: null, parentItemCode: null, workOrderNo: 'WO1', pcbItem: null,
+    masterModelName: 'M', mfsGroupNo: 'MI20261014001', shiftCode: 'A', productionType: 'P', customerCode: null,
+    planStatus: 'W', planQty: 100, lotQty: 100, remainQty: 100,
+  };
+
+  it('refuses an MI run card without a process', async () => {
+    const query = jest.fn();
+    await expect(serviceWith(query).createFromPlan(
+      { planType: 'MI', planDate: '2026-10-14', planSequence: 1, mfs: miPlan.mfs, productRunType: 'P' }, 1, 'U',
+    )).rejects.toBeInstanceOf(BadRequestException);
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('computes MI remaining quantity per process and stores WORKSTAGE_CODE', async () => {
+    const query = jest.fn(async (sql: string) => {
+      if (sql.includes('FROM IP_PRODUCT_MI_PLAN')) return [miPlan];
+      if (sql.includes('FROM IP_PRODUCT_MODEL_MASTER')) return [{ cnt: 1, carrierSize: 2 }];
+      if (sql.includes('F_GET_NEW_RUN_NO')) return [{ runNo: 'R9' }];
+      if (sql.includes('SELECT COUNT(*) AS "cnt" FROM IP_PRODUCT_RUN_CARD WHERE RUN_NO')) return [{ cnt: 0 }];
+      return [];
+    });
+    await serviceWith(query).createFromPlan(
+      { planType: 'MI', planDate: '2026-10-14', planSequence: 1, mfs: miPlan.mfs, productRunType: 'P', workstageCode: 'W091' }, 1, 'U',
+    );
+    const plan = query.mock.calls.find(([s]) => String(s).includes('FROM IP_PRODUCT_MI_PLAN'))!;
+    expect(String(plan[0])).toContain('rc.WORKSTAGE_CODE = :workstageCode');
+    expect(plan[1]).toMatchObject({ workstageCode: 'W091' });
+    const insert = query.mock.calls.find(([s]) => String(s).includes('INSERT INTO IP_PRODUCT_RUN_CARD ('))!;
+    expect(String(insert[0])).toContain('WORKSTAGE_CODE');
+    expect(insert[1]).toMatchObject({ workstageCode: 'W091' });
+  });
+
+  it('refuses PIDs when another run card of the same plan already has PIDs', async () => {
+    const run = [{ runNo: 'R2', modelName: 'M', runDate: '2026-10-14', lotSize: 10, itemCode: 'I', parentItemCode: null, lineCode: '34', carrierSize: 2, lotNo: 'MI20261014001' }];
+    const query = jest.fn()
+      .mockResolvedValueOnce(run)
+      .mockResolvedValueOnce([{ cnt: 0 }])
+      .mockResolvedValueOnce([{ runNo: 'R1' }]);
+    await expect(serviceWith(query).createPids('R2', {}, 1, 'U')).rejects.toBeInstanceOf(ConflictException);
+    expect(query.mock.calls.some(([s]) => String(s).includes('INSERT INTO IP_PRODUCT_2D_BARCODE'))).toBe(false);
   });
 });

@@ -50,7 +50,10 @@ const PLAN_SELECT = {
            p.MFS AS "mfsGroupNo", 'A' AS "shiftCode", 'P' AS "productionType",
            p.CUSTOMER_CODE AS "customerCode", NVL(p.PLAN_STATUS, 'W') AS "planStatus",
            p.PLAN_QTY AS "planQty", p.PLAN_QTY AS "lotQty",
-           p.PLAN_QTY - NVL((SELECT SUM(LOT_SIZE) FROM IP_PRODUCT_RUN_CARD WHERE LOT_NO = p.MFS), 0) AS "remainQty"
+           -- 후공정 지시는 공정마다 따로 내린다 — 남은 수량은 고른 공정의 런카드만 뺀다 (공정 미선택이면 전체)
+           p.PLAN_QTY - NVL((SELECT SUM(rc.LOT_SIZE) FROM IP_PRODUCT_RUN_CARD rc
+             WHERE rc.LOT_NO = p.MFS AND rc.ORGANIZATION_ID = p.ORGANIZATION_ID
+               AND (:workstageCode IS NULL OR rc.WORKSTAGE_CODE = :workstageCode)), 0) AS "remainQty"
       FROM IP_PRODUCT_MI_PLAN p, ID_ITEM i
      WHERE p.ITEM_CODE = i.ITEM_CODE(+) AND p.ORGANIZATION_ID = i.ORGANIZATION_ID(+)
        AND p.ORGANIZATION_ID = :organizationId`,
@@ -120,6 +123,7 @@ export class LotCardService {
         dateTo: query.dateTo,
         lineCode: `${query.lineCode}%`,
         modelName: `${(query.modelName ?? '').trim()}%`,
+        ...(planType === 'MI' ? { workstageCode: query.workstageCode?.trim() || null } : {}),
       }),
     ) as LotCardPlanRow[];
     return rows.map((r) => ({
@@ -147,13 +151,20 @@ export class LotCardService {
    */
   async createFromPlan(dto: LotCardFromPlanDto, organizationId: number, userId: string) {
     if (!dto.productRunType?.trim()) throw new BadRequestException('제조유형을 선택하세요.');
+    const workstageCode = dto.planType === 'MI' ? dto.workstageCode?.trim() || null : null;
+    if (dto.planType === 'MI' && !workstageCode) {
+      throw new BadRequestException('공정을 선택하세요. 후공정 지시는 공정마다 따로 내립니다.');
+    }
     return this.dataSource.transaction(async (m) => {
       const plans = await m.query(
         `${PLAN_SELECT[dto.planType]}
            AND p.PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')
            AND p.PLAN_SEQUENCE = :planSequence
            AND p.MFS = :mfs`,
-        namedBinds({ organizationId, planDate: dto.planDate, planSequence: dto.planSequence, mfs: dto.mfs }),
+        namedBinds({
+          organizationId, planDate: dto.planDate, planSequence: dto.planSequence, mfs: dto.mfs,
+          ...(dto.planType === 'MI' ? { workstageCode } : {}),
+        }),
       ) as LotCardPlanRow[];
       const plan = plans[0];
       if (!plan) throw new NotFoundException('계획을 찾을 수 없습니다.');
@@ -213,18 +224,19 @@ export class LotCardService {
            RUN_NO, ORGANIZATION_ID, RUN_DATE, ITEM_CODE, PARENT_ITEM_CODE, MASTER_MODEL_NAME, MFS_GROUP_NO,
            MODEL_NAME, LINE_CODE, SHIFT_CODE, CARRIER_SIZE, PCB_SUPPLIER_CODE, PRODUCT_RUN_TYPE, CHARGER,
            RUN_STATUS, LOT_NO, ARRAY_TYPE, LOT_SIZE, MARKING_NO, PCB_ITEM, REVISION, MODEL_CLASS, PCB_WEEK,
-           ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE)
+           WORKSTAGE_CODE, ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE)
          VALUES (
            :runNo, :organizationId, TO_DATE(:runDate, 'YYYY-MM-DD'), :itemCode, :parentItemCode,
            :masterModelName, :mfsGroupNo, :modelName, :lineCode, :shiftCode, :carrierSize, NULL,
            :productRunType, :userId, '1', :mfs, F_GET_PCB_ARRAY_TYPE(:modelName, :organizationId),
-           :lotSize, '*', :pcbItem, '0', :modelClass, :pcbWeek, :userId, SYSDATE, :userId, SYSDATE)`,
+           :lotSize, '*', :pcbItem, '0', :modelClass, :pcbWeek, :workstageCode, :userId, SYSDATE, :userId, SYSDATE)`,
         namedBinds({
           runNo, organizationId, userId, lotSize, runDate: plan.planDate,
           itemCode: plan.itemCode, parentItemCode: plan.parentItemCode, lineCode: plan.lineCode,
           masterModelName: plan.masterModelName, mfsGroupNo: plan.mfsGroupNo, modelName: plan.modelName,
           shiftCode: plan.shiftCode, carrierSize, productRunType: dto.productRunType, mfs: plan.mfs,
           pcbItem: plan.pcbItem, modelClass: dto.modelClass?.trim() || null, pcbWeek: dto.pcbWeek?.trim() || null,
+          workstageCode,
         }),
       );
       return { runNo, lotSize, carrierSize };
@@ -387,6 +399,17 @@ export class LotCardService {
           `DELETE FROM IP_PRODUCT_2D_BARCODE WHERE RUN_NO = :runNo AND ORGANIZATION_ID = :organizationId`,
           namedBinds({ runNo, organizationId }),
         );
+      }
+
+      // 후공정 지시는 공정마다 따로 내려가 한 계획(LOT_NO)에 런카드가 여럿이다. PID 는 제품마다 한 벌이라
+      // 같은 계획의 다른 런카드에 이미 있으면 만들지 않는다 (PID_INSERT 가 LOT_NO 를 같이 넣는다).
+      const sibling = await m.query(
+        `SELECT MIN(b.RUN_NO) AS "runNo" FROM IP_PRODUCT_2D_BARCODE b
+          WHERE b.LOT_NO = :lotNo AND b.RUN_NO <> :runNo AND b.ORGANIZATION_ID = :organizationId`,
+        namedBinds({ lotNo: card.lotNo, runNo, organizationId }),
+      ) as Array<{ runNo: string | null }>;
+      if (sibling[0]?.runNo) {
+        throw new ConflictException(`같은 계획의 다른 공정 지시(${sibling[0].runNo})에 PID 가 이미 있습니다. PID 는 계획당 한 번만 만듭니다.`);
       }
 
       const models = await m.query(

@@ -10,6 +10,8 @@ export class LotCardPlanQueryDto {
   @IsOptional() @IsString() modelName?: string;
   @Matches(YMD) dateFrom!: string;
   @Matches(YMD) dateTo!: string;
+  /** 후공정 계획에서 이 공정 기준 남은 수량을 본다 (공정마다 지시를 따로 내린다) */
+  @IsOptional() @IsString() @MaxLength(10) workstageCode?: string;
 }
 
 /** 계획으로 롯트카드 생성 — 계획 키만 받고 나머지는 서버가 계획에서 다시 읽는다 */
@@ -22,6 +24,8 @@ export class LotCardFromPlanDto {
   @IsString() @MaxLength(1) productRunType!: string;
   @IsOptional() @IsString() @MaxLength(20) modelClass?: string;
   @IsOptional() @IsString() @MaxLength(20) pcbWeek?: string;
+  /** 후공정(MI) 지시의 공정 — 제조공정만. SMD 는 비운다 */
+  @IsOptional() @IsString() @MaxLength(10) workstageCode?: string;
 }
 
 /** 상세 생성 — BOM(설계 BOM 전개) 또는 FEEDER(피더 레이아웃 IB_PRODUCT_PLANDATA) */
