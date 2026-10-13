@@ -10,7 +10,7 @@
  * 5. **uploadFromExcel**: xlsx 파일에서 BOM 데이터를 읽어 일괄 등록
  */
 
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, FindOptionsWhere } from 'typeorm';
 import * as XLSX from 'xlsx';
@@ -21,8 +21,8 @@ import { CreateBomDto, UpdateBomDto, BomQueryDto } from '../dto/bom.dto';
 /** Excel 업로드 결과 인터페이스 */
 export interface BomUploadResult {
   inserted: number;
-  skipped: number;
-  errors: { row: number; message: string }[];
+  updated: number;
+  unchanged: number;
 }
 
 /** 업로드 미리보기 행 */
@@ -33,20 +33,34 @@ export interface BomPreviewRow {
   validFrom: string | null;
   validTo: string | null;
   qtyPer: number | null;
-  revision: string;
-  status: 'new' | 'duplicate_db' | 'duplicate_file' | 'error';
+  revision: string | null;
+  seq: number;
+  processCode: string;
+  /** 로케이션 (ID_ENG_BOM.LOCATION_INFO) */
+  location: string | null;
+  /** new 신규 / update 기존 행 수정 / same 기존 행과 같음(저장 안 함) / error 오류 */
+  status: 'new' | 'update' | 'same' | 'error';
   message?: string;
-  /** 업로드 시 넣을 BOM 주인(ID_ENG_BOM.ITEM_CODE) */
+  /** 수정 행에서 바뀌는 항목 (예: '소요량 1 → 2') */
+  changes?: string[];
+  /** 업로드 시 넣을 BOM 주인(ID_ENG_BOM.ITEM_CODE) — 신규 행만 */
   ownerItemCode?: string;
 }
 
 /** 업로드 미리보기 결과 */
 export interface BomPreviewResult {
   rows: BomPreviewRow[];
-  duplicateCount: number;
   newCount: number;
+  updateCount: number;
+  sameCount: number;
   errorCount: number;
 }
+
+/** 업로드 양식 열. 내보내기 파일에 덧붙는 레벨·하위품번·하위품명·단위 열은 업로드 때 읽지 않는다 */
+const BOM_UPLOAD_HEADERS = ['상위품목코드', '하위품목코드', '소요량', '리비전', '순서', '공정코드', '로케이션', '유효시작일', '유효종료일'];
+const BOM_UPLOAD_COL_WIDTHS = [20, 20, 10, 8, 8, 10, 40, 12, 12];
+const BOM_LOCATION_MAX = 2500;
+const DEFAULT_VALID_TO = '9999-12-31';
 
 type BomParentRow = {
   itemCode: string;
@@ -731,224 +745,286 @@ export class BomService {
     if (organizationId != null) where.organizationId = organizationId;
 
     const bomList = await this.bomRepository.find({ where, order: { parentItemCode: 'ASC', seq: 'ASC' } });
-    const headers = ['상위품목코드', '하위품목코드', '소요량', '리비전', '순서', 'BOM그룹', '공정코드', '사이드', 'ECO번호', '유효시작일', '유효종료일', '비고'];
     const fmtDate = (d: Date | null) => this.toDateOnly(d) ?? '';
-    const rows = bomList.length > 0
-      ? bomList.map((b) => [b.parentItemCode, b.childItemCode, b.qtyPer, b.revision, b.seq, b.bomGrp ?? '', b.processCode ?? '', b.lineType ?? '', b.ecoNo ?? '', fmtDate(b.validFrom), fmtDate(b.validTo), b.remark ?? ''])
-      : [Array(headers.length).fill('')];
-
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-    ws['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 14 }, { wch: 14 }, { wch: 30 }];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'BOM');
-    return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+    const rows = bomList.map((b) => [
+      b.parentItemCode, b.childItemCode, Number(b.qtyPer), b.revision ?? '', Number(b.seq), b.processCode ?? '', b.remark ?? '',
+      fmtDate(b.validFrom), fmtDate(b.validTo),
+    ]);
+    return this.buildSheet(BOM_UPLOAD_HEADERS, rows, BOM_UPLOAD_COL_WIDTHS);
   }
 
   /**
    * 선택한 모품목의 BOM 을 화면 트리와 같은 경로(CONNECT BY, 10레벨)로 전부 펼쳐 내보낸다.
-   * 업로드 양식의 열 이름(상위품목코드·하위품목코드·소요량…)을 그대로 쓰고 레벨·품번·품명·단위 열을 덧붙인다.
+   * 업로드 양식 열에 레벨·하위품번·하위품명·단위를 덧붙인다. 덧붙인 열은 업로드 때 읽지 않으므로 이 파일을 고쳐 그대로 다시 올릴 수 있다.
    */
   private async exportTreeToExcel(parentItemCode: string, organizationId?: number, effectiveDate?: string): Promise<Buffer> {
     const flat = await this.queryHierarchyRows(parentItemCode, 10, effectiveDate, organizationId);
-    const headers = ['레벨', '상위품목코드', '하위품목코드', '하위품번', '하위품명', '단위', '소요량', '리비전', '순서', '공정코드', '사이드', '유효시작일', '유효종료일', '비고'];
-    const rows = flat.length > 0
-      ? flat.map((r) => [
-          Number(r.lvl), r.parentItemCode, r.childItemCode, r.itemNo ?? '', r.itemName ?? '', r.unit ?? '',
-          Number(r.qtyPer), r.revision ?? '', Number(r.seq), r.processCode ?? '', r.side ?? '',
-          r.validFrom ?? '', r.validTo ?? '', r.remark ?? '',
-        ])
-      : [Array(headers.length).fill('')];
-
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-    ws['!cols'] = [{ wch: 6 }, { wch: 18 }, { wch: 18 }, { wch: 20 }, { wch: 32 }, { wch: 6 }, { wch: 10 }, { wch: 8 }, { wch: 8 }, { wch: 10 }, { wch: 8 }, { wch: 12 }, { wch: 12 }, { wch: 30 }];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'BOM');
-    return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+    const headers = ['레벨', '상위품목코드', '하위품목코드', '하위품번', '하위품명', '단위', '소요량', '리비전', '순서', '공정코드', '로케이션', '유효시작일', '유효종료일'];
+    const rows = flat.map((r) => [
+      Number(r.lvl), r.parentItemCode, r.childItemCode, r.itemNo ?? '', r.itemName ?? '', r.unit ?? '',
+      Number(r.qtyPer), r.revision ?? '', Number(r.seq), r.processCode ?? '', r.remark ?? '',
+      r.validFrom ?? '', r.validTo ?? '',
+    ]);
+    return this.buildSheet(headers, rows, [6, 18, 18, 20, 32, 6, 10, 8, 8, 10, 40, 12, 12]);
   }
 
   /** 업로드 양식용 빈 xlsx 템플릿 반환 (헤더 행만 포함) */
   downloadTemplate(): Buffer {
-    const headers = ['상위품목코드', '하위품목코드', '소요량', '리비전', '순서', 'BOM그룹', '공정코드', '사이드', 'ECO번호', '유효시작일', '유효종료일', '비고'];
-    const ws = XLSX.utils.aoa_to_sheet([headers]);
-    ws['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 14 }, { wch: 14 }, { wch: 30 }];
+    return this.buildSheet(BOM_UPLOAD_HEADERS, [], BOM_UPLOAD_COL_WIDTHS);
+  }
+
+  private buildSheet(headers: string[], rows: unknown[][], widths: number[]): Buffer {
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    ws['!cols'] = widths.map((wch) => ({ wch }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'BOM');
     return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
   }
 
-  /** 업로드 미리보기 — 중복(모+자+유효시작일) 및 오류 행 사전 확인 */
+  /** 업로드 미리보기 — 행마다 신규/수정/변경없음/오류를 판정한다. 업로드도 같은 판정을 그대로 쓴다. */
   async previewUpload(buffer: Buffer, organizationId?: number): Promise<BomPreviewResult> {
-    const wb = XLSX.read(buffer, { type: 'buffer' });
-    const jsonRows = XLSX.utils.sheet_to_json<BomExcelRow>(wb.Sheets[wb.SheetNames[0]], { defval: '' });
-    const str = (v: unknown) => String(v ?? '').trim();
-    const fmtDate = (v: unknown): string | null => this.excelDateOnly(v);
+    const { rows } = await this.analyzeUpload(buffer, organizationId);
+    return this.summarizePreview(rows);
+  }
 
-    const rows: BomPreviewRow[] = [];
-    const fileKeySet = new Set<string>();
-    const dbKeys: { parentItemCode: string; childItemCode: string; validFrom: Date | null }[] = [];
-
-    for (let i = 0; i < jsonRows.length; i++) {
-      const r = jsonRows[i];
-      const rowNum = i + 2;
-      const parentCode = str(r['상위품목코드']);
-      const childCode = str(r['하위품목코드']);
-      const qtyRaw = r['소요량'];
-      const revision = str(r['리비전']) || 'A';
-      const validFrom = fmtDate(r['유효시작일']);
-      const validTo = fmtDate(r['유효종료일']);
-
-      if (!parentCode || !childCode) {
-        rows.push({ row: rowNum, parentItemCode: parentCode, childItemCode: childCode, validFrom, validTo, qtyPer: null, revision, status: 'error', message: '상위/하위품목코드 필수' });
-        continue;
-      }
-      if (!validFrom || !validTo) {
-        rows.push({ row: rowNum, parentItemCode: parentCode, childItemCode: childCode, validFrom, validTo, qtyPer: qtyRaw === '' || qtyRaw === null || isNaN(Number(qtyRaw)) ? null : Number(qtyRaw), revision, status: 'error', message: '유효시작일·유효종료일이 비었거나 날짜가 아님' });
-        continue;
-      }
-      if (qtyRaw === '' || qtyRaw === null || isNaN(Number(qtyRaw))) {
-        rows.push({ row: rowNum, parentItemCode: parentCode, childItemCode: childCode, validFrom, validTo, qtyPer: null, revision, status: 'error', message: '소요량 누락 또는 숫자 아님' });
-        continue;
-      }
-      if (parentCode === childCode) {
-        rows.push({ row: rowNum, parentItemCode: parentCode, childItemCode: childCode, validFrom, validTo, qtyPer: Number(qtyRaw), revision, status: 'error', message: '상위=하위 불가' });
-        continue;
-      }
-
-      const fileKey = `${parentCode}::${childCode}::${validFrom ?? ''}`;
-      if (fileKeySet.has(fileKey)) {
-        rows.push({ row: rowNum, parentItemCode: parentCode, childItemCode: childCode, validFrom, validTo, qtyPer: Number(qtyRaw), revision, status: 'duplicate_file', message: '파일 내 중복 (동일 모·자·적용일자)' });
-        continue;
-      }
-      fileKeySet.add(fileKey);
-      dbKeys.push({ parentItemCode: parentCode, childItemCode: childCode, validFrom: this.keyDate(validFrom) });
-      rows.push({ row: rowNum, parentItemCode: parentCode, childItemCode: childCode, validFrom, validTo, qtyPer: Number(qtyRaw), revision, status: 'new' });
+  /**
+   * Excel(xlsx) BOM 일괄 등록.
+   * 같은 상위·하위·유효시작일(PK) 행이 있으면 값이 바뀐 칸만 수정하고, 없으면 새로 넣는다.
+   * 오류 행이 하나라도 있으면 아무것도 저장하지 않는다 (BOM 이 반쯤 들어가지 않도록 한 트랜잭션으로 처리).
+   */
+  async uploadFromExcel(buffer: Buffer, organizationId?: number, userId?: string): Promise<BomUploadResult> {
+    const { rows, existing } = await this.analyzeUpload(buffer, organizationId);
+    if (rows.length === 0) throw new BadRequestException('업로드할 데이터 행이 없습니다.');
+    const errors = rows.filter((r) => r.status === 'error');
+    if (errors.length > 0) {
+      throw new BadRequestException(`오류 행이 ${errors.length}건 있어 저장하지 않았습니다. 첫 오류: ${errors[0].row}행 ${errors[0].message ?? ''}`);
     }
 
-    // DB 중복 확인 (모+자+유효시작일)
-    if (dbKeys.length > 0) {
-      const existBoms = await this.bomRepository.find({
-        where: dbKeys.map((k) => ({
-          parentItemCode: k.parentItemCode,
-          childItemCode: k.childItemCode,
-          ...(organizationId != null ? { organizationId } : {}),
-        })),
-        select: ['parentItemCode', 'childItemCode', 'validFrom'],
-      });
-      // DB 기존 행의 모+자+유효시작일(PK) 키 셋
-      const dbKeySet = new Set(existBoms.map((b) => `${b.parentItemCode}::${b.childItemCode}::${this.toDateOnly(b.validFrom) ?? ''}`));
+    const result: BomUploadResult = { inserted: 0, updated: 0, unchanged: 0 };
+    const now = new Date();
+    await this.bomRepository.manager.transaction(async (em) => {
+      const repo = em.getRepository(BomMaster);
+      for (const r of rows) {
+        const validFrom = this.keyDate(r.validFrom)!;
+        if (r.status === 'same') { result.unchanged++; continue; }
+        if (r.status === 'update') {
+          const before = existing.get(this.uploadKey(r))!;
+          await repo.update(
+            {
+              parentItemCode: r.parentItemCode,
+              childItemCode: r.childItemCode,
+              validFrom: before.validFrom,
+              ...(organizationId != null ? { organizationId } : {}),
+            },
+            {
+              qtyPer: r.qtyPer!, seq: r.seq, revision: r.revision, processCode: r.processCode,
+              remark: r.location, validTo: this.keyDate(r.validTo)!,
+              updatedBy: userId ?? null, updatedAt: now,
+            },
+          );
+          result.updated++;
+          continue;
+        }
+        const bom = repo.create({
+          parentItemCode: r.parentItemCode, childItemCode: r.childItemCode,
+          qtyPer: r.qtyPer!, seq: r.seq, revision: r.revision,
+          ...this.newRowCodes(r.processCode),
+          itemCode: r.ownerItemCode ?? r.parentItemCode,
+          validFrom, validTo: this.keyDate(r.validTo)!,
+          remark: r.location,
+          organizationId,
+          createdBy: userId ?? null, createdAt: now, updatedBy: userId ?? null, updatedAt: now,
+        });
+        await repo.insert(bom);
+        result.inserted++;
+      }
+    });
+    return result;
+  }
 
-      for (const row of rows) {
-        if (row.status !== 'new') continue;
-        const key = `${row.parentItemCode}::${row.childItemCode}::${row.validFrom ?? ''}`;
-        if (dbKeySet.has(key)) {
-          row.status = 'duplicate_db';
-          row.message = 'DB에 동일 모·자·적용일자 존재';
+  private summarizePreview(rows: BomPreviewRow[]): BomPreviewResult {
+    const count = (s: BomPreviewRow['status']) => rows.filter((r) => r.status === s).length;
+    return { rows, newCount: count('new'), updateCount: count('update'), sameCount: count('same'), errorCount: count('error') };
+  }
+
+  private uploadKey(r: { parentItemCode: string; childItemCode: string; validFrom: string | null }): string {
+    return `${r.parentItemCode}::${r.childItemCode}::${r.validFrom ?? ''}`;
+  }
+
+  /**
+   * 업로드 파일을 읽어 행마다 판정한다 (미리보기·업로드 공용 단일 경로).
+   * 빈 칸 규칙: 기존 행 수정 때 리비전·순서·공정코드·로케이션·유효종료일이 비어 있으면 기존 값을 그대로 둔다.
+   * 신규 행은 리비전 A, 순서 0, 공정코드 *, 유효종료일 9999-12-31 로 채운다.
+   */
+  private async analyzeUpload(buffer: Buffer, organizationId?: number): Promise<{ rows: BomPreviewRow[]; existing: Map<string, BomMaster> }> {
+    const wb = XLSX.read(buffer, { type: 'buffer' });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const jsonRows = sheet ? XLSX.utils.sheet_to_json<BomExcelRow>(sheet, { defval: '' }) : [];
+    const str = (v: unknown) => String(v ?? '').trim();
+    // 예전 양식은 LOCATION_INFO 를 '비고' 열로 받았다 — 옛 파일도 그대로 읽는다
+    const locationOf = (r: BomExcelRow) => str(r['로케이션'] !== undefined ? r['로케이션'] : r['비고']);
+
+    type Parsed = BomPreviewRow & { raw: { revision: string; seq: string; processCode: string; location: string; validTo: string } };
+    const parsed: Parsed[] = [];
+    const firstRowOfKey = new Map<string, number>();
+
+    for (let i = 0; i < jsonRows.length; i++) {
+      const src = jsonRows[i];
+      const raw = { revision: str(src['리비전']), seq: str(src['순서']), processCode: str(src['공정코드']), location: locationOf(src), validTo: str(src['유효종료일']) };
+      const qtyText = str(src['소요량']);
+      const qty = qtyText === '' ? NaN : Number(qtyText);
+      const row: Parsed = {
+        row: i + 2,
+        parentItemCode: str(src['상위품목코드']),
+        childItemCode: str(src['하위품목코드']),
+        validFrom: this.excelDateOnly(src['유효시작일']),
+        validTo: raw.validTo === '' ? null : this.excelDateOnly(src['유효종료일']),
+        qtyPer: Number.isFinite(qty) ? qty : null,
+        revision: raw.revision || null,
+        seq: raw.seq === '' ? 0 : Number(raw.seq),
+        processCode: raw.processCode || '*',
+        location: raw.location || null,
+        status: 'new',
+        raw,
+      };
+      // 내용이 전혀 없는 행(서식만 남은 줄)은 건너뛴다
+      if (!row.parentItemCode && !row.childItemCode && !qtyText && !str(src['유효시작일'])) continue;
+
+      const error =
+        !row.parentItemCode || !row.childItemCode ? '상위품목코드·하위품목코드는 필수입니다.'
+        : row.parentItemCode === row.childItemCode ? '상위 품목과 하위 품목이 같을 수 없습니다.'
+        : !row.validFrom ? '유효시작일이 비었거나 날짜가 아닙니다. (예: 2026-10-13)'
+        : raw.validTo !== '' && !row.validTo ? '유효종료일이 날짜가 아닙니다. 비우면 9999-12-31 로 들어갑니다.'
+        : row.qtyPer === null || row.qtyPer <= 0 ? '소요량이 비었거나 0 이하이거나 숫자가 아닙니다.'
+        : !Number.isFinite(row.seq) ? '순서는 숫자여야 합니다.'
+        : row.processCode.length > 10 ? '공정코드는 10자를 넘을 수 없습니다.'
+        : (row.revision?.length ?? 0) > 10 ? '리비전은 10자를 넘을 수 없습니다.'
+        : (row.location?.length ?? 0) > BOM_LOCATION_MAX ? `로케이션은 ${BOM_LOCATION_MAX}자를 넘을 수 없습니다.`
+        : null;
+      if (error) {
+        row.status = 'error'; row.message = error;
+      } else {
+        const key = this.uploadKey(row);
+        const first = firstRowOfKey.get(key);
+        if (first) { row.status = 'error'; row.message = `파일 안 ${first}행과 상위·하위·유효시작일이 같습니다.`; }
+        else firstRowOfKey.set(key, row.row);
+      }
+      parsed.push(row);
+    }
+
+    const valid = () => parsed.filter((r) => r.status !== 'error');
+    const tenant = organizationId != null ? { organizationId } : {};
+
+    // 품목마스터 존재 (DB 트리거 TRG_ITEM_CODE_CHECK 와 같은 검사를 미리 한다)
+    const itemCodes = [...new Set(valid().flatMap((r) => [r.parentItemCode, r.childItemCode]))];
+    const knownItems = new Set<string>();
+    for (const chunk of this.chunks(itemCodes)) {
+      const parts = await this.partRepository.find({ where: { itemCode: In(chunk), ...tenant }, select: ['itemCode'] });
+      parts.forEach((p) => knownItems.add(p.itemCode));
+    }
+    for (const r of valid()) {
+      const missing = [r.parentItemCode, r.childItemCode].filter((c) => !knownItems.has(c));
+      if (missing.length > 0) { r.status = 'error'; r.message = `품목마스터에 없는 품목: ${missing.join(', ')}`; }
+    }
+
+    // 공정코드 존재 ('*' 는 공정 미지정)
+    const processCodes = [...new Set(valid().map((r) => r.processCode).filter((c) => c !== '*'))];
+    const knownProcesses = new Set<string>();
+    for (const chunk of this.chunks(processCodes)) {
+      const params: unknown[] = [...chunk];
+      let tenantSql = '';
+      if (organizationId != null) { params.push(organizationId); tenantSql = `AND ORGANIZATION_ID = :${params.length}`; }
+      const found = await this.bomRepository.query<{ code: string }[]>(
+        `SELECT WORKSTAGE_CODE AS "code" FROM IP_PRODUCT_WORKSTAGE WHERE WORKSTAGE_CODE IN (${chunk.map((_, i) => `:${i + 1}`).join(', ')}) ${tenantSql}`,
+        params,
+      );
+      found.forEach((f) => knownProcesses.add(f.code));
+    }
+    for (const r of valid()) {
+      if (r.processCode !== '*' && !knownProcesses.has(r.processCode)) { r.status = 'error'; r.message = `공정마스터에 없는 공정코드: ${r.processCode}`; }
+    }
+
+    // 기존 행(PK 같은 행) → 수정/변경없음
+    const existing = new Map<string, BomMaster>();
+    const parents = [...new Set(valid().map((r) => r.parentItemCode))];
+    for (const chunk of this.chunks(parents)) {
+      const boms = await this.bomRepository.find({ where: { parentItemCode: In(chunk), ...tenant } });
+      for (const b of boms) existing.set(this.uploadKey({ parentItemCode: b.parentItemCode, childItemCode: b.childItemCode, validFrom: this.toDateOnly(b.validFrom) }), b);
+    }
+    for (const r of valid()) {
+      const before = existing.get(this.uploadKey(r));
+      if (!before) {
+        r.revision = r.revision ?? 'A';
+        r.validTo = r.validTo ?? DEFAULT_VALID_TO;
+        continue;
+      }
+      // 빈 칸은 기존 값 유지
+      if (r.raw.revision === '') r.revision = before.revision;
+      if (r.raw.seq === '') r.seq = Number(before.seq);
+      if (r.raw.processCode === '') r.processCode = before.processCode ?? '*';
+      if (r.raw.location === '') r.location = before.remark;
+      if (r.raw.validTo === '') r.validTo = this.toDateOnly(before.validTo) ?? DEFAULT_VALID_TO;
+
+      const changes: string[] = [];
+      const diff = (label: string, a: unknown, b: unknown) => { if (String(a ?? '') !== String(b ?? '')) changes.push(`${label} ${a ?? '-'} → ${b ?? '-'}`); };
+      diff('소요량', Number(before.qtyPer), r.qtyPer);
+      diff('순서', Number(before.seq), r.seq);
+      diff('리비전', before.revision, r.revision);
+      diff('공정코드', before.processCode, r.processCode);
+      diff('로케이션', before.remark, r.location);
+      diff('유효종료일', this.toDateOnly(before.validTo), r.validTo);
+      r.status = changes.length > 0 ? 'update' : 'same';
+      if (changes.length > 0) r.changes = changes;
+    }
+
+    // 순환 검사: 새로 넣는 상위→하위 연결이 하위에서 다시 상위로 돌아오면 BOM 전개(CONNECT BY)가 ORA-01436 으로 깨진다
+    const newRows = valid().filter((r) => r.status === 'new');
+    if (newRows.length > 0) {
+      const params: unknown[] = [];
+      let tenantSql = '';
+      if (organizationId != null) { params.push(organizationId); tenantSql = `WHERE ORGANIZATION_ID = :1`; }
+      const edges = await this.bomRepository.query<{ p: string; c: string }[]>(
+        `SELECT DISTINCT PARENT_ITEM_CODE AS "p", CHILD_ITEM_CODE AS "c" FROM ID_ENG_BOM ${tenantSql}`,
+        params,
+      );
+      const childrenOf = new Map<string, Set<string>>();
+      const link = (p: string, c: string) => { if (!childrenOf.has(p)) childrenOf.set(p, new Set()); childrenOf.get(p)!.add(c); };
+      edges.forEach((e) => link(e.p, e.c));
+      newRows.forEach((r) => link(r.parentItemCode, r.childItemCode));
+      const reaches = (from: string, target: string) => {
+        const seen = new Set<string>();
+        const stack = [from];
+        while (stack.length > 0) {
+          const cur = stack.pop()!;
+          if (cur === target) return true;
+          if (seen.has(cur)) continue;
+          seen.add(cur);
+          childrenOf.get(cur)?.forEach((n) => stack.push(n));
+        }
+        return false;
+      };
+      for (const r of newRows) {
+        if (reaches(r.childItemCode, r.parentItemCode)) {
+          r.status = 'error';
+          r.message = `순환 BOM: ${r.childItemCode} 아래에 이미 ${r.parentItemCode} 가 있습니다.`;
         }
       }
     }
 
-    // 업로드 때 들어갈 BOM 주인을 미리 보여준다 (uploadFromExcel 과 같은 규칙)
-    const okRows = rows.filter((r) => r.status !== 'error');
-    if (okRows.length > 0) {
-      const owners = await this.resolveUploadOwners(okRows.map((r) => ({ parent: r.parentItemCode, child: r.childItemCode })), organizationId);
-      for (const r of okRows) r.ownerItemCode = owners.get(r.parentItemCode) ?? r.parentItemCode;
+    // 신규 행이 들어갈 BOM 주인
+    const toInsert = valid().filter((r) => r.status === 'new');
+    if (toInsert.length > 0) {
+      const owners = await this.resolveUploadOwners(toInsert.map((r) => ({ parent: r.parentItemCode, child: r.childItemCode })), organizationId);
+      for (const r of toInsert) r.ownerItemCode = owners.get(r.parentItemCode) ?? r.parentItemCode;
     }
 
-    const duplicateCount = rows.filter((r) => r.status === 'duplicate_db' || r.status === 'duplicate_file').length;
-    const newCount = rows.filter((r) => r.status === 'new').length;
-    const errorCount = rows.filter((r) => r.status === 'error').length;
-    return { rows, duplicateCount, newCount, errorCount };
+    const rows: BomPreviewRow[] = parsed.map(({ raw: _raw, ...rest }) => rest);
+    return { rows, existing };
   }
 
-  /** Excel(xlsx)에서 BOM 일괄 등록 (신규만 INSERT, 기존 PK 스킵) */
-  async uploadFromExcel(buffer: Buffer, organizationId?: number, userId?: string): Promise<BomUploadResult> {
-    const wb = XLSX.read(buffer, { type: 'buffer' });
-    const jsonRows = XLSX.utils.sheet_to_json<BomExcelRow>(wb.Sheets[wb.SheetNames[0]], { defval: '' });
-    if (jsonRows.length === 0) return { inserted: 0, skipped: 0, errors: [{ row: 2, message: '데이터가 없습니다.' }] };
-
-    /* 1) 품목코드 일괄 존재 확인 */
-    const allItemCodes = new Set<string>();
-    for (const row of jsonRows) {
-      const p = String(row['상위품목코드'] ?? '').trim();
-      const c = String(row['하위품목코드'] ?? '').trim();
-      if (p) allItemCodes.add(p);
-      if (c) allItemCodes.add(c);
-    }
-    const parts = allItemCodes.size > 0
-      ? await this.partRepository.find({
-          where: { itemCode: In([...allItemCodes]), ...(organizationId != null ? { organizationId } : {}) },
-          select: ['itemCode'],
-        })
-      : [];
-    const validCodes = new Set(parts.map((p) => p.itemCode));
-
-    /* 2) 기존 BOM 일괄 조회 — 중복 스킵 판정은 PK인 모+자+적용일자 (미리보기와 동일 규칙) */
-    const pairList = jsonRows
-      .map((r) => ({ p: String(r['상위품목코드'] ?? '').trim(), c: String(r['하위품목코드'] ?? '').trim() }))
-      .filter((pk) => pk.p && pk.c);
-    const existBoms = pairList.length > 0
-      ? await this.bomRepository.find({
-          where: pairList.map((pk) => ({
-            parentItemCode: pk.p,
-            childItemCode: pk.c,
-            ...(organizationId != null ? { organizationId } : {}),
-          })),
-          select: ['parentItemCode', 'childItemCode', 'validFrom'],
-        })
-      : [];
-    // BOM 주인(ITEM_CODE): 행마다 파일 안 자기 계통의 최상위 상위품목 (resolveUploadOwners 규칙)
-    const ownerByParent = await this.resolveUploadOwners(pairList.map((pk) => ({ parent: pk.p, child: pk.c })), organizationId);
-    const existValidSet = new Set(existBoms.map((b) => `${b.parentItemCode}::${b.childItemCode}::${this.toDateOnly(b.validFrom) ?? ''}`));
-
-    /* 3) 행별 검증 및 INSERT */
-    const result: BomUploadResult = { inserted: 0, skipped: 0, errors: [] };
-    const doneValidSet = new Set<string>();
-    const str = (v: unknown) => String(v ?? '').trim();
-
-    for (let i = 0; i < jsonRows.length; i++) {
-      const row = jsonRows[i];
-      const rowNum = i + 2;
-      const parentCode = str(row['상위품목코드']);
-      const childCode = str(row['하위품목코드']);
-      const qtyRaw = row['소요량'];
-      const revision = str(row['리비전']) || 'A';
-      const validFrom = this.excelDateOnly(row['유효시작일']);
-      const validTo = this.excelDateOnly(row['유효종료일']);
-
-      if (!parentCode || !childCode) { result.errors.push({ row: rowNum, message: '상위품목코드, 하위품목코드는 필수입니다.' }); continue; }
-      if (qtyRaw === '' || qtyRaw === null || qtyRaw === undefined || isNaN(Number(qtyRaw))) { result.errors.push({ row: rowNum, message: '소요량이 누락되었거나 숫자가 아닙니다.' }); continue; }
-      if (!validFrom || !validTo) { result.errors.push({ row: rowNum, message: '유효시작일·유효종료일이 비었거나 날짜가 아닙니다. (예: 2026-10-12)' }); continue; }
-      if (parentCode === childCode) { result.errors.push({ row: rowNum, message: '상위 품목과 하위 품목이 같을 수 없습니다.' }); continue; }
-      if (!validCodes.has(parentCode)) { result.errors.push({ row: rowNum, message: `상위품목코드 [${parentCode}]가 품목마스터에 없습니다.` }); continue; }
-      if (!validCodes.has(childCode)) { result.errors.push({ row: rowNum, message: `하위품목코드 [${childCode}]가 품목마스터에 없습니다.` }); continue; }
-
-      // 중복 스킵: PK인 모+자+적용일자 (미리보기 duplicate 규칙과 동일)
-      const dupKey = `${parentCode}::${childCode}::${validFrom}`;
-      if (existValidSet.has(dupKey) || doneValidSet.has(dupKey)) { result.skipped++; continue; }
-
-      try {
-        const bom = this.bomRepository.create({
-          parentItemCode: parentCode, childItemCode: childCode, revision,
-          qtyPer: Number(qtyRaw), seq: Number(row['순서'] ?? 0) || 0,
-          bomGrp: str(row['BOM그룹']) || null,
-          ...this.newRowCodes(str(row['공정코드'])),
-          itemCode: ownerByParent.get(parentCode) ?? parentCode,
-          side: str(row['사이드']) || null, ecoNo: str(row['ECO번호']) || null,
-          validFrom: this.keyDate(validFrom)!,
-          validTo: this.keyDate(validTo)!,
-          remark: str(row['비고']) || null, useYn: 'Y',
-          organizationId,
-          createdBy: userId ?? null, updatedBy: userId ?? null,
-        });
-        await this.bomRepository.save(bom);
-        doneValidSet.add(dupKey);
-        result.inserted++;
-      } catch (error: unknown) {
-        const msg = error instanceof Error ? error.message : String(error);
-        result.errors.push({ row: rowNum, message: `저장 실패: ${msg}` });
-      }
-    }
-    console.log(`[BomService.uploadFromExcel] 완료 — 등록: ${result.inserted}, 스킵: ${result.skipped}, 오류: ${result.errors.length}`);
-    return result;
+  private chunks<T>(list: T[], size = 500): T[][] {
+    const out: T[][] = [];
+    for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size));
+    return out;
   }
 }

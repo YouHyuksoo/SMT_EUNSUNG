@@ -310,44 +310,44 @@ describe('BomService', () => {
   });
 
   describe('previewUpload', () => {
-    it('should reject upload rows without validFrom or validTo', async () => {
-      const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.json_to_sheet([
-        {
-          상위품목코드: 'P01',
-          하위품목코드: 'C01',
-          소요량: 1,
-          리비전: 'A',
-          유효시작일: '',
-          유효종료일: '',
-        },
-      ]);
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'BOM');
-      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+    const buildSheet = (aoa: unknown[][]) => {
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'BOM');
+      return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+    };
+    const HEAD = ['상위품목코드', '하위품목코드', '소요량', '리비전', '순서', '공정코드', '로케이션', '유효시작일', '유효종료일'];
+    const known = (...codes: string[]) => mockPartRepo.find.mockResolvedValue(codes.map((itemCode) => ({ itemCode }) as ItemMaster));
+    const dbRow = (v: Partial<BomMaster>) => ({
+      parentItemCode: 'P01', childItemCode: 'C01', validFrom: new Date(2021, 0, 1), validTo: new Date(9999, 11, 31),
+      qtyPer: 1, seq: 1, revision: null, processCode: '*', remark: 'C1', ...v,
+    }) as BomMaster;
 
-      const result = await target.previewUpload(buffer, 1);
+    it('유효시작일이 없으면 오류, 유효종료일은 비우면 9999-12-31', async () => {
+      known('P01', 'C01', 'C02');
+      mockBomRepo.find.mockResolvedValue([]);
+      mockBomRepo.query.mockResolvedValue([]);
+      const result = await target.previewUpload(buildSheet([
+        HEAD,
+        ['P01', 'C01', 1, '', '', '', '', '', ''],
+        ['P01', 'C02', 1, '', '', '', 'R1,R2', '2026-10-13', ''],
+      ]), 1);
 
-      expect(result.errorCount).toBe(1);
       expect(result.rows[0].status).toBe('error');
       expect(result.rows[0].message).toContain('유효시작일');
-      expect(result.rows[0].message).toContain('유효종료일');
-      expect(mockBomRepo.find).not.toHaveBeenCalled();
+      expect(result.rows[1]).toMatchObject({ status: 'new', validTo: '9999-12-31', revision: 'A', processCode: '*', location: 'R1,R2' });
     });
 
     it('should read excel date serials and date strings as real dates', async () => {
-      const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.aoa_to_sheet([
+      known('P01', 'C01', 'C02', 'C03', 'C04');
+      mockBomRepo.find.mockResolvedValue([]);
+      mockBomRepo.query.mockResolvedValue([]);
+      const result = await target.previewUpload(buildSheet([
         ['상위품목코드', '하위품목코드', '소요량', '유효시작일', '유효종료일'],
         ['P01', 'C01', 1, 44337, 73050],
         ['P01', 'C02', 1, '2021/5/21', '20991231'],
         ['P01', 'C03', 1, '2021.05.21', '73050'],
         ['P01', 'C04', 1, '2021-13-01', '2099-12-31'],
-      ]);
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'BOM');
-      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
-      mockBomRepo.find.mockResolvedValue([]);
-
-      const result = await target.previewUpload(buffer, 1);
+      ]), 1);
 
       expect(result.rows.slice(0, 3).map((r) => [r.validFrom, r.validTo])).toEqual([
         ['2021-05-21', '2099-12-31'],
@@ -356,6 +356,94 @@ describe('BomService', () => {
       ]);
       expect(result.rows[3].status).toBe('error');
       expect(result.rows[3].validFrom).toBeNull();
+    });
+
+    it('기존 행은 바뀐 칸만 수정으로, 같으면 변경없음으로, 빈 칸은 기존 값을 유지한다', async () => {
+      known('P01', 'C01', 'C02');
+      mockBomRepo.find.mockResolvedValue([dbRow({}), dbRow({ childItemCode: 'C02', remark: 'R9' })]);
+      mockBomRepo.query.mockResolvedValue([]);
+      const result = await target.previewUpload(buildSheet([
+        HEAD,
+        ['P01', 'C01', 2, '', '', '', 'C1,C2', '2021-01-01', ''],
+        ['P01', 'C02', 1, '', '', '', '', '2021-01-01', ''],
+      ]), 1);
+
+      expect(result.rows[0].status).toBe('update');
+      expect(result.rows[0].changes).toEqual(['소요량 1 → 2', '로케이션 C1 → C1,C2']);
+      expect(result.rows[1]).toMatchObject({ status: 'same', location: 'R9', revision: null, seq: 1 });
+      expect(result).toMatchObject({ newCount: 0, updateCount: 1, sameCount: 1, errorCount: 0 });
+    });
+
+    it('예전 양식의 비고 열을 로케이션으로 읽는다', async () => {
+      known('P01', 'C01');
+      mockBomRepo.find.mockResolvedValue([]);
+      mockBomRepo.query.mockResolvedValue([]);
+      const result = await target.previewUpload(buildSheet([
+        ['상위품목코드', '하위품목코드', '소요량', '유효시작일', '유효종료일', '비고'],
+        ['P01', 'C01', 1, '2026-10-13', '9999-12-31', 'U1,U2'],
+      ]), 1);
+      expect(result.rows[0].location).toBe('U1,U2');
+    });
+
+    it('품목마스터·공정마스터에 없는 코드, 파일 안 중복, 순환 BOM 은 오류다', async () => {
+      known('P01', 'C01', 'C02', 'C03', 'C04');
+      mockBomRepo.find.mockResolvedValue([]);
+      mockBomRepo.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('IP_PRODUCT_WORKSTAGE')) return [{ code: 'W10' }];
+        if (sql.includes('SELECT DISTINCT PARENT_ITEM_CODE')) return [{ p: 'C04', c: 'P01' }];
+        return [];
+      });
+      const result = await target.previewUpload(buildSheet([
+        HEAD,
+        ['P01', 'X99', 1, '', '', '', '', '2026-10-13', ''],
+        ['P01', 'C01', 1, '', '', 'W99', '', '2026-10-13', ''],
+        ['P01', 'C02', 1, '', '', 'W10', '', '2026-10-13', ''],
+        ['P01', 'C02', 1, '', '', '', '', '2026-10-13', ''],
+        ['P01', 'C04', 1, '', '', '', '', '2026-10-13', ''],
+      ]), 1);
+
+      expect(result.rows.map((r) => r.status)).toEqual(['error', 'error', 'new', 'error', 'error']);
+      expect(result.rows[0].message).toContain('X99');
+      expect(result.rows[1].message).toContain('W99');
+      expect(result.rows[3].message).toContain('4행');
+      expect(result.rows[4].message).toContain('순환');
+    });
+  });
+
+  describe('uploadFromExcel', () => {
+    const buildUpload = (rows: unknown[][]) => {
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['상위품목코드', '하위품목코드', '소요량', '로케이션', '유효시작일', '유효종료일'], ...rows]), 'BOM');
+      return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+    };
+    beforeEach(() => {
+      (mockBomRepo.manager as any).transaction = jest.fn(async (cb: (em: unknown) => unknown) => cb({ getRepository: () => mockBomRepo }));
+      mockBomRepo.create.mockImplementation((v) => v as BomMaster);
+      mockBomRepo.query.mockResolvedValue([]);
+    });
+
+    it('오류 행이 있으면 아무것도 저장하지 않는다', async () => {
+      mockPartRepo.find.mockResolvedValue([{ itemCode: 'P01' } as ItemMaster]);
+      mockBomRepo.find.mockResolvedValue([]);
+      await expect(target.uploadFromExcel(buildUpload([['P01', 'C01', 1, '', '2026-10-13', '']]), 1, 'U1')).rejects.toThrow('오류 행이 1건');
+      expect(mockBomRepo.insert).not.toHaveBeenCalled();
+      expect(mockBomRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('신규는 넣고 기존 행은 수정한다 (한 트랜잭션)', async () => {
+      mockPartRepo.find.mockResolvedValue(['P01', 'C01', 'C02'].map((itemCode) => ({ itemCode }) as ItemMaster));
+      mockBomRepo.find.mockResolvedValue([{ parentItemCode: 'P01', childItemCode: 'C01', validFrom: new Date(2021, 0, 1), validTo: new Date(9999, 11, 31), qtyPer: 1, seq: 0, revision: 'A', processCode: '*', remark: null } as BomMaster]);
+      const result = await target.uploadFromExcel(buildUpload([
+        ['P01', 'C01', 1, 'C1', '2021-01-01', ''],
+        ['P01', 'C02', 2, 'R1,R2', '2026-10-13', ''],
+      ]), 1, 'U1');
+
+      expect(result).toEqual({ inserted: 1, updated: 1, unchanged: 0 });
+      expect(mockBomRepo.update).toHaveBeenCalledWith(
+        expect.objectContaining({ parentItemCode: 'P01', childItemCode: 'C01', organizationId: 1 }),
+        expect.objectContaining({ remark: 'C1', updatedBy: 'U1' }),
+      );
+      expect(mockBomRepo.insert).toHaveBeenCalledWith(expect.objectContaining({ childItemCode: 'C02', remark: 'R1,R2', itemType: 'T', lineType: 'T', processCode: '*' }));
     });
   });
 
@@ -406,9 +494,9 @@ describe('BomService', () => {
       const codes = ['T01', 'S01', 'C01', 'N01', 'C02', 'X01', 'Y01'];
       mockPartRepo.find.mockResolvedValue(codes.map((itemCode) => ({ itemCode }) as ItemMaster));
       mockBomRepo.find.mockResolvedValue([]);
-      mockBomRepo.query.mockResolvedValue([{ parentItemCode: 'S01', ownerItemCode: 'W01', cnt: 3 }]);
+      mockBomRepo.query.mockImplementation(async (sql: string) => (sql.includes('GROUP BY PARENT_ITEM_CODE, ITEM_CODE') ? [{ parentItemCode: 'S01', ownerItemCode: 'W01', cnt: 3 }] : []));
       mockBomRepo.create.mockImplementation((v) => v as BomMaster);
-      mockBomRepo.save.mockResolvedValue({} as BomMaster);
+      (mockBomRepo.manager as any).transaction = jest.fn(async (cb: (em: unknown) => unknown) => cb({ getRepository: () => mockBomRepo }));
 
       const result = await target.uploadFromExcel(buffer, 1, 'U1');
 

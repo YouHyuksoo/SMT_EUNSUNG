@@ -97,7 +97,7 @@ export class BomController {
   ) {
     if (!file) throw new BadRequestException('File is required');
     const result = await this.bomService.previewUpload(file.buffer, organizationId);
-    return ResponseUtil.success(result, `미리보기 완료 — 신규: ${result.newCount}, 중복: ${result.duplicateCount}, 오류: ${result.errorCount}`);
+    return ResponseUtil.success(result, `미리보기 완료 — 신규: ${result.newCount}, 수정: ${result.updateCount}, 변경없음: ${result.sameCount}, 오류: ${result.errorCount}`);
   }
 
   @Post('upload')
@@ -124,7 +124,7 @@ export class BomController {
     const result = await this.bomService.uploadFromExcel(file.buffer, organizationId, userId);
     return ResponseUtil.success(
       result,
-      `Inserted: ${result.inserted}, Skipped: ${result.skipped}, Errors: ${result.errors.length}`,
+      `BOM 업로드 완료 — 추가: ${result.inserted}, 수정: ${result.updated}, 변경없음: ${result.unchanged}`,
     );
   }
 
