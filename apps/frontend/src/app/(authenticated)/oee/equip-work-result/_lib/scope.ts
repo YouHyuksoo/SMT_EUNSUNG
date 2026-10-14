@@ -41,21 +41,21 @@ export function saveScope(scope: Scope) {
   try { localStorage.setItem(SCOPE_KEY, JSON.stringify(scope)); } catch { /* 저장 실패 무시 */ }
 }
 
-/** 오늘 고른 작업지시만 되살린다 */
-export function loadRunNo(): string | null {
+/** 오늘 고른 작업지시만 되살린다. 지시일(runDate)이 오늘이 아니어도 그 날짜로 다시 찾는다 */
+export function loadRunNo(): { runNo: string; runDate: string | null } | null {
   try {
     const raw = localStorage.getItem(RUN_KEY);
     if (!raw) return null;
-    const r = JSON.parse(raw) as { runNo?: string; savedOn?: string };
-    return r.runNo && r.savedOn === todayStr() ? r.runNo : null;
+    const r = JSON.parse(raw) as { runNo?: string; runDate?: string; savedOn?: string };
+    return r.runNo && r.savedOn === todayStr() ? { runNo: r.runNo, runDate: r.runDate ?? null } : null;
   } catch {
     return null;
   }
 }
 
-export function saveRunNo(runNo: string | null) {
+export function saveRunNo(runNo: string | null, runDate?: string) {
   try {
-    if (runNo) localStorage.setItem(RUN_KEY, JSON.stringify({ runNo, savedOn: todayStr() }));
+    if (runNo) localStorage.setItem(RUN_KEY, JSON.stringify({ runNo, runDate, savedOn: todayStr() }));
     else localStorage.removeItem(RUN_KEY);
   } catch { /* 저장 실패 무시 */ }
 }

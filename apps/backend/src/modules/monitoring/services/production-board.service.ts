@@ -211,10 +211,8 @@ export const MI_ORDER_SQL = `
          NVL((SELECT SUM(wr.RESULT_QTY) FROM IP_PRODUCT_WORK_RESULT wr
                WHERE wr.RUN_NO = r.RUN_NO AND wr.ORGANIZATION_ID = r.ORGANIZATION_ID
                  AND wr.RESULT_STATUS = 'DONE'), 0) AS "goodQty",
-         0 AS "defectQty",
-         (SELECT MAX(wr.ENTER_DATE) FROM IP_PRODUCT_WORK_RESULT wr
-           WHERE wr.RUN_NO = r.RUN_NO AND wr.ORGANIZATION_ID = r.ORGANIZATION_ID
-             AND wr.RESULT_STATUS = 'DONE') AS "lastResultAt"
+         -- 수기 실적은 입력 간격이 길어 마지막 실적 시각으로 '대기' 판정하지 않는다 (SMD 센서 실적만 쓴다)
+         0 AS "defectQty", CAST(NULL AS DATE) AS "lastResultAt"
     FROM IP_PRODUCT_RUN_CARD r
     CROSS JOIN wd
     LEFT JOIN ID_ITEM i ON i.ITEM_CODE = r.ITEM_CODE AND i.ORGANIZATION_ID = ${ORG}
@@ -269,15 +267,15 @@ export class ProductionBoardService {
 
     // 1묶음: 계획 행 2개 쿼리
     const [smdRows, miRows] = await Promise.all([
-      this.dataSource.query(SMD_PLAN_SQL, dayStartBind) as Promise<PlanRow[]>,
-      this.dataSource.query(MI_ORDER_SQL, dayBind) as Promise<PlanRow[]>,
+      this.dataSource.query<PlanRow[]>(SMD_PLAN_SQL, dayStartBind),
+      this.dataSource.query<PlanRow[]>(MI_ORDER_SQL, dayBind),
     ]);
     // 2묶음: 시간대 총계·불량·칸 정의 (커넥션 풀 보호를 위해 묶음을 나눈다)
     const [smdSlots, miMinutes, qcRows, slotRows] = await Promise.all([
-      this.dataSource.query(SLOT_SUM_SQL('IP_ASSEMBLY_ACTUAL_TIME_V', 'RECEIPT_DATE'), dayBind) as Promise<SlotSumRow[]>,
-      this.dataSource.query(MI_RESULT_MINUTE_SQL, dayStartBind) as Promise<ResultMinuteRow[]>,
-      this.dataSource.query(QC_MINUTE_SQL, dayStartBind) as Promise<QcMinuteRow[]>,
-      this.dataSource.query(SLOT_RANGE_SQL) as Promise<SlotRange[]>,
+      this.dataSource.query<SlotSumRow[]>(SLOT_SUM_SQL('IP_ASSEMBLY_ACTUAL_TIME_V', 'RECEIPT_DATE'), dayBind),
+      this.dataSource.query<ResultMinuteRow[]>(MI_RESULT_MINUTE_SQL, dayStartBind),
+      this.dataSource.query<QcMinuteRow[]>(QC_MINUTE_SQL, dayStartBind),
+      this.dataSource.query<SlotRange[]>(SLOT_RANGE_SQL),
     ]);
 
     const orders = this.buildOrders(smdRows, miRows, now);

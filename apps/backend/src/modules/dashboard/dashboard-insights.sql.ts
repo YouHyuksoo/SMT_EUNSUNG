@@ -4,14 +4,14 @@
  *
  * 초보자 가이드:
  * 1. 바인드는 :day 하나(YYYY-MM-DD, 비면 오늘). 선택일 포함 7일을 달력(calendar)으로 만들어 빈 날도 행이 나온다
- * 2. 계획: IP_PRODUCT_SMD_PLAN / IP_PRODUCT_MI_PLAN 의 PLAN_QTY 합 (계획 테이블 ACTUAL_QTY 는 갱신되지 않는다)
+ * 2. 계획: SMD 는 IP_PRODUCT_SMD_PLAN 의 PLAN_QTY 합, 제품은 후공정 생산지시(런카드) 지시수량 합(공정마다 지시가 따로라 지시 대비로 본다)
  * 3. 실적: SMD 는 IP_ASSEMBLY_ACTUAL_TIME_V 시간대 10칸(A~J) 합, 제품은 후공정 생산지시 확정 실적
  *    (IP_PRODUCT_WORK_RESULT, planning/order-result.sql.ts)을 입력 시각의 작업일(08:30 시작)로 묶는다
  * 4. 실적만 있고 계획이 없는 라인도 UNION ALL 로 합쳐서 남긴다 (한쪽만 JOIN 하면 사라진다)
  * 5. 조직(ORGANIZATION_ID)은 getSummary 와 같이 1 이다. 실적 뷰에는 조직 컬럼이 없다
  */
 
-import { MI_ORDER_RESULTS_SQL } from '../planning/order-result.sql';
+import { MI_ORDER_RESULTS_SQL, MI_ORDERS_SQL } from '../planning/order-result.sql';
 
 /** 실적 뷰의 시간대 10칸(A~J) 합 */
 export const DASHBOARD_ACTUAL_SUM = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
@@ -36,10 +36,10 @@ export const DASHBOARD_INSIGHTS_SQL = `
      WHERE v.RECEIPT_DATE >= b.selected_day - 6 AND v.RECEIPT_DATE < b.selected_day + 1
      GROUP BY v.RECEIPT_DATE, v.LINE_CODE
     UNION ALL
-    SELECT p.PLAN_DATE, p.LINE_CODE, 'MI', SUM(NVL(p.PLAN_QTY, 0)), 0
-      FROM IP_PRODUCT_MI_PLAN p CROSS JOIN bounds b
-     WHERE p.ORGANIZATION_ID = 1 AND p.PLAN_DATE >= b.selected_day - 6 AND p.PLAN_DATE < b.selected_day + 1
-     GROUP BY p.PLAN_DATE, p.LINE_CODE
+    SELECT o.RUN_DATE, o.LINE_CODE, 'MI', SUM(NVL(o.LOT_SIZE, 0)), 0
+      FROM (${MI_ORDERS_SQL}) o CROSS JOIN bounds b
+     WHERE o.ORGANIZATION_ID = 1 AND o.RUN_DATE >= b.selected_day - 6 AND o.RUN_DATE < b.selected_day + 1
+     GROUP BY o.RUN_DATE, o.LINE_CODE
     UNION ALL
     SELECT F_GET_WORK_ACTUAL_DATE(x.ENTER_DATE, 'A'), x.LINE_CODE, 'MI', 0, SUM(x.RESULT_QTY)
       FROM (${MI_ORDER_RESULTS_SQL}) x CROSS JOIN bounds b

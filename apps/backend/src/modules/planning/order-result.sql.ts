@@ -24,3 +24,9 @@ export const MI_ORDER_RESULTS_SQL = `
     JOIN IP_PRODUCT_RUN_CARD r ON r.RUN_NO = wr.RUN_NO AND r.ORGANIZATION_ID = wr.ORGANIZATION_ID
    WHERE wr.RESULT_STATUS = 'DONE'
      AND ${MI_ORDER_EXISTS('r')}`;
+
+/** 후공정 생산지시(런카드)의 지시수량. 공정마다 지시가 따로라 지시 대비 실적은 이 수량과 비교한다. */
+export const MI_ORDERS_SQL = `
+  SELECT r.RUN_NO, r.ORGANIZATION_ID, r.LINE_CODE, r.RUN_DATE, r.LOT_SIZE
+    FROM IP_PRODUCT_RUN_CARD r
+   WHERE ${MI_ORDER_EXISTS('r')}`;

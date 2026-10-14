@@ -65,8 +65,10 @@ export default function PlanPickerModal({ isOpen, onClose, onCreated }: {
     setLoading(true);
     try {
       const res = await api.get('/production/lot-card/plans', { params: { lineCode, modelName: modelName || undefined, dateFrom, dateTo, workstageCode: workstageCode || undefined } });
-      setRows(res.data?.data ?? []);
-      setPicked(null);
+      const next: PlanRow[] = res.data?.data ?? [];
+      setRows(next);
+      // 공정만 바꿔 다시 조회하면 고른 계획을 남은 수량이 바뀐 새 행으로 유지한다
+      setPicked((prev) => (prev ? next.find((r) => planKey(r) === planKey(prev)) ?? null : null));
     } catch {
       // 원인은 api 인터셉터의 오류 창이 보여 준다.
     } finally {

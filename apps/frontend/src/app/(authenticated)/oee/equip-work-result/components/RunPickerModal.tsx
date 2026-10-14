@@ -49,6 +49,8 @@ export default function RunPickerModal({ isOpen, onClose, lineCode, lineName, wo
     }
   }, [date, lineCode, workstageCode]);
 
+  // 단말을 켜 둔 채 작업일이 바뀌어도(08:30) 열 때마다 오늘 작업일로 맞춘다
+  useEffect(() => { if (isOpen) setDate(todayStr()); }, [isOpen]);
   useEffect(() => { if (isOpen) void search(); }, [isOpen, search]);
 
   const filtered = useMemo(() => {

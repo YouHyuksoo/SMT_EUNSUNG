@@ -11,6 +11,7 @@ import { DataSource } from 'typeorm';
 import { MockLoggerService } from '@test/mock-logger.service';
 import {
   DEFAULT_SLOTS,
+  MI_ORDER_SQL,
   ProductionBoardService,
   deriveStatus,
   slotIndexOf,
@@ -110,6 +111,10 @@ describe('ProductionBoardService', () => {
       const { hourly } = await target.getBoard();
       expect(hourly[0].goodQty).toBe(10 + 7);
       expect(hourly[9].goodQty).toBe(3);
+    });
+
+    it('제품 지시 행은 마지막 실적 시각으로 대기 처리하지 않는다 (수기 실적은 간격이 길다)', () => {
+      expect(MI_ORDER_SQL).toContain('CAST(NULL AS DATE) AS "lastResultAt"');
     });
 
     it('칸 정의 조회가 비어 있으면 기본 10칸을 쓴다', async () => {

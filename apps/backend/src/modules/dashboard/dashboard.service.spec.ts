@@ -103,6 +103,16 @@ describe('DashboardService', () => {
       expect(prod).toContain("F_GET_WORK_ACTUAL_DATE(x.ENTER_DATE, 'A')");
     });
 
+    it('product plan is the order quantity of that day (run cards), compared order by order', async () => {
+      mockDataSource.query.mockImplementation(async (sql: string) => answer(sql));
+
+      await target.getSummary('2026-10-14');
+
+      const prod = (mockDataSource.query.mock.calls as [string, unknown][]).map(([sql]) => sql).find((sql) => sql.includes('"miPlan"'))!;
+      expect(prod).toContain('SUM(o.LOT_SIZE)');
+      expect(prod).not.toContain('FROM IP_PRODUCT_MI_PLAN p');
+    });
+
     it('rejects a malformed date', async () => {
       await expect(target.getSummary('2026/09/30')).rejects.toThrow('YYYY-MM-DD');
       expect(mockDataSource.query).not.toHaveBeenCalled();
@@ -141,6 +151,11 @@ describe('DashboardService', () => {
       expect(DASHBOARD_INSIGHTS_SQL).not.toContain('IP_PRODUCT_ACTUAL_TIME_V');
       expect(DASHBOARD_INSIGHTS_SQL).toContain("wr.RESULT_STATUS = 'DONE'");
       expect(DASHBOARD_INSIGHTS_SQL).toContain("F_GET_WORK_ACTUAL_DATE(x.ENTER_DATE, 'A')");
+    });
+
+    it('insights product plan is the order quantity by run date and line', () => {
+      expect(DASHBOARD_INSIGHTS_SQL).toContain('SUM(NVL(o.LOT_SIZE, 0))');
+      expect(DASHBOARD_INSIGHTS_SQL).not.toContain('FROM IP_PRODUCT_MI_PLAN p CROSS JOIN');
     });
 
     it('rejects a malformed date without querying', async () => {

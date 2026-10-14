@@ -69,35 +69,35 @@ export class ShippingOrderService {
   async create(dto: ShippingOrderUpsertDto, organizationId: number, userId: string) {
     return this.tx.run(async (qr) => {
       const model = await this.model(qr, dto.modelName, organizationId);
-      // 같은 납기일 순번은 MAX+1 로 잡고, 번호가 겹치면 다시 잡는다
-      for (let attempt = 0; attempt < 3; attempt += 1) {
-        const seqRows = await qr.query(
-          `SELECT NVL(MAX(PLAN_SEQUENCE), 0) + 1 + :attempt AS "seq" FROM IP_PRODUCT_DELIVERY_PLAN
-            WHERE PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD') AND ORGANIZATION_ID = :organizationId`,
-          namedBinds({ attempt, planDate: dto.planDate, organizationId }),
-        ) as Array<{ seq: number }>;
-        const seq = Number(seqRows[0]?.seq ?? 1);
-        const no = shipOrderNo(dto.planDate, seq);
-        const dup = await qr.query(
-          `SELECT COUNT(*) AS "cnt" FROM IP_PRODUCT_DELIVERY_PLAN WHERE MFS = :no AND ORGANIZATION_ID = :organizationId`,
-          namedBinds({ no, organizationId }),
-        ) as Array<{ cnt: number }>;
-        if (Number(dup[0]?.cnt ?? 0) > 0) continue;
-        await qr.query(
-          `INSERT INTO IP_PRODUCT_DELIVERY_PLAN
-             (PLAN_DATE, PLAN_SEQUENCE, LINE_CODE, MFS, MODEL_NAME, MODEL_SUFFIX, ITEM_CODE, PLAN_QTY, ACTUAL_QTY,
-              CUSTOMER_CODE, PLAN_STATUS, COMMENTS, ORGANIZATION_ID, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY)
-           VALUES (TO_DATE(:planDate, 'YYYY-MM-DD'), :seq, '*', :no, :modelName, :modelSuffix, :itemCode, :planQty, 0,
-                   :customerCode, 'W', :comments, :organizationId, SYSDATE, :userId, SYSDATE, :userId)`,
-          namedBinds({
-            planDate: dto.planDate, seq, no, modelName: dto.modelName, modelSuffix: model.modelSuffix,
-            itemCode: model.itemCode, planQty: dto.planQty, customerCode: dto.customerCode,
-            comments: dto.comments?.trim() || null, organizationId, userId,
-          }),
-        );
-        return { shipOrderNo: no };
-      }
-      throw new ConflictException('출하지시번호를 만들지 못했습니다. 다시 시도하세요.');
+      // 테이블에 PK·UK 가 없어 동시에 등록하면 같은 번호가 나올 수 있다. 채번부터 INSERT 까지 표를 잠근다
+      // (커밋 때 풀린다). 등록은 드물고 짧아서 잠금 대기는 거의 없다.
+      await qr.query('LOCK TABLE IP_PRODUCT_DELIVERY_PLAN IN SHARE ROW EXCLUSIVE MODE');
+      const seqRows = await qr.query(
+        `SELECT NVL(MAX(PLAN_SEQUENCE), 0) + 1 AS "seq" FROM IP_PRODUCT_DELIVERY_PLAN
+          WHERE PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD') AND ORGANIZATION_ID = :organizationId`,
+        namedBinds({ planDate: dto.planDate, organizationId }),
+      ) as Array<{ seq: number }>;
+      const seq = Number(seqRows[0]?.seq ?? 1);
+      const no = shipOrderNo(dto.planDate, seq);
+      const dup = await qr.query(
+        `SELECT COUNT(*) AS "cnt" FROM IP_PRODUCT_DELIVERY_PLAN WHERE MFS = :no AND ORGANIZATION_ID = :organizationId`,
+        namedBinds({ no, organizationId }),
+      ) as Array<{ cnt: number }>;
+      // 같은 날 1000건을 넘겨 번호 자리가 넘치는 경우 등 — 겹치는 번호로 넣지 않는다
+      if (Number(dup[0]?.cnt ?? 0) > 0) throw new ConflictException(`출하지시번호 ${no} 가 이미 있습니다.`);
+      await qr.query(
+        `INSERT INTO IP_PRODUCT_DELIVERY_PLAN
+           (PLAN_DATE, PLAN_SEQUENCE, LINE_CODE, MFS, MODEL_NAME, MODEL_SUFFIX, ITEM_CODE, PLAN_QTY, ACTUAL_QTY,
+            CUSTOMER_CODE, PLAN_STATUS, COMMENTS, ORGANIZATION_ID, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY)
+         VALUES (TO_DATE(:planDate, 'YYYY-MM-DD'), :seq, '*', :no, :modelName, :modelSuffix, :itemCode, :planQty, 0,
+                 :customerCode, 'W', :comments, :organizationId, SYSDATE, :userId, SYSDATE, :userId)`,
+        namedBinds({
+          planDate: dto.planDate, seq, no, modelName: dto.modelName, modelSuffix: model.modelSuffix,
+          itemCode: model.itemCode, planQty: dto.planQty, customerCode: dto.customerCode,
+          comments: dto.comments?.trim() || null, organizationId, userId,
+        }),
+      );
+      return { shipOrderNo: no };
     });
   }
 
@@ -141,9 +141,12 @@ export class ShippingOrderService {
   }
 
   /** 박스 출고 직후(같은 트랜잭션) — 박스를 지시에 잇는다 */
-  async linkIssuedBox(qr: Q, no: string, barcode: string, organizationId: number, userId: string) {
+  async linkIssuedBox(qr: Q, no: string, barcode: string, organizationId: number, userId: string, customerCode?: string) {
     const order = await this.lock(qr, no, organizationId);
     if (order.planStatus === 'C') throw new ConflictException(`출하지시 ${no} 는 이미 완료됐습니다.`);
+    if (customerCode && order.customerCode && customerCode !== order.customerCode) {
+      throw new BadRequestException(`출고 고객(${customerCode})이 출하지시 고객(${order.customerCode})과 다릅니다.`);
+    }
     const box = await this.box(qr, barcode, organizationId);
     if (box.modelName !== order.modelName) {
       throw new BadRequestException(`박스 모델(${box.modelName})이 출하지시 모델(${order.modelName})과 다릅니다.`);
@@ -176,10 +179,10 @@ export class ShippingOrderService {
   private async lock(qr: Q, no: string, organizationId: number) {
     const rows = await qr.query(
       `SELECT MODEL_NAME AS "modelName", PLAN_QTY AS "planQty", NVL(ACTUAL_QTY, 0) AS "actualQty",
-              NVL(PLAN_STATUS, 'W') AS "planStatus"
+              NVL(PLAN_STATUS, 'W') AS "planStatus", CUSTOMER_CODE AS "customerCode"
          FROM IP_PRODUCT_DELIVERY_PLAN WHERE MFS = :no AND ORGANIZATION_ID = :organizationId FOR UPDATE`,
       namedBinds({ no, organizationId }),
-    ) as Array<{ modelName: string; planQty: number; actualQty: number; planStatus: string }>;
+    ) as Array<{ modelName: string; planQty: number; actualQty: number; planStatus: string; customerCode: string | null }>;
     if (!rows[0]) throw new NotFoundException(`출하지시 ${no} 가 없습니다.`);
     return { ...rows[0], planQty: Number(rows[0].planQty), actualQty: Number(rows[0].actualQty) };
   }

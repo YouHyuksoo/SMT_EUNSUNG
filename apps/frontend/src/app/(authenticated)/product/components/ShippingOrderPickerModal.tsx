@@ -32,7 +32,8 @@ export default function ShippingOrderPickerModal({ isOpen, onClose, onPick }: Pr
     setLoading(true);
     try {
       const res = await api.get('/product/shipping-orders', {
-        params: { dateFrom: shiftDays(today, -7), dateTo: shiftDays(today, 30), openOnly: 'Y' },
+        // 완료되지 않은 지시는 납기가 지났어도 출고할 수 있어야 한다 — 지난 1년치를 본다
+        params: { dateFrom: shiftDays(today, -365), dateTo: shiftDays(today, 30), openOnly: 'Y' },
       });
       setRows(res.data?.data ?? []);
     } catch {
@@ -49,7 +50,7 @@ export default function ShippingOrderPickerModal({ isOpen, onClose, onPick }: Pr
       {loading ? (
         <p className="p-6 text-center text-text-muted">불러오는 중…</p>
       ) : rows.length === 0 ? (
-        <p className="p-6 text-center text-text-muted">출고할 제품납품계획이 없습니다 (납기일 7일 전 ~ 30일 후, 완료 제외).</p>
+        <p className="p-6 text-center text-text-muted">출고할 제품납품계획이 없습니다 (납기일 1년 전 ~ 30일 후, 완료 제외).</p>
       ) : (
         <div className="grid grid-cols-4 gap-3">
           {rows.map((r) => (

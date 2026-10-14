@@ -64,6 +64,23 @@ describe('ShippingOrderService', () => {
     await expect(service.shipOrderOfBox(r2 as never, 'BOX1', 1)).resolves.toBeNull();
   });
 
+  it('rejects a box shipped to another customer than the order', async () => {
+    const r = qr([[/FOR UPDATE/, [{ ...order[0], customerCode: 'TS' }]], [/FROM IP_PRODUCT_PACK_MASTER/, box('M1', 10)]]);
+    await expect(service.linkIssuedBox(r as never, 'DLV261020001', 'BOX1', 1, 'U', 'KY')).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('serializes order numbering with a table lock so two creates cannot take the same number', async () => {
+    const r = qr([[/FROM IP_PRODUCT_MODEL_MASTER/, [{ modelSuffix: '*', itemCode: 'I1' }]], [/AS "seq"/, [{ seq: 1 }]], [/COUNT\(\*\)/, [{ cnt: 0 }]]]);
+    const tx = { run: jest.fn(async (cb: (q: unknown) => unknown) => cb(r)) };
+    const svc = new ShippingOrderService({} as never, tx as never);
+    await svc.create({ planDate: '2026-10-20', customerCode: 'TS', modelName: 'M1', planQty: 10 }, 1, 'U');
+    const sqls = r.query.mock.calls.map(([s]) => String(s).trim());
+    const lockAt = sqls.findIndex((s) => s.startsWith('LOCK TABLE IP_PRODUCT_DELIVERY_PLAN'));
+    const seqAt = sqls.findIndex((s) => s.includes('AS "seq"'));
+    expect(lockAt).toBeGreaterThanOrEqual(0);
+    expect(lockAt).toBeLessThan(seqAt);
+  });
+
   it('refuses to delete an order that already shipped boxes', async () => {
     const tx = { run: jest.fn(async (cb: (q: unknown) => unknown) => cb(qr([[/FOR UPDATE/, order]]))) };
     const svc = new ShippingOrderService({} as never, tx as never);

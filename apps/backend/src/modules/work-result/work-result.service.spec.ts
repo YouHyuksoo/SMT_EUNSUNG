@@ -209,7 +209,8 @@ describe('WorkResultService tenancy', () => {
     expect(insertCall?.[1]?.[3]).toBeNull();
     expect(insertCall?.[1]?.[4]).toBe('WS-1');
     expect(runCardCall?.[1]?.[0]).toBeNull();
-    expect(runCardCall?.[1]?.[1]).toBe('WS-1');
+    // 공정은 발행 때 정해지고 실적이 런카드에 다시 쓰지 않는다
+    expect(String(runCardCall?.[0])).not.toContain('WORKSTAGE_CODE');
   });
 
   it('normalizes whitespace equipment on an existing result update', async () => {
@@ -247,7 +248,8 @@ describe('WorkResultService tenancy', () => {
     expect(updateCall?.[1]?.[0]).toBeNull();
     expect(updateCall?.[1]?.[1]).toBe('WS-1');
     expect(runCardCall?.[1]?.[0]).toBeNull();
-    expect(runCardCall?.[1]?.[1]).toBe('WS-1');
+    // 공정은 발행 때 정해지고 실적이 런카드에 다시 쓰지 않는다
+    expect(String(runCardCall?.[0])).not.toContain('WORKSTAGE_CODE');
   });
 
   it('does not call the sensor procedure while the result is in progress', async () => {
@@ -431,12 +433,13 @@ describe('WorkResultService process-bound run cards', () => {
     expect(manager.query.mock.calls.some(([s]) => String(s).startsWith('INSERT INTO IP_PRODUCT_WORK_RESULT'))).toBe(false);
   });
 
-  it('locks an unassigned run card to the first result process', async () => {
+  it('keeps a legacy run card without a process unassigned (only the machine is written back)', async () => {
     const manager = managerFor(null);
     await service.upsertResult(
       { runNo: 'R1', machineCode: 'M1', workstageCode: 'W091', resultQty: 5, resultStatus: 'WIP' } as never, 7, 'U',
     );
     const write = manager.query.mock.calls.find(([s]) => String(s).startsWith('UPDATE IP_PRODUCT_RUN_CARD'));
-    expect(String(write?.[0])).toContain('WORKSTAGE_CODE=NVL(WORKSTAGE_CODE,');
+    expect(String(write?.[0])).toContain('SET MACHINE_CODE=:1 WHERE');
+    expect(String(write?.[0])).not.toContain('WORKSTAGE_CODE');
   });
 });

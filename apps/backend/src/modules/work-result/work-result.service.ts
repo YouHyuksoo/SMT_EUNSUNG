@@ -283,10 +283,11 @@ export class WorkResultService {
           ],
         );
       }
-      // run card write-back — 설비는 마지막 실적 설비로, 공정은 비어 있을 때만 첫 실적 공정으로 채운다(전환 기간)
+      // run card write-back — 설비만 마지막 실적 설비로 둔다. 공정은 발행 때 정해지고 실적이 바꾸지 않는다.
+      // 공정이 비어 있는 예전 런카드는 그대로 두어(어느 공정 실적도 받는다) 잘못 넣은 첫 실적에 고정되지 않게 한다.
       await mgr.query(
-        `UPDATE IP_PRODUCT_RUN_CARD SET MACHINE_CODE=:1, WORKSTAGE_CODE=NVL(WORKSTAGE_CODE, :2) WHERE RUN_NO=:3 AND ORGANIZATION_ID=:4`,
-        [machineCode, dto.workstageCode, dto.runNo, organization],
+        `UPDATE IP_PRODUCT_RUN_CARD SET MACHINE_CODE=:1 WHERE RUN_NO=:2 AND ORGANIZATION_ID=:3`,
+        [machineCode, dto.runNo, organization],
       );
       return { seqNo: seq!, lineCode: line };
     });

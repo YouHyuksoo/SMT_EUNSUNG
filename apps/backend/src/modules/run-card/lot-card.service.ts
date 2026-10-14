@@ -358,14 +358,14 @@ export class LotCardService {
 
   /** PID 목록 (PB dw_4 d_pcb_label_qr_with_item_code_report) */
   async findPids(runNo: string, organizationId: number) {
-    return this.dataSource.query(
+    return this.dataSource.query<Array<{ serialNo: string; labelText: string | null; itemCode: string | null }>>(
       `SELECT SERIAL_NO AS "serialNo", LABEL_TEXT AS "labelText", ITEM_CODE AS "itemCode",
               BARCODE_STATUS AS "barcodeStatus", BOX_NO AS "boxNo"
          FROM IP_PRODUCT_2D_BARCODE
         WHERE RUN_NO = :runNo AND ORGANIZATION_ID = :organizationId
         ORDER BY SERIAL_NO`,
       namedBinds({ runNo, organizationId }),
-    ) as Promise<Array<{ serialNo: string; labelText: string | null; itemCode: string | null }>>;
+    );
   }
 
   /**
@@ -490,7 +490,7 @@ export class LotCardService {
    */
   async findPrint(runNos: string, organizationId: number) {
     const ins = this.inList(runNos);
-    return this.dataSource.query(
+    return this.dataSource.query<Row[]>(
       `SELECT R.RUN_NO AS "runNo", TO_CHAR(R.RUN_DATE, 'YYYY-MM-DD') AS "runDate", R.MODEL_NAME AS "modelName",
               B.MODEL_NAME AS "groupModelName", B.ITEM_CODE AS "groupItemCode", B.MODEL_SPEC AS "groupModelSpec",
               R.LINE_CODE AS "lineCode", R.LOT_SIZE AS "lotSize", R.PRODUCT_RUN_TYPE AS "productRunType",
@@ -526,7 +526,7 @@ export class LotCardService {
           AND R.ORGANIZATION_ID = :organizationId
         ORDER BY R.RUN_NO, B.MODEL_NAME`,
       namedBinds({ ...ins.binds, organizationId }),
-    ) as Promise<Row[]>;
+    );
   }
 
   /** 출고계획 (PB dw_5 d_ip_product_run_issue_plan_summary) — 고른 롯트카드들의 투입 자재 합계 */

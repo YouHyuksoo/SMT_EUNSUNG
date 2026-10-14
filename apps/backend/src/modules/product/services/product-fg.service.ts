@@ -400,7 +400,7 @@ export class ProductFgService {
           if (dto.cancel) {
             if (cancelledOrder) await this.shippingOrders.unlinkCancelledBox(qr, cancelledOrder, barcode, organizationId, userId);
           } else if (shipOrderNo) {
-            await this.shippingOrders.linkIssuedBox(qr, shipOrderNo, barcode, organizationId, userId);
+            await this.shippingOrders.linkIssuedBox(qr, shipOrderNo, barcode, organizationId, userId, dto.customerCode);
           }
         },
       },

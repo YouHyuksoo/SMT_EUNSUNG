@@ -137,12 +137,13 @@ export default function EquipWorkResultPage() {
   // 범위가 정해지면 오늘 고른 작업지시를 되살린다
   useEffect(() => {
     if (!booted || !scope) return;
-    const runNo = loadRunNo();
-    if (!runNo) { setRun(null); setHistory([]); return; }
+    const saved = loadRunNo();
+    if (!saved) { setRun(null); setHistory([]); return; }
     void (async () => {
-      const found = await reloadRun(runNo, scope.lineCode, businessDate(new Date()));
-      if (found) await loadHistory(found.runNo);
-      else { saveRunNo(null); setHistory([]); }
+      const found = await reloadRun(saved.runNo, scope.lineCode, saved.runDate ?? businessDate(new Date()));
+      // 공정이 정해진 지시가 지금 공정과 다르면 되살리지 않는다 (저장하면 서버가 거부한다)
+      if (found && (!found.workstageCode || found.workstageCode === scope.workstageCode)) await loadHistory(found.runNo);
+      else { setRun(null); saveRunNo(null); setHistory([]); }
     })();
   }, [booted, scope, reloadRun, loadHistory]);
 
@@ -152,13 +153,14 @@ export default function EquipWorkResultPage() {
   }, [run, scope, reloadRun, loadHistory]);
 
   function confirmScope(next: Scope) {
-    const lineChanged = next.lineCode !== scope?.lineCode;
+    // 작업지시는 라인·공정에 속한다 — 둘 중 하나라도 바뀌면 지시를 다시 고른다
+    const changed = next.lineCode !== scope?.lineCode || next.workstageCode !== scope?.workstageCode;
     setScope(next); saveScope(next); setScopeOpen(false);
-    if (lineChanged) { setRun(null); setHistory([]); saveRunNo(null); setRunOpen(true); }
+    if (changed) { setRun(null); setHistory([]); saveRunNo(null); setRunOpen(true); }
   }
 
   async function selectRun(r: RunRow) {
-    setRun(r); saveRunNo(r.runNo); setRunOpen(false);
+    setRun(r); saveRunNo(r.runNo, r.runDate); setRunOpen(false);
     await loadHistory(r.runNo);
   }
 

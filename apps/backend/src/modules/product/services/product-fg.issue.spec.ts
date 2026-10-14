@@ -17,7 +17,7 @@ describe('ProductFgService.issue with a shipping order', () => {
   it('links the shipped box to the order after the procedure, in the same transaction', async () => {
     await service.issue({ ...base, shipOrderNo: 'DLV261020001' }, 1, 'U');
     expect(String(qr.query.mock.calls[0][0])).toContain('P_PRODUCT_FG_ISSUE');
-    expect(shippingOrders.linkIssuedBox).toHaveBeenCalledWith(qr, 'DLV261020001', 'BOX1', 1, 'U');
+    expect(shippingOrders.linkIssuedBox).toHaveBeenCalledWith(qr, 'DLV261020001', 'BOX1', 1, 'U', 'C1');
     expect(tx.run).toHaveBeenCalledTimes(1);
   });
 
