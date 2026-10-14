@@ -154,6 +154,14 @@ export class LotCardService {
       throw new BadRequestException('공정을 선택하세요. 후공정 지시는 공정을 정해 내립니다.');
     }
     return this.dataSource.transaction(async (m) => {
+      // 같은 계획을 동시에 발행하면 남은 수량·공정 검사를 둘 다 통과한다 — 계획 행을 먼저 잠근다
+      await m.query(
+        `SELECT 1 FROM ${dto.planType === 'SMD' ? 'IP_PRODUCT_SMD_PLAN' : 'IP_PRODUCT_MI_PLAN'}
+          WHERE PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD') AND PLAN_SEQUENCE = :planSequence
+            AND MFS = :mfs AND ORGANIZATION_ID = :organizationId
+            FOR UPDATE`,
+        namedBinds({ organizationId, planDate: dto.planDate, planSequence: dto.planSequence, mfs: dto.mfs }),
+      );
       const plans = await m.query(
         `${PLAN_SELECT[dto.planType]}
            AND p.PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')

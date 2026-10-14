@@ -113,7 +113,11 @@ describe('LotCardService per-process run cards', () => {
     await serviceWith(query).createFromPlan(
       { planType: 'MI', planDate: '2026-10-14', planSequence: 1, mfs: miPlan.mfs, productRunType: 'P', workstageCode: 'W091' }, 1, 'U',
     );
-    const plan = query.mock.calls.find(([s]) => String(s).includes('FROM IP_PRODUCT_MI_PLAN'))!;
+    const lockAt = query.mock.calls.findIndex(([s]) => /FROM IP_PRODUCT_MI_PLAN[\s\S]*FOR UPDATE/.test(String(s)));
+    const planAt = query.mock.calls.findIndex(([s]) => String(s).includes('AS "remainQty"'));
+    expect(lockAt).toBeGreaterThanOrEqual(0);
+    expect(lockAt).toBeLessThan(planAt);
+    const plan = query.mock.calls[planAt];
     expect(String(plan[0])).not.toContain('WORKSTAGE_CODE');
     expect(plan[1]).not.toHaveProperty('workstageCode');
     const insert = query.mock.calls.find(([s]) => String(s).includes('INSERT INTO IP_PRODUCT_RUN_CARD ('))!;
