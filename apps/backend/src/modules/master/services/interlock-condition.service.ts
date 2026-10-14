@@ -10,13 +10,17 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { namedBinds } from '../../../common/utils/named-binds.util';
+import { TransactionService } from '../../../shared/transaction.service';
 import { CopyInterlockConditionDto, InterlockConditionQueryDto, SaveInterlockConditionDto } from '../dto/interlock-condition.dto';
 
 type Row = Record<string, unknown>;
 
 @Injectable()
 export class InterlockConditionService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly tx: TransactionService,
+  ) {}
 
   findAll(query: InterlockConditionQueryDto, organizationId: number) {
     const conditions = ['c.ORGANIZATION_ID = :organizationId'];
@@ -147,15 +151,13 @@ export class InterlockConditionService {
 
   /** DML 을 실행하고 영향받은 행 수를 돌려준다 */
   private async execute(sql: string, binds: Record<string, unknown>): Promise<number> {
-    const runner = this.dataSource.createQueryRunner();
     try {
-      await runner.connect();
-      const result = await runner.query(sql, namedBinds(binds), true) as { affected?: number };
-      return Number(result.affected ?? 0);
+      return await this.tx.run(async (qr) => {
+        const result = await qr.query(sql, namedBinds(binds), true) as { affected?: number };
+        return Number(result.affected ?? 0);
+      });
     } catch (error: unknown) {
       throw this.oracleError(error);
-    } finally {
-      await runner.release();
     }
   }
 

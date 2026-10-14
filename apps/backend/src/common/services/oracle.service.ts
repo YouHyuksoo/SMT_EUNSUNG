@@ -42,6 +42,9 @@ export const outNumberBind = () => ({ dir: oracledb.BIND_OUT, type: oracledb.NUM
 /** 긴 문자열(JSON 등)을 CLOB 으로 넘긴다 — VARCHAR2 한도(32KB)를 넘어도 된다. */
 export const clobBind = (val: string) => ({ val, type: oracledb.CLOB });
 
+/** 파일 내용(양식 파일·이미지 등)을 BLOB 으로 넘긴다. */
+export const blobBind = (val: Buffer) => ({ val, type: oracledb.DB_TYPE_BLOB });
+
 /** Oracle 식별자 화이트리스트 패턴 (패키지명/프로시저명 인젝션 방지) */
 const SAFE_IDENTIFIER = /^[A-Z][A-Z0-9_$#]{0,29}$/i;
 type OracleRow = Record<string, unknown>;

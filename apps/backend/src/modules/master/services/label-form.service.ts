@@ -12,9 +12,10 @@
  *    미리보기 값은 DB 함수 F_GEN_LABEL_DATA_4_BARTENDER 의 PREVIEW 모드로 만든다.
  */
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import * as oracledb from 'oracledb';
+import { blobBind } from '../../../common/services/oracle.service';
 import { DataSource, QueryRunner } from 'typeorm';
 import { namedBinds } from '../../../common/utils/named-binds.util';
+import { TransactionService } from '../../../shared/transaction.service';
 import { CopyLabelFormDto, LABEL_VALUE_KEYS, LabelFormKeyDto, LabelFormQueryDto, SaveLabelFormDto, UpdateLabelFormDto } from '../dto/label-form.dto';
 
 type Row = Record<string, unknown>;
@@ -24,7 +25,10 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 @Injectable()
 export class LabelFormService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly tx: TransactionService,
+  ) {}
 
   /** 양식 목록 — BLOB 는 크기만 돌려준다 */
   findAll(query: LabelFormQueryDto, organizationId: number) {
@@ -122,7 +126,7 @@ export class LabelFormService {
              LAST_MODIFY_DATE = SYSDATE, LAST_MODIFY_BY = :userId
        WHERE MODEL_NAME = :modelName AND LABEL_FORM_NO = :labelFormNo AND ORGANIZATION_ID = :organizationId`,
       {
-        content: { val: file.buffer, type: oracledb.DB_TYPE_BLOB },
+        content: blobBind(file.buffer),
         ...(kind === 'syntax' ? { fileName } : {}),
         userId: userId ?? null, modelName: key.modelName, labelFormNo: key.labelFormNo, organizationId,
       }));
@@ -172,27 +176,21 @@ export class LabelFormService {
     if (new Set(types).size !== types.length) throw new BadRequestException('유형이 같은 양식을 한 모델로 함께 복사할 수 없습니다. 한 모델에는 유형별로 양식이 하나만 있어야 합니다.');
     for (const type of types) await this.assertTypeFree(target, type, organizationId);
 
-    let copied = 0;
-    await this.execute(async (runner) => {
-      await runner.startTransaction();
-      try {
-        for (const source of dto.sources) {
-          copied += await this.dml(runner, `
-            INSERT INTO ISYS_LABEL_FORM
-              (MODEL_NAME, LABEL_FORM_NO, LABEL_FORM_NAME, LABEL_FORM_TYPE, USE_FLAG, COMMENTS, ${VALUE_COLUMNS.join(', ')},
-               LABEL_SYNTAX, LABEL_IMAGE, ORGANIZATION_ID, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY)
-            SELECT :target, LABEL_FORM_NO, LABEL_FORM_NAME, LABEL_FORM_TYPE, USE_FLAG, COMMENTS, ${VALUE_COLUMNS.join(', ')},
-                   LABEL_SYNTAX, LABEL_IMAGE, ORGANIZATION_ID, SYSDATE, :userId, SYSDATE, :userId
-              FROM ISYS_LABEL_FORM
-             WHERE MODEL_NAME = :modelName AND LABEL_FORM_NO = :labelFormNo AND ORGANIZATION_ID = :organizationId`,
-            { target, userId: userId ?? null, modelName: source.modelName, labelFormNo: source.labelFormNo, organizationId });
-        }
-        await runner.commitTransaction();
-      } catch (error: unknown) {
-        await runner.rollbackTransaction();
-        throw error;
+    // 여러 양식을 한 트랜잭션으로 복사한다 — 하나라도 실패하면 모두 되돌린다
+    const copied = await this.execute(async (runner) => {
+      let count = 0;
+      for (const source of dto.sources) {
+        count += await this.dml(runner, `
+          INSERT INTO ISYS_LABEL_FORM
+            (MODEL_NAME, LABEL_FORM_NO, LABEL_FORM_NAME, LABEL_FORM_TYPE, USE_FLAG, COMMENTS, ${VALUE_COLUMNS.join(', ')},
+             LABEL_SYNTAX, LABEL_IMAGE, ORGANIZATION_ID, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY)
+          SELECT :target, LABEL_FORM_NO, LABEL_FORM_NAME, LABEL_FORM_TYPE, USE_FLAG, COMMENTS, ${VALUE_COLUMNS.join(', ')},
+                 LABEL_SYNTAX, LABEL_IMAGE, ORGANIZATION_ID, SYSDATE, :userId, SYSDATE, :userId
+            FROM ISYS_LABEL_FORM
+           WHERE MODEL_NAME = :modelName AND LABEL_FORM_NO = :labelFormNo AND ORGANIZATION_ID = :organizationId`,
+          { target, userId: userId ?? null, modelName: source.modelName, labelFormNo: source.labelFormNo, organizationId });
       }
-      return copied;
+      return count;
     });
     return { copied, targetModelName: target };
   }
@@ -258,15 +256,12 @@ export class LabelFormService {
     return Number(result.affected ?? 0);
   }
 
+  /** 쓰기는 공용 트랜잭션으로 한다 — 성공하면 커밋, 예외면 롤백 */
   private async execute(work: (runner: QueryRunner) => Promise<number>): Promise<number> {
-    const runner = this.dataSource.createQueryRunner();
     try {
-      await runner.connect();
-      return await work(runner);
+      return await this.tx.run(work);
     } catch (error: unknown) {
       throw error instanceof BadRequestException || error instanceof NotFoundException ? error : this.oracleError(error);
-    } finally {
-      await runner.release();
     }
   }
 

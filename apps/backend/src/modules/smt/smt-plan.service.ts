@@ -20,7 +20,7 @@
  *    스캔·풀체크 화면의 일이고 이 화면이 아니다.
  */
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import * as oracledb from 'oracledb';
+import { outStringBind } from '../../common/services/oracle.service';
 import { DataSource } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
 import {
@@ -278,14 +278,11 @@ export class SmtPlanService {
    * 라인 ON(장착)/OFF(회수) — 현장 PDA 와 같은 P_CHECK_PDA_TB_INOUT_PS_USER 를 런카드 번호로 부른다 (**쓰기**).
    * PB 계획배포 화면의 Line On/Off 는 다른 스키마(INFINITY21_JSLCD)의 P_CHECK_PDA_TB_INOUT_PS 를 불러 은성에서는 동작하지 않았다.
    * 프로시저가 성공하면 스스로 COMMIT 하고 p_err='OK' 를 돌려준다. 실패 메시지일 때 COMMIT 없이 끝나는 경로가 있어
-   * 트랜잭션 안에서 부르고 'OK' 가 아니면 되돌린다.
+   * 트랜잭션 안에서 부르고 'OK' 가 아니면 예외를 던져 되돌린다 (TransactionService 가 롤백한다).
    */
   async lineOnOff(dto: SmtPlanLineOnOffDto, userId: string) {
-    const runner = this.dataSource.createQueryRunner();
-    await runner.connect();
-    await runner.startTransaction();
-    try {
-      const out = (await runner.query(
+    return this.tx.run(async (qr) => {
+      const out = (await qr.query(
         `BEGIN P_CHECK_PDA_TB_INOUT_PS_USER(:lineCode, :runNo, :pcbItem, :inout, :ps, :err, :userId); END;`,
         namedBinds({
           lineCode: dto.lineCode.trim(),
@@ -293,23 +290,14 @@ export class SmtPlanService {
           pcbItem: dto.pcbItem,
           inout: dto.onOff === 'ON' ? '1' : '2',
           ps: dto.ps,
-          err: { dir: oracledb.BIND_OUT, type: oracledb.STRING, maxSize: 4000 },
+          err: outStringBind(4000),
           userId,
         }),
       )) as { err?: string | null };
       const message = String(out?.err ?? '').trim();
-      if (message !== 'OK') {
-        await runner.rollbackTransaction();
-        throw new BadRequestException(message || '라인 ON/OFF 처리 결과를 알 수 없습니다.');
-      }
-      await runner.commitTransaction();
+      if (message !== 'OK') throw new BadRequestException(message || '라인 ON/OFF 처리 결과를 알 수 없습니다.');
       return { onOff: dto.onOff, runNo: dto.runNo, message };
-    } catch (error: unknown) {
-      if (runner.isTransactionActive) await runner.rollbackTransaction();
-      throw error;
-    } finally {
-      await runner.release();
-    }
+    });
   }
 
   /** 같은 라인·모델·면의 계획 건수. 프로시저 전후를 비교하는 데 쓴다. */
