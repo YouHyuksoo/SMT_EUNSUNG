@@ -147,6 +147,7 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "OEE_RESULT_ENTRY", labelKey: "menu.oee.resultEntry", path: "/oee/result-entry", pbLinkStatus: "web-native" },
       { code: "OEE_OVERALL_STATUS", labelKey: "menu.oee.overallStatus", path: "/oee/overall-status", pbLinkStatus: "web-native" },
       { code: "OEE_EQUIP_WORK_RESULT", labelKey: "menu.oee.equipWorkResult", path: "/oee/equip-work-result", pbLinkStatus: "web-native" },
+      { code: "OEE_EQUIP_INSPECT_RESULT", labelKey: "menu.oee.equipInspectResult", path: "/oee/equip-inspect-result", pbLinkStatus: "web-native" },
       { code: "OEE_EQUIP_OPS_STATUS", labelKey: "menu.oee.equipOpsStatus", path: "/oee/equip-ops-status", pbLinkStatus: "web-native" },
       { code: "OEE_FIELD_OPS", labelKey: "menu.oee.fieldOps", path: "/oee/field-ops", pbLinkStatus: "web-native" },
       // 미사용(2026-08-27): 설비별 운영 현황 및 분석 → 설비 운영 현황(OEE_EQUIP_OPS_STATUS)으로 대체.

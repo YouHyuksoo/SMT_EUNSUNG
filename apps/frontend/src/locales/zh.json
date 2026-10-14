@@ -477,6 +477,7 @@
     "oee.multiEntry": "OEE停机录入",
     "oee.resultEntry": "平板生产实绩录入",
     "oee.equipWorkResult": "设备作业实绩管理",
+    "oee.equipInspectResult": "设备检查实绩管理",
     "oee.equipOpsStatus": "设备运行现况",
     "oee.fieldOps": "设备运行及实绩管理(现场)",
     "oee.equipOpsAnalysis": "设备运行现况及分析",

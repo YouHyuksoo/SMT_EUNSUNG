@@ -481,6 +481,7 @@
     "oee.equipReason": "Equipment Downtime Code Management",
     "oee.resource": "OEE Resource Management",
     "oee.equipWorkResult": "Equipment Work Result",
+    "oee.equipInspectResult": "Equipment Inspection Result",
     "oee.equipOpsStatus": "Equipment Ops Status",
     "oee.fieldOps": "Equipment Ops & Work Results (Field)",
     "oee.equipOpsAnalysis": "Equipment Ops Analysis",

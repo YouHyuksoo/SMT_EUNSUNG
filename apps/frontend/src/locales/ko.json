@@ -481,6 +481,7 @@
     "oee.equipReason": "설비별 비가동코드 관리",
     "oee.resource": "OEE 라인 관리",
     "oee.equipWorkResult": "설비별 작업 실적관리",
+    "oee.equipInspectResult": "설비별 검사실적관리",
     "oee.equipOpsStatus": "설비 운영 현황",
     "oee.fieldOps": "설비 운영 및 실적관리(현장)",
     "oee.equipOpsAnalysis": "설비별 운영 현황 및 분석",
