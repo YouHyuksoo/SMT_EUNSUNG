@@ -50,10 +50,9 @@ const PLAN_SELECT = {
            p.MFS AS "mfsGroupNo", 'A' AS "shiftCode", 'P' AS "productionType",
            p.CUSTOMER_CODE AS "customerCode", NVL(p.PLAN_STATUS, 'W') AS "planStatus",
            p.PLAN_QTY AS "planQty", p.PLAN_QTY AS "lotQty",
-           -- 후공정 지시는 공정마다 따로 내린다 — 남은 수량은 고른 공정의 런카드와 공정 미지정(예전) 런카드를 뺀다 (공정 미선택이면 전체)
+           -- 계획 한 건은 한 공정으로만 내려간다 — 남은 수량은 그 계획의 런카드를 모두 뺀다
            p.PLAN_QTY - NVL((SELECT SUM(rc.LOT_SIZE) FROM IP_PRODUCT_RUN_CARD rc
-             WHERE rc.LOT_NO = p.MFS AND rc.ORGANIZATION_ID = p.ORGANIZATION_ID
-               AND (:workstageCode IS NULL OR rc.WORKSTAGE_CODE = :workstageCode OR rc.WORKSTAGE_CODE IS NULL)), 0) AS "remainQty"
+             WHERE rc.LOT_NO = p.MFS AND rc.ORGANIZATION_ID = p.ORGANIZATION_ID), 0) AS "remainQty"
       FROM IP_PRODUCT_MI_PLAN p, ID_ITEM i
      WHERE p.ITEM_CODE = i.ITEM_CODE(+) AND p.ORGANIZATION_ID = i.ORGANIZATION_ID(+)
        AND p.ORGANIZATION_ID = :organizationId`,
@@ -123,7 +122,6 @@ export class LotCardService {
         dateTo: query.dateTo,
         lineCode: `${query.lineCode}%`,
         modelName: `${(query.modelName ?? '').trim()}%`,
-        ...(planType === 'MI' ? { workstageCode: query.workstageCode?.trim() || null } : {}),
       }),
     ) as LotCardPlanRow[];
     return rows.map((r) => ({
@@ -153,7 +151,7 @@ export class LotCardService {
     if (!dto.productRunType?.trim()) throw new BadRequestException('제조유형을 선택하세요.');
     const workstageCode = dto.planType === 'MI' ? dto.workstageCode?.trim() || null : null;
     if (dto.planType === 'MI' && !workstageCode) {
-      throw new BadRequestException('공정을 선택하세요. 후공정 지시는 공정마다 따로 내립니다.');
+      throw new BadRequestException('공정을 선택하세요. 후공정 지시는 공정을 정해 내립니다.');
     }
     return this.dataSource.transaction(async (m) => {
       const plans = await m.query(
@@ -161,10 +159,7 @@ export class LotCardService {
            AND p.PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')
            AND p.PLAN_SEQUENCE = :planSequence
            AND p.MFS = :mfs`,
-        namedBinds({
-          organizationId, planDate: dto.planDate, planSequence: dto.planSequence, mfs: dto.mfs,
-          ...(dto.planType === 'MI' ? { workstageCode } : {}),
-        }),
+        namedBinds({ organizationId, planDate: dto.planDate, planSequence: dto.planSequence, mfs: dto.mfs }),
       ) as LotCardPlanRow[];
       const plan = plans[0];
       if (!plan) throw new NotFoundException('계획을 찾을 수 없습니다.');
@@ -178,6 +173,18 @@ export class LotCardService {
       // 제조번호가 '*' 면 LOT_NO 가 '*' 인 롯트카드가 생겨 다른 계획과 섞인다 (남은 수량·삭제 트리거가 LOT_NO 로 묶는다).
       if (!plan.mfs || plan.mfs === '*') {
         throw new ConflictException(`계획(순번 ${plan.planSequence})에 제조번호가 없어 롯트카드와 이을 수 없습니다.`);
+      }
+      // 후공정 계획 한 건은 한 공정으로만 지시가 내려간다. 다른 공정은 그 공정의 계획에서 지시한다.
+      if (workstageCode) {
+        const others = await m.query(
+          `SELECT MIN(WORKSTAGE_CODE) AS "otherProcess" FROM IP_PRODUCT_RUN_CARD
+            WHERE LOT_NO = :mfs AND ORGANIZATION_ID = :organizationId
+              AND WORKSTAGE_CODE IS NOT NULL AND WORKSTAGE_CODE <> :workstageCode`,
+          namedBinds({ mfs: plan.mfs, organizationId, workstageCode }),
+        ) as Array<{ otherProcess: string | null }>;
+        if (others[0]?.otherProcess) {
+          throw new ConflictException(`계획 ${plan.mfs} 은 이미 ${others[0].otherProcess} 공정으로 지시가 내려갔습니다. 한 계획은 한 공정으로만 지시합니다.`);
+        }
       }
 
       // 연배열 수 — 모델마스터에 모델이 없으면 PB 처럼 막는다 (f_get_carrier_size)
@@ -399,26 +406,6 @@ export class LotCardService {
           `DELETE FROM IP_PRODUCT_2D_BARCODE WHERE RUN_NO = :runNo AND ORGANIZATION_ID = :organizationId`,
           namedBinds({ runNo, organizationId }),
         );
-      }
-
-      // 후공정 지시는 공정마다 따로 내려가 한 계획(LOT_NO)에 런카드가 공정 수만큼 있다. PID 는 제품마다 한 벌이라
-      // 같은 계획의 다른 공정 런카드에 이미 있으면 만들지 않는다. SMD 와 같은 공정 분할 런카드는 대상이 아니다.
-      // PID 표(1.8억 행)는 LOT_NO 인덱스가 없어 런카드에서 형제를 찾고 RUN_NO 인덱스로 PID 유무만 본다.
-      const sibling = await m.query(
-        `SELECT MIN(rc.RUN_NO) AS "runNo"
-           FROM IP_PRODUCT_RUN_CARD me
-           JOIN IP_PRODUCT_RUN_CARD rc
-             ON rc.LOT_NO = me.LOT_NO AND rc.ORGANIZATION_ID = me.ORGANIZATION_ID
-            AND rc.RUN_NO <> me.RUN_NO AND rc.WORKSTAGE_CODE <> me.WORKSTAGE_CODE
-          WHERE me.RUN_NO = :runNo AND me.ORGANIZATION_ID = :organizationId
-            AND EXISTS (SELECT 1 FROM IP_PRODUCT_MI_PLAN mp
-                         WHERE mp.MFS = me.LOT_NO AND mp.ORGANIZATION_ID = me.ORGANIZATION_ID)
-            AND EXISTS (SELECT 1 FROM IP_PRODUCT_2D_BARCODE b
-                         WHERE b.RUN_NO = rc.RUN_NO AND b.ORGANIZATION_ID = rc.ORGANIZATION_ID)`,
-        namedBinds({ runNo, organizationId }),
-      ) as Array<{ runNo: string | null }>;
-      if (sibling[0]?.runNo) {
-        throw new ConflictException(`같은 계획의 다른 공정 지시(${sibling[0].runNo})에 PID 가 이미 있습니다. PID 는 계획당 한 번만 만듭니다.`);
       }
 
       const models = await m.query(

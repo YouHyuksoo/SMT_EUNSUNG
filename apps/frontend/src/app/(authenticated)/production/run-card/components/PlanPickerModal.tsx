@@ -9,9 +9,10 @@
  * 2. **수량은 고르지 않는다.** 계획의 남은 수량(계획 - 이미 만든 롯트카드)이 그대로 롯트카드 수량이 된다.
  *    지시일자는 계획일자, 롯트카드 번호는 서버가 채번한다.
  * 3. 투입 자재(상세)는 계획 품목의 BOM 1단계로 함께 만들어진다. 다른 기준이 필요하면 [상세 생성]을 쓴다.
- * 4. **후공정(제품) 계획은 공정마다 지시를 따로 내린다.** 공정(제조공정만)을 고르면 남은 수량이 그 공정 기준으로 나온다.
+ * 4. **후공정(제품) 계획 한 건은 한 공정으로만 지시한다.** 공정(제조공정만)을 골라 런카드에 적는다.
+ *    이미 다른 공정으로 지시한 계획이면 서버가 거부한다. 다른 공정은 그 공정의 계획에서 지시한다.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, Search } from 'lucide-react';
@@ -64,25 +65,22 @@ export default function PlanPickerModal({ isOpen, onClose, onCreated }: {
     if (!lineCode) { toast.error('라인을 고르세요.'); return; }
     setLoading(true);
     try {
-      const res = await api.get('/production/lot-card/plans', { params: { lineCode, modelName: modelName || undefined, dateFrom, dateTo, workstageCode: workstageCode || undefined } });
+      const res = await api.get('/production/lot-card/plans', { params: { lineCode, modelName: modelName || undefined, dateFrom, dateTo } });
       const next: PlanRow[] = res.data?.data ?? [];
       setRows(next);
-      // 공정만 바꿔 다시 조회하면 고른 계획을 남은 수량이 바뀐 새 행으로 유지한다
+      // 다시 조회해도 고른 계획은 남은 수량이 갱신된 새 행으로 유지한다
       setPicked((prev) => (prev ? next.find((r) => planKey(r) === planKey(prev)) ?? null : null));
     } catch {
       // 원인은 api 인터셉터의 오류 창이 보여 준다.
     } finally {
       setLoading(false);
     }
-  }, [lineCode, modelName, dateFrom, dateTo, workstageCode]);
-
-  // 남은 수량이 공정 기준이라 공정을 바꾸면 다시 조회한다
-  useEffect(() => { if (lineCode) void search(); }, [workstageCode]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lineCode, modelName, dateFrom, dateTo]);
 
   const create = useCallback(async () => {
     if (!picked) return;
     if (!productRunType) { toast.error('제조유형을 고르세요.'); return; }
-    if (picked.planType === 'MI' && !workstageCode) { toast.error('공정을 고르세요. 후공정 지시는 공정마다 따로 내립니다.'); return; }
+    if (picked.planType === 'MI' && !workstageCode) { toast.error('공정을 고르세요. 후공정 지시는 공정을 정해 내립니다.'); return; }
     setSaving(true);
     try {
       const res = await api.post('/production/lot-card/from-plan', {

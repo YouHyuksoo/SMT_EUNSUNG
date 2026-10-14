@@ -15,8 +15,10 @@
  *    PB 계획 SMD 372건·MI 459건 전부). 롯트카드를 만들면 LOT_NO 에 이 값이 들어가고, 계획의 남은
  *    수량은 LOT_NO 로 묶어 센다. '*' 로 두면 롯트카드가 계획과 이어지지 않는다.
  *    이 서비스는 MFS 를 화면에서 받지 않는다.
- * 4. **실적은 뷰에서 좌측 외부조인으로 붙인다.** 계획일·라인·모델(·공정)로 맞춘다.
- *    내부조인으로 바꾸면 실적이 아직 없는 계획이 목록에서 사라진다.
+ * 4. **실적은 좌측 외부조인으로 붙인다.** 내부조인으로 바꾸면 실적이 아직 없는 계획이 목록에서 사라진다.
+ *    - 제품생산계획(MI): 그 계획(MFS)에서 내려간 생산지시(런카드)의 확정 실적 (order-result.sql.ts miPlanActualJoins).
+ *      공정 통과 이력(IP_PRODUCT_ACTUAL_TIME_V)은 실적이 아니라서 쓰지 않는다.
+ *    - 반제품생산계획(SMD): 센서 실적 뷰를 계획일·라인·모델·서픽스·PCB 면으로 맞춘다.
  * 5. **계획순번은 날짜별 번호가 아니라 시퀀스 SEQ_PLAN_DATE_SEQUENCE 다.**
  *    MI·SMD 두 테이블이 같은 시퀀스를 나눠 쓴다 (실측: 221262 SMD, 221263 MI …).
  *    날짜별 MAX+1 로 매기면 시퀀스가 나중에 같은 번호를 내줘 키가 부딪히고,
@@ -38,15 +40,14 @@ import {
   planTimeSumExpression,
   timeDescColumns,
 } from './plan-shared';
+import { miPlanActualJoins } from './order-result.sql';
 import { affectedRows } from '../../common/utils/affected-rows.util';
 import { namedBinds } from '../../common/utils/named-binds.util';
 
-export interface PlanTableConfig {
+interface PlanTableBase {
   /** 화면에 보일 이름. 오류 문구에 쓴다. */
   label: string;
   table: 'IP_PRODUCT_MI_PLAN' | 'IP_PRODUCT_SMD_PLAN';
-  /** 실적 뷰 */
-  actualView: 'IP_PRODUCT_ACTUAL_TIME_V' | 'IP_ASSEMBLY_ACTUAL_TIME_V';
   /** 이 테이블에만 있는 컬럼 ↔ DTO 필드 */
   extraColumns: Array<[column: string, field: keyof PlanUpsertDto]>;
   /** 이 테이블에서 NOT NULL 인 DTO 필드 (키·수량 제외) */
@@ -60,18 +61,24 @@ export interface PlanTableConfig {
   mfsGroupByLine: boolean;
   /** 제조번호(MFS) 머리 — MFS = 머리 || 계획순번 (가이드 3번) */
   mfsPrefix: 'MI' | 'SMD';
-  /**
-   * 실적 뷰 조인 조건 [계획 컬럼, 뷰 컬럼]. PB 데이터윈도 조인을 그대로 옮긴다.
-   * 두 뷰는 날짜 컬럼 이름부터 다르다 (IP_PRODUCT_ACTUAL_TIME_V.ACTUAL_DATE / IP_ASSEMBLY_ACTUAL_TIME_V.RECEIPT_DATE).
-   */
-  actualJoin: Array<[planColumn: string, viewColumn: string]>;
 }
 
-export const PLAN_TABLES: Record<'mi' | 'smd', PlanTableConfig> = {
+/** 실적 출처 (가이드 4번). orders = 생산지시 확정 실적, view = 센서 실적 뷰 */
+export type PlanTableConfig = PlanTableBase & (
+  | { actualSource: 'orders' }
+  | {
+      actualSource: 'view';
+      actualView: 'IP_ASSEMBLY_ACTUAL_TIME_V';
+      /** 실적 뷰 조인 조건 [계획 컬럼, 뷰 컬럼]. PB 데이터윈도 조인을 그대로 옮긴다. */
+      actualJoin: Array<[planColumn: string, viewColumn: string]>;
+    }
+);
+
+export const PLAN_TABLES = {
   mi: {
     label: '제품생산계획',
     table: 'IP_PRODUCT_MI_PLAN',
-    actualView: 'IP_PRODUCT_ACTUAL_TIME_V',
+    actualSource: 'orders',
     extraColumns: [['WORKSTAGE_CODE', 'workstageCode']],
     // PLAN_PRIORITY 는 MI 에서 NOT NULL 이고 SMD 에서는 nullable 이다.
     // 실측으로 확인했다 (없이 INSERT 하면 ORA-01400).
@@ -79,17 +86,11 @@ export const PLAN_TABLES: Record<'mi' | 'smd', PlanTableConfig> = {
     joinWorkstage: true,
     mfsGroupByLine: false,
     mfsPrefix: 'MI',
-    // d_pln_mi_master_plan_lst_tree: MODEL_SUFFIX 조인은 PB 에서도 주석 처리돼 있다.
-    actualJoin: [
-      ['PLAN_DATE', 'ACTUAL_DATE'],
-      ['LINE_CODE', 'LINE_CODE'],
-      ['MODEL_NAME', 'MODEL_NAME'],
-      ['WORKSTAGE_CODE', 'WORKSTAGE_CODE'],
-    ],
   },
   smd: {
     label: '반제품생산계획',
     table: 'IP_PRODUCT_SMD_PLAN',
+    actualSource: 'view',
     actualView: 'IP_ASSEMBLY_ACTUAL_TIME_V',
     extraColumns: [
       ['SHIFT_CODE', 'shiftCode'],
@@ -115,7 +116,7 @@ export const PLAN_TABLES: Record<'mi' | 'smd', PlanTableConfig> = {
       ['PCB_ITEM', 'PCB_ITEM'],
     ],
   },
-};
+} satisfies Record<'mi' | 'smd', PlanTableConfig>;
 
 /** 두 테이블에 공통으로 있는 수정 가능 컬럼. 감사컬럼과 MFS 는 여기에 없다. */
 const COMMON_COLUMNS: Array<[column: string, field: keyof PlanUpsertDto]> = [
@@ -163,6 +164,15 @@ export class PlanBaseService {
                                 WHERE tl.ORGANIZATION_ID = p.ORGANIZATION_ID
                                   AND tl.LINE_DIVISION IN (${Object.keys(teamBinds).map((k) => `:${k}`).join(', ')}))`
       : '';
+    // 실적 칸 (가이드 4번). MI 실적은 조회 범위 계획의 MFS 로만 모은다.
+    const actualQtyColumn = cfg.actualSource === 'orders' ? 'NVL(ma.ACTUAL_QTY, 0)' : 'p.ACTUAL_QTY';
+    const actualJoin = cfg.actualSource === 'orders'
+      ? miPlanActualJoins(`SELECT pf.MFS FROM ${cfg.table} pf
+                              WHERE pf.ORGANIZATION_ID = :organizationId
+                                AND pf.PLAN_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
+                                AND pf.PLAN_DATE < TO_DATE(:dateTo, 'YYYY-MM-DD') + 1`)
+      : `LEFT JOIN ${cfg.actualView} v
+                ON ${cfg.actualJoin.map(([planCol, viewCol]) => `v.${viewCol} = p.${planCol}`).join('\n               AND ')}`;
     const extraSelect = cfg.extraColumns
       .map(([column, field]) => `p.${column} AS "${String(field)}"`)
       .join(', ');
@@ -180,7 +190,7 @@ export class PlanBaseService {
               i.ITEM_SPEC AS "itemSpec", i.ITEM_UOM AS "itemUom",
               i.ITEM_CLASS AS "itemClass",
               p.WORK_ORDER_NO AS "workOrderNo",
-              p.PLAN_QTY AS "planQty", p.ACTUAL_QTY AS "actualQty",
+              p.PLAN_QTY AS "planQty", ${actualQtyColumn} AS "actualQty",
               ${planTimeSumExpression('p')} AS "planTimeSum",
               p.PLAN_QTY_D1 AS "planQtyD1", p.PLAN_QTY_D2 AS "planQtyD2",
               p.PLAN_QTY_D3 AS "planQtyD3",
@@ -211,8 +221,7 @@ export class PlanBaseService {
                 ON pcb.CODE_TYPE = 'PCB ITEM' AND pcb.CODE_NAME = p.PCB_ITEM
          LEFT JOIN ISYS_BASECODE ps
                 ON ps.CODE_TYPE = 'PLAN STATUS' AND ps.CODE_NAME = p.PLAN_STATUS
-         LEFT JOIN ${cfg.actualView} v
-                ON ${cfg.actualJoin.map(([planCol, viewCol]) => `v.${viewCol} = p.${planCol}`).join('\n               AND ')}
+         ${actualJoin}
         WHERE p.ORGANIZATION_ID = :organizationId
           AND p.PLAN_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
           AND p.PLAN_DATE < TO_DATE(:dateTo, 'YYYY-MM-DD') + 1

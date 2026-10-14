@@ -67,13 +67,12 @@ describe('LotCardService.createPids guards', () => {
     const query = jest.fn()
       .mockResolvedValueOnce(run)
       .mockResolvedValueOnce([{ cnt: 0 }])
-      .mockResolvedValueOnce([{ runNo: null }])
       .mockResolvedValueOnce([{ productClass: 'DN8', customerCode: 'TS' }])
       .mockResolvedValueOnce([{ next: 5 }])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ count: 10, firstSerial: 'A', lastSerial: 'B' }]);
     const result = await serviceWith(query).createPids('R1', {}, 1, 'U');
-    const insert = query.mock.calls[5];
+    const insert = query.mock.calls[4];
     expect(String(insert[0])).toContain('F_GET_PCB_BARCODE_SERIAL');
     expect(insert[1]).toMatchObject({ runNo: 'R1', serial: 5, lotSize: 10, userId: 'U', organizationId: 1 });
     expect(result).toMatchObject({ count: 10, startSerial: 5 });
@@ -100,56 +99,43 @@ describe('LotCardService per-process run cards', () => {
     expect(query).not.toHaveBeenCalled();
   });
 
-  it('computes MI remaining quantity per process and stores WORKSTAGE_CODE', async () => {
-    const query = jest.fn(async (sql: string) => {
-      if (sql.includes('FROM IP_PRODUCT_MI_PLAN')) return [miPlan];
-      if (sql.includes('FROM IP_PRODUCT_MODEL_MASTER')) return [{ cnt: 1, carrierSize: 2 }];
-      if (sql.includes('F_GET_NEW_RUN_NO')) return [{ runNo: 'R9' }];
-      if (sql.includes('SELECT COUNT(*) AS "cnt" FROM IP_PRODUCT_RUN_CARD WHERE RUN_NO')) return [{ cnt: 0 }];
-      return [];
-    });
+  const createDeps = (existingProcess: string | null) => jest.fn(async (sql: string) => {
+    if (sql.includes('FROM IP_PRODUCT_MI_PLAN')) return [miPlan];
+    if (sql.includes('AS "otherProcess"')) return [{ otherProcess: existingProcess }];
+    if (sql.includes('FROM IP_PRODUCT_MODEL_MASTER')) return [{ cnt: 1, carrierSize: 2 }];
+    if (sql.includes('F_GET_NEW_RUN_NO')) return [{ runNo: 'R9' }];
+    if (sql.includes('SELECT COUNT(*) AS "cnt" FROM IP_PRODUCT_RUN_CARD WHERE RUN_NO')) return [{ cnt: 0 }];
+    return [];
+  });
+
+  it('computes MI remaining quantity per plan (all run cards of the MFS) and stores WORKSTAGE_CODE', async () => {
+    const query = createDeps(null);
     await serviceWith(query).createFromPlan(
       { planType: 'MI', planDate: '2026-10-14', planSequence: 1, mfs: miPlan.mfs, productRunType: 'P', workstageCode: 'W091' }, 1, 'U',
     );
     const plan = query.mock.calls.find(([s]) => String(s).includes('FROM IP_PRODUCT_MI_PLAN'))!;
-    expect(String(plan[0])).toContain('rc.WORKSTAGE_CODE = :workstageCode');
-    expect(plan[1]).toMatchObject({ workstageCode: 'W091' });
+    expect(String(plan[0])).not.toContain('WORKSTAGE_CODE');
+    expect(plan[1]).not.toHaveProperty('workstageCode');
     const insert = query.mock.calls.find(([s]) => String(s).includes('INSERT INTO IP_PRODUCT_RUN_CARD ('))!;
     expect(String(insert[0])).toContain('WORKSTAGE_CODE');
     expect(insert[1]).toMatchObject({ workstageCode: 'W091' });
   });
 
-  it('refuses PIDs when another run card of the same plan already has PIDs', async () => {
-    const run = [{ runNo: 'R2', modelName: 'M', runDate: '2026-10-14', lotSize: 10, itemCode: 'I', parentItemCode: null, lineCode: '34', carrierSize: 2, lotNo: 'MI20261014001' }];
-    const query = jest.fn()
-      .mockResolvedValueOnce(run)
-      .mockResolvedValueOnce([{ cnt: 0 }])
-      .mockResolvedValueOnce([{ runNo: 'R1' }]);
-    await expect(serviceWith(query).createPids('R2', {}, 1, 'U')).rejects.toBeInstanceOf(ConflictException);
-    expect(query.mock.calls.some(([s]) => String(s).includes('INSERT INTO IP_PRODUCT_2D_BARCODE'))).toBe(false);
+  it('refuses an MI run card whose process differs from the process the plan was already issued to', async () => {
+    const query = createDeps('W120');
+    await expect(serviceWith(query).createFromPlan(
+      { planType: 'MI', planDate: '2026-10-14', planSequence: 1, mfs: miPlan.mfs, productRunType: 'P', workstageCode: 'W091' }, 1, 'U',
+    )).rejects.toBeInstanceOf(ConflictException);
+    const check = query.mock.calls.find(([s]) => String(s).includes('AS "otherProcess"'))!;
+    expect(check[1]).toMatchObject({ mfs: miPlan.mfs, workstageCode: 'W091' });
+    expect(query.mock.calls.some(([s]) => String(s).includes('INSERT INTO IP_PRODUCT_RUN_CARD ('))).toBe(false);
   });
 
-  it('finds sibling PIDs through run cards of another process, not by scanning barcodes by LOT_NO', async () => {
-    const run = [{ runNo: 'R2', modelName: 'M', runDate: '2026-10-14', lotSize: 10, itemCode: 'I', parentItemCode: null, lineCode: '34', carrierSize: 2, lotNo: 'MI20261014001' }];
-    const query = jest.fn()
-      .mockResolvedValueOnce(run)
-      .mockResolvedValueOnce([{ cnt: 0 }])
-      .mockResolvedValueOnce([{ runNo: 'R1' }]);
-    await expect(serviceWith(query).createPids('R2', {}, 1, 'U')).rejects.toBeInstanceOf(ConflictException);
-    const sql = String(query.mock.calls[2][0]);
-    expect(sql).toContain('JOIN IP_PRODUCT_RUN_CARD rc');
-    expect(sql).toContain('rc.WORKSTAGE_CODE <> me.WORKSTAGE_CODE');
-    expect(sql).toContain('b.RUN_NO = rc.RUN_NO');
-    expect(sql).toContain('FROM IP_PRODUCT_MI_PLAN');
-    expect(sql).not.toMatch(/b\.LOT_NO\s*=/);
-  });
-
-  it('MI remaining quantity also subtracts legacy run cards with no process', async () => {
+  it('MI plan list remaining quantity subtracts every run card of the plan', async () => {
     const query = jest.fn().mockResolvedValue([]);
-    const svc = serviceWith(query);
     query.mockResolvedValueOnce([{ division: 'L' }]);
-    await svc.findPlans({ lineCode: '34', dateFrom: '2026-10-14', dateTo: '2026-10-14', workstageCode: 'W091' }, 1);
+    await serviceWith(query).findPlans({ lineCode: '34', dateFrom: '2026-10-14', dateTo: '2026-10-14' }, 1);
     const sql = String(query.mock.calls[1][0]);
-    expect(sql).toContain('(:workstageCode IS NULL OR rc.WORKSTAGE_CODE = :workstageCode OR rc.WORKSTAGE_CODE IS NULL)');
+    expect(sql).toContain('WHERE rc.LOT_NO = p.MFS AND rc.ORGANIZATION_ID = p.ORGANIZATION_ID), 0) AS "remainQty"');
   });
 });
