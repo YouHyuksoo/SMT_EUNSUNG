@@ -15,6 +15,8 @@ import { ROW_LIMIT } from '../../shared/row-limit';
 import {
   MagazineDestroyDto,
   MagazineIssueDto,
+  MagazinePrintDataDto,
+  MagazineWorkerQueryDto,
   MagazineIssuedQueryDto,
   MagazineLabelLookupDto,
   MagazinePidCancelDto,
@@ -74,8 +76,8 @@ export class MagazineLabelController {
   @ApiOperation({
     summary: '229 정상(P) 매거진라벨 발행 (**쓰기**). 장입수량 단위로 떼어 가며'
       + ' 마지막 상자는 남은 만큼만 담는다. 이미 발행한 수량 + 이번 수량이 런카드'
-      + ' 지시수량을 넘으면 거절한다. 라벨 인쇄는 포함하지 않는다 — 발행된'
-      + ' 라벨번호를 돌려주므로 인쇄는 뒤에 붙일 수 있다.',
+      + ' 지시수량을 넘으면 거절한다. 한 번 발행한 라벨은 같은 세트번호를 갖는다.'
+      + ' 인쇄는 화면이 print-data 로 값을 받아 한다.',
   })
   async issue(
     @Body() dto: MagazineIssueDto,
@@ -84,6 +86,31 @@ export class MagazineLabelController {
   ) {
     return ResponseUtil.success(
       await this.service.issueLabels(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Get('worker')
+  @ApiOperation({ summary: '229 작업자 ID 의 이름 (없으면 null — 라인 작업자 ID 도 그대로 쓴다).' })
+  async worker(
+    @Query() query: MagazineWorkerQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(
+      await this.service.findWorkerName(query.workerId, organizationId),
+    );
+  }
+
+  @Post('print-data')
+  @ApiOperation({
+    summary: '229 라벨 출력 값 (PB d_pln_product_magazine_label_rpt_es 와 같은 값). 읽기 전용 —'
+      + ' 발행 직후 출력과 재출력이 같이 쓴다.',
+  })
+  async printData(
+    @Body() dto: MagazinePrintDataDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(
+      await this.service.findPrintData(dto.magazineLabelNos, organizationId),
     );
   }
 

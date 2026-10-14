@@ -11,6 +11,9 @@
  */
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayNotEmpty,
+  IsArray,
   IsBoolean,
   IsDateString,
   IsInt,
@@ -46,7 +49,23 @@ export class MagazineIssueDto {
    * 실측 런카드 `WORKSTAGE_CODE` 는 전부 NULL 이다. 화면이 반드시 보낸다.
    */
   @IsString() @IsNotEmpty() workstageCode!: string;
-  @IsOptional() @IsString() magazineSetNo?: string;
+  /**
+   * 라벨을 찍는 작업자 ID (PB `sle_user_id`). 원장 `ENTER_BY` 에 들어간다 —
+   * 실측 작성자는 AA·KK·LL 같은 라인 작업자 ID 이고 로그인 계정은 `LAST_MODIFY_BY` 다.
+   */
+  @IsString() @IsNotEmpty() workerId!: string;
+  /** 라벨 라인. 비우면 런카드 라인 (PB 도 런카드 라인을 채워 두고 바꿀 수 있게 했다). */
+  @IsOptional() @IsString() lineCode?: string;
+}
+
+export class MagazinePrintDataDto {
+  /** 출력할 매거진 라벨번호 목록. */
+  @IsArray() @ArrayNotEmpty() @ArrayMaxSize(200) @IsString({ each: true })
+  magazineLabelNos!: string[];
+}
+
+export class MagazineWorkerQueryDto {
+  @IsString() @IsNotEmpty() workerId!: string;
 }
 
 export class MagazineDestroyDto {

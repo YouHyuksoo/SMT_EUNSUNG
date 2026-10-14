@@ -182,60 +182,58 @@ export default function MagazineSplitPage() {
         </p>
       </header>
 
-      {/* 분할 (쓰기) */}
+      {/* 분할 (쓰기) — 라벨 조회부터 분할까지 한 줄 */}
       <Card padding="none">
-        <CardContent className="flex flex-col gap-3 p-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="flex items-center gap-1 text-sm font-semibold text-text">
-              <ScanLine className="h-4 w-4" />나눌 라벨
-            </span>
-            <Input aria-label="매거진라벨번호" placeholder="매거진라벨번호"
-              value={scan} className="w-56" autoFocus
-              onChange={(e) => setScan(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') void lookup(); }} />
-            <Button size="sm" onClick={lookup}>조회</Button>
-            {target && (
-              <span className="text-sm text-text-muted">
-                {target.modelName} · {target.lineName ?? target.lineCode} · 수량{' '}
-                <span className="font-semibold text-text">
-                  {lotQty.toLocaleString()}
-                </span>
+        <CardContent className="flex items-center gap-2 overflow-hidden p-3 [&>*]:shrink-0">
+          <span className="flex items-center gap-1 whitespace-nowrap text-sm font-semibold text-text">
+            <ScanLine className="h-4 w-4" />나눌 라벨
+          </span>
+          <Input aria-label="매거진라벨번호" placeholder="매거진라벨번호"
+            value={scan} className="w-44" autoFocus
+            onChange={(e) => setScan(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') void lookup(); }} />
+          <Button size="sm" onClick={lookup}>조회</Button>
+          {target && (
+            <span className="max-w-[18rem] !shrink truncate text-sm text-text-muted"
+              title={`${target.modelName} · ${target.lineName ?? target.lineCode}`}>
+              {target.modelName} · {target.lineName ?? target.lineCode} · 수량{' '}
+              <span className="font-semibold text-text">
+                {lotQty.toLocaleString()}
               </span>
-            )}
-          </div>
+            </span>
+          )}
 
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="flex items-center gap-1 text-sm font-semibold text-text">
-              <Scissors className="h-4 w-4" />나눌 수량
+          <span className="ml-2 flex items-center gap-1 whitespace-nowrap text-sm font-semibold text-text">
+            <Scissors className="h-4 w-4" />나눌 수량
+          </span>
+          <Input aria-label="분할 수량" placeholder="분할(정상)" value={divideQty}
+            className="w-24" inputMode="numeric" disabled={!target}
+            onChange={(e) => setDivideQty(e.target.value)} />
+          <Input aria-label="불량 수량" placeholder="불량" value={ngQty}
+            className="w-20" inputMode="numeric" disabled={!target}
+            onChange={(e) => setNgQty(e.target.value)} />
+          <Input aria-label="폐기 수량" placeholder="폐기" value={destroyQty}
+            className="w-20" inputMode="numeric" disabled={!target}
+            onChange={(e) => setDestroyQty(e.target.value)} />
+          <Button size="sm" disabled={busy || Boolean(blocker)}
+            onClick={() => setConfirmOpen(true)}>
+            분할
+          </Button>
+          {/* 남는 폭만 쓰고 모자라면 말줄임 — 줄이 둘로 갈라지지 않게 */}
+          {blocker && target ? (
+            <span className="flex min-w-0 !shrink items-center gap-1 text-sm text-amber-500" title={blocker}>
+              <AlertTriangle className="h-4 w-4 shrink-0" /><span className="truncate">{blocker}</span>
             </span>
-            <Input aria-label="분할 수량" placeholder="분할(정상)" value={divideQty}
-              className="w-32" inputMode="numeric" disabled={!target}
-              onChange={(e) => setDivideQty(e.target.value)} />
-            <Input aria-label="불량 수량" placeholder="불량" value={ngQty}
-              className="w-28" inputMode="numeric" disabled={!target}
-              onChange={(e) => setNgQty(e.target.value)} />
-            <Input aria-label="폐기 수량" placeholder="폐기" value={destroyQty}
-              className="w-28" inputMode="numeric" disabled={!target}
-              onChange={(e) => setDestroyQty(e.target.value)} />
-            {pieces.length > 0 && (
-              <span className="text-sm text-text-muted">
-                조각 {pieces.length}개 ={' '}
-                <span className="font-semibold text-text">
-                  {pieces.map((p) => `${LABEL_TYPE_NAME[p.type]} ${p.qty}`).join(' + ')}
-                </span>
-                {' '}= {lotQty.toLocaleString()}
+          ) : pieces.length > 0 && (
+            <span className="min-w-0 !shrink truncate text-sm text-text-muted"
+              title={`${pieces.map((p) => `${LABEL_TYPE_NAME[p.type]} ${p.qty}`).join(' + ')} = ${lotQty}`}>
+              조각 {pieces.length}개 ={' '}
+              <span className="font-semibold text-text">
+                {pieces.map((p) => `${LABEL_TYPE_NAME[p.type]} ${p.qty}`).join(' + ')}
               </span>
-            )}
-            <Button size="sm" disabled={busy || Boolean(blocker)}
-              onClick={() => setConfirmOpen(true)}>
-              분할
-            </Button>
-            {blocker && target && (
-              <span className="flex items-center gap-1 text-sm text-amber-500">
-                <AlertTriangle className="h-4 w-4" />{blocker}
-              </span>
-            )}
-          </div>
+              {' '}= {lotQty.toLocaleString()}
+            </span>
+          )}
         </CardContent>
       </Card>
 
