@@ -98,13 +98,17 @@ export default function EquipWorkResultPage() {
     } catch { toast.error('설비 목록 조회에 실패했습니다'); }
   }, []);
 
+  const loadLines = useCallback(async () => {
+    try {
+      const res = await api.get('/oee/equip-ops/lines');
+      setLines(res.data?.data?.list ?? []);
+    } catch { toast.error('라인 목록 조회에 실패했습니다'); }
+  }, []);
+
   // 진입: 라인·설비 목록을 읽고 기억한 선택을 되살린다. 없으면 라인선택 창을 연다.
   useEffect(() => {
     void (async () => {
-      try {
-        const res = await api.get('/oee/equip-ops/lines');
-        setLines(res.data?.data?.list ?? []);
-      } catch { /* 빈 목록 */ }
+      await loadLines();
       await loadMachines();
       const saved = loadScope();
       setScope(saved);
@@ -112,7 +116,14 @@ export default function EquipWorkResultPage() {
       if (!saved) setScopeOpen(true);
       setBooted(true);
     })();
-  }, [loadMachines]);
+  }, [loadLines, loadMachines]);
+
+  // 라인선택 창을 열 때 목록이 비어 있으면 다시 읽는다 — 진입 때 조회가 실패(서버 지연 등)하면 빈 창만 뜬다
+  useEffect(() => {
+    if (!scopeOpen) return;
+    if (!lines.length) void loadLines();
+    if (!machines.length) void loadMachines();
+  }, [scopeOpen, lines.length, machines.length, loadLines, loadMachines]);
 
   const machine = useMemo(() => machines.find((m) => m.machineCode === scope?.machineCode) ?? null, [machines, scope]);
   const line = useMemo(() => lines.find((l) => l.lineCode === scope?.lineCode) ?? null, [lines, scope]);
