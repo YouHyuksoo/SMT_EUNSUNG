@@ -338,6 +338,8 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "TRK_LOT_ALL", labelKey: "menu.tracking.lotAll", path: "/tracking/lot-all", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_all_barcode_tracking" },
       { code: "TRK_LINE_DASHBOARD", labelKey: "menu.tracking.lineDashboard", path: "/tracking/line-dashboard", pbLinkStatus: "powerbuilder", pbWindow: "w_com_production_status_dashboard" },
       { code: "PLN_WORKSTAGE_PASS", labelKey: "menu.workstagePass", path: "/process-transaction/workstage-pass", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_inout_scan_master", pbEvidence: "apps/backend/src/modules/process-transaction/workstage-pass.controller.ts" },
+      { code: "TRK_FORWARD_TRACE", labelKey: "menu.tracking.forwardTrace", path: "/tracking/forward-trace", pbLinkStatus: "web-native" },
+      { code: "TRK_REVERSE_TRACE", labelKey: "menu.tracking.reverseTrace", path: "/tracking/reverse-trace", pbLinkStatus: "web-native" },
     ],
   },
   {

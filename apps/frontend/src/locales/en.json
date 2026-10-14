@@ -501,6 +501,8 @@
     "tracking.runNo": "Production History (Run No)",
     "tracking.lotAll": "Lot Tracking (ALL)",
     "tracking.lineDashboard": "Production Status Dashboard",
+    "tracking.forwardTrace": "Forward Trace (PCB→Material)",
+    "tracking.reverseTrace": "Reverse Trace (Material→PCB)",
     "query": "Information Inquiry",
     "query.pidInfo": "PID Master Query",
     "query.marking": "Marking History Query",

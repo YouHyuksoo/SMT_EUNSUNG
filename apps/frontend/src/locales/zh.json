@@ -501,6 +501,8 @@
     "tracking.runNo": "生产履历(Run No)",
     "tracking.lotAll": "批次追溯(ALL)",
     "tracking.lineDashboard": "生产状况仪表板",
+    "tracking.forwardTrace": "正向追溯(PCB→物料)",
+    "tracking.reverseTrace": "反向追溯(物料→PCB)",
     "query": "信息查询",
     "query.pidInfo": "PID 信息查询",
     "query.marking": "打标履历查询",

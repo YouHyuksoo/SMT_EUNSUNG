@@ -501,6 +501,8 @@
     "tracking.runNo": "Lịch sử sản xuất (Run No)",
     "tracking.lotAll": "Truy xuất lô (ALL)",
     "tracking.lineDashboard": "Bảng điều khiển tình trạng sản xuất",
+    "tracking.forwardTrace": "Truy vết xuôi (PCB→Vật liệu)",
+    "tracking.reverseTrace": "Truy vết ngược (Vật liệu→PCB)",
     "query": "Tra cứu thông tin",
     "query.pidInfo": "Tra cứu thông tin PID",
     "query.marking": "Lịch sử khắc PID",

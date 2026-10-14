@@ -937,6 +937,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/tracking/forward-trace": {
+      const mod = await import("./page-registries/tracking__forward-trace.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/tracking/line-dashboard": {
       const mod = await import("./page-registries/tracking__line-dashboard.generated");
       component = mod.getPageComponent();
@@ -964,6 +969,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/tracking/pid": {
       const mod = await import("./page-registries/tracking__pid.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/tracking/reverse-trace": {
+      const mod = await import("./page-registries/tracking__reverse-trace.generated");
       component = mod.getPageComponent();
       break;
     }

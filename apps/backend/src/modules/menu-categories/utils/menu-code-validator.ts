@@ -143,6 +143,8 @@ const KNOWN_LEAF_CODES: ReadonlySet<string> = new Set<string>([
   'TRK_LOT_ALL',
   'TRK_LINE_DASHBOARD',
   'PLN_WORKSTAGE_PASS',
+  'TRK_FORWARD_TRACE',
+  'TRK_REVERSE_TRACE',
   'QRY_PID_INFO',
   'QRY_MARKING',
   'QRY_PCB_INPUT',
