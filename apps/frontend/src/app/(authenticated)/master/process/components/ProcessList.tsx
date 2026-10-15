@@ -21,6 +21,22 @@ import { useComCodeOptions } from "@/hooks/useComCode";
 import { ColumnDef } from "@tanstack/react-table";
 import type { Process } from "../types";
 
+/** 공정유형 배지 색 — 제조(I)·최종(L)·검사(Q) */
+const PROCESS_TYPE_COLOR: Record<string, string> = {
+  I: "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300",
+  L: "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300",
+  Q: "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300",
+};
+
+/** 공정그룹 배지 색 — SMT·후공정(PBA)·포장·수리·창고 */
+const CODE_GROUP_COLOR: Record<string, string> = {
+  SMT: "bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300",
+  PBA: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300",
+  PACKING: "bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300",
+  REPAIR: "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300",
+  WAREHOUSE: "bg-slate-200 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300",
+};
+
 export type { Process };
 
 interface ProcessListProps {
@@ -109,7 +125,7 @@ export default function ProcessList({
         ),
         size: 90,
         cell: ({ getValue }) => (
-          <ComCodeBadge groupCode="WORKSTAGE TYPE" code={getValue() as string} />
+          <ComCodeBadge groupCode="WORKSTAGE TYPE" code={getValue() as string} colorMap={PROCESS_TYPE_COLOR} />
         ),
       },
       {
@@ -122,7 +138,7 @@ export default function ProcessList({
         },
         cell: ({ getValue }) => {
           const v = getValue() as string | null;
-          return v ? <ComCodeBadge groupCode="WORKSTAGE CODE GROUP" code={v} /> : "-";
+          return v ? <ComCodeBadge groupCode="WORKSTAGE CODE GROUP" code={v} colorMap={CODE_GROUP_COLOR} /> : "-";
         },
       },
       {
@@ -165,16 +181,6 @@ export default function ProcessList({
               {count}
             </span>
           );
-        },
-      },
-      {
-        accessorKey: "uphValue",
-        header: t("master.process.uphValue"),
-        size: 70,
-        meta: { align: "right" as const },
-        cell: ({ getValue }) => {
-          const v = getValue() as number | null;
-          return v == null ? "-" : v.toLocaleString();
         },
       },
       {

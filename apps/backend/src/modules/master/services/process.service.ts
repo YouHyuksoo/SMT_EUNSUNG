@@ -38,7 +38,6 @@ const UPDATABLE_FIELDS = [
   'stValue',
   'otValue',
   'standardQty',
-  'uphValue',
   'capacity',
   'capacityUom',
   'useRate',

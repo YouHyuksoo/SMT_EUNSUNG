@@ -514,7 +514,6 @@ export default function ProcessPage() {
               </Section>
 
               <Section title={t("master.process.sectionCapacity")}>
-                {numberField("uphValue", t("master.process.uphValue"))}
                 {numberField("standardQty", t("master.process.standardQty"))}
                 {numberField("capacity", t("master.process.capacity"))}
                 <FieldCodeSelect

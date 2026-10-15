@@ -24,6 +24,12 @@ export interface ComCodeBadgeProps {
   className?: string;
   /** 아이콘 컴포넌트 (선택) */
   icon?: React.ComponentType<{ className?: string }>;
+  /**
+   * 코드별 색상 클래스 (선택). DB 색상(CODE_VALUE)보다 우선한다.
+   * CODE_VALUE 는 PB 가 다른 값으로 쓰는 그룹이 있고, DB 에서 읽은 Tailwind 클래스는 빌드에 포함되지 않을 수 있어
+   * 화면에서 코드별 색을 정해 넘긴다. 예: { I: 'bg-blue-100 text-blue-700 …' }
+   */
+  colorMap?: Record<string, string>;
 }
 
 const DEFAULT_COLOR = 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
@@ -32,13 +38,13 @@ const DEFAULT_COLOR = 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray
  * 공통코드 기반 상태 배지 (다국어 지원)
  * groupCode + code로 DB에서 색상 조회, i18n에서 현재 언어 라벨 표시
  */
-export default function ComCodeBadge({ groupCode, code, className = '', icon: Icon }: ComCodeBadgeProps) {
+export default function ComCodeBadge({ groupCode, code, className = '', icon: Icon, colorMap }: ComCodeBadgeProps) {
   const { t } = useTranslation();
   const item = useComCodeItem(groupCode, code);
 
   const translated = t(`comCode.${groupCode}.${code}`, { defaultValue: '' });
   const label = translated || item?.codeName || code;
-  const color = item?.attr1 ?? DEFAULT_COLOR;
+  const color = colorMap?.[code] ?? item?.attr1 ?? DEFAULT_COLOR;
 
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${color} ${className}`}>

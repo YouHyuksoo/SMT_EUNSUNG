@@ -36,7 +36,7 @@ IMCN_MACHINE (PK: MACHINE_CODE, ORGANIZATION_ID)   ── 하단 그리드 표�
 |------|------|------|
 | 공정코드 | `WORKSTAGE_CODE` | PK 구성(자연키, varchar2 10). 불변 — 라우팅/실적/CAPA가 이 코드로 연결. 수정 폼 비활성. 중복 시 409 ConflictException. |
 | 공정명 | `WORKSTAGE_NAME` | 표시명(varchar2 100). NOT NULL. |
-| 공정유형 | `WORKSTAGE_TYPE` | 공통코드 `WORKSTAGE TYPE` — **I=일반공정 / L=최종공정 / Q=검사공정**. NOT NULL, DEFAULT `'I'`. `processType` 인덱스 존재. |
+| 공정유형 | `WORKSTAGE_TYPE` | 공통코드 `WORKSTAGE TYPE` — **I=제조공정 / L=최종공정 / Q=검사공정**. NOT NULL, DEFAULT `'I'`. `processType` 인덱스 존재. |
 | 정렬순서 | `WORKSTAGE_SORT_ORDER` | 목록 정렬 기준(ASC). NOT NULL, `Min(0)` 정수. |
 | 시작공정 | `WORKSTAGE_START_YN` | 공통코드 `WORKSTAGE START YN`. DEFAULT `'N'`. |
 | 공정그룹 | `WORKSTAGE_CODE_GROUP` | 공통코드 `WORKSTAGE CODE GROUP` — SMT/PBA/PACKING/REPAIR/WAREHOUSE. 목록 다중 필터. |
@@ -53,7 +53,6 @@ IMCN_MACHINE (PK: MACHINE_CODE, ORGANIZATION_ID)   ── 하단 그리드 표�
 
 | 화면 항목 | DB 컬럼 |
 |------|------|
-| UPH | `UPH_VALUE` |
 | 표준수량 | `STANDARD_QTY` |
 | 생산능력 / 능력단위 | `CAPACITY` / `CAPACITY_UOM` (공통코드 `CAPACITY UOM` — ST, KG) |
 | 가동률(%) | `USE_RATE` |

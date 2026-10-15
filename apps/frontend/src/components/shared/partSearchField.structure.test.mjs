@@ -22,7 +22,6 @@ const ITEM_CODE_SIGNAL = /(\bitemCode\b|[a-z]ItemCode\b|\bitem_code\b|\bITEM_COD
 /** 품목코드 칸이 아니거나 품목마스터 조회 대상이 아닌 곳 (파일 경로 끝 → 이유) */
 const EXEMPT = {
   "components/shared/PartSearchModal.tsx": "품목 조회 모달 자체의 검색어 입력칸",
-  "app/(authenticated)/oee/equip-work-result/page.tsx": "품번·품명·설비를 함께 찾는 키워드 칸",
   "app/(authenticated)/master/equip/components/EquipBomPanel.tsx": "설비 자체 부품 목록 (품목명·유형을 직접 입력)",
 };
 
