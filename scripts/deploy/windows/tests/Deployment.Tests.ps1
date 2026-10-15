@@ -589,6 +589,17 @@ exit $LASTEXITCODE
     Assert-True (-not ($script:pm2Calls | Where-Object { $_ -match '^start\s' }))
   }
 
+  Test-Case 'restored fork-mode app without instances matches a captured single instance' {
+    # pm2 resurrect 로 되살린 fork 모드 앱은 jlist 에 instances 가 없다 (2026-10-15 롤백 실측).
+    $captured = @([pscustomobject]@{ name='eunsung-frontend'; pid=111; pm2_env=[pscustomobject]@{ pm_cwd='C:\prior\frontend'; instances=1; exec_mode='fork_mode' } },
+                  [pscustomobject]@{ name='eunsung-backend'; pid=222; pm2_env=[pscustomobject]@{ pm_cwd='C:\prior\backend'; instances=1; exec_mode='fork_mode' } })
+    $restored = @([pscustomobject]@{ name='eunsung-frontend'; pid=333; pm2_env=[pscustomobject]@{ pm_cwd='C:\prior\frontend'; exec_mode='fork_mode' } },
+                  [pscustomobject]@{ name='eunsung-backend'; pid=444; pm2_env=[pscustomobject]@{ pm_cwd='C:\prior\backend'; exec_mode='fork_mode' } })
+    & (Get-Module EunsungDeployment) { param($c, $r) Assert-EunsungPm2DefinitionFidelity -CapturedApps $c -RestoredApps $r } $captured $restored
+    $cluster = @([pscustomobject]@{ name='eunsung-frontend'; pid=111; pm2_env=[pscustomobject]@{ instances=2; exec_mode='cluster_mode' } }, $captured[1])
+    Assert-Throws { & (Get-Module EunsungDeployment) { param($c, $r) Assert-EunsungPm2DefinitionFidelity -CapturedApps $c -RestoredApps $r } $cluster $restored } 'eunsung-frontend/instances'
+  }
+
   Test-Case 'rollback health failure is distinct and includes sanitized diagnostics' {
     $root = Join-Path $tempRoot 'rollback-fails'
     New-TestRelease -DeployRoot $root -Sha $shaA | Out-Null

@@ -333,7 +333,9 @@ function Test-EunsungReleaseHealth {
     [scriptblock]$HttpInvoker,
     [ValidateRange(1, 20)][int]$MaxAttempts = 20,
     [ValidateRange(1, 60)][int]$TimeoutSec = 5,
-    [ValidateRange(0, 60000)][int]$RetryDelayMs = 5000,
+    # 배포 직후 서버 디스크 캐시가 비어 있으면 백엔드 모듈 로딩만 2분 40초 걸린 적이 있다 (2026-10-15).
+    # 20회 × 15초 ≈ 5분을 기다린다.
+    [ValidateRange(0, 60000)][int]$RetryDelayMs = 15000,
     [scriptblock]$SleepAdapter
     ,[string]$ExpectedReleaseDir
     ,[string]$FrontendUrl = 'http://127.0.0.1:3100/'
@@ -854,6 +856,8 @@ function Assert-EunsungPm2DefinitionFidelity {
       $expected = Get-EunsungObjectMember -Object $expectedPm.Value -Name $option
       if (-not $expected.Present) { continue }
       $actual = Get-EunsungObjectMember -Object $actualPm.Value -Name $option
+      # pm2 resurrect 로 되살린 fork 모드 앱은 jlist 에 instances 를 싣지 않는다. 빠진 것은 기본값 1 과 같다.
+      if (-not $actual.Present -and $option -ceq 'instances' -and [string]$expected.Value -ceq '1') { continue }
       if (-not $actual.Present) { throw "Restored PM2 option is missing: $name/$option" }
       $expectedJson = ConvertTo-Json -InputObject $expected.Value -Depth 12 -Compress
       $actualJson = ConvertTo-Json -InputObject $actual.Value -Depth 12 -Compress
