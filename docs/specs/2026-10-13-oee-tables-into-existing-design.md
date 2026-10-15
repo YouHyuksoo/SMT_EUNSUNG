@@ -170,3 +170,8 @@ ESDB와 ESDBext는 같은 운영 DB다. 배포된 백엔드가 아직 OEE_를 �
   - 시간대별 생산실적에 `ITEM_CODE`를 넣었던 시도(같은 날)는 되돌렸다. 컬럼을 지우고 `P_INTERLOCK_SENSOR_ACTUAL_NEO`를 원래 본으로 재배포했다.
   - `IP_PRODUCT_ST_MASTER`의 키를 `MODEL_NAME + MACHINE_CODE + DATESET + 조직`으로 바꿨다(`apps/backend/src/migrations/2026-10-13_st_master_model_name.sql`).
   - OEE 계산은 생산실적의 `MODEL_NAME`으로 표준시간 마스터를 바로 조회한다. 같은 모델에 설비별 행이 여럿이면 MAX를 쓴다.
+- **REV2 (2026-10-14)**: 4.2의 "ASSY 완료 실적은 센서 실적 테이블에 쌓인다"는 가정이 틀렸다.
+  - `P_INTERLOCK_SENSOR_ACTUAL_NEO`는 라인의 활성 피더 계획(`IB_PRODUCT_PLANDATA`)이 있어야 쌓는다. 피더 계획은 SMT(D) 라인 12개에만 있다.
+  - 실측: 최근 90일 `IP_PRODUCT_SENSOR_ACTUAL_TIME`에는 SMT 라인 행만 있다. 조립 H라인 테스트 실적은 `NG ACTIVE PLAN NOT FOUND`로 실패했다.
+  - 그래서 SMT가 아닌 라인 실적은 센서 반영을 부르지 않고 `SENSOR_APPLY_YN='X'`(해당 없음)로 기록한다.
+  - **생산수량 원천 변경:** SMT 라인은 `IP_PRODUCT_SENSOR_ACTUAL_TIME`, 조립·가공 라인은 `IP_PRODUCT_WORK_RESULT`(취소 제외)를 쓴다. 두 원천이 라인으로 나뉘므로 이중집계는 없다.

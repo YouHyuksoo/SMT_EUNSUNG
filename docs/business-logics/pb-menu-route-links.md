@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: e5b935ec
+verifiedCommit: eb43cfa8
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: e5b935ec
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 204 | 175 | 28 | 1 |
+| 208 | 176 | 31 | 1 |
 
 ## 전체 연결표
 
@@ -33,7 +33,7 @@ verifiedCommit: e5b935ec
 | 기준정보 | 고객마스터 | `MST_CUSTOMER` | `/master/customer` | PB 연결 | `w_com_customer_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 설비마스터 | `EQUIP_MASTER` | `/master/equip` | PB 연결 | `w_mcn_machine_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 표준시간 관리 | `OEE_MST_STD_TIME` | `/oee/master/standard-time` | 웹 신규 |  | PB 대응 없음 |
-| 기준정보 | 설비 비가동 사유코드 | `OEE_MST_IDLE_REASON` | `/oee/master/idle-reason` | 웹 신규 |  | PB 대응 없음 |
+| 기준정보 | 비가동사유마스터 | `OEE_MST_IDLE_REASON` | `/oee/master/idle-reason` | 웹 신규 |  | PB 대응 없음 |
 | 기준정보 | 설비별 비가동코드 관리 | `OEE_MST_EQUIP_REASON` | `/oee/master/equip-reason-map` | 웹 신규 |  | PB 대응 없음 |
 | 기준정보 | 공정관리 | `MST_PROCESS` | `/master/process` | PB 연결 | `w_pln_workstage_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 생산라인관리 | `MST_PROD_LINE` | `/master/prod-line` | PB 연결 | `w_pln_line_master` | PB 메뉴 인벤토리 |
@@ -66,6 +66,7 @@ verifiedCommit: e5b935ec
 | OEE 관리 | OEE 실적 입력 | `OEE_RESULT_ENTRY` | `/oee/result-entry` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | OEE 종합 현황 | `OEE_OVERALL_STATUS` | `/oee/overall-status` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | 설비별 작업 실적관리 | `OEE_EQUIP_WORK_RESULT` | `/oee/equip-work-result` | 웹 신규 |  | PB 대응 없음 |
+| OEE 관리 | 설비별 검사실적관리 | `OEE_EQUIP_INSPECT_RESULT` | `/oee/equip-inspect-result` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | 설비 운영 현황 | `OEE_EQUIP_OPS_STATUS` | `/oee/equip-ops-status` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | 설비 운영 및 실적관리(현장) | `OEE_FIELD_OPS` | `/oee/field-ops` | 웹 신규 |  | PB 대응 없음 |
 | 자재발주 | 자재소요량관리 | `PUR_REQUIREMENT` | `/purchase/requirement` | PB 연결 | `w_mat_requirment_plan_master` | PB 메뉴 인벤토리 |
@@ -132,6 +133,7 @@ verifiedCommit: e5b935ec
 | 제품재고관리 | 제품패킹이력 | `PRD_PACK_HISTORY` | `/product/pack-history` | PB 연결 | `w_prd_product_packing_history` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품입고관리(PID) | `PRD_FG_RECEIPT` | `/product/fg-receipt` | PB 연결 | `w_prd_product_fg_receipt` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품입고관리(모델단위) | `PRD_FG_MODEL_RECEIPT` | `/product/fg-model-receipt` | PB 연결 | `w_prd_product_fg_4_model_receipt` | PB 메뉴 인벤토리 |
+| 제품재고관리 | 제품납품계획 | `PRD_SHIPPING_ORDER` | `/product/shipping-order` | PB 연결 | `w_pln_product_delivery_master` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품출하관리 | `PRD_FG_ISSUE` | `/product/fg-issue` | PB 연결 | `w_prd_product_fg_issue` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품출하조회 | `PRD_FG_ISSUE_QUERY` | `/product/fg-issue-query` | PB 연결 | `w_prd_product_fg_issue_rpt` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품출고관리(모델단위) | `PRD_FG_MODEL_ISSUE` | `/product/fg-model-issue` | PB 연결 | `w_prd_product_fg_4_model_issue` | PB 메뉴 인벤토리 |
@@ -158,6 +160,8 @@ verifiedCommit: e5b935ec
 | 추적 | 롯트추적조회(ALL) | `TRK_LOT_ALL` | `/tracking/lot-all` | PB 연결 | `w_pln_product_all_barcode_tracking` | PB 메뉴 인벤토리 |
 | 추적 | 생산현황데쉬보드 | `TRK_LINE_DASHBOARD` | `/tracking/line-dashboard` | PB 연결 | `w_com_production_status_dashboard` | PB 메뉴 인벤토리 |
 | 추적 | 공정통과이력 관리 | `PLN_WORKSTAGE_PASS` | `/process-transaction/workstage-pass` | PB 연결 | `w_pln_product_inout_scan_master` | PB 메뉴 인벤토리 |
+| 추적 | 정추적(PCB→자재) | `TRK_FORWARD_TRACE` | `/tracking/forward-trace` | 웹 신규 |  | PB 대응 없음 |
+| 추적 | 역추적(자재→PCB) | `TRK_REVERSE_TRACE` | `/tracking/reverse-trace` | 웹 신규 |  | PB 대응 없음 |
 | 정보조회 | PID 정보조회 | `QRY_PID_INFO` | `/query/pid-info` | PB 연결 | `w_pln_product_barcode_query` | PB 메뉴 인벤토리 |
 | 정보조회 | 마킹이력조회 | `QRY_MARKING` | `/query/marking` | PB 연결 | `w_pln_product_pcb_marking_query` | PB 메뉴 인벤토리 |
 | 정보조회 | PCB 투입 리스트조회 | `QRY_PCB_INPUT` | `/query/pcb-input` | PB 연결 | `w_qc_pcb_input_scan_master` | PB 메뉴 인벤토리 |

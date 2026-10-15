@@ -4,7 +4,7 @@ sources:
   - apps/frontend/scripts/data/pb-screen-inventory.json
   - apps/frontend/scripts/data/pb-screen-exclusions.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: e5b935ec
+verifiedCommit: eb43cfa8
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -19,12 +19,12 @@ verifiedCommit: e5b935ec
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 175 |
-| 이관제외(사용자 결정) | 31 |
+| 완료(개발됨, pbWindow 매핑) | 176 |
+| 이관제외(사용자 결정) | 30 |
 | 미착수 | 43 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 175개 / 웹 신규 28개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 176개 / 웹 신규 31개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -49,7 +49,7 @@ verifiedCommit: e5b935ec
 | 리포트 | `M_REPORT` | 23 | 23 | 0 | 0 | 0 |
 | 승인 | `M_CONFIRM` | 6 | 4 | 2 | 0 | 0 |
 | 기본정보 | `M_MANAGE` | 10 | 4 | 5 | 1 | 0 |
-| 시스템 | `M_SYSTEM` | 76 | 8 | 24 | 20 | 24 |
+| 시스템 | `M_SYSTEM` | 76 | 9 | 23 | 20 | 24 |
 
 ## 화면 목록
 
@@ -420,7 +420,7 @@ verifiedCommit: e5b935ec
 | 490 | SMT 파트라이브러리관리 | `w_smt_upload_partlib_master` | srw | 이관제외 |  | IB_MNT_PARTLIB_MASTER 0행 |
 | 492 | 메탈마스크텐션 수동 관리 | `w_mcn_jig_mask_check_master` | srw | 미착수 |  |  |
 | 493 | 픽스쳐검사관리 | `w_mcn_jig_fixture_check_master` | srw | 미착수 |  |  |
-| 495 | 제품납품계획 | `w_pln_product_delivery_master` | srw | 이관제외 |  | IP_PRODUCT_DELIVERY_MONTH_PLAN 0행 |
+| 495 | 제품납품계획 | `w_pln_product_delivery_master` | srw | 완료 | `PRD_SHIPPING_ORDER` | `/product/shipping-order` |
 | 496 | 포장바코드중복체크관리 | `w_pln_product_packing_dupulicate_check_master` | srw | 미착수 |  |  |
 | 498 | 반출송장 | `w_com_carrying_out_master` | srw | 이관제외 |  | 반출반입 업무는 이관 대상에서 제외 (사용자 지시) |
 | 499 | 반입송장 | `w_com_bring_in_master` | srw | 이관제외 |  | 반출반입 업무는 이관 대상에서 제외 (사용자 지시) |
