@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
 import { Button, Input, Select } from "@/components/ui";
+import DowntimeReasonGrid from "@/components/shared/DowntimeReasonGrid";
 import api from "@/services/api";
 import type { PlanLine, PlanMachine, PlanReason } from "../types";
 
@@ -56,7 +57,8 @@ export default function PlanDowntimePanel({ selectedDates, onRegistered }: Props
 
   // 라인 모드에서 라인을 안 고르면 조회하지 않는다 — 전체 설비가 쏟아지는 것을 막는다.
   const machineParams = useMemo(
-    () => (mode === "LINE" ? (lineCode ? { lineCode } : null) : {}),
+    // 비가동 대상 설비만(ES- 코드) — 다른 비가동 화면과 같은 설비 집합
+    () => (mode === "LINE" ? (lineCode ? { lineCode, downtimeTarget: "Y" } : null) : { downtimeTarget: "Y" }),
     [mode, lineCode],
   );
 
@@ -208,23 +210,8 @@ export default function PlanDowntimePanel({ selectedDates, onRegistered }: Props
         <p className="mb-1.5 text-xs font-medium text-text dark:text-gray-200">
           {t("master.workCalendar.planReason")}
         </p>
-        <div className="grid grid-cols-2 gap-2">
-          {reasons.map((r) => {
-            const active = reasonCode === r.code;
-            return (
-              <button key={r.code} type="button" onClick={() => setReasonCode(active ? "" : r.code)}
-                className={`h-[38px] flex flex-col items-center justify-center px-2 rounded border text-xs text-center transition-colors ${active ? "bg-primary text-white border-primary" : "border-border bg-background text-text hover:border-primary/60"}`}>
-                <span className="block font-medium leading-tight">{r.name}</span>
-                <span className={`block text-[10px] font-mono ${active ? "text-white/80" : "text-text-muted"}`}>{r.code}</span>
-              </button>
-            );
-          })}
-          {reasons.length === 0 && (
-            <span className="col-span-2 py-2 text-xs text-text-muted dark:text-gray-400">
-              {t("master.workCalendar.noPlanReasons")}
-            </span>
-          )}
-        </div>
+        <DowntimeReasonGrid reasons={reasons} value={reasonCode} onChange={setReasonCode}
+          emptyText={t("master.workCalendar.noPlanReasons")} />
       </div>
 
       {/* ③ 비가동 시간 + 등록 */}

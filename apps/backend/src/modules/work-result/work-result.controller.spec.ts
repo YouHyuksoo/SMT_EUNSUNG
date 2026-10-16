@@ -18,7 +18,7 @@ describe('WorkResultController', () => {
     machines: jest.fn().mockResolvedValue([]),
     downtimeReasons: jest.fn().mockResolvedValue([]),
     downtimes: jest.fn().mockResolvedValue([]),
-    upsertDowntime: jest.fn().mockResolvedValue({ dtSeq: 1 }),
+    bulkDowntime: jest.fn().mockResolvedValue({ affected: 1, skipped: 0, targets: 1, skippedMachines: [] }),
   } as unknown as WorkResultService;
 
   beforeEach(() => jest.clearAllMocks());
@@ -42,8 +42,9 @@ describe('WorkResultController', () => {
       resultStatus: 'WIP',
     };
     const downtimeDto = {
+      action: 'START',
       runNo: 'RUN-1',
-      machineCode: 'MC-1',
+      machineCodes: ['MC-1'],
     };
 
     await controller.list('2026-08-01', '2026-08-25', '01', 'ITEM', undefined, 7, 'Y');
@@ -53,7 +54,7 @@ describe('WorkResultController', () => {
       7,
       'user-7',
     );
-    await controller.createDowntime(downtimeDto, 7, 'user-7');
+    await controller.bulkDowntime(downtimeDto, 7, 'user-7');
 
     expect(service.list).toHaveBeenCalledWith(
       '2026-08-01',
@@ -79,11 +80,7 @@ describe('WorkResultController', () => {
       7,
       'user-7',
     );
-    expect(service.upsertDowntime).toHaveBeenCalledWith(
-      { ...downtimeDto, dtSeq: undefined },
-      7,
-      'user-7',
-    );
+    expect(service.bulkDowntime).toHaveBeenCalledWith(downtimeDto, 7, 'user-7');
   });
 
   it('parses unique trimmed lineCodes and forwards them as the final list argument', async () => {

@@ -15,6 +15,8 @@ export class EquipOpsController {
     @Query('workstageCode') workstageCode?: string,
     @Query('lineCode') lineCode?: string,
     @Query('keyword') keyword?: string,
+    // 'Y' 면 비가동 대상 설비만 (common/utils/downtime-target.ts)
+    @Query('downtimeTarget') downtimeTarget?: string,
   ) {
     return {
       list: await this.service.machines({
@@ -22,6 +24,7 @@ export class EquipOpsController {
         workstageCode: workstageCode || undefined,
         lineCode: lineCode || undefined,
         keyword: keyword || undefined,
+        downtimeTarget: downtimeTarget === 'Y',
       }),
     };
   }

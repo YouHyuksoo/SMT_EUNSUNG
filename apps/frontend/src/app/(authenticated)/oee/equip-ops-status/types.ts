@@ -31,8 +31,6 @@ export interface RecentRow {
   machineName: string | null;
   startTime: string | null;
   endTime: string | null;
-  /** 원인설비 여부: 'Y'면 이 설비가 라인 정지의 원인 */
-  causeYn: string;
   durationMin: number;
 }
 

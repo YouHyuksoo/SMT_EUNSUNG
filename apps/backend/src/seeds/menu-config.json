@@ -76,6 +76,7 @@
     ],
     "OEE": [
       "OEE_MULTI_ENTRY",
+      "OEE_MULTI_ENTRY_ASSY",
       "OEE_RESULT_ENTRY",
       "OEE_OVERALL_STATUS",
       "OEE_EQUIP_WORK_RESULT",

@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EquipDowntimeResult } from '../../entities/equip-downtime-result.entity';
+import { downtimeTargetMachineSql } from '../../common/utils/downtime-target';
 
 const ORG = 1;
 
@@ -37,9 +38,10 @@ export class EquipOpsService {
   }
 
   /** 설비 목록 + 유형명·공정명·모델 + 진행중 비가동 여부 */
-  machines(filter: { machineType?: string; workstageCode?: string; keyword?: string; lineCode?: string }) {
+  machines(filter: { machineType?: string; workstageCode?: string; keyword?: string; lineCode?: string; downtimeTarget?: boolean }) {
     const params: unknown[] = [];
     let where = `m.ORGANIZATION_ID = ${ORG}`;
+    if (filter.downtimeTarget) where += ` AND ${downtimeTargetMachineSql('m')}`;
     if (filter.machineType) { params.push(filter.machineType); where += ` AND m.MACHINE_TYPE = :${params.length}`; }
     if (filter.workstageCode) { params.push(filter.workstageCode); where += ` AND m.WORKSTAGE_CODE = :${params.length}`; }
     if (filter.lineCode) { params.push(filter.lineCode); where += ` AND m.LINE_CODE = :${params.length}`; }
@@ -114,7 +116,6 @@ export class EquipOpsService {
                 WHERE m.MACHINE_CODE=d.MACHINE_CODE AND m.ORGANIZATION_ID=d.ORGANIZATION_ID) AS "machineName",
               TO_CHAR(d.START_TIME,'MM-DD HH24:MI') AS "startTime",
               TO_CHAR(d.END_TIME,'MM-DD HH24:MI') AS "endTime",
-              NVL(d.CAUSE_YN,'N') AS "causeYn",
               ROUND((NVL(d.END_TIME, SYSDATE) - d.START_TIME) * 24 * 60) AS "durationMin"
          FROM IP_EQUIP_DOWNTIME_RESULT d
         WHERE d.ORGANIZATION_ID = ${ORG}

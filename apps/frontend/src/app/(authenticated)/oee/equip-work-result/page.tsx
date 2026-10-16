@@ -93,7 +93,7 @@ export default function EquipWorkResultPage() {
 
   const loadMachines = useCallback(async () => {
     try {
-      const res = await api.get('/oee/equip-ops/machines');
+      const res = await api.get('/oee/equip-ops/machines', { params: { downtimeTarget: 'Y' } }); // 비가동 대상 설비만(ES- 코드)
       setMachines(res.data?.data?.list ?? []);
     } catch { toast.error('설비 목록 조회에 실패했습니다'); }
   }, []);

@@ -15,6 +15,7 @@ import { Barcode, Factory, PauseCircle, PlayCircle, Wrench } from 'lucide-react'
 import toast from 'react-hot-toast';
 import { Card, CardContent, Input, Select } from '@/components/ui';
 import DataGrid from '@/components/data-grid/DataGrid';
+import DowntimeReasonGrid from '@/components/shared/DowntimeReasonGrid';
 import api from '@/services/api';
 import DailyMetrics from './DailyMetrics';
 import { recentColumns, targetMachineColumns } from './downtime-columns';
@@ -43,9 +44,6 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
   const [recent, setRecent] = useState<{ list: RecentRow[]; totalCount: number; totalMinutes: number }>({ list: [], totalCount: 0, totalMinutes: 0 });
   const [busy, setBusy] = useState(false);
 
-  // 라인 정지의 원인설비(복수 가능). 대상이 바뀌면 비운다 — 다른 라인의 설비가 남으면 안 된다.
-  const [causeCodes, setCauseCodes] = useState<Set<string>>(new Set());
-
   const selectedLine = lines.find((l) => l.lineCode === lineCode) ?? null;
   const selectedMachine = machines.find((m) => m.machineCode === machineCode) ?? null;
 
@@ -65,25 +63,12 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
   const openReasonCode = willEnd ? (actionTargets[0]?.openReasonCode ?? '') : '';
   const reasonCode = reasonPick ?? openReasonCode;
 
-  // 대상 선택을 바꾸는 모든 경로에서 원인설비를 비운다 — 다른 라인의 설비가 남으면 안 된다
+  // 대상 선택을 바꾸면 고른 사유를 비운다
   const selectMode = (m: ScopeMode) => {
-    setMode(m); setLineCode(''); setMachineCode(''); setCauseCodes(new Set()); setReasonPick(null);
+    setMode(m); setLineCode(''); setMachineCode(''); setReasonPick(null);
   };
-  const selectLine = (code: string) => { setLineCode(code); setCauseCodes(new Set()); setReasonPick(null); };
-  const selectMachine = (code: string) => { setMachineCode(code); setCauseCodes(new Set()); setReasonPick(null); };
-
-  const toggleCause = (code: string) =>
-    setCauseCodes((prev) => {
-      const next = new Set(prev);
-      if (next.has(code)) next.delete(code); else next.add(code);
-      return next;
-    });
-
-  // 원인설비 체크 상태가 바뀌면 체크박스 셀을 다시 그린다
-  const targetColumns = useMemo(
-    () => targetMachineColumns({ causeCodes, willEnd, onToggleCause: toggleCause }),
-    [causeCodes, willEnd],
-  );
+  const selectLine = (code: string) => { setLineCode(code); setReasonPick(null); };
+  const selectMachine = (code: string) => { setMachineCode(code); setReasonPick(null); };
 
   const scopeLabel = mode === 'LINE'
     ? (selectedLine ? `${selectedLine.lineCode} · ${selectedLine.lineName ?? ''}` : null)
@@ -152,17 +137,12 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
       const res = await api.post('/oee/work-result/downtimes/bulk', {
         action: willEnd ? 'END' : 'START',
         machineCodes: actionTargets.map((m) => m.machineCode),
-        // 원인설비는 비가동 시작에서만 의미가 있다. 실제로 처리되는 대상만 추린다.
-        causeMachineCodes: willEnd
-          ? undefined
-          : actionTargets.filter((m) => causeCodes.has(m.machineCode)).map((m) => m.machineCode),
         reasonCode: reasonCode || undefined,
       });
       const d = res.data?.data ?? {};
       const verb = willEnd ? '가동 전환' : '비가동 시작';
       toast.success(d.skipped ? `${d.affected}대 ${verb} (${d.skipped}대는 이미 해당 상태)` : `${d.affected}대 ${verb}`);
       setReasonPick(null);
-      setCauseCodes(new Set());
       await onChanged();
       await loadScope();
     } catch (e: unknown) {
@@ -225,7 +205,6 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
               <span className="text-sm font-semibold text-text">비가동 대상 설비</span>
               <span className="text-[11px] text-text-muted">
                 대상 {targets.length}대 · 비가동 <span className={downTargets.length ? 'text-red-500 font-semibold' : ''}>{downTargets.length}</span>대
-                {!willEnd && causeCodes.size > 0 && <> · 원인설비 <span className="text-amber-600 font-semibold">{causeCodes.size}</span>대</>}
               </span>
             </div>
 
@@ -233,7 +212,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
             <div className="flex-shrink-0">
               <DataGrid
                 data={targets}
-                columns={targetColumns}
+                columns={targetMachineColumns}
                 pageSize={1000}
                 showFooter={false}
                 enableColumnFilter={false}
@@ -253,19 +232,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
                 비가동 사유 {willEnd && <span className="text-red-500">*</span>}
                 <span className="text-[11px]"> {willEnd ? '(종료 시 필수 — 대상 전체에 기록)' : '(선택)'}</span>
               </span>
-              <div className="grid grid-cols-2 gap-2">
-                {reasons.map((r) => {
-                  const active = reasonCode === r.code;
-                  return (
-                    <button key={r.code} type="button" onClick={() => setReasonPick(active ? '' : r.code)}
-                      className={`px-2 py-2 rounded border text-xs text-center transition-colors ${active ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'}`}>
-                      <span className="block font-medium leading-tight">{r.name}</span>
-                      <span className={`block text-[10px] font-mono ${active ? 'text-white/80' : 'text-text-muted'}`}>{r.code}</span>
-                    </button>
-                  );
-                })}
-                {!reasons.length && <span className="col-span-2 text-xs text-text-muted py-2">연계된 비가동 사유가 없습니다</span>}
-              </div>
+              <DowntimeReasonGrid reasons={reasons} value={reasonCode} onChange={setReasonPick} />
             </div>
 
             {/* 처리 토글 */}

@@ -18,8 +18,6 @@ import { OeeLogService } from './oee-log.service';
 import { ProdLineMaster } from '../../entities/prod-line-master.entity';
 import { OeeMobileController } from './oee-mobile.controller';
 import { OeeMobileService } from './oee-mobile.service';
-import { OeeMultiEntryController } from './oee-multi-entry.controller';
-import { OeeMultiEntryService } from './oee-multi-entry.service';
 import { SmtCloseRunPreviewService } from './smt-close-run-preview.service';
 
 @Module({
@@ -36,12 +34,11 @@ import { SmtCloseRunPreviewService } from './smt-close-run-preview.service';
       ProdLineMaster,
     ]),
   ],
-  controllers: [OeeController, OeeMobileController, OeeMultiEntryController],
+  controllers: [OeeController, OeeMobileController],
   providers: [
     OeeMasterService,
     OeeLogService,
     OeeMobileService,
-    OeeMultiEntryService,
     SmtCloseRunPreviewService,
   ],
 })

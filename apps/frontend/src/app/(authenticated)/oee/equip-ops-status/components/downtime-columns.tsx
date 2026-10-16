@@ -4,8 +4,7 @@
  *
  * 초보자 가이드:
  * 1. recentColumns: 이전 30일 비가동 이력 (설비 · 시작 · 종료 · 소요)
- * 2. targetMachineColumns: 비가동 대상 설비 (원인설비 체크 · 상태 · 설비코드 · 설비명 · 유형)
- *    원인설비 체크 상태는 화면이 들고 있으므로 함수 인자로 받는다.
+ * 2. targetMachineColumns: 비가동 대상 설비 (상태 · 설비코드 · 설비명 · 유형)
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import type { OpsMachine, RecentRow } from '../types';
@@ -16,14 +15,7 @@ export const recentColumns: ColumnDef<RecentRow>[] = [
     accessorKey: 'machineCode',
     header: '설비',
     meta: { align: 'center' },
-    cell: ({ row }) => (
-      <span className="font-mono">
-        {row.original.machineCode}
-        {row.original.causeYn === 'Y' && (
-          <span className="ml-1 px-1 py-0.5 rounded bg-amber-500/15 text-amber-600 text-[10px] font-sans" title="라인 정지의 원인설비">원인</span>
-        )}
-      </span>
-    ),
+    cell: ({ row }) => <span className="font-mono">{row.original.machineCode}</span>,
   },
   { accessorKey: 'startTime', header: '시작', meta: { align: 'center' }, cell: ({ row }) => <span className="font-mono">{row.original.startTime ?? '-'}</span> },
   {
@@ -42,41 +34,8 @@ export const recentColumns: ColumnDef<RecentRow>[] = [
   },
 ];
 
-interface TargetColumnOptions {
-  causeCodes: Set<string>;
-  /** 하나라도 비가동이면 종료 처리 — 이때는 원인설비를 고르지 않는다 */
-  willEnd: boolean;
-  onToggleCause: (machineCode: string) => void;
-}
-
-/** 비가동 대상 설비 — 원인설비 체크박스는 비가동 시작에서만 고를 수 있다 */
-export function targetMachineColumns({ causeCodes, willEnd, onToggleCause }: TargetColumnOptions): ColumnDef<OpsMachine>[] {
-  return [
-    {
-      id: 'cause',
-      header: '원인',
-      size: 52,
-      enableSorting: false,
-      enableResizing: false,
-      meta: { align: 'center', filterType: 'none' },
-      cell: ({ row }) => {
-        const m = row.original;
-        const down = m.openDtSeq != null;
-        return (
-          <input
-            type="checkbox"
-            checked={causeCodes.has(m.machineCode)}
-            onChange={() => onToggleCause(m.machineCode)}
-            onClick={(e) => e.stopPropagation()}
-            disabled={willEnd || down}
-            title={willEnd ? '종료 처리에는 원인설비를 지정하지 않습니다' : down ? '이미 비가동 중인 설비입니다' : '이 설비를 라인 정지의 원인으로 표시'}
-            aria-label={`${m.machineCode} 원인설비`}
-            className="w-4 h-4 cursor-pointer rounded border-border accent-primary disabled:cursor-not-allowed disabled:opacity-40"
-          />
-        );
-      },
-    },
-    // 상태는 원인 바로 뒤에 둔다 — 좁은 현장 화면에서도 가로 스크롤 없이 보이게
+/** 비가동 대상 설비 — 상태를 맨 앞에 둔다(좁은 현장 화면에서도 가로 스크롤 없이 보이게) */
+export const targetMachineColumns: ColumnDef<OpsMachine>[] = [
     {
       id: 'status',
       header: '상태',
@@ -89,5 +48,4 @@ export function targetMachineColumns({ causeCodes, willEnd, onToggleCause }: Tar
     { accessorKey: 'machineCode', header: '설비코드', cell: ({ row }) => <span className="font-mono">{row.original.machineCode}</span> },
     { id: 'machineName', header: '설비명', accessorFn: (m) => m.machineName ?? '-' },
     { id: 'machineType', header: '유형', accessorFn: (m) => m.machineTypeName ?? m.machineType ?? '-', meta: { align: 'center' } },
-  ];
-}
+];

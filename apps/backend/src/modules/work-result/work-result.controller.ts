@@ -21,7 +21,6 @@ import {
   CancelResultDto,
   DefectSaveDto,
   DowntimeBulkDto,
-  DowntimeUpsertDto,
   PlanDowntimeCreateDto,
   WorkResultUpsertDto,
 } from './work-result.dto';
@@ -216,6 +215,15 @@ export class WorkResultController {
     };
   }
 
+  /** OEE 비가동 입력 보드 — 공정의 라인별 비가동 대상 설비와 진행중 비가동 (한 번에) */
+  @Get('downtime-board')
+  async downtimeBoard(
+    @Query('processCode') processCode: string,
+    @OrganizationId() organizationId?: number,
+  ) {
+    return await this.service.downtimeBoard(processCode, organizationId);
+  }
+
   /** 비가동 실적 목록 (설비별) + DB 현재시각 */
   @Get('downtimes')
   async downtimes(
@@ -254,31 +262,7 @@ export class WorkResultController {
     return await this.service.deleteDowntime(Number(dtSeq), organizationId);
   }
 
-  /** 비가동 시작(신규) */
-  @Post('downtimes')
-  async createDowntime(
-    @Body() dto: DowntimeUpsertDto,
-    @OrganizationId() organizationId?: number,
-    @UserId() userId?: string,
-  ) {
-    return await this.service.upsertDowntime(
-      { ...dto, dtSeq: undefined },
-      organizationId,
-      userId,
-    );
-  }
-
-  /** 비가동 종료/수정 */
-  @Put('downtimes')
-  async updateDowntime(
-    @Body() dto: DowntimeUpsertDto,
-    @OrganizationId() organizationId?: number,
-    @UserId() userId?: string,
-  ) {
-    return await this.service.upsertDowntime(dto, organizationId, userId);
-  }
-
-  /** 라인/설비 일괄 비가동 시작·종료 (ADR 0002) */
+  /** 설비 비가동 시작·종료 — 비가동을 쓰는 유일한 API (ADR 0002·0003) */
   @Post('downtimes/bulk')
   async bulkDowntime(
     @Body() dto: DowntimeBulkDto,

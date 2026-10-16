@@ -443,3 +443,90 @@ describe('WorkResultService process-bound run cards', () => {
     expect(String(write?.[0])).not.toContain('WORKSTAGE_CODE');
   });
 });
+
+describe('WorkResultService machine downtime core', () => {
+  const query = jest.fn();
+  const transaction = jest.fn();
+  const repository = { manager: { query, transaction } } as unknown as Repository<ProductWorkResult>;
+  const service = new WorkResultService(repository, {} as unknown as OracleService);
+
+  /** 설비 잠금·진행중 조회·채번에 답하는 트랜잭션 매니저 */
+  function managerWith(opts: {
+    locked: string[];
+    open?: Array<{ machineCode: string; dtSeq: number; reasonCode: string | null }>;
+    updateAffected?: number;
+  }) {
+    const manager = {
+      query: jest.fn().mockImplementation((sql: string) => {
+        if (sql.includes('FROM IMCN_MACHINE m') && sql.includes('FOR UPDATE')) {
+          return Promise.resolve(opts.locked.map((machineCode) => ({ machineCode, workstageCode: 'W040', lineCode: '04' })));
+        }
+        if (sql.includes('END_TIME IS NULL') && sql.startsWith('SELECT')) return Promise.resolve(opts.open ?? []);
+        if (sql.includes('NEXTVAL')) return Promise.resolve([{ seq: 501 }]);
+        if (sql.startsWith('UPDATE')) return Promise.resolve(opts.updateAffected ?? 1);
+        return Promise.resolve([]);
+      }),
+    };
+    transaction.mockImplementation((callback: (value: typeof manager) => unknown) => callback(manager));
+    return manager;
+  }
+  const sqlOf = (manager: { query: jest.Mock }) => manager.query.mock.calls.map(([sql]) => String(sql));
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('locks only downtime-target machines (ES- code, in use, not TEMP) before starting', async () => {
+    const manager = managerWith({ locked: ['ES-E-055'] });
+    await service.bulkDowntime({ action: 'START', machineCodes: ['ES-E-055'], runNo: 'RUN-1' } as never, 1, 'U1');
+    const lock = sqlOf(manager).find((sql) => sql.includes('FOR UPDATE')) ?? '';
+    expect(lock).toContain("MACHINE_CODE LIKE 'ES-%'");
+    expect(lock).toContain("<> 'TEMP'");
+    const insert = manager.query.mock.calls.find(([sql]) => String(sql).includes('INSERT INTO IP_EQUIP_DOWNTIME_RESULT'));
+    // 설비 · 작업지시 · 라인/공정(설비마스터) · 사유 · 시작시각만 — 동반정지 같은 구분은 없다
+    expect(String(insert?.[0])).not.toContain('CAUSE_YN');
+    expect(insert?.[1]).toEqual(['RUN-1', 501, 1, 'ES-E-055', 'W040', '04', null, null, null, 'U1']);
+  });
+
+  it('rejects a machine that is not a downtime target (old serial code row)', async () => {
+    managerWith({ locked: [] });
+    await expect(
+      service.bulkDowntime({ action: 'START', machineCodes: ['HIT413H05'] } as never, 1, 'U1'),
+    ).rejects.toThrow('비가동 대상 설비가 아닙니다');
+  });
+
+  it('skips machines already stopped on START instead of failing the batch', async () => {
+    managerWith({ locked: ['ES-E-055', 'ES-E-058'], open: [{ machineCode: 'ES-E-055', dtSeq: 9, reasonCode: 'EB01' }] });
+    await expect(
+      service.bulkDowntime({ action: 'START', machineCodes: ['ES-E-055', 'ES-E-058'] } as never, 1, 'U1'),
+    ).resolves.toEqual({ affected: 1, skipped: 1, targets: 2, skippedMachines: ['ES-E-055'] });
+  });
+
+  it('keeps the start reason on END when no new reason is given, but refuses when none exists', async () => {
+    const manager = managerWith({ locked: ['ES-E-055'], open: [{ machineCode: 'ES-E-055', dtSeq: 9, reasonCode: 'EB01' }] });
+    await service.bulkDowntime({ action: 'END', machineCodes: ['ES-E-055'] } as never, 1, 'U1');
+    const update = sqlOf(manager).find((sql) => sql.startsWith('UPDATE')) ?? '';
+    expect(update).toContain('NVL(:1, REASON_CODE)');
+    expect(update).toContain('END_TIME IS NULL');
+
+    managerWith({ locked: ['ES-E-055'], open: [{ machineCode: 'ES-E-055', dtSeq: 9, reasonCode: null }] });
+    await expect(
+      service.bulkDowntime({ action: 'END', machineCodes: ['ES-E-055'] } as never, 1, 'U1'),
+    ).rejects.toThrow('종료 시 비가동 사유를 선택하세요');
+  });
+
+  it('refuses to end a downtime that another screen already closed', async () => {
+    managerWith({ locked: ['ES-E-055'], open: [{ machineCode: 'ES-E-055', dtSeq: 9, reasonCode: 'EB01' }], updateAffected: 0 });
+    await expect(
+      service.bulkDowntime({ action: 'END', machineCodes: ['ES-E-055'] } as never, 1, 'U1'),
+    ).rejects.toThrow('이미 종료된 비가동입니다');
+  });
+
+  it('locks the machine before checking for an open downtime on a single start', async () => {
+    const manager = managerWith({ locked: ['ES-E-055'] });
+    await service.bulkDowntime({ action: 'START', machineCodes: ['ES-E-055'] } as never, 1, 'U1');
+    const sqls = sqlOf(manager);
+    const lockAt = sqls.findIndex((sql) => sql.includes('FOR UPDATE'));
+    const openAt = sqls.findIndex((sql) => sql.includes('END_TIME IS NULL'));
+    expect(lockAt).toBeGreaterThanOrEqual(0);
+    expect(lockAt).toBeLessThan(openAt);
+  });
+});

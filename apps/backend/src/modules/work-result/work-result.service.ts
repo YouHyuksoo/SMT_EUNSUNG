@@ -11,16 +11,16 @@
 //   RESULT_STATUS    = 처리구분 (WIP=진행, DONE=완료/수정불가)
 //   SENSOR_APPLY_YN  = 센서실적 반영여부. 처리구분이 DONE이 되는 순간 프로시저를 1회 부르고
 //                      그 결과를 여기에 남긴다. WIP는 호출하지 않으므로 'N'이지만 실패가 아니다.
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { ProductWorkResult } from '../../entities/product-work-result.entity';
 import { OracleService } from '../../common/services/oracle.service';
+import { downtimeTargetMachineSql } from '../../common/utils/downtime-target';
 import {
   ApplySensorDto,
   CancelResultDto,
   DowntimeBulkDto,
-  DowntimeUpsertDto,
   PlanDowntimeCreateDto,
   WorkResultUpsertDto,
 } from './work-result.dto';
@@ -809,25 +809,142 @@ export class WorkResultService {
     return { deleted: 1 };
   }
 
-  /** 라인/설비 일괄 비가동 시작·종료.
-   *  이미 요청한 상태인 설비는 건너뛰고 결과를 요약해 돌려준다 — 한 대 때문에 전체가 막히지 않게. */
+  /** OEE 비가동 입력 보드 — 공정(SMT/ASSY)의 라인과 그 라인의 비가동 대상 설비, 설비별 진행중 비가동을 한 번에.
+   *  라인은 묶음일 뿐이고 상태는 설비 기준이다(ADR 0002). 설비가 없는 라인도 목록에 남긴다(설비 미지정 안내용). */
+  async downtimeBoard(processCode: string, organizationId?: number) {
+    const organization = this.requireOrganization(organizationId);
+    if (processCode !== 'SMT' && processCode !== 'ASSY') throw new BadRequestException('지원하지 않는 공정입니다.');
+    // 오라클 배열 바인드는 이름이 아니라 등장 순서로 채워진다 — 같은 :n 을 두 번 쓰지 않는다
+    const lineFilter = (org: number, proc: number) =>
+      `l.ORGANIZATION_ID=:${org} AND l.PROCESS_CODE=:${proc} AND l.RESOURCE_TYPE IN ('LINE','CELL')
+                        AND l.LINE_CODE IS NOT NULL AND l.LINE_NAME IS NOT NULL`;
+    const lines = await this.q<{ lineCode: string; lineName: string }>(
+      `SELECT l.LINE_CODE AS "lineCode", l.LINE_NAME AS "lineName" FROM IP_PRODUCT_LINE l WHERE ${lineFilter(1, 2)} ORDER BY l.LINE_CODE`,
+      [organization, processCode],
+    );
+    const rows = await this.q<{
+      machineCode: string; machineName: string | null; lineCode: string; workstageCode: string | null; workstageName: string | null;
+      dtSeq: number | null; reasonCode: string | null; reasonName: string | null; startAt: string | null; closedSecToday: number | null;
+    }>(
+      `SELECT m.MACHINE_CODE AS "machineCode", m.MACHINE_NAME AS "machineName", m.LINE_CODE AS "lineCode",
+              m.WORKSTAGE_CODE AS "workstageCode",
+              (SELECT MAX(w.WORKSTAGE_NAME) FROM IP_PRODUCT_WORKSTAGE w
+                WHERE w.WORKSTAGE_CODE=m.WORKSTAGE_CODE AND w.ORGANIZATION_ID=m.ORGANIZATION_ID) AS "workstageName",
+              d.DT_SEQ AS "dtSeq", d.REASON_CODE AS "reasonCode", r.REASON_NAME AS "reasonName",
+              TO_CHAR(d.START_TIME,'YYYY-MM-DD HH24:MI:SS') AS "startAt",
+              -- 오늘(달력일) 종료된 비가동 누적 초 — 진행중 분은 화면이 시작시각부터 실시간으로 더한다
+              (SELECT NVL(ROUND(SUM((LEAST(x.END_TIME, TRUNC(SYSDATE) + 1) - GREATEST(x.START_TIME, TRUNC(SYSDATE))) * 86400)), 0)
+                 FROM IP_EQUIP_DOWNTIME_RESULT x
+                WHERE x.ORGANIZATION_ID = m.ORGANIZATION_ID AND x.MACHINE_CODE = m.MACHINE_CODE
+                  AND x.END_TIME IS NOT NULL AND x.START_TIME < TRUNC(SYSDATE) + 1 AND x.END_TIME > TRUNC(SYSDATE)) AS "closedSecToday"
+         FROM IMCN_MACHINE m
+         LEFT JOIN IP_EQUIP_DOWNTIME_RESULT d
+           ON d.ORGANIZATION_ID=m.ORGANIZATION_ID AND d.MACHINE_CODE=m.MACHINE_CODE AND d.END_TIME IS NULL
+         LEFT JOIN IP_EQUIP_DOWNTIME_REASON r
+           ON r.REASON_CODE=d.REASON_CODE AND r.ORGANIZATION_ID=d.ORGANIZATION_ID
+        WHERE m.ORGANIZATION_ID=:1 AND ${downtimeTargetMachineSql('m')}
+          AND m.LINE_CODE IN (SELECT l.LINE_CODE FROM IP_PRODUCT_LINE l WHERE ${lineFilter(2, 3)})
+        ORDER BY m.LINE_CODE, m.WORKSTAGE_CODE, m.MACHINE_CODE, d.DT_SEQ`,
+      [organization, organization, processCode],
+    );
+    // 설비 1대에 진행중 행이 둘 이상이면(정상은 아님) 가장 최근 것을 보인다
+    const machines = new Map<string, (typeof rows)[number]>();
+    for (const row of rows) machines.set(row.machineCode, row);
+    const now = await this.q<{ now: string }>(`SELECT TO_CHAR(SYSDATE,'YYYY-MM-DD HH24:MI:SS') AS "now" FROM DUAL`);
+    return {
+      serverNow: now[0]?.now ?? null,
+      lines: lines.map((line) => ({
+        ...line,
+        machines: [...machines.values()]
+          .filter((m) => m.lineCode === line.lineCode)
+          .map((m) => ({
+            machineCode: m.machineCode,
+            machineName: m.machineName,
+            workstageCode: m.workstageCode,
+            workstageName: m.workstageName,
+            open: m.dtSeq == null ? null : { dtSeq: Number(m.dtSeq), reasonCode: m.reasonCode, reasonName: m.reasonName, startAt: m.startAt },
+            closedSecToday: Number(m.closedSecToday ?? 0),
+          })),
+      })),
+    };
+  }
+
+  /* ── 설비 비가동 공통 처리 ──
+   * 설비정지 모달·설비 운영 현황·현장 운영·OEE 비가동 입력이 모두 bulkDowntime 으로 여기를 지난다.
+   * 1) 대상 설비 행을 코드 순서로 잠근다 — 같은 설비를 두 화면이 동시에 시작해도 한쪽만 들어간다.
+   * 2) 진행중 판정은 MACHINE_CODE 기준(ADR 0002).
+   * 3) 종료는 END_TIME IS NULL 인 행만 닫는다 — 다른 화면에서 이미 닫은 행을 다시 덮어쓰지 않는다.
+   */
+  private async lockDowntimeMachines(
+    mgr: EntityManager,
+    organization: number,
+    machineCodes: string[],
+  ): Promise<Map<string, { workstageCode: string | null; lineCode: string | null }>> {
+    const codes = [...new Set(machineCodes)].sort();
+    if (!codes.length) return new Map();
+    const binds = codes.map((_, i) => `:${i + 2}`).join(',');
+    const rows = (await mgr.query(
+      `SELECT m.MACHINE_CODE AS "machineCode", m.WORKSTAGE_CODE AS "workstageCode", m.LINE_CODE AS "lineCode"
+         FROM IMCN_MACHINE m
+        WHERE m.ORGANIZATION_ID=:1 AND m.MACHINE_CODE IN (${binds}) AND ${downtimeTargetMachineSql('m')}
+        ORDER BY m.MACHINE_CODE
+          FOR UPDATE`,
+      [organization, ...codes],
+    )) as Array<{ machineCode: string; workstageCode: string | null; lineCode: string | null }>;
+    const found = new Map(
+      rows.map((r) => [r.machineCode, { workstageCode: r.workstageCode, lineCode: r.lineCode === '*' ? null : r.lineCode }]),
+    );
+    const missing = codes.filter((code) => !found.has(code));
+    if (missing.length) throw new BadRequestException(`비가동 대상 설비가 아닙니다: ${missing.join(', ')}`);
+    return found;
+  }
+
+  private affectedRows(value: unknown): number {
+    if (typeof value === 'number') return value;
+    if (Array.isArray(value) && typeof value[1] === 'number') return value[1];
+    if (value && typeof value === 'object') {
+      const v = value as { rowsAffected?: number; affected?: number };
+      return Number(v.rowsAffected ?? v.affected ?? 0);
+    }
+    return 0;
+  }
+
+  /** 진행중 비가동 1건 종료 — 이미 닫혔으면 Conflict */
+  private async closeOpenDowntime(
+    mgr: EntityManager,
+    organization: number,
+    dtSeq: number,
+    reasonCode: string | null,
+    user: string,
+  ): Promise<void> {
+    const result: unknown = await mgr.query(
+      `UPDATE IP_EQUIP_DOWNTIME_RESULT SET REASON_CODE=NVL(:1, REASON_CODE),
+         END_TIME=SYSDATE, LAST_MODIFY_BY=:2, LAST_MODIFY_DATE=SYSDATE
+       WHERE DT_SEQ=:3 AND ORGANIZATION_ID=:4 AND END_TIME IS NULL`,
+      [reasonCode, user, dtSeq, organization],
+    );
+    if (this.affectedRows(result) !== 1) {
+      throw new ConflictException('이미 종료된 비가동입니다. 화면을 새로고침하세요.');
+    }
+  }
+
+  /** 설비 비가동 시작·종료 — 비가동을 쓰는 유일한 경로다(설비 1대도 이걸로).
+   *  비가동 한 건 = 설비 · 사유 · 시작~종료. 라인을 주면 그 라인의 비가동 대상 설비 전부.
+   *  이미 그 상태인 설비는 건너뛰고 결과를 요약해 돌려준다 — 한 대 때문에 전체가 막히지 않게. */
   async bulkDowntime(dto: DowntimeBulkDto, organizationId?: number, userId?: string) {
     const organization = this.requireOrganization(organizationId);
     const user = userId ?? dto.userId ?? DEFAULT_USER;
     const isEnd = dto.action === 'END';
-    if (isEnd && !dto.reasonCode) throw new BadRequestException('종료 시 비가동 사유를 선택하세요');
-    // 원인설비는 START에서만 의미가 있다. 종료는 이미 시작된 행을 닫을 뿐이라 무시한다.
-    const causeSet = new Set(isEnd ? [] : (dto.causeMachineCodes ?? []));
 
     return this.repo.manager.transaction(async (mgr) => {
-      // 대상 설비 확정 — 설비 직접 지정이 우선, 없으면 라인 배정 설비
+      // 대상 설비 확정 — 설비 직접 지정이 우선, 없으면 라인 배정 설비(비가동 대상만)
       let targets: string[];
       if (dto.machineCodes?.length) {
-        targets = dto.machineCodes;
+        targets = [...new Set(dto.machineCodes)];
       } else if (dto.lineCode) {
         const rows = (await mgr.query(
-          `SELECT MACHINE_CODE AS "machineCode" FROM IMCN_MACHINE
-            WHERE ORGANIZATION_ID=:1 AND LINE_CODE=:2 ORDER BY MACHINE_CODE`,
+          `SELECT m.MACHINE_CODE AS "machineCode" FROM IMCN_MACHINE m
+            WHERE m.ORGANIZATION_ID=:1 AND m.LINE_CODE=:2 AND ${downtimeTargetMachineSql('m')} ORDER BY m.MACHINE_CODE`,
           [organization, dto.lineCode],
         )) as Array<{ machineCode: string }>;
         targets = rows.map((r) => r.machineCode);
@@ -836,41 +953,40 @@ export class WorkResultService {
       }
       if (!targets.length) return { affected: 0, skipped: 0, targets: 0, skippedMachines: [] as string[] };
 
+      const master = await this.lockDowntimeMachines(mgr, organization, targets);
+
       // 진행중 비가동을 한 번에 조회해 대상/건너뛸 설비를 가른다
       const binds = targets.map((_, i) => `:${i + 2}`).join(',');
       const open = (await mgr.query(
-        `SELECT MACHINE_CODE AS "machineCode", DT_SEQ AS "dtSeq" FROM IP_EQUIP_DOWNTIME_RESULT
+        `SELECT MACHINE_CODE AS "machineCode", DT_SEQ AS "dtSeq", REASON_CODE AS "reasonCode" FROM IP_EQUIP_DOWNTIME_RESULT
           WHERE ORGANIZATION_ID=:1 AND END_TIME IS NULL AND MACHINE_CODE IN (${binds})`,
         [organization, ...targets],
-      )) as Array<{ machineCode: string; dtSeq: number }>;
-      const openMap = new Map(open.map((o) => [o.machineCode, o.dtSeq]));
+      )) as Array<{ machineCode: string; dtSeq: number; reasonCode: string | null }>;
+      const openMap = new Map(open.map((o) => [o.machineCode, o]));
+
+      // 종료 사유: 새로 고르지 않았으면 시작 때 사유를 그대로 쓴다. 둘 다 없으면 막는다.
+      if (isEnd && !dto.reasonCode && targets.some((code) => openMap.has(code) && !openMap.get(code)?.reasonCode)) {
+        throw new BadRequestException('종료 시 비가동 사유를 선택하세요');
+      }
 
       const acted: string[] = [];
       const skipped: string[] = [];
       for (const machineCode of targets) {
-        const openSeq = openMap.get(machineCode);
+        const openRow = openMap.get(machineCode);
         if (isEnd) {
-          if (openSeq == null) { skipped.push(machineCode); continue; }
-          await mgr.query(
-            `UPDATE IP_EQUIP_DOWNTIME_RESULT
-                SET REASON_CODE=:1, END_TIME=SYSDATE, LAST_MODIFY_BY=:2, LAST_MODIFY_DATE=SYSDATE
-              WHERE DT_SEQ=:3 AND ORGANIZATION_ID=:4`,
-            [dto.reasonCode, user, openSeq, organization],
-          );
+          if (!openRow) { skipped.push(machineCode); continue; }
+          await this.closeOpenDowntime(mgr, organization, openRow.dtSeq, dto.reasonCode ?? null, user);
         } else {
-          if (openSeq != null) { skipped.push(machineCode); continue; }
+          if (openRow) { skipped.push(machineCode); continue; }
           const nx = (await mgr.query(
             `SELECT SEQ_IP_EQUIP_DOWNTIME.NEXTVAL AS "seq" FROM DUAL`,
           )) as Array<{ seq: number }>;
-          const ws = (await mgr.query(
-            `SELECT WORKSTAGE_CODE AS "ws", LINE_CODE AS "lineCode" FROM IMCN_MACHINE WHERE MACHINE_CODE=:1 AND ORGANIZATION_ID=:2`,
-            [machineCode, organization],
-          )) as Array<{ ws: string | null; lineCode: string | null }>;
+          const m = master.get(machineCode);
           await mgr.query(
             `INSERT INTO IP_EQUIP_DOWNTIME_RESULT
-               (RUN_NO, DT_SEQ, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE, LINE_CODE, REASON_CODE, START_TIME, MEMO, WORKER, CAUSE_YN, ENTER_BY, ENTER_DATE)
-             VALUES (NULL,:1,:2,:3,:4,:5,:6,SYSDATE,:7,:8,:9,:10,SYSDATE)`,
-            [Number(nx[0]?.seq), organization, machineCode, ws[0]?.ws ?? null, ws[0]?.lineCode ?? dto.lineCode ?? null, dto.reasonCode ?? null, dto.memo ?? null, dto.worker ?? null, causeSet.has(machineCode) ? 'Y' : 'N', user],
+               (RUN_NO, DT_SEQ, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE, LINE_CODE, REASON_CODE, START_TIME, MEMO, WORKER, ENTER_BY, ENTER_DATE)
+             VALUES (:1,:2,:3,:4,:5,:6,:7,SYSDATE,:8,:9,:10,SYSDATE)`,
+            [dto.runNo ?? null, Number(nx[0]?.seq), organization, machineCode, m?.workstageCode ?? null, m?.lineCode ?? dto.lineCode ?? null, dto.reasonCode ?? null, dto.memo ?? null, dto.worker ?? null, user],
           );
         }
         acted.push(machineCode);
@@ -879,70 +995,4 @@ export class WorkResultService {
     });
   }
 
-  /** 비가동 시작(신규)/종료·수정 — 식별은 DT_SEQ 단독, RUN_NO는 선택 맥락 (ADR 0002) */
-  async upsertDowntime(
-    dto: DowntimeUpsertDto,
-    organizationId?: number,
-    userId?: string,
-  ): Promise<{ dtSeq: number }> {
-    const organization = this.requireOrganization(organizationId);
-    // userId는 JWT에서 온다 — DowntimeUpsertDto에는 더 이상 본문 필드가 없다.
-    const user = userId ?? DEFAULT_USER;
-    return this.repo.manager.transaction(async (mgr) => {
-      let dtSeq = dto.dtSeq;
-      if (dtSeq != null) {
-        if (dto.endNow) {
-          // 종료시각을 DB 현재시각(SYSDATE)으로 — 시작(SYSDATE)과 동일 시계 사용
-          await mgr.query(
-            `UPDATE IP_EQUIP_DOWNTIME_RESULT SET REASON_CODE=NVL(:1, REASON_CODE),
-               START_TIME=NVL(TO_DATE(:2,'YYYY-MM-DD HH24:MI'), START_TIME),
-               END_TIME=SYSDATE,
-               MEMO=NVL(:3, MEMO), WORKER=NVL(:4, WORKER), LAST_MODIFY_BY=:5, LAST_MODIFY_DATE=SYSDATE
-             WHERE DT_SEQ=:6 AND ORGANIZATION_ID=:7`,
-            [dto.reasonCode ?? null, dto.startTime ?? null, dto.memo ?? null, dto.worker ?? null, user, dtSeq, organization],
-          );
-        } else {
-          await mgr.query(
-            `UPDATE IP_EQUIP_DOWNTIME_RESULT SET REASON_CODE=NVL(:1, REASON_CODE),
-               START_TIME=NVL(TO_DATE(:2,'YYYY-MM-DD HH24:MI'), START_TIME),
-               END_TIME=NVL(TO_DATE(:3,'YYYY-MM-DD HH24:MI'), END_TIME),
-               MEMO=NVL(:4, MEMO), WORKER=NVL(:5, WORKER), LAST_MODIFY_BY=:6, LAST_MODIFY_DATE=SYSDATE
-             WHERE DT_SEQ=:7 AND ORGANIZATION_ID=:8`,
-            [dto.reasonCode ?? null, dto.startTime ?? null, dto.endTime ?? null, dto.memo ?? null, dto.worker ?? null, user, dtSeq, organization],
-          );
-        }
-      } else {
-        // 같은 설비에 진행중 비가동이 이미 있으면 중복 시작을 막는다 (ADR 0002)
-        const open = (await mgr.query(
-          `SELECT DT_SEQ AS "dtSeq" FROM IP_EQUIP_DOWNTIME_RESULT
-            WHERE MACHINE_CODE=:1 AND ORGANIZATION_ID=:2 AND END_TIME IS NULL`,
-          [dto.machineCode, organization],
-        )) as Array<{ dtSeq: number }>;
-        if (open.length) throw new BadRequestException('이미 진행중인 비가동이 있습니다. 먼저 종료하세요.');
-
-        const nx = (await mgr.query(
-          `SELECT SEQ_IP_EQUIP_DOWNTIME.NEXTVAL AS "seq" FROM DUAL`,
-        )) as Array<{ seq: number }>;
-        dtSeq = Number(nx[0]?.seq);
-
-        // 라인코드는 설비마스터 기준으로 채운다 (라인별 비가동 집계용)
-        const lineRows = (await mgr.query(
-          `SELECT LINE_CODE AS "lineCode" FROM IMCN_MACHINE WHERE MACHINE_CODE=:1 AND ORGANIZATION_ID=:2`,
-          [dto.machineCode, organization],
-        )) as Array<{ lineCode: string | null }>;
-        const lineCode = lineRows[0]?.lineCode ?? null;
-
-        await mgr.query(
-          `INSERT INTO IP_EQUIP_DOWNTIME_RESULT
-             (RUN_NO, DT_SEQ, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE, LINE_CODE, REASON_CODE, START_TIME, END_TIME, MEMO, WORKER, ENTER_BY, ENTER_DATE)
-           VALUES (:1,:2,:3,:4,:5,:6,:7,
-             NVL(TO_DATE(:8,'YYYY-MM-DD HH24:MI'), SYSDATE),
-             TO_DATE(:9,'YYYY-MM-DD HH24:MI'),
-             :10,:11,:12,SYSDATE)`,
-          [dto.runNo ?? null, dtSeq, organization, dto.machineCode, dto.workstageCode ?? null, lineCode, dto.reasonCode ?? null, dto.startTime ?? null, dto.endTime ?? null, dto.memo ?? null, dto.worker ?? null, user],
-        );
-      }
-      return { dtSeq: dtSeq! };
-    });
-  }
 }

@@ -26,7 +26,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BellRing, ClipboardList, Factory, PauseCircle, PlayCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Modal } from '@/components/ui';
-import EquipDowntimePanel from '@/components/shared/EquipDowntimePanel';
+import EquipDowntimePanel, { EquipDowntimeHistory } from '@/components/shared/EquipDowntimePanel';
 import api from '@/services/api';
 import type { OpsLine, OpsMachine } from '../equip-ops-status/types';
 import RunPickerModal from '../equip-work-result/components/RunPickerModal';
@@ -81,7 +81,7 @@ export default function EquipInspectResultPage() {
 
   const loadMachines = useCallback(async () => {
     try {
-      const res = await api.get('/oee/equip-ops/machines');
+      const res = await api.get('/oee/equip-ops/machines', { params: { downtimeTarget: 'Y' } }); // 비가동 대상 설비만(ES- 코드)
       setMachines(res.data?.data?.list ?? []);
     } catch { toast.error('설비 목록 조회에 실패했습니다'); }
   }, []);
@@ -252,9 +252,13 @@ export default function EquipInspectResultPage() {
           </section>
         )}
 
-        <InspectEntryPad disabledReason={entryBlocked} badReasons={badReasons}
-          subtitle={[machine?.machineCode, run?.runNo].filter(Boolean).join(' · ')}
-          onSave={saveInspect} onBlocked={guideBlocked} />
+        {/* 입력판 + 그 아래 비가동 이력 */}
+        <div className="w-[300px] flex-shrink-0 min-h-0 flex flex-col gap-3 overflow-y-auto">
+          <InspectEntryPad disabledReason={entryBlocked} badReasons={badReasons}
+            subtitle={[machine?.machineCode, run?.runNo].filter(Boolean).join(' · ')}
+            onSave={saveInspect} onBlocked={guideBlocked} />
+          <EquipDowntimeHistory machineCode={machine?.machineCode ?? ''} refreshKey={machine?.openDtSeq ?? null} />
+        </div>
 
         <nav className="w-[140px] flex-shrink-0 flex flex-col gap-2.5" aria-label="작업">
           <RailButton icon={<Factory className="w-6 h-6" />} label="라인선택" onClick={() => setScopeOpen(true)} />
@@ -283,6 +287,7 @@ export default function EquipInspectResultPage() {
             key={machine.machineCode}
             machine={{ machineCode: machine.machineCode, machineName: machine.machineName ?? '', workstageCode: machine.workstageCode ?? '' }}
             runNo={run?.runNo ?? null}
+            hideHistory
             onChanged={async () => { await loadMachines(); setStopOpen(false); }}
           />
         )}
