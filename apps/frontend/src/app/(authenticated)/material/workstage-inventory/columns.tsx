@@ -1,6 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { comCodeCell } from '@/components/shared/codeCells';
-import type { WorkstageInventoryRow } from './types';
+import type { WorkstageInventoryRow, WorkstageProductRow } from './types';
 
 const quantity = (value: unknown) => value == null ? '' : Number(value).toLocaleString(undefined, { maximumFractionDigits: 6 });
 const dateTime = (value: unknown) => {
@@ -11,13 +11,30 @@ const dateTime = (value: unknown) => {
 
 export const workstageInventoryColumns: ColumnDef<WorkstageInventoryRow>[] = [
   { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemDivision', header: '품목구분', size: 90, cell: comCodeCell('ITEM DIVISION') },
+  { accessorKey: 'itemClass', header: '품목분류', size: 120, cell: comCodeCell('ITEM CLASS') },
   { accessorKey: 'itemName', header: '품목명', size: 220 },
   { accessorKey: 'itemSpec', header: '규격', size: 220 },
   { accessorKey: 'itemUom', header: '단위', size: 80, cell: comCodeCell('ITEM UOM') },
+  { accessorKey: 'supplierCode', header: '공급상코드', size: 110 },
+  { accessorKey: 'supplierName', header: '공급상명', size: 180 },
+  { accessorKey: 'modelName', header: '모델명', size: 180 },
+  { accessorKey: 'locationAddress', header: '자재위치', size: 100 },
   { accessorKey: 'inventoryQty', header: '공정재고수량', size: 130, meta: { align: 'right' }, cell: context => quantity(context.getValue()) },
   { accessorKey: 'enterDate', header: '등록일시', size: 160, cell: context => dateTime(context.getValue()) },
   { accessorKey: 'enterBy', header: '등록자', size: 110 },
   { accessorKey: 'lastModifyDate', header: '최종수정일시', size: 160, cell: context => dateTime(context.getValue()) },
   { accessorKey: 'lastModifyBy', header: '최종수정자', size: 110 },
   { accessorKey: 'organizationId', header: '조직 ID', size: 90, meta: { align: 'right' } },
+];
+
+export const workstageProductColumns: ColumnDef<WorkstageProductRow>[] = [
+  { accessorKey: 'modelName', header: '모델명', size: 240 },
+  { accessorKey: 'itemCode', header: '품목코드', size: 170 },
+  { accessorKey: 'itemName', header: '품목명', size: 220 },
+  { accessorKey: 'itemDivision', header: '품목구분', size: 90, cell: comCodeCell('ITEM DIVISION') },
+  { accessorKey: 'boxCount', header: '박스수', size: 90, meta: { align: 'right' }, cell: context => quantity(context.getValue()) },
+  { accessorKey: 'packQty', header: '포장수량', size: 110, meta: { align: 'right' }, cell: context => quantity(context.getValue()) },
+  { accessorKey: 'firstPackDate', header: '최초포장일', size: 110 },
+  { accessorKey: 'lastPackDate', header: '최종포장일', size: 110 },
 ];

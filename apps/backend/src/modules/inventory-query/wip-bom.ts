@@ -36,6 +36,16 @@ export const wipPendingPackWhere = (p = 'p') => `(
       AND ${p}.PACK_DATE >= DATE '${WIP_FULL_CONSUME_FROM}'))`;
 
 /**
+ * 포장했지만 제품창고에 입고 안 한 박스 — 공정에 있는 제품. 출하된 박스와 생산투입 제외 모델은 뺀다.
+ * WIP_FULL_CONSUME_FROM(2026-10-01) 이후 포장만 센다. 그 뒤 박스는 자재가 아직 공정재고 장부(원자재)에 있고,
+ * 그 전 박스는 옛 규칙으로 포장 때 자재를 이미 일부 뺐다.
+ */
+export const wipUnreceivedPackWhere = (p = 'p') => `(
+  NVL(${p}.RECEIPT_FLAG, 'N') = 'N' AND NVL(${p}.SHIP_FLAG, 'N') = 'N'
+  AND ${p}.PACK_DATE >= DATE '${WIP_FULL_CONSUME_FROM}'
+  AND NVL(${p}.MODEL_NAME, '*') NOT IN ${EXCLUDED_MODELS})`;
+
+/**
  * 생산투입을 지금까지의 입고·입고취소까지 반영한다. 처리 안 된 박스가 남은 채로 장부를 고정하거나 조정하거나
  * 마감하면, 그 소모가 나중에 또 빠져 이중 차감이 된다. 입고는 하루 종일 생기므로 기다리지 않고
  * 같은 트랜잭션에서 프로시저를 돌린다 (프로시저는 COMMIT 하지 않고, 대상을 'P' · 'R' 로 묶어

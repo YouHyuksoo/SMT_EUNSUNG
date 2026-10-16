@@ -18,4 +18,10 @@ export class WorkstageInventoryController {
     const result = await this.service.find(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
+
+  @Get('products')
+  @ApiOperation({ summary: '공정에 있는 제품 — 포장 후 제품창고 미입고 박스' })
+  async findProducts(@OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.findProducts(organizationId));
+  }
 }
