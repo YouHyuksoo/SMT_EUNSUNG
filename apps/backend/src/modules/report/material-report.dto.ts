@@ -124,7 +124,7 @@ export class MaterialReceiptSumQueryDto extends DateRangeReportQueryDto {
 
   @ApiPropertyOptional({
     description: '코드표 표시 언어. 매트릭스 탭의 위치·구분 이름에 쓴다 (PB :ARG_LANG).',
-    default: 'KOR',
+    default: 'K',
   })
   @IsOptional() @IsString() @Length(0, 10)
   lang?: string;
@@ -205,13 +205,20 @@ export class MaterialIssueSumQueryDto extends DateRangeReportQueryDto {
   @IsOptional() @IsString() @Length(0, 50)
   itemCode?: string;
 
-  @ApiPropertyOptional({ description: '협력사코드 (앞부분 일치). 품목별 탭에만 쓴다.' })
+  @ApiPropertyOptional({ description: '협력사코드 (앞부분 일치). 품목별·일자별 탭에 쓴다.' })
   @IsOptional() @IsString() @Length(0, 30)
   supplierCode?: string;
 
-  @ApiPropertyOptional({ description: '출고계정 (앞부분 일치). 계정별 탭에만 쓴다.' })
+  @ApiPropertyOptional({ description: '출고계정 (앞부분 일치). 계정별·일자별 탭에 쓴다.' })
   @IsOptional() @IsString() @Length(0, 30)
   issueAccount?: string;
+
+  @ApiPropertyOptional({
+    description: '코드표 표시 언어. 일자별 탭의 출고계정·창고 이름에 쓴다.',
+    default: 'K',
+  })
+  @IsOptional() @IsString() @Length(0, 10)
+  lang?: string;
 }
 
 // ───────────────────────────────── 367 자재랙이동리포트
@@ -229,7 +236,8 @@ export class MaterialRackMoveQueryDto extends DateRangeReportQueryDto {
 // ───────────────────────────────── 368 자재장기재고리포트
 
 /**
- * 368 — 마지막 입고가 N개월 이전인 재고.
+ * 368 — 마지막 입고가 N개월 이전이고, 같은 N개월 동안 출고가 재고 대비
+ * 기준 % 이하인 재고.
  *
  * PB: `LAST_RECEIPT_DATE <= ADD_MONTHS(TO_DATE(:arg_date), :arg_term * -1)`
  * 기준일에서 개월수를 거꾸로 세는 것이므로 기간이 아니라 **기준일 + 개월수**다.
@@ -239,9 +247,17 @@ export class MaterialLongTermQueryDto {
   @IsString() @Matches(DATE_ONLY)
   baseDate!: string;
 
-  @ApiProperty({ description: '개월수. 이 개월수보다 오래 입고가 없는 재고를 본다.', minimum: 1 })
+  @ApiProperty({ description: '개월수. 이 개월수보다 오래 입고가 없고, 이 기간의 출고로 출고율을 센다.', minimum: 1 })
   @Type(() => Number) @IsInt() @Min(1) @Max(120)
   termMonths!: number;
+
+  @ApiPropertyOptional({
+    description: '출고율(%) 기준. 기간 출고량 ÷ 품목 재고량 × 100 이 이 값 이하인 품목만 본다. 0 이면 기간 출고가 없는 품목만.',
+    minimum: 0,
+    default: 0,
+  })
+  @IsOptional() @Type(() => Number) @IsNumber() @Min(0) @Max(10000)
+  maxIssueRate?: number;
 
   @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
   @IsOptional() @IsString() @Length(0, 50)

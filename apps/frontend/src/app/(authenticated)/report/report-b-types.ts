@@ -183,6 +183,20 @@ export interface MaterialReceiptSumWarehouseRow {
 }
 
 /** 364 입출고 매트릭스 원자료 한 줄. `txnKind` 로 입고·출고를 가른다. */
+/** 366 출고 × 일자 원자료 한 줄 (화면에서 피벗한다) */
+export interface MaterialIssueMatrixRow {
+  txnDate: string;
+  itemCode: string | null;
+  itemName: string | null;
+  issueAccount: string | null;
+  issueAccountName: string | null;
+  locationCode: string | null;
+  locationName: string | null;
+  supplierCode: string | null;
+  supplierName: string | null;
+  qty: number | null;
+}
+
 export interface MaterialTxnMatrixRow {
   txnDate: string;
   txnKind: 'RECEIPT' | 'ISSUE';
@@ -330,9 +344,20 @@ export interface MaterialLongTermRow {
   supplierCode: string | null;
   supplierName: string | null;
   inventoryQty: number | null;
+  /** 기준일에 유효한 구매단가 */
+  unitPrice: number | null;
+  /** 재고수량 × 구매단가 */
+  inventoryAmt: number | null;
   locationAddressRack: string | null;
   lastReceiptDate: string | null;
   idleDays: number | null;
+  /** 품목 전체 재고 (출고율의 분모) */
+  itemInventoryQty: number | null;
+  /** 개월수 기간의 품목 출고량 (양산·양산불량) */
+  termIssueQty: number | null;
+  /** 기간 출고량 ÷ 품목 재고 × 100 */
+  issueRate: number | null;
+  lastIssueDate: string | null;
 }
 
 /** 369 롯트별 재고 상세 한 줄 */

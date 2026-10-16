@@ -66,7 +66,7 @@ export class PurchasePriceService {
         LEFT JOIN ID_ITEM i ON i.ITEM_CODE = p.ITEM_CODE AND i.ORGANIZATION_ID = p.ORGANIZATION_ID
         LEFT JOIN ICOM_SUPPLIER s ON s.SUPPLIER_CODE = p.SUPPLIER_CODE AND s.ORGANIZATION_ID = p.ORGANIZATION_ID
        WHERE ${where}
-       ORDER BY p.ITEM_CODE, p.SUPPLIER_CODE, p.LINE_TYPE, p.DATESET DESC
+       ORDER BY p.SUPPLIER_CODE, p.ITEM_CODE, p.LINE_TYPE, p.DATESET DESC
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`, binds);
     const total = Number(countRows[0]?.total ?? countRows[0]?.TOTAL ?? 0);
     return { data: rows, total, page, limit };

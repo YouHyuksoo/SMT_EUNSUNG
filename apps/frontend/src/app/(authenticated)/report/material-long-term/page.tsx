@@ -5,8 +5,10 @@
  * @description 자재장기재고리포트 — PB w_mat_long_term_inventory_report 이식
  *
  * 초보자 가이드:
- * 1. **오래 입고가 없는 재고를 찾는다.** 기간이 아니라 **기준일 + 개월수**다 —
- *    기준일에서 개월수를 거꾸로 세어 그보다 오래된 재고를 본다 (PB ADD_MONTHS).
+ * 1. **오래 입고가 없고 잘 안 나가는 재고를 찾는다.** 기간이 아니라 **기준일 + 개월수**다 —
+ *    기준일에서 개월수를 거꾸로 세어 그보다 오래 입고가 없고, 그 기간 출고율이
+ *    기준 % 이하인 재고를 본다. 출고율 = 기간 출고량 ÷ 품목 재고 × 100 (품목 단위).
+ *    0% 면 기간 출고가 없는 품목만 나온다.
  * 2. **경과일수를 함께 보여준다.** PB 는 마지막 입고일만 보여줘서 며칠인지
  *    직접 세어야 했다. 1년 넘으면 빨강, 6개월 넘으면 주황으로 보인다.
  * 3. **재고수량이 0 보다 큰 것만 본다** (PB 고정조건). 그 조건이 있어 가볍다
@@ -31,6 +33,7 @@ const today = () => getTodayLocal();
 export default function MaterialLongTermPage() {
   const [baseDate, setBaseDate] = useState(today());
   const [termMonths, setTermMonths] = useState('6');
+  const [maxIssueRate, setMaxIssueRate] = useState('0');
   const [itemCode, setItemCode] = useState('');
   const [materialMfs, setMaterialMfs] = useState('');
   const [supplierCode, setSupplierCode] = useState('');
@@ -46,12 +49,18 @@ export default function MaterialLongTermPage() {
       toast.error('개월수를 1 이상 넣으세요.');
       return;
     }
+    const rate = Number(maxIssueRate || 0);
+    if (Number.isNaN(rate)) {
+      toast.error('출고율 기준을 숫자로 넣으세요.');
+      return;
+    }
     setLoading(true);
     try {
       const response = await api.get('/report/material-long-term', {
         params: {
           baseDate,
           termMonths: months,
+          maxIssueRate: rate,
           itemCode: itemCode || undefined,
           materialMfs: materialMfs || undefined,
           supplierCode: supplierCode || undefined,
@@ -67,20 +76,21 @@ export default function MaterialLongTermPage() {
     } finally {
       setLoading(false);
     }
-  }, [baseDate, termMonths, itemCode, materialMfs, supplierCode]);
+  }, [baseDate, termMonths, maxIssueRate, itemCode, materialMfs, supplierCode]);
 
   useEffect(() => { void search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const overYear = rows.filter((r) => Number(r.idleDays ?? 0) >= 365).length;
+  const totalAmt = rows.reduce((sum, r) => sum + Number(r.inventoryAmt ?? 0), 0);
 
   return (
     <div className="flex h-full flex-col gap-4 p-6">
       <header>
         <h1 className="text-xl font-bold text-text">자재장기재고리포트</h1>
         <p className="mt-1 text-sm text-text-muted">
-          기준일에서 정한 개월수보다 오래 입고가 없는 재고를 봅니다 ·{' '}
+          개월수보다 오래 입고가 없고, 그 기간 출고율(기간 출고 ÷ 품목 재고)이 기준 이하인 재고를 봅니다 ·{' '}
           {searched
-            ? `${rows.length.toLocaleString()}건${overYear > 0 ? ` · 1년 이상 ${overYear.toLocaleString()}건` : ''}`
+            ? `${rows.length.toLocaleString()}건 · 재고금액 ${Math.round(totalAmt).toLocaleString()}${overYear > 0 ? ` · 1년 이상 ${overYear.toLocaleString()}건` : ''}`
             : '조회하세요'}
         </p>
       </header>
@@ -98,6 +108,12 @@ export default function MaterialLongTermPage() {
             <Input aria-label="개월수" value={termMonths} className="w-16"
               onChange={(e) => setTermMonths(e.target.value.replace(/\D/g, ''))} />
             개월 이상 입고 없음
+          </label>
+          <label className="flex items-center gap-1 text-sm text-text">
+            그 기간 출고율
+            <Input aria-label="출고율 기준(%)" value={maxIssueRate} className="w-16"
+              onChange={(e) => setMaxIssueRate(e.target.value.replace(/[^d.]/g, ''))} />
+            % 이하
           </label>
           <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
             onChange={(e) => setItemCode(e.target.value)}

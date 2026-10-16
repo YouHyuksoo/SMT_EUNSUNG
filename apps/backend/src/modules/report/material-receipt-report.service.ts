@@ -452,7 +452,7 @@ export class MaterialReceiptReportService {
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         locationCode: likePrefix(query.locationCode),
-        lang: query.lang ?? 'KOR',
+        lang: query.lang ?? 'K',
         organizationId,
       }),
     )) as Row[];
@@ -518,7 +518,7 @@ export class MaterialReceiptReportService {
         dateTo: query.dateTo,
         supplierCode: likePrefix(query.supplierCode),
         itemCode: likePrefix(query.itemCode),
-        lang: query.lang ?? 'KOR',
+        lang: query.lang ?? 'K',
         organizationId,
       }),
     )) as Row[];

@@ -350,6 +350,55 @@ export class MaterialIssueReportService {
     return limited(rows);
   }
 
+  /**
+   * 출고 × 일자 원자료. 입고합계의 입출고 매트릭스와 같은 모양이다 —
+   * 열(일자)이 기간에 따라 달라지므로 피벗은 화면에서 한다.
+   * 줄은 품목·출고계정·창고·협력사다. 계정을 섞으면 양산과 롯트분할이 한 줄에 더해진다.
+   */
+  async findIssueSumMatrix(query: MaterialIssueSumQueryDto, organizationId: number) {
+    const rows = (await this.dataSource.query(
+      `SELECT TO_CHAR(TRUNC(g.ISSUE_DATE), 'YYYY-MM-DD')        AS "txnDate",
+              g.ITEM_CODE                                       AS "itemCode",
+              MAX(i.ITEM_NAME)                                  AS "itemName",
+              g.ISSUE_ACCOUNT                                   AS "issueAccount",
+              F_GET_BASECODE('ISSUE ACCOUNT', g.ISSUE_ACCOUNT,
+                             :lang, g.ORGANIZATION_ID)          AS "issueAccountName",
+              g.LOCATION_CODE                                   AS "locationCode",
+              F_GET_BASECODE('MATERIAL LOCATION CODE', g.LOCATION_CODE,
+                             :lang, g.ORGANIZATION_ID)          AS "locationName",
+              g.SUPPLIER_CODE                                   AS "supplierCode",
+              MAX(s.SUPPLIER_NAME)                              AS "supplierName",
+              SUM(NVL(g.ISSUE_QTY, 0))                          AS "qty"
+         FROM IM_ITEM_ISSUE g
+         LEFT JOIN ID_ITEM i
+                ON i.ITEM_CODE = g.ITEM_CODE
+               AND i.ORGANIZATION_ID = g.ORGANIZATION_ID
+         LEFT JOIN ICOM_SUPPLIER s
+                ON s.SUPPLIER_CODE = g.SUPPLIER_CODE
+               AND s.ORGANIZATION_ID = g.ORGANIZATION_ID
+        WHERE ${this.dateWhere('g.ISSUE_DATE')}
+          AND g.ITEM_CODE LIKE :itemCode ESCAPE '\\'
+          AND NVL(g.SUPPLIER_CODE, '*') LIKE :supplierCode ESCAPE '\\'
+          AND NVL(g.ISSUE_ACCOUNT, '*') LIKE :issueAccount ESCAPE '\\'
+          AND g.ORGANIZATION_ID = :organizationId
+          AND g.ISSUE_STATUS <> '${ISSUE_CANCELED}'
+        GROUP BY TRUNC(g.ISSUE_DATE), g.ITEM_CODE, g.ISSUE_ACCOUNT, g.LOCATION_CODE,
+                 g.SUPPLIER_CODE, g.ORGANIZATION_ID
+        ORDER BY g.ITEM_CODE, g.ISSUE_ACCOUNT, g.LOCATION_CODE, g.SUPPLIER_CODE, TRUNC(g.ISSUE_DATE)
+        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
+      namedBinds({
+        dateFrom: query.dateFrom,
+        dateTo: query.dateTo,
+        itemCode: likePrefix(query.itemCode),
+        supplierCode: likePrefix(query.supplierCode),
+        issueAccount: likePrefix(query.issueAccount),
+        lang: query.lang ?? 'K',
+        organizationId,
+      }),
+    )) as Row[];
+    return limited(rows);
+  }
+
   // ───────────────────────────────── 367 자재랙이동리포트
 
   /**
