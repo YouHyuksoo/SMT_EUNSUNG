@@ -189,10 +189,11 @@ export class RunCardService {
       const guards: Array<{ PID_CNT: number; RESULT_CNT: number; DETAIL_CNT: number }> = await m.query(
         `SELECT
            (SELECT COUNT(*) FROM IP_PRODUCT_2D_BARCODE WHERE RUN_NO = :1 AND ORGANIZATION_ID = ${ORG}) AS PID_CNT,
-           (SELECT COUNT(*) FROM IP_PRODUCT_SENSOR_ACTUAL WHERE RUN_NO = :1 AND ORGANIZATION_ID = ${ORG}) AS RESULT_CNT,
-           (SELECT COUNT(*) FROM IP_PRODUCT_RUN_CARD_DETAIL WHERE RUN_NO = :1 AND ORGANIZATION_ID = ${ORG}) AS DETAIL_CNT
+           (SELECT COUNT(*) FROM IP_PRODUCT_SENSOR_ACTUAL WHERE RUN_NO = :2 AND ORGANIZATION_ID = ${ORG}) AS RESULT_CNT,
+           (SELECT COUNT(*) FROM IP_PRODUCT_RUN_CARD_DETAIL WHERE RUN_NO = :3 AND ORGANIZATION_ID = ${ORG}) AS DETAIL_CNT
          FROM DUAL`,
-        [runNo],
+        // 오라클 배열 바인드는 등장 순서로 채워진다 — 같은 값을 자리마다 넘긴다
+        [runNo, runNo, runNo],
       );
       const pid = Number(guards[0]?.PID_CNT ?? 0);
       const result = Number(guards[0]?.RESULT_CNT ?? 0);
@@ -238,11 +239,12 @@ export class RunCardService {
            (SELECT COUNT(*) FROM IP_PRODUCT_2D_BARCODE
              WHERE RUN_NO = :1 AND ORGANIZATION_ID = ${ORG})
          + (SELECT COUNT(*) FROM IP_PRODUCT_RUN_CARD_DETAIL
-             WHERE RUN_NO = :1 AND ORGANIZATION_ID = ${ORG})
+             WHERE RUN_NO = :2 AND ORGANIZATION_ID = ${ORG})
          + (SELECT COUNT(*) FROM IP_PRODUCT_RUN_CARD
-             WHERE RUN_NO = :1 AND ORGANIZATION_ID = ${ORG}) AS CNT
+             WHERE RUN_NO = :3 AND ORGANIZATION_ID = ${ORG}) AS CNT
          FROM DUAL`,
-        [runNo],
+        // 오라클 배열 바인드는 등장 순서로 채워진다 — 같은 값을 자리마다 넘긴다
+        [runNo, runNo, runNo],
       );
 
       await m
