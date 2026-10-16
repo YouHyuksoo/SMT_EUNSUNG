@@ -608,8 +608,9 @@ function DataGrid<T>({
             ? { tableLayout: 'fixed', width: table.getTotalSize() }
             : { minWidth: fillWidth ? '100%' : undefined, width: 'max-content' }}
         >
-          {/* Header */}
-          <thead className="bg-background sticky top-0 z-10">
+          {/* Header — thead 는 sticky+z 로 자기 쌓임 맥락을 만들므로, 고정 컬럼 본문 칸(z 11)보다 높아야
+              세로 스크롤 때 고정 컬럼 헤더가 본문에 덮이지 않는다 */}
+          <thead className="bg-background sticky top-0 z-20">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
