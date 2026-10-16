@@ -9,9 +9,10 @@
  *    품목 단위이고 수량이 부호를 가진다 (입고취소는 음수). 그래서 수량을 그냥 더한다.
  *    출고에 공정실사 조정(LAST_MODIFY_BY = 'INV ADJUST')이 들어 있으면 출고 합계에는 포함하고
  *    조정 칸에도 따로 보인다 (자재 마감의 조정 칸과 같다). 모자람 +, 남음 −.
- * 2. **기초**: 직전 달을 마감했으면 그 달 기말. 첫 마감이면 **지금 공정재고에서 그 달 이후의 움직임을
- *    거꾸로 뺀다.** 공정 입출고 원장은 시작(2022~2023년) 이전 재고가 없어서 원장만 더하면 현재고와
- *    맞지 않는다 (실측 원장 합과 공정재고가 15% 어긋난다).
+ * 2. **기초**: 직전 달을 마감했으면 그 달 기말. 첫 마감이면 **전월 말 공정재고를 0 으로 본다.**
+ *    다만 그 달 입고보다 소비가 많은 품목은 모자란 만큼을 기초로 둔다 (전월에 라인에 나간 자재를 쓴 몫).
+ *    현재 공정재고 장부는 쓰지 않는다 — 2026-10-11 까지 소비를 인팩 사급 자재만 빼서 장부에
+ *    11.8억 개가 쌓였다 (2026-10-16 실측, 사용자 결정 "8월말 공정기초 0 으로 9월부터 쌓기").
  * 3. **단가**: 그 달 원자재 마감(IM_ITEM_INVENTORY_CLOSE)의 월평균단가를 쓴다 (PB 와 같은 출처).
  *    그 달 단가가 없으면 직전 달 공정 마감 단가, 그것도 없으면 0 원이다. 금액 = 수량 × 단가.
  *    그래서 **원자재 마감을 먼저 해야** 마감할 수 있다 (PB 도 먼저 확인한다).
@@ -84,34 +85,28 @@ export async function assertWipMonthOpen(qr: QueryRunner, yyyymm: string, organi
 }
 
 /**
- * 기초·입고·출고·조정 집계. 한 줄 = 품목.
- * `previousClose` 면 기초를 직전 달 마감에서, 아니면 현재 공정재고에서 그 달 이후 움직임을 빼서 만든다.
+ * 입고·출고·조정 집계. 한 줄 = 품목.
+ * `previousClose` 면 직전 달 마감 기말도 함께 읽는다. 첫 마감의 기초는 wipCloseLine 이 정한다.
  */
 export const wipCloseAggregateSql = (previousClose: boolean) => `
   SELECT m.ITEM_CODE AS "itemCode",
-         SUM(m.INV_Q) AS "invQty", SUM(m.AFT_RC) AS "afterReceipt", SUM(m.AFT_IS) AS "afterIssue",
          SUM(m.RC_Q) AS "receiptQty", SUM(m.IS_Q) AS "issueQty", SUM(m.AD_Q) AS "adjustQty",
          SUM(m.PREV_Q) AS "prevQty", SUM(m.PREV_A) AS "prevAmt"
     FROM (
-      SELECT ITEM_CODE, INVENTORY_QTY AS INV_Q, 0 AS AFT_RC, 0 AS AFT_IS, 0 AS RC_Q, 0 AS IS_Q, 0 AS AD_Q,
-             0 AS PREV_Q, 0 AS PREV_A
-        FROM IM_ITEM_WORKSTAGE_INVENTORY WHERE ORGANIZATION_ID = :organizationId
-      UNION ALL
-      SELECT ITEM_CODE, 0, SUM(RECEIPT_QTY), 0,
-             SUM(CASE WHEN RECEIPT_DATE < TO_DATE(:endDate, 'YYYY-MM-DD') THEN RECEIPT_QTY ELSE 0 END), 0, 0, 0, 0
+      SELECT ITEM_CODE, SUM(RECEIPT_QTY) AS RC_Q, 0 AS IS_Q, 0 AS AD_Q, 0 AS PREV_Q, 0 AS PREV_A
         FROM IM_ITEM_WORKSTAGE_RECEIPT
        WHERE ORGANIZATION_ID = :organizationId AND RECEIPT_DATE >= TO_DATE(:startDate, 'YYYY-MM-DD')
+         AND RECEIPT_DATE < TO_DATE(:endDate, 'YYYY-MM-DD')
        GROUP BY ITEM_CODE
       UNION ALL
-      SELECT ITEM_CODE, 0, 0, SUM(ISSUE_QTY), 0,
-             SUM(CASE WHEN ISSUE_DATE < TO_DATE(:endDate, 'YYYY-MM-DD') THEN ISSUE_QTY ELSE 0 END),
-             SUM(CASE WHEN ISSUE_DATE < TO_DATE(:endDate, 'YYYY-MM-DD') AND LAST_MODIFY_BY = '${ADJUST_MARK}'
-                      THEN ISSUE_QTY ELSE 0 END), 0, 0
+      SELECT ITEM_CODE, 0, SUM(ISSUE_QTY),
+             SUM(CASE WHEN LAST_MODIFY_BY = '${ADJUST_MARK}' THEN ISSUE_QTY ELSE 0 END), 0, 0
         FROM IM_ITEM_WORKSTAGE_ISSUE
        WHERE ORGANIZATION_ID = :organizationId AND ISSUE_DATE >= TO_DATE(:startDate, 'YYYY-MM-DD')
+         AND ISSUE_DATE < TO_DATE(:endDate, 'YYYY-MM-DD')
        GROUP BY ITEM_CODE
       ${previousClose ? `UNION ALL
-      SELECT ITEM_CODE, 0, 0, 0, 0, 0, 0, SUM(MM_INVENTORY_QTY), SUM(MM_INVENTORY_AMT)
+      SELECT ITEM_CODE, 0, 0, 0, SUM(MM_INVENTORY_QTY), SUM(MM_INVENTORY_AMT)
         FROM IM_ITEM_WORKSTAGE_INV_CLOSE
        WHERE CLOSE_YYYYMM = :prevYyyymm AND ORGANIZATION_ID = :organizationId
        GROUP BY ITEM_CODE` : ''}
@@ -128,9 +123,10 @@ export function wipCloseLine(
   const receiptQty = num(r.receiptQty);
   const issueQty = num(r.issueQty);
   const adjustQty = num(r.adjustQty);
+  // 첫 마감: 전월 말 0. 그 달 입고보다 소비가 많으면 모자란 만큼만 기초로 둔다.
   const openingQty = previousClose
     ? num(r.prevQty)
-    : num(r.invQty) - (num(r.afterReceipt) - num(r.afterIssue));
+    : Math.max(0, issueQty - receiptQty);
   const endingQty = openingQty + receiptQty - issueQty;
   const openingAmt = previousClose ? num(r.prevAmt) : openingQty * price;
   return {

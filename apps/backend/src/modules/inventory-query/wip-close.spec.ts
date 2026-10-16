@@ -3,15 +3,18 @@ import { wipCloseAggregateSql, wipCloseLine } from './wip-close.service';
 const info = { itemName: null, itemSpec: null, itemUom: null, lineType: 'A' };
 
 describe('wipCloseLine', () => {
-  it('첫 마감 기초는 현재 공정재고에서 그 달 이후 움직임을 거꾸로 뺀다', () => {
-    // 현재 1000, 그 달 이후 입고 300 · 출고 100 → 기초 800. 그 달 입고 200 · 출고 50 이면 기말 950
-    const l = wipCloseLine(
-      { itemCode: 'A', invQty: 1000, afterReceipt: 300, afterIssue: 100, receiptQty: 200, issueQty: 50, adjustQty: 0 },
-      false, 2, info,
-    );
-    expect(l.openingQty).toBe(800);
-    expect(l.endingQty).toBe(950);
-    expect(l.endingAmt).toBe(1900);
+  it('첫 마감 기초는 0 이다 — 입고가 소비보다 많으면 남은 만큼이 기말이다', () => {
+    const l = wipCloseLine({ itemCode: 'A', receiptQty: 200, issueQty: 50, adjustQty: 0 }, false, 2, info);
+    expect(l.openingQty).toBe(0);
+    expect(l.endingQty).toBe(150);
+    expect(l.endingAmt).toBe(300);
+  });
+
+  it('첫 마감에서 소비가 입고보다 많으면 모자란 만큼을 기초로 두어 기말이 0 이 된다', () => {
+    const l = wipCloseLine({ itemCode: 'A', receiptQty: 200, issueQty: 500, adjustQty: 0 }, false, 2, info);
+    expect(l.openingQty).toBe(300);
+    expect(l.openingAmt).toBe(600);
+    expect(l.endingQty).toBe(0);
   });
 
   it('이후 마감은 직전 달 기말을 기초로 쓰고 기초 금액도 그대로 잇는다', () => {
