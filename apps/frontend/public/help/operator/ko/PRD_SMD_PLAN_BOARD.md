@@ -27,7 +27,7 @@ related: [PRD_SMD_PLAN, PRD_SMD_ACTUAL]
 |------|------|------|
 | 계획 행 | `IP_PRODUCT_SMD_PLAN` (PLAN_DATE = 조회일) | 라인 → 우선순위 → 계획순번 순 |
 | 시간대 실적 | `IP_ASSEMBLY_ACTUAL_TIME_V` | `IP_PRODUCT_SENSOR_ACTUAL_TIME.TIME_DIVISION` A~J 합계. 계획일=RECEIPT_DATE, 라인·모델·서픽스·PCB 면으로 좌측 외부조인 |
-| 시간대 구간 | `ICOM_WORKTIME_RANGES` (RANGE_TYPE='SMTWORKTIME') | 센서 프로시저가 `F_GET_WORKTIME_SMT_ZONE` 으로 같은 구간을 찍는다. A~E 주간, F~J 야간 |
+| 시간대 구간 | `ICOM_WORKTIME_RANGES` (RANGE_TYPE='SMTWORKTIME') | 생산실적(조립실적, `P_ASSY_RESULT_ADD`)이 실적 시각으로 시간대를 찍는다. A~E 주간, F~J 야간 |
 | 라인 목록 | `IP_PRODUCT_LINE` | 생산 1팀 = SMT 라인구분(@smt/shared `SMT_LINE_DIVISIONS`, 실데이터 'D') 중 `MES_DISPLAY_YN='Y'` + 그날 계획·실적·메모가 있는 라인. `MES_DISPLAY_SEQUENCE` 순 |
 | 계획 외 실적 | `IP_ASSEMBLY_ACTUAL_TIME_V` | RECEIPT_DATE = 조회일 중 같은 날 계획과 조인되지 않는 행 |
 | LOT 수량 | `IP_PRODUCT_SMD_PLAN.PLAN_QTY` | 롯트카드 `IP_PRODUCT_RUN_CARD.LOT_SIZE` 와 같은 값 |
@@ -51,5 +51,5 @@ PK: `XPKIP_PRODUCT_SMD_PLAN_NOTE (PLAN_DATE, ORGANIZATION_ID, LINE_CODE, NOTE_SE
 ## 운영 포인트
 
 - 같은 블록을 동시에 저장하면 뒤 트랜잭션이 `ORA-00001` 로 실패할 수 있습니다. 다시 저장하면 됩니다.
-- 현황판의 주간·야간 합계는 센서 실적만 더합니다. 반제품생산실적관리의 주야 수기실적(`IP_PRODUCT_SMD_SHIFT_MANUAL`)은 반영하지 않습니다.
+- 현황판의 주간·야간 합계는 생산실적(조립실적 — AOI 자동·수기·보정, 2026-10-17 센서실적에서 바꿈)만 더합니다. 반제품생산실적관리의 주야 수기실적(`IP_PRODUCT_SMD_SHIFT_MANUAL`)은 반영하지 않습니다.
 - 업무일은 08:30 에 바뀝니다(`F_GET_WORKTIME_SMT_ZONE`). 화면의 기본 조회일은 달력상 오늘입니다.

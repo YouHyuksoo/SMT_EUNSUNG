@@ -71,7 +71,7 @@ const historyColumns: ColumnDef<ResultRow>[] = [
       if (h.resultStatus !== 'DONE') return '진행';
       return isSensorPending(h)
         // 센서 미반영 — 빨간색으로 구분하고 사유는 title로 보여준다
-        ? <span className="text-red-600 font-semibold" title={h.sensorApplyMsg ?? '센서 실적에 반영되지 않았습니다'}>완료</span>
+        ? <span className="text-red-600 font-semibold" title={h.sensorApplyMsg ?? '생산실적에 반영되지 않았습니다'}>완료</span>
         : <span className="text-blue-600 font-semibold">완료</span>;
     } },
 ];
@@ -196,14 +196,14 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
         runNo: run.runNo, seqNo: selectedRow.seqNo,
       });
       const warning = res.data?.data?.sensorWarning as string | undefined;
-      if (warning) toast.error(`센서 반영 실패 — ${warning}`);
-      else toast.success('센서 실적에 반영되었습니다');
+      if (warning) toast.error(`생산실적 반영 실패 — ${warning}`);
+      else toast.success('생산실적에 반영되었습니다');
       await loadHistory();
       await onSaved?.();
     } catch (e: unknown) {
       const msg = e && typeof e === 'object' && 'response' in e
         ? (e as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
-      toast.error(msg || '센서 반영에 실패했습니다');
+      toast.error(msg || '생산실적 반영에 실패했습니다');
     } finally {
       setApplying(false);
     }
@@ -226,7 +226,7 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
       // 처리구분을 '완료'로 저장하면 서버가 센서 누적 프로시저를 부른다. 실패해도 실적은
       // 저장되므로 경고만 띄우고, 미반영 상태는 이력의 처리구분 색으로 남는다.
       const warning = res.data?.data?.sensorWarning as string | undefined;
-      if (warning) toast.error(`실적은 저장됐지만 센서 반영에 실패했습니다 — ${warning}`);
+      if (warning) toast.error(`실적은 저장됐지만 생산실적 반영에 실패했습니다 — ${warning}`);
       else toast.success('실적이 저장되었습니다');
       // 현장 모드는 저장하면 바로 모달을 닫는다(onSaved가 닫는다).
       // 이력을 다시 읽거나 폼을 접으면 닫히기 직전에 이력 화면이 잠깐 비친다.
@@ -290,10 +290,10 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold text-text">{form.seqNo ? `실적 상세 (일련 ${form.seqNo})` : '신규 실적'}</span>
-              {/* 센서 반영에 실패한 실적을 다시 프로시저로 넘긴다 — 선택한 실적에만 해당한다 */}
+              {/* 생산실적 반영에 실패한 실적을 다시 프로시저로 넘긴다 — 선택한 실적에만 해당한다 */}
               {canApplySensor && (
                 <button type="button" onClick={applySensorNow} disabled={applying}
-                  title={selectedRow?.sensorApplyMsg ?? '센서 실적에 반영되지 않았습니다'}
+                  title={selectedRow?.sensorApplyMsg ?? '생산실적에 반영되지 않았습니다'}
                   className="text-xs rounded px-2 py-1 flex items-center gap-1 border border-red-500 text-red-600 hover:bg-red-50 disabled:opacity-50">
                   <RefreshCw className={`w-3 h-3 ${applying ? 'animate-spin' : ''}`} />실적반영
                 </button>

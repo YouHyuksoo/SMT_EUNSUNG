@@ -4,9 +4,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductWorkResult } from '../../entities/product-work-result.entity';
 import { WorkResultController } from './work-result.controller';
 import { WorkResultService } from './work-result.service';
+import { AssemblyResultModule } from '../assembly-result/assembly-result.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ProductWorkResult])],
+  imports: [TypeOrmModule.forFeature([ProductWorkResult]), AssemblyResultModule],
   controllers: [WorkResultController],
   providers: [WorkResultService],
 })

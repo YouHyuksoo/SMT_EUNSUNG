@@ -132,16 +132,17 @@ export class WorkResultController {
     return await this.service.upsertResult(dto, organizationId, userId);
   }
 
-  /** 센서 반영 재시도 — 완료인데 미반영인 실적을 다시 프로시저로 넘긴다 */
+  /** 생산실적(조립실적) 반영 재시도 — 완료인데 미반영인 실적을 다시 넣는다 (경로 이름은 예전 그대로) */
   @Post('results/apply-sensor')
   async applySensor(
     @Body() dto: ApplySensorDto,
     @OrganizationId() organizationId?: number,
+    @UserId() userId?: string,
   ) {
-    return await this.service.applySensor(dto, organizationId);
+    return await this.service.applySensor(dto, organizationId, userId);
   }
 
-  /** 실적 취소 — 오늘 업무일 실적만. 센서 누적에서 그 수량을 뺀다 */
+  /** 실적 취소 — 오늘 업무일 실적만. 생산실적(조립실적)에서 그 수량을 뺀다 */
   @Post('results/cancel')
   async cancelResult(
     @Body() dto: CancelResultDto,

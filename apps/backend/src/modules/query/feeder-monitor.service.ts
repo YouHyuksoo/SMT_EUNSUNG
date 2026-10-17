@@ -144,7 +144,7 @@ export class FeederMonitorService {
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
-  /** 라인의 센서 실적 (PB d_pln_product_sensor_actual_4_feeder — 피더 화면 머리글) */
+  /** 라인의 생산실적 (PB d_pln_product_sensor_actual_4_feeder — 피더 화면 머리글). 2026-10-17 부터 조립실적 뷰 */
   async findLineActual(query: FeederMonitorQueryDto, organizationId: number) {
     const rows = (await this.dataSource.query(
       `SELECT a.LINE_CODE                               AS "lineCode",
@@ -161,11 +161,11 @@ export class FeederMonitorService {
               a.IS_LAST_YN                              AS "isLastYn",
               TO_CHAR(a.RECEIPT_DATE, 'YYYY-MM-DD HH24:MI:SS')      AS "receiptDate",
               TO_CHAR(a.LAST_RECEIPT_DATE, 'YYYY-MM-DD HH24:MI:SS') AS "lastReceiptDate"
-         FROM IP_PRODUCT_SENSOR_ACTUAL a
+         FROM IP_ASSEMBLY_RESULT_SENSOR_V a
          LEFT JOIN IP_PRODUCT_MODEL_MASTER m ON m.MODEL_NAME = a.MODEL_NAME
         WHERE a.LINE_CODE = :lineCode
           AND a.ORGANIZATION_ID = :organizationId
-        ORDER BY a.RECEIPT_DATE DESC, a.WORKSTAGE_CODE
+        ORDER BY a.RECEIPT_DATE DESC, a.LAST_RECEIPT_DATE DESC
         FETCH FIRST 200 ROWS ONLY`,
       namedBinds({ lineCode: query.lineCode, organizationId }),
     )) as Row[];

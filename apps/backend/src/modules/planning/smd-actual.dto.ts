@@ -56,19 +56,21 @@ export class SmdActualKeyDto {
   @ApiProperty({ description: '집계순번' })
   @Type(() => Number) @IsInt() @Min(0)
   receiptSequence!: number;
+
+  @ApiPropertyOptional({ description: '수정·삭제 사유 (보정 행 비고에 남는다)' })
+  @IsOptional() @IsString() @Length(0, 200)
+  reason?: string;
 }
 
 /**
- * 수정 — PB 는 실적수량과 보정수량만 고치게 했다.
- * 센서가 올린 원시값(ORIGIN_COUNT)은 바꾸지 않는다 — 그것을 고치면
- * 센서 이력과 화면 값이 갈려 원인 추적이 불가능해진다.
+ * 수정 — 행을 바꾸지 않고 (새 수량 − 지금 수량)만큼 보정 행을 더한다.
  */
 export class SmdActualUpdateDto extends SmdActualKeyDto {
   @ApiProperty({ description: '생산실적수량' })
   @Type(() => Number) @IsNumber() @Min(0)
   productActualQty!: number;
 
-  @ApiPropertyOptional({ description: '보정수량 (음수 가능)' })
+  @ApiPropertyOptional({ description: '보정수량 — 쓰지 않는다 (보정 행에서 계산된다). 예전 화면 호환용' })
   @IsOptional() @Type(() => Number) @IsNumber()
   adjustQty?: number;
 }

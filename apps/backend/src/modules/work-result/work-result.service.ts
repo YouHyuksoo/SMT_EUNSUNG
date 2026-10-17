@@ -1,21 +1,22 @@
 // 설비별 작업 실적관리 — IP_PRODUCT_RUN_CARD 기준 실적/불량/비가동 실 구현
 //
 // 실적 저장 테이블(2026-09-30 복원): IP_PRODUCT_SENSOR_ACTUAL -> IP_PRODUCT_WORK_RESULT
-//   건별 실적 이력은 IP_PRODUCT_WORK_RESULT가 원장이고, 센서 누적(IP_PRODUCT_SENSOR_ACTUAL·
-//   _TIME·_HOUR)은 P_INTERLOCK_SENSOR_ACTUAL_NEO가 담당한다. 프로시저는 같은 라인·모델의
-//   기존 행에 수량을 가산하는 구조라 건별 이력을 그 테이블에 직접 쌓을 수 없다.
-//   계획: docs/plans/2026-09-30-work-result-restore-sensor-proc.md
+//   건별 실적 이력은 IP_PRODUCT_WORK_RESULT가 원장이다.
+//   2026-10-17: SMT 라인 완료 실적은 생산실적(조립실적 IP_ASSEMBLY_RESULT)에 MANUAL 로 넣는다
+//   (예전에는 센서 누적 프로시저 P_INTERLOCK_SENSOR_ACTUAL_NEO). AssemblyResultService → P_ASSY_RESULT_ADD 가
+//   생산 품목·시간대를 정하고, 전환 이후면 공정재고(반제품 입고 + 직속 자품목 출고)도 같은 규칙으로 움직인다.
+//   설계: docs/specs/2026-10-17-wip-semi-product-from-aoi-design.md
 //
 //   SEQ_NO           = 실적 일련번호 (작업지시별 01~99)
 //   RESULT_QTY       = 실적수량
 //   RESULT_STATUS    = 처리구분 (WIP=진행, DONE=완료/수정불가)
-//   SENSOR_APPLY_YN  = 센서실적 반영여부. 처리구분이 DONE이 되는 순간 프로시저를 1회 부르고
-//                      그 결과를 여기에 남긴다. WIP는 호출하지 않으므로 'N'이지만 실패가 아니다.
+//   SENSOR_APPLY_YN  = 생산실적(조립실적) 반영여부 (칼럼 이름은 예전 그대로). 처리구분이 DONE이 되는 순간
+//                      1회 넣고 결과를 남긴다. WIP는 넣지 않으므로 'N'이지만 실패가 아니다.
+//                      Y 반영 / N 미반영 / X 대상 아님(SMT 아님) / C 취소 차감 완료
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { ProductWorkResult } from '../../entities/product-work-result.entity';
-import { OracleService } from '../../common/services/oracle.service';
 import { downtimeTargetMachineSql } from '../../common/utils/downtime-target';
 import {
   ApplySensorDto,
@@ -25,18 +26,17 @@ import {
   WorkResultUpsertDto,
 } from './work-result.dto';
 import { SMT_LINE_DIVISIONS } from '@smt/shared';
+import { AssemblyResultService } from '../assembly-result/assembly-result.service';
 
 const DEFAULT_USER = 'ADMIN';
 
-/** 센서 누적 프로시저 — 파라미터 이름이 의미와 반대다. 아래 호출부 주석을 반드시 읽을 것 */
-const SENSOR_PROC = 'P_INTERLOCK_SENSOR_ACTUAL_NEO';
 
 @Injectable()
 export class WorkResultService {
   constructor(
     @InjectRepository(ProductWorkResult)
     private readonly repo: Repository<ProductWorkResult>,
-    private readonly oracle: OracleService,
+    private readonly assembly: AssemblyResultService,
   ) {}
 
   private q<T = Record<string, unknown>>(
@@ -46,7 +46,7 @@ export class WorkResultService {
     return this.repo.manager.query(sql, params);
   }
 
-  /** 라인이 SMT(라인구분 SMT_LINE_DIVISIONS)인지 — 센서 누적 프로시저는 SMT 피더 계획이 있는 라인에서만 쌓인다 */
+  /** 라인이 SMT(라인구분 SMT_LINE_DIVISIONS)인지 — 생산실적(조립실적)은 SMT 런(면 T/B)만 받는다 */
   private async isSmtLine(lineCode: string | null, organization: number): Promise<boolean> {
     if (!lineCode) return false;
     const rows = await this.q<{ div: string | null }>(
@@ -294,9 +294,8 @@ export class WorkResultService {
 
     if (!isDone) return { seqNo, sensorApplyYn: 'N' };
 
-    // 센서 누적 프로시저는 라인의 활성 피더 계획(IB_PRODUCT_PLANDATA, SMT 전용)이 있어야 쌓는다.
-    // 조립·가공 등 SMT 가 아닌 라인은 늘 'NG ACTIVE PLAN NOT FOUND' 로 실패하므로 부르지 않고
-    // 실적 원장(IP_PRODUCT_WORK_RESULT)만 기준으로 둔다. 'X' = 센서 반영 해당 없음.
+    // 생산실적(조립실적)은 SMT 런만 받는다. 조립·가공 등 SMT 가 아닌 라인은 넣지 않고
+    // 실적 원장(IP_PRODUCT_WORK_RESULT)만 기준으로 둔다. 'X' = 반영 대상 아님.
     if (!(await this.isSmtLine(lineCode, organization))) {
       await this.q(
         `UPDATE IP_PRODUCT_WORK_RESULT SET SENSOR_APPLY_YN='X', SENSOR_APPLY_MSG=NULL
@@ -306,16 +305,8 @@ export class WorkResultService {
       return { seqNo, sensorApplyYn: 'X' };
     }
 
-    // 실적은 위 트랜잭션에서 이미 커밋됐다. 프로시저가 실패해도 실적은 남는다.
-    const applied = await this.applyToSensor(
-      dto.runNo,
-      seqNo,
-      organization,
-      lineCode,
-      dto.workstageCode,
-      machineCode,
-      dto.resultQty,
-    );
+    // 실적은 위 트랜잭션에서 이미 커밋됐다. 조립실적 반영이 실패해도 실적은 남는다.
+    const applied = await this.applyToAssembly(dto.runNo, seqNo, organization, lineCode, dto.resultQty, userId ?? DEFAULT_USER);
     return {
       seqNo,
       sensorApplyYn: applied.ok ? 'Y' : 'N',
@@ -324,57 +315,41 @@ export class WorkResultService {
   }
 
   /**
-   * 센서 누적 프로시저 호출 + 반영 상태 기록.
-   *
-   * 파라미터 이름이 의미와 반대다 — P_ACC_COUNT가 이번 실적수량이고 P_COUNT가 누적 계수다.
-   * P_COUNT는 ORIGIN_COUNT에 참조용으로만 저장되며 소스 주석이 "계속 1 만 넘어와야 함"이라
-   * 명시하므로 1로 고정한다.
-   *
-   * autoCommit을 켜야 한다. 기본값(false)이면 커넥션 반납 시 프로시저의 DML이 롤백된다.
+   * 생산실적(조립실적) 반영 + 반영 상태 기록. 실적 시각은 지금(완료 시점)이다.
+   * 조립실적 REMARK 에 작업실적 키(런-순번)를 남겨 취소 때 같은 시각으로 차감한다.
    */
-  private async applyToSensor(
+  private async applyToAssembly(
     runNo: string,
     seqNo: string,
     organization: number,
     lineCode: string | null,
-    workstageCode: string,
-    machineCode: string | null,
     resultQty: number,
+    user: string,
   ): Promise<{ ok: boolean; message: string }> {
-    let message: string;
+    let message = 'OK';
     try {
-      const out = await this.oracle.callProcScalar(
-        SENSOR_PROC,
-        [{ name: 'P_OUT', type: 'STRING', maxSize: 1000 }],
-        {
-          P_LINE_CODE: lineCode,
-          P_WORKSTAGE_CODE: workstageCode,
-          P_MACHINE_CODE: machineCode,
-          P_COUNT: 1,
-          P_ACC_COUNT: resultQty,
-        },
-        { autoCommit: true },
-      );
-      message = String(out.P_OUT ?? '').trim();
+      await this.assembly.add({
+        runNo, lineCode, time: new Date(), qty: resultQty, source: 'MANUAL', remark: `${runNo}-${seqNo}`, user,
+      });
     } catch (error: unknown) {
-      // Oracle 원문을 보존한다 — 'Database query failed' 같은 요약으로 덮지 않는다.
+      // Oracle·프로시저 원문을 보존한다 — 요약으로 덮지 않는다.
       message = error instanceof Error ? error.message : String(error);
     }
-    const ok = message.toUpperCase() === 'OK';
+    const ok = message === 'OK';
     await this.q(
       `UPDATE IP_PRODUCT_WORK_RESULT SET SENSOR_APPLY_YN=:1, SENSOR_APPLY_MSG=:2
         WHERE RUN_NO=:3 AND SEQ_NO=:4 AND ORGANIZATION_ID=:5`,
       [ok ? 'Y' : 'N', ok ? null : message.slice(0, 1000), runNo, seqNo, organization],
     );
-    return { ok, message: message || `${SENSOR_PROC} 응답이 비어 있습니다` };
+    return { ok, message };
   }
 
   /**
    * 실적 취소 — 행은 지우지 않고 RESULT_STATUS='CANCEL' 로 남긴다(합계에서 빠진다).
    *
    * 오늘 업무일(F_GET_WORK_ACTUAL_DATE) 실적만 취소한다. 지난 업무일 실적이 바뀌면 이미 본 집계가 틀어진다.
-   * 센서에 반영된 실적이면 같은 프로시저에 음수 수량을 넘겨 차감한다. 프로시저는 호출 시점의 시간대에
-   * 누적하므로, 하루 합계는 맞지만 시간대별 실적은 등록 시간대가 아니라 취소 시간대에서 줄어든다.
+   * 생산실적(조립실적)에 반영된 실적이면 음수 수량 행을 넣어 차감한다. 반영했던 행과 같은 실적 시각으로 넣어
+   * 작업일·시간대가 같다 (공정재고도 같은 규칙으로 되돌린다).
    * 차감에 실패해도 취소는 유지하고 경고를 돌려준다(SENSOR_APPLY_YN 은 'Y' 로 남아 재확인할 수 있다).
    */
   async cancelResult(
@@ -415,40 +390,38 @@ export class WorkResultService {
       return { ...cur, lineCode: line[0]?.lineCode ?? null };
     });
 
-    // 센서에 반영되지 않은 실적은 뺄 것이 없다
+    // 생산실적에 반영되지 않은 실적은 뺄 것이 없다
     if (row.applied !== 'Y') return { cancelled: true };
 
-    let message: string;
+    const key = `${dto.runNo}-${dto.seqNo}`;
+    const orig = (await this.q<{ t: Date | null }>(
+      `SELECT MAX(PRODUCT_ACTUAL_TIME) AS "t" FROM IP_ASSEMBLY_RESULT
+        WHERE ENTER_BY='WORK_RESULT' AND REMARK=:1 AND PRODUCT_ACTUAL_QTY > 0 AND ORGANIZATION_ID=:2`,
+      [key, organization],
+    ))[0]?.t;
+    let message = 'OK';
     try {
-      const out = await this.oracle.callProcScalar(
-        SENSOR_PROC,
-        [{ name: 'P_OUT', type: 'STRING', maxSize: 1000 }],
-        {
-          P_LINE_CODE: row.lineCode,
-          P_WORKSTAGE_CODE: row.workstageCode ?? '',
-          P_MACHINE_CODE: row.machineCode,
-          P_COUNT: 1,
-          P_ACC_COUNT: -Number(row.resultQty ?? 0),
-        },
-        { autoCommit: true },
-      );
-      message = String(out.P_OUT ?? '').trim();
+      await this.assembly.add({
+        runNo: dto.runNo, lineCode: row.lineCode, time: orig ? new Date(orig) : new Date(),
+        qty: -Number(row.resultQty ?? 0), source: 'MANUAL', remark: `${key} 취소`, user,
+      });
     } catch (error: unknown) {
       message = error instanceof Error ? error.message : String(error);
     }
-    const ok = message.toUpperCase() === 'OK';
+    const ok = message === 'OK';
     await this.q(
       `UPDATE IP_PRODUCT_WORK_RESULT SET SENSOR_APPLY_YN=:1, SENSOR_APPLY_MSG=:2
         WHERE RUN_NO=:3 AND SEQ_NO=:4 AND ORGANIZATION_ID=:5`,
       [ok ? 'C' : 'Y', ok ? null : `취소 차감 실패: ${message}`.slice(0, 1000), dto.runNo, dto.seqNo, organization],
     );
-    return ok ? { cancelled: true } : { cancelled: true, sensorWarning: message || `${SENSOR_PROC} 응답이 비어 있습니다` };
+    return ok ? { cancelled: true } : { cancelled: true, sensorWarning: message };
   }
 
-  /** 센서 반영 재시도 — 완료 상태인데 미반영인 실적만 대상이다 */
+  /** 생산실적(조립실적) 반영 재시도 — 완료 상태인데 미반영인 실적만 대상이다 */
   async applySensor(
     dto: ApplySensorDto,
     organizationId?: number,
+    userId?: string,
   ): Promise<{ sensorApplyYn: string; sensorWarning?: string }> {
     const organization = this.requireOrganization(organizationId);
     const rows = (await this.q(
@@ -471,22 +444,14 @@ export class WorkResultService {
     const row = rows[0];
     if (!row) throw new NotFoundException('실적을 찾을 수 없습니다');
     if (row.resultStatus !== 'DONE')
-      throw new BadRequestException('완료된 실적만 센서에 반영할 수 있습니다');
-    // 이미 반영된 건을 다시 부르면 수량이 가산된다 — 반드시 막는다.
+      throw new BadRequestException('완료된 실적만 생산실적에 반영할 수 있습니다');
+    // 이미 반영된 건을 다시 넣으면 수량이 가산된다 — 반드시 막는다.
     if (row.sensorApplyYn === 'Y')
-      throw new BadRequestException('이미 센서에 반영된 실적입니다');
+      throw new BadRequestException('이미 생산실적에 반영된 실적입니다');
     if (row.sensorApplyYn === 'X' || !(await this.isSmtLine(row.lineCode, organization)))
-      throw new BadRequestException('SMT 라인이 아니라 센서 실적 반영 대상이 아닙니다');
+      throw new BadRequestException('SMT 라인이 아니라 생산실적 반영 대상이 아닙니다');
 
-    const applied = await this.applyToSensor(
-      dto.runNo,
-      dto.seqNo,
-      organization,
-      row.lineCode,
-      row.workstageCode ?? '',
-      row.machineCode,
-      row.resultQty ?? 0,
-    );
+    const applied = await this.applyToAssembly(dto.runNo, dto.seqNo, organization, row.lineCode, row.resultQty ?? 0, userId ?? DEFAULT_USER);
     return {
       sensorApplyYn: applied.ok ? 'Y' : 'N',
       ...(applied.ok ? {} : { sensorWarning: applied.message }),

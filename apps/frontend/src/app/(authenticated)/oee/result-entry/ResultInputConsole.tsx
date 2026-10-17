@@ -240,7 +240,7 @@ export default function ResultInputConsole({
       });
       const result = unwrap<SensorApplyResponse>(response);
       if (result?.sensorWarning) {
-        toast.error(`실적은 저장됐지만 센서 반영에 실패했습니다. ${result.sensorWarning}`);
+        toast.error(`실적은 저장됐지만 생산실적 반영에 실패했습니다. ${result.sensorWarning}`);
       } else {
         toast.success('실적이 저장되었습니다.');
       }
@@ -268,14 +268,14 @@ export default function ResultInputConsole({
       });
       const result = unwrap<SensorApplyResponse>(response);
       if (result?.sensorWarning) {
-        toast.error(`센서 반영에 실패했습니다. ${result.sensorWarning}`);
+        toast.error(`생산실적 반영에 실패했습니다. ${result.sensorWarning}`);
       } else {
-        toast.success('센서 실적에 반영되었습니다.');
+        toast.success('생산실적에 반영되었습니다.');
       }
       await loadLatest();
       await onSaved();
     } catch (error: unknown) {
-      toast.error(readApiMessage(error, '센서 반영에 실패했습니다.'));
+      toast.error(readApiMessage(error, '생산실적 반영에 실패했습니다.'));
     } finally {
       setApplyingSensor(false);
     }
@@ -364,7 +364,7 @@ export default function ResultInputConsole({
               </div>
               {isSensorPending(latest.resultStatus, latest.sensorApplyYn) && (
                 <div data-testid="oee-result-entry-sensor-warning" className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 p-2 text-xs font-bold text-red-700" role="status">
-                  <span className="min-w-0 flex-1 truncate" title={latest.sensorApplyMsg ?? '센서 실적에 반영되지 않았습니다.'}>{latest.sensorApplyMsg ?? '센서 실적에 반영되지 않았습니다.'}</span>
+                  <span className="min-w-0 flex-1 truncate" title={latest.sensorApplyMsg ?? '생산실적에 반영되지 않았습니다.'}>{latest.sensorApplyMsg ?? '생산실적에 반영되지 않았습니다.'}</span>
                   <button type="button" onClick={() => void applyLatestSensor()} disabled={applyingSensor} className="inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 text-xs font-black text-red-700 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50">
                     <RefreshCw className={`h-4 w-4 ${applyingSensor ? 'animate-spin' : ''}`} aria-hidden="true" />
                     실적반영

@@ -19,7 +19,7 @@
  * 5. 상태(status)는 계획 테이블 PLAN_STATUS 가 항상 'W' 라 쓸 수 없어서 실적 대비로 파생한다.
  *    실적 0 → WAITING / 계획 이상 → DONE / 그 사이 → RUNNING (SMD 는 마지막 실적이 1시간 넘게 멈췄으면 WAITING).
  *    HOLD 는 근거 데이터가 없어 쓰지 않는다. startAt/endAt/updatedAt 도 근거가 없어 null,
- *    lastResultAt 은 SMD 만 센서 실적(IP_PRODUCT_SENSOR_ACTUAL_TIME.LAST_RECEIPT_DATE)으로 채운다.
+ *    lastResultAt 은 SMD 만 생산실적(조립실적 뷰 IP_ASSEMBLY_RESULT_SENSOR_V.LAST_RECEIPT_DATE)으로 채운다.
  * 6. 불량은 IP_PRODUCT_WORK_QC 의 QC_RESULT='N'(진성불량) 건수다(대시보드 '진성'과 같은 기준, 작업일 08:30 창).
  *    행별 불량은 라인·모델·서픽스가 맞는 SMD 계획 행에만 붙인다. 제품(MI) 행은 매칭 근거가 없어 0.
  * 7. hourly 는 항상 10칸(A~J). hour = 칸 시작 시각 'HH:MM', label = 'HH:MM~HH:MM'.
@@ -165,7 +165,7 @@ export const SMD_PLAN_SQL = `
   ), lastres AS (
     SELECT s.LINE_CODE, s.MODEL_NAME, NVL(s.MODEL_SUFFIX, '*') AS MODEL_SUFFIX, NVL(s.PCB_ITEM, '*') AS PCB_ITEM,
            MAX(s.LAST_RECEIPT_DATE) AS LAST_AT
-      FROM IP_PRODUCT_SENSOR_ACTUAL_TIME s, wd
+      FROM IP_ASSEMBLY_RESULT_SENSOR_V s, wd
      WHERE s.ORGANIZATION_ID = ${ORG} AND s.RECEIPT_DATE >= wd.day AND s.RECEIPT_DATE < wd.day + 1
      GROUP BY s.LINE_CODE, s.MODEL_NAME, NVL(s.MODEL_SUFFIX, '*'), NVL(s.PCB_ITEM, '*')
   ), qc AS (

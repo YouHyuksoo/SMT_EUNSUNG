@@ -151,7 +151,7 @@ export default function LineBlock({
                             {item.kind === 'extra' && (
                               <span
                                 className="shrink-0 rounded border border-info/50 px-1 text-[10px] text-info"
-                                title="같은 날 계획과 라인·모델·PCB 면이 맞지 않는 센서 실적"
+                                title="같은 날 계획과 라인·모델·PCB 면이 맞지 않는 생산실적"
                               >
                                 계획 외
                               </span>

@@ -95,6 +95,13 @@ export interface SmdActualRow {
   isLastYn: string | null;
   lastReceiptDate: string | null;
   carrierSize: number | null;
+  /** 실적 시각 'YYYY-MM-DD HH:mm' (KST) — 보정 등록 기본값 */
+  actualTime: string | null;
+  runNo: string | null;
+  itemCode: string | null;
+  /** AOI_JOB 자동 · WORK_RESULT 수기 · ASSY_ADJUST 보정 */
+  actualSource: string | null;
+  remark: string | null;
   enterBy: string | null;
   enterDate: string | null;
   lastModifyBy: string | null;

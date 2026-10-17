@@ -16,6 +16,11 @@
           "path": "/master/bom"
         },
         {
+          "menuCode": "MST_PRODUCT_MODEL",
+          "title": "제품모델관리",
+          "path": "/master/product-model"
+        },
+        {
           "menuCode": "MST_WAREHOUSE",
           "title": "창고/로케이션 관리",
           "path": "/master/warehouse"

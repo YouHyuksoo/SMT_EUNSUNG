@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "@/services/api";
 import type { ProductModelRow } from "./productModelColumns";
 
+/** 모델 목록 + BOM 전개 방식 (GET /master/product-models/bom-explode) */
 export function useProductModels() {
   const [data, setData] = useState<ProductModelRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,11 +15,11 @@ export function useProductModels() {
     setFailed(false);
     async function load() {
       try {
-        const response = await api.get<{ data: { list: ProductModelRow[] } }>(
-          "/master/product-models", { signal: controller.signal },
+        const response = await api.get<{ data: ProductModelRow[] }>(
+          "/master/product-models/bom-explode", { signal: controller.signal },
         );
-        if (!Array.isArray(response.data?.data?.list)) throw new Error("Invalid model response");
-        if (!controller.signal.aborted) setData(response.data.data.list);
+        if (!Array.isArray(response.data?.data)) throw new Error("Invalid model response");
+        if (!controller.signal.aborted) setData(response.data.data);
       } catch (error: unknown) {
         if (!controller.signal.aborted) {
           setData([]);

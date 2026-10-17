@@ -42,9 +42,10 @@ import {
 } from './query.controllers';
 import { SensorActualService } from './sensor-actual.service';
 import { SmtCheckQueryService } from './smt-check-query.service';
+import { AssemblyResultModule } from '../assembly-result/assembly-result.module';
 
 @Module({
-  imports: [TrackingModule],
+  imports: [TrackingModule, AssemblyResultModule],
   controllers: [
     PidInfoController,
     MarkingQueryController,

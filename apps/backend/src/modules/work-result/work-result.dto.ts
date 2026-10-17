@@ -23,7 +23,7 @@ export class WorkResultUpsertDto {
   @IsIn(['WIP', 'DONE']) resultStatus: string;
 }
 
-// 센서 반영 재시도 — 완료 상태인데 P_INTERLOCK_SENSOR_ACTUAL_NEO 호출이 실패한 실적 대상
+// 생산실적(조립실적) 반영 재시도 — 완료 상태인데 반영이 실패한 실적 대상
 export class ApplySensorDto {
   @IsString() @IsNotEmpty() runNo: string;
   @IsString() @IsNotEmpty() seqNo: string;

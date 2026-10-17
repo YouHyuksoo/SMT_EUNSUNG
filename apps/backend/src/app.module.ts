@@ -27,6 +27,7 @@ import { IdleReasonModule } from './modules/idle-reason/idle-reason.module';
 import { EquipReasonMapModule } from './modules/equip-reason-map/equip-reason-map.module';
 import { ProductModelModule } from './modules/product-model/product-model.module';
 import { WorkResultModule } from './modules/work-result/work-result.module';
+import { AssemblyResultModule } from './modules/assembly-result/assembly-result.module';
 import { InspectResultModule } from './modules/inspect-result/inspect-result.module';
 import { JigModule } from './modules/jig/jig.module';
 import { MoldModule } from './modules/mold/mold.module';
@@ -119,6 +120,7 @@ import { SharedModule } from './shared/shared.module';
     EquipReasonMapModule,
     ProductModelModule,
     WorkResultModule,
+    AssemblyResultModule,
     InspectResultModule,
     EquipOpsModule,
 

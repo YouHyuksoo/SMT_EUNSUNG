@@ -121,7 +121,7 @@ export const smdShiftActualColumns: ColumnDef<SmdShiftActualRow>[] = [
       return n > 1 ? <span className="text-amber-600">{n}건 (자동 실적 공유)</span> : '';
     },
   },
-  { accessorKey: 'lastReceiptDate', header: '최종 센서 집계', size: 140 },
+  { accessorKey: 'lastReceiptDate', header: '최종 실적 시각', size: 140 },
   {
     id: 'dayManualInfo',
     header: '주간 수기 입력',

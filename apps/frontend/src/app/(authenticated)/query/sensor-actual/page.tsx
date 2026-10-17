@@ -5,16 +5,14 @@
  * @description SMT 제품실적센서이력조회 — PB w_pln_product_sensor_actual_master 이식
  *
  * 초보자 가이드:
- * 1. **라인 끝 센서가 세는 생산 실적을 본다.** 네 갈래가 같은 값을 다른 단위로
- *    보여준다 — 현재 / 이력(일자 마감 후 백업) / 1시간 / 교대 시간대.
- * 2. **'실적 보정' 은 쓰기다** (PB 'Actual Adjust'). 센서가 잘못 센 수량을 손으로
- *    맞춘다. **실적수량·보정수량 두 컬럼만 바꾼다** — DataWindow 의 update=yes 를
- *    실측해 맞췄다.
- * 3. **키는 수집시각 + 순번이다** (실측 PK). 라인·공정으로 잡으면 같은 라인의 다른
- *    시점 실적까지 바뀐다. 보정 전후 값을 결과로 돌려받아 화면에 띄운다.
- * 4. **자동갱신이 있다** (PB Interval 기본 20초 / Start / Stop).
- * 5. **이력(백업) 탭에는 설비·작업자 칸이 비어 있다.** 백업 테이블에 그 컬럼이
- *    없다 (실측) — 화면이 숨기지 않고 비워 둔다.
+ * 1. **생산실적(조립실적)을 본다** (2026-10-17 센서실적에서 바꿈). AOI 양품 자동 ·
+ *    수기 작업실적 · 보정이 모인 값을 네 단위로 보여준다 — 현재(오늘 작업일) /
+ *    이력(지난 작업일) / 1시간 / 교대 시간대.
+ * 2. **'실적 보정' 은 행을 바꾸지 않고 보정 행을 더한다.** 새 실적수량을 넣으면
+ *    (새 수량 − 지금 수량)만큼 같은 런카드·시각으로 보정 행이 생긴다.
+ * 3. **키는 작업일 + 순번이다** (조립실적 PK). 보정 전후 값을 결과로 돌려받아 띄운다.
+ * 4. **자동갱신이 있다** (Interval 기본 20초 / Start / Stop).
+ * 5. **설비·작업자 칸은 비어 있다.** 조립실적에 그 컬럼이 없다.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useActiveInterval } from '@/hooks/useTabActive';
@@ -55,7 +53,6 @@ export default function SensorActualPage() {
 
   const [selected, setSelected] = useState<SensorActualRow | null>(null);
   const [actualQty, setActualQty] = useState('');
-  const [adjustQty, setAdjustQty] = useState('');
   const [busy, setBusy] = useState(false);
 
   const [intervalSec, setIntervalSec] = useState('20');
@@ -86,7 +83,7 @@ export default function SensorActualPage() {
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
         ?.response?.data?.message;
-      toast.error(message ?? '센서 실적 조회에 실패했습니다.');
+      toast.error(message ?? '생산실적 조회에 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -100,27 +97,28 @@ export default function SensorActualPage() {
   const pick = useCallback((row: SensorActualRow) => {
     setSelected(row);
     setActualQty(row.productActualQty == null ? '' : String(row.productActualQty));
-    setAdjustQty(row.adjustQty == null ? '' : String(row.adjustQty));
   }, []);
 
   const save = useCallback(async () => {
     if (!selected) return;
+    if (actualQty === '') {
+      toast.error('새 실적수량을 넣으세요.');
+      return;
+    }
     setBusy(true);
     try {
       const response = await api.put('/query/sensor-actual/adjust', {
         receiptDateKey: selected.receiptDateKey,
         receiptSequence: selected.receiptSequence,
-        productActualQty: actualQty === '' ? undefined : Number(actualQty),
-        adjustQty: adjustQty === '' ? undefined : Number(adjustQty),
+        productActualQty: Number(actualQty),
       });
       const data = response.data?.data;
       if (!data?.found) {
-        toast.error('그 실적 행을 찾을 수 없었습니다 (수집시각·순번을 확인하세요).');
+        toast.error('그 실적 행을 찾을 수 없었습니다 (작업일·순번을 확인하세요).');
       } else {
         toast.success(
-          `보정했습니다 — 실적 ${data.before?.productActualQty ?? 0}`
-          + ` → ${data.after?.productActualQty ?? 0}`
-          + ` · 보정 ${data.before?.adjustQty ?? 0} → ${data.after?.adjustQty ?? 0}`,
+          `보정 행을 더했습니다 — 실적 ${data.before?.productActualQty ?? 0}`
+          + ` → ${data.after?.productActualQty ?? 0} (보정 ${data.after?.adjustQty ?? 0})`,
         );
       }
       void search();
@@ -131,7 +129,7 @@ export default function SensorActualPage() {
     } finally {
       setBusy(false);
     }
-  }, [selected, actualQty, adjustQty, search]);
+  }, [selected, actualQty, search]);
 
   const rowKey = (r: SensorActualRow) => `${r.receiptDateKey}|${r.receiptSequence}`;
   const editable = tab === 'current';
@@ -143,7 +141,7 @@ export default function SensorActualPage() {
         <div>
           <h1 className="text-xl font-bold text-text">SMT 제품실적센서이력조회</h1>
           <p className="mt-1 text-sm text-text-muted">
-            라인 끝 센서가 센 생산 실적을 네 단위로 봅니다 ·{' '}
+            생산실적(AOI 자동·수기·보정)을 네 단위로 봅니다 ·{' '}
             {searched ? `현재 ${current.length}건` : '라인을 고르세요'}
             {autoOn && <span className="ml-1 text-primary">· 자동갱신 {intervalSec}초</span>}
           </p>
@@ -197,7 +195,7 @@ export default function SensorActualPage() {
               pageSize={100}
               enableColumnFilter
               enableExport
-              exportFileName={tab === 'current' ? '센서실적현재' : '센서실적이력'}
+              exportFileName={tab === 'current' ? '생산실적현재' : '생산실적이력'}
               emptyMessage={searched ? '이 라인에 실적이 없습니다.' : '라인을 고르세요.'}
               onRowClick={(row) => editable && pick(row as SensorActualRow)}
               rowClassName={(row) =>
@@ -208,12 +206,12 @@ export default function SensorActualPage() {
           )}
           {tab === 'hourly' && (
             <DataGrid data={hourly} columns={sensorBucketColumns} isLoading={loading}
-              pageSize={100} enableColumnFilter enableExport exportFileName="센서실적시간"
+              pageSize={100} enableColumnFilter enableExport exportFileName="생산실적시간"
               emptyMessage={searched ? '이 기준일 이후 1시간 실적이 없습니다.' : '조회하세요.'} />
           )}
           {tab === 'timeSlot' && (
             <DataGrid data={timeSlot} columns={sensorBucketColumns} isLoading={loading}
-              pageSize={100} enableColumnFilter enableExport exportFileName="센서실적시간대"
+              pageSize={100} enableColumnFilter enableExport exportFileName="생산실적시간대"
               emptyMessage={searched ? '이 기준일 이후 시간대 실적이 없습니다.' : '조회하세요.'} />
           )}
         </CardContent>
@@ -239,17 +237,11 @@ export default function SensorActualPage() {
                 disabled={!selected}
                 onChange={(e) => setActualQty(e.target.value.replace(/[^\d]/g, ''))} />
             </label>
-            <label className="flex items-center gap-2 text-sm text-text">
-              보정수량
-              <Input aria-label="보정수량" value={adjustQty} className="w-28"
-                disabled={!selected}
-                onChange={(e) => setAdjustQty(e.target.value.replace(/[^-\d]/g, ''))} />
-            </label>
             <Button size="sm" onClick={save} disabled={!selected || busy}>
               <Save className="mr-1 h-4 w-4" />보정
             </Button>
             <span className="text-sm text-text-muted">
-              이 두 컬럼만 바뀝니다 · 보정 전후 값이 결과에 나옵니다
+              행은 그대로 두고 차이만큼 보정 행을 더합니다 · 공정재고도 같이 움직입니다
             </span>
           </CardContent>
         </Card>

@@ -4,17 +4,16 @@
  *              + 333 자재 바코드 상태 조회 (w_mat_barcode_status_report)
  *
  * 초보자 가이드:
- * 1. **330 은 라인 끝 센서가 세는 생산 실적을 본다.** 네 갈래가 같은 값을 다른
- *    단위로 보여준다 (PB 탭 4개):
- *      현재   IP_PRODUCT_SENSOR_ACTUAL       지금 카운트
- *      이력   IP_PRODUCT_SENSOR_ACTUAL_BACK  일자 마감 후 백업
- *      시간   IP_PRODUCT_SENSOR_ACTUAL_HOUR  1시간 단위
- *      시간대 IP_PRODUCT_SENSOR_ACTUAL_TIME  교대 시간대 단위
- * 2. **'실적 보정' 은 쓰기다** (PB 'Actual Adjust'). 센서가 잘못 센 수량을 손으로
- *    맞춘다. DataWindow 의 update=yes 컬럼은 PRODUCT_ACTUAL_QTY·ADJUST_QTY
- *    둘뿐이다 (실측) — 그 둘만 받는다.
- * 3. **키는 RECEIPT_DATE + RECEIPT_SEQUENCE 다** (실측 PK). 라인·공정으로 잡으면
- *    같은 라인의 다른 시점 실적까지 바뀐다. 시각은 불투명 키로 주고받는다.
+ * 1. **330 은 생산실적(조립실적)을 본다** (2026-10-17 센서실적에서 바꿈). 원천은
+ *    IP_ASSEMBLY_RESULT_SENSOR_V — AOI 양품 자동 · 수기 작업실적 · 보정이 모인 뷰다.
+ *    네 탭 (PB 탭 4개를 그대로 둔다):
+ *      현재   오늘 작업일 행
+ *      이력   지난 작업일 행
+ *      시간   1시간 단위 합계 (실적 시각 기준)
+ *      시간대 작업일 · 시간대(A~J) 합계
+ * 2. **'실적 보정' 은 보정 행을 더한다** (AssemblyResultService). 행을 바꾸지 않는다 —
+ *    실적수량을 주면 (새 수량 − 지금 수량), 보정수량을 주면 그 값만큼 보정 행이 생긴다.
+ * 3. **키는 작업일 + 순번이다** (조립실적 PK). 작업일은 불투명 키로 주고받는다.
  * 4. **자동갱신이 있다** (PB Interval 기본 20초 / Start / Stop).
  * 5. **333 은 독립 화면이지만 파일을 같이 둔다** — 자재 바코드 한 줄의 상태
  *    (입고대조·출고대조·홀딩·릴폐기·MSL)를 보는 단순 조회라 파일을 따로 둘 만큼이
@@ -23,14 +22,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { checkTrackingFilter, likePrefix, formatDate } from '@smt/shared';
-import { TransactionService } from '../../shared/transaction.service';
+import { AssemblyResultService } from '../assembly-result/assembly-result.service';
 import {
   MaterialBarcodeQueryDto,
   SensorActualAdjustDto,
   SensorActualQueryDto,
 } from './query.dto';
 import { ROW_LIMIT } from './row-limit';
-import { affectedRows } from '../../common/utils/affected-rows.util';
 import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
@@ -39,17 +37,13 @@ type Row = Record<string, unknown>;
 export class SensorActualService {
   constructor(
     private readonly dataSource: DataSource,
-    private readonly tx: TransactionService,
+    private readonly assembly: AssemblyResultService,
   ) {}
 
   /**
-   * 현재·이력 두 탭의 컬럼 구성.
-   *
-   * **백업 테이블에는 설비·작업자 컬럼이 없다** — IP_PRODUCT_SENSOR_ACTUAL 에만
-   * MACHINE_CODE · WORK_TIME · WORKER_NAME · WORKER_COUNT 가 있다 (실측 ORA-00904).
-   * 이름이 같은 백업표라고 컬럼까지 같다고 짐작하면 안 된다.
+   * 현재·이력 두 탭의 컬럼 구성. 조립실적 뷰에는 설비·작업자 칼럼이 없어 withMachine 은 false 로 부른다.
    */
-  private actualSelect(table: string, withMachine: boolean) {
+  private actualSelect(table: string, withMachine: boolean, dateWhere = '') {
     return `SELECT a.LINE_CODE                          AS "lineCode",
               c.LINE_NAME                               AS "lineName",
               a.MODEL_NAME                              AS "modelName",
@@ -81,56 +75,58 @@ export class SensorActualService {
                 ON c.LINE_CODE = a.LINE_CODE AND c.ORGANIZATION_ID = a.ORGANIZATION_ID
         WHERE NVL(a.LINE_CODE, '*') LIKE :lineCode ESCAPE '\\'
           AND a.ORGANIZATION_ID = :organizationId
-        ORDER BY a.RECEIPT_DATE DESC, a.RECEIPT_SEQUENCE DESC
+          ${dateWhere}
+        ORDER BY a.RECEIPT_DATE DESC, a.LAST_RECEIPT_DATE DESC, a.RECEIPT_SEQUENCE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`;
   }
 
-  /** 330 현재 실적 */
+  /** 생산실적 원천 (조립실적). 설비·작업자 칼럼은 없다 */
+  private static readonly SOURCE = 'IP_ASSEMBLY_RESULT_SENSOR_V';
+
+  /** 330 현재 실적 — 오늘 작업일 */
   async findCurrent(query: SensorActualQueryDto, organizationId: number) {
     const rows = (await this.dataSource.query(
-      this.actualSelect('IP_PRODUCT_SENSOR_ACTUAL', true),
+      this.actualSelect(SensorActualService.SOURCE, false, `AND a.RECEIPT_DATE = F_GET_WORK_ACTUAL_DATE(SYSDATE, 'A')`),
       namedBinds({ lineCode: likePrefix(query.lineCode), organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
-  /** 330 실적 이력 (일자 마감 후 백업) */
+  /** 330 실적 이력 — 지난 작업일 */
   async findHistory(query: SensorActualQueryDto, organizationId: number) {
     const rows = (await this.dataSource.query(
-      this.actualSelect('IP_PRODUCT_SENSOR_ACTUAL_BACK', false),
+      this.actualSelect(SensorActualService.SOURCE, false, `AND a.RECEIPT_DATE < F_GET_WORK_ACTUAL_DATE(SYSDATE, 'A')`),
       namedBinds({ lineCode: likePrefix(query.lineCode), organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   /**
-   * 330 1시간 단위 / 시간대 단위 실적. 두 테이블이 같은 모양이다.
-   * 기준일을 주면 그 날부터 본다 (PB 는 `RECEIPT_DATE >= :dateset` 한쪽만 걸었다 —
-   * 상한이 없어 그 뒤 전부가 나온다. 그대로 두되 기본값을 오늘로 두어 화면이
-   * 폭주하지 않게 했다).
+   * 330 1시간 단위 / 시간대 단위 실적 — 조립실적을 접어 내린다.
+   * 시간 = 실적 시각의 시(時), 시간대 = 작업일 + A~J. 기준일부터 본다 (기본 오늘).
    */
-  private async findBucketed(
-    table: 'IP_PRODUCT_SENSOR_ACTUAL_HOUR' | 'IP_PRODUCT_SENSOR_ACTUAL_TIME',
-    query: SensorActualQueryDto,
-    organizationId: number,
-  ) {
+  private async findBucketed(kind: 'HOUR' | 'SLOT', query: SensorActualQueryDto, organizationId: number) {
+    const bucket = kind === 'HOUR' ? `TRUNC(a.LAST_RECEIPT_DATE, 'HH24')` : 'a.RECEIPT_DATE';
     const rows = (await this.dataSource.query(
       `SELECT a.LINE_CODE                               AS "lineCode",
-              c.LINE_NAME                               AS "lineName",
+              MAX(c.LINE_NAME)                          AS "lineName",
               a.MODEL_NAME                              AS "modelName",
-              a.PRODUCT_ACTUAL_QTY                      AS "productActualQty",
-              TO_CHAR(a.RECEIPT_DATE, 'YYYY-MM-DD HH24:MI:SS')      AS "receiptDate",
-              TO_CHAR(a.RECEIPT_DATE, 'YYYYMMDDHH24MISS')           AS "receiptDateKey",
-              a.ENTER_BY                                AS "enterBy",
-              TO_CHAR(a.ENTER_DATE, 'YYYY-MM-DD HH24:MI:SS')        AS "enterDate"
-         FROM ${table} a
+              ${kind === 'SLOT' ? 'a.TIME_DIVISION' : 'NULL'}  AS "timeDivision",
+              SUM(a.PRODUCT_ACTUAL_QTY)                 AS "productActualQty",
+              TO_CHAR(${bucket}, 'YYYY-MM-DD HH24:MI:SS')      AS "receiptDate",
+              TO_CHAR(${bucket}, 'YYYYMMDDHH24MISS')           AS "receiptDateKey",
+              MAX(a.ENTER_BY)                           AS "enterBy",
+              TO_CHAR(MAX(a.LAST_RECEIPT_DATE), 'YYYY-MM-DD HH24:MI:SS') AS "enterDate"
+         FROM ${SensorActualService.SOURCE} a
          LEFT JOIN IP_PRODUCT_LINE c
                 ON c.LINE_CODE = a.LINE_CODE AND c.ORGANIZATION_ID = a.ORGANIZATION_ID
         WHERE NVL(a.LINE_CODE, '*') LIKE :lineCode ESCAPE '\\'
           AND NVL(a.MODEL_NAME, '*') LIKE :modelName ESCAPE '\\'
-          AND a.RECEIPT_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
+          AND a.RECEIPT_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD') - 1
+          AND ${bucket} >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
           AND a.ORGANIZATION_ID = :organizationId
-        ORDER BY a.RECEIPT_DATE DESC
+        GROUP BY a.LINE_CODE, a.MODEL_NAME, ${bucket}${kind === 'SLOT' ? ', a.TIME_DIVISION' : ''}
+        ORDER BY ${bucket} DESC${kind === 'SLOT' ? ', a.TIME_DIVISION DESC' : ''}, a.LINE_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       namedBinds({
         lineCode: likePrefix(query.lineCode),
@@ -143,74 +139,36 @@ export class SensorActualService {
   }
 
   findHourly(query: SensorActualQueryDto, organizationId: number) {
-    return this.findBucketed('IP_PRODUCT_SENSOR_ACTUAL_HOUR', query, organizationId);
+    return this.findBucketed('HOUR', query, organizationId);
   }
 
   findByTimeSlot(query: SensorActualQueryDto, organizationId: number) {
-    return this.findBucketed('IP_PRODUCT_SENSOR_ACTUAL_TIME', query, organizationId);
+    return this.findBucketed('SLOT', query, organizationId);
   }
 
   /**
-   * 실적 보정 (PB 'Actual Adjust' — **쓰기**).
-   *
-   * 두 컬럼만 바꾼다. 보정 전 값을 함께 돌려준다 — 실적 숫자를 손으로 고치는
-   * 동작이라 무엇이 무엇으로 바뀌었는지 남아야 한다.
+   * 실적 보정 — 보정 행을 더한다 (행을 바꾸지 않는다).
+   * 실적수량을 주면 (새 수량 − 지금 수량), 보정수량만 주면 그 값이 보정 수량이다.
+   * 보정 전·후 수량을 함께 돌려준다.
    */
-  async adjust(dto: SensorActualAdjustDto, organizationId: number, userId: string) {
-    return this.tx.run(async (qr) => {
-      const before = (await qr.query(
-        `SELECT LINE_CODE AS "lineCode", WORKSTAGE_CODE AS "workstageCode",
-                PRODUCT_ACTUAL_QTY AS "productActualQty", ADJUST_QTY AS "adjustQty"
-           FROM IP_PRODUCT_SENSOR_ACTUAL
-          WHERE RECEIPT_DATE = TO_DATE(:receiptDateKey, 'YYYYMMDDHH24MISS')
-            AND RECEIPT_SEQUENCE = :receiptSequence
-            AND ORGANIZATION_ID = :organizationId`,
-        namedBinds({
-          receiptDateKey: dto.receiptDateKey,
-          receiptSequence: dto.receiptSequence,
-          organizationId,
-        }),
-      )) as Row[];
-      if (before.length === 0) {
-        return { found: false, changed: 0, before: null, after: null };
-      }
-      const result = await qr.query(
-        `UPDATE IP_PRODUCT_SENSOR_ACTUAL
-            SET PRODUCT_ACTUAL_QTY = NVL(:productActualQty, PRODUCT_ACTUAL_QTY),
-                ADJUST_QTY = NVL(:adjustQty, ADJUST_QTY),
-                LAST_MODIFY_BY = :userId,
-                LAST_MODIFY_DATE = SYSDATE
-          WHERE RECEIPT_DATE = TO_DATE(:receiptDateKey, 'YYYYMMDDHH24MISS')
-            AND RECEIPT_SEQUENCE = :receiptSequence
-            AND ORGANIZATION_ID = :organizationId`,
-        namedBinds({
-          productActualQty: dto.productActualQty ?? null,
-          adjustQty: dto.adjustQty ?? null,
-          userId,
-          receiptDateKey: dto.receiptDateKey,
-          receiptSequence: dto.receiptSequence,
-          organizationId,
-        }),
-      );
-      const after = (await qr.query(
-        `SELECT PRODUCT_ACTUAL_QTY AS "productActualQty", ADJUST_QTY AS "adjustQty"
-           FROM IP_PRODUCT_SENSOR_ACTUAL
-          WHERE RECEIPT_DATE = TO_DATE(:receiptDateKey, 'YYYYMMDDHH24MISS')
-            AND RECEIPT_SEQUENCE = :receiptSequence
-            AND ORGANIZATION_ID = :organizationId`,
-        namedBinds({
-          receiptDateKey: dto.receiptDateKey,
-          receiptSequence: dto.receiptSequence,
-          organizationId,
-        }),
-      )) as Row[];
-      return {
-        found: true,
-        changed: Number(affectedRows(result) ?? 0),
-        before: before[0],
-        after: after[0] ?? null,
-      };
-    });
+  async adjust(dto: SensorActualAdjustDto, _organizationId: number, userId: string) {
+    let before = 0;
+    const r = await this.assembly.adjustRow(
+      dto,
+      (current) => {
+        before = current;
+        if (dto.productActualQty != null) return dto.productActualQty - current;
+        return dto.adjustQty ?? 0;
+      },
+      '생산실적 조회 화면 보정',
+      userId,
+    );
+    return {
+      found: true,
+      changed: r.changed,
+      before: { productActualQty: before },
+      after: { productActualQty: before + Number(r.adjustQty ?? 0), adjustQty: r.adjustQty ?? 0 },
+    };
   }
 
   // ───────────────────────────────── 333 자재 바코드 상태 조회

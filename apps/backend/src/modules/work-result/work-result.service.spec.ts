@@ -1,30 +1,28 @@
 import { BadRequestException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { ProductWorkResult } from '../../entities/product-work-result.entity';
-import { OracleService } from '../../common/services/oracle.service';
+import { AssemblyResultService } from '../assembly-result/assembly-result.service';
 import { WorkResultService } from './work-result.service';
 
 describe('WorkResultService tenancy', () => {
   const query = jest.fn();
   const transaction = jest.fn();
-  const callProcScalar = jest.fn();
+  const add = jest.fn();
   const repository = {
     manager: { query, transaction },
   } as unknown as Repository<ProductWorkResult>;
-  const service = new WorkResultService(repository, {
-    callProcScalar,
-  } as unknown as OracleService);
+  const service = new WorkResultService(repository, { add } as unknown as AssemblyResultService);
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // 라인구분 조회는 SMT('D')로 답한다 — 센서 누적 프로시저는 SMT 라인에서만 부른다
+    // 라인구분 조회는 SMT('D')로 답한다 — 생산실적(조립실적)은 SMT 라인만 받는다
     query.mockImplementation((sql: string) =>
       Promise.resolve(sql.includes('LINE_DIVISION') ? [{ div: 'D' }] : []),
     );
-    callProcScalar.mockResolvedValue({ P_OUT: 'OK' });
+    add.mockResolvedValue({ itemCode: 'SEMI-1', productDate: new Date(), productSeq: 1 });
   });
 
-  it('does not call the sensor procedure for a non-SMT line and marks the result X', async () => {
+  it('does not put a non-SMT line result into the assembly result and marks it X', async () => {
     query.mockImplementation((sql: string) =>
       Promise.resolve(sql.includes('LINE_DIVISION') ? [{ div: 'W' }] : []),
     );
@@ -43,7 +41,7 @@ describe('WorkResultService tenancy', () => {
       'user-7',
     );
 
-    expect(callProcScalar).not.toHaveBeenCalled();
+    expect(add).not.toHaveBeenCalled();
     expect(res).toEqual({ seqNo: '01', sensorApplyYn: 'X' });
     const marked = query.mock.calls.find(([sql]) => String(sql).includes("SENSOR_APPLY_YN='X'"));
     expect(marked?.[1]).toEqual(['RUN-1', '01', 7]);
@@ -252,7 +250,7 @@ describe('WorkResultService tenancy', () => {
     expect(String(runCardCall?.[0])).not.toContain('WORKSTAGE_CODE');
   });
 
-  it('does not call the sensor procedure while the result is in progress', async () => {
+  it('does not put an in-progress result into the assembly result', async () => {
     const manager = {
       query: jest.fn().mockImplementation((sql: string) => {
         if (sql.includes('MAX(TO_NUMBER(SEQ_NO))'))
@@ -270,11 +268,11 @@ describe('WorkResultService tenancy', () => {
       'user-7',
     );
 
-    expect(callProcScalar).not.toHaveBeenCalled();
+    expect(add).not.toHaveBeenCalled();
     expect(res.sensorApplyYn).toBe('N');
   });
 
-  it('calls the sensor procedure once when the result is completed', async () => {
+  it('puts a completed SMT result into the assembly result once (MANUAL)', async () => {
     const manager = {
       query: jest.fn().mockImplementation((sql: string) => {
         if (sql.includes('MAX(TO_NUMBER(SEQ_NO))'))
@@ -300,28 +298,15 @@ describe('WorkResultService tenancy', () => {
       'user-7',
     );
 
-    expect(callProcScalar).toHaveBeenCalledTimes(1);
-    const [procName, outDefs, inParams, options] = callProcScalar.mock.calls[0] as [
-      string,
-      unknown,
-      Record<string, unknown>,
-      Record<string, unknown>,
-    ];
-    expect(procName).toBe('P_INTERLOCK_SENSOR_ACTUAL_NEO');
-    expect(outDefs).toEqual([{ name: 'P_OUT', type: 'STRING', maxSize: 1000 }]);
-    // P_ACC_COUNT가 실적수량이고 P_COUNT는 1 고정이다 — 이름과 의미가 반대다.
-    expect(inParams.P_ACC_COUNT).toBe(10);
-    expect(inParams.P_COUNT).toBe(1);
-    expect(inParams.P_LINE_CODE).toBe('L1');
-    expect(inParams.P_MACHINE_CODE).toBe('MC-1');
-    // autoCommit 없이는 프로시저의 DML이 롤백된다.
-    expect(options).toEqual({ autoCommit: true });
+    expect(add).toHaveBeenCalledTimes(1);
+    const [input] = add.mock.calls[0] as [Record<string, unknown>];
+    expect(input).toMatchObject({ runNo: 'RUN-1', lineCode: 'L1', qty: 10, source: 'MANUAL', remark: 'RUN-1-01', user: 'user-7' });
     expect(res.sensorApplyYn).toBe('Y');
     expect(res.sensorWarning).toBeUndefined();
   });
 
-  it('keeps the result and warns when the sensor procedure fails', async () => {
-    callProcScalar.mockResolvedValue({ P_OUT: 'NG ACTIVE PLAN NOT FOUND. Line Code=[L1]' });
+  it('keeps the result and warns when the assembly result is refused', async () => {
+    add.mockRejectedValue(new BadRequestException('조립실적을 넣지 못했습니다: M1 T면 생산 품목 미지정'));
     const manager = {
       query: jest.fn().mockImplementation((sql: string) => {
         if (sql.includes('MAX(TO_NUMBER(SEQ_NO))'))
@@ -342,16 +327,16 @@ describe('WorkResultService tenancy', () => {
     );
 
     expect(res.sensorApplyYn).toBe('N');
-    expect(res.sensorWarning).toContain('NG ACTIVE PLAN NOT FOUND');
+    expect(res.sensorWarning).toContain('생산 품목 미지정');
     // 반영 실패를 실적 행에 기록해 화면이 빨간색으로 표기할 수 있게 한다.
     const flagCall = query.mock.calls.find(([sql]) =>
       String(sql).includes('SET SENSOR_APPLY_YN'),
     );
     expect(flagCall?.[1]?.[0]).toBe('N');
-    expect(String(flagCall?.[1]?.[1])).toContain('NG ACTIVE PLAN NOT FOUND');
+    expect(String(flagCall?.[1]?.[1])).toContain('생산 품목 미지정');
   });
 
-  it('refuses to re-apply a result already reflected in the sensor tables', async () => {
+  it('refuses to re-apply a result already reflected in the assembly result', async () => {
     query.mockResolvedValue([
       {
         workstageCode: 'WS-1',
@@ -366,7 +351,7 @@ describe('WorkResultService tenancy', () => {
     await expect(
       service.applySensor({ runNo: 'RUN-1', seqNo: '01' }, 7),
     ).rejects.toThrow(BadRequestException);
-    expect(callProcScalar).not.toHaveBeenCalled();
+    expect(add).not.toHaveBeenCalled();
   });
 
   it('re-applies a completed result that has not been reflected yet', async () => {
@@ -384,13 +369,8 @@ describe('WorkResultService tenancy', () => {
 
     const res = await service.applySensor({ runNo: 'RUN-1', seqNo: '01' }, 7);
 
-    expect(callProcScalar).toHaveBeenCalledTimes(1);
-    const [, , inParams] = callProcScalar.mock.calls[0] as [
-      string,
-      unknown,
-      Record<string, unknown>,
-    ];
-    expect(inParams.P_ACC_COUNT).toBe(25);
+    expect(add).toHaveBeenCalledTimes(1);
+    expect((add.mock.calls[0] as [Record<string, unknown>])[0]).toMatchObject({ qty: 25, source: 'MANUAL' });
     expect(res.sensorApplyYn).toBe('Y');
   });
 });
@@ -399,7 +379,7 @@ describe('WorkResultService process-bound run cards', () => {
   const query = jest.fn();
   const transaction = jest.fn();
   const repository = { manager: { query, transaction } } as unknown as Repository<ProductWorkResult>;
-  const service = new WorkResultService(repository, { callProcScalar: jest.fn() } as unknown as OracleService);
+  const service = new WorkResultService(repository, { add: jest.fn() } as unknown as AssemblyResultService);
 
   function managerFor(fixed: string | null) {
     const manager = {
@@ -448,7 +428,7 @@ describe('WorkResultService machine downtime core', () => {
   const query = jest.fn();
   const transaction = jest.fn();
   const repository = { manager: { query, transaction } } as unknown as Repository<ProductWorkResult>;
-  const service = new WorkResultService(repository, {} as unknown as OracleService);
+  const service = new WorkResultService(repository, {} as unknown as AssemblyResultService);
 
   /** 설비 잠금·진행중 조회·채번에 답하는 트랜잭션 매니저 */
   function managerWith(opts: {
