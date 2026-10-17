@@ -92,12 +92,11 @@ export function classifyBomExplode(
   const twoSided = (type: BomExplodeType, t: string, b: string) =>
     result(type, t, b, sides && sides !== 'BT' ? `최근 SMT 런카드는 ${sides}면만 있다` : null);
   // 단면·원자재만 — 런카드 면으로 세는 면을 정한다.
-  // 런카드가 양면이면 각 면을 하나의 모델 생산으로 보고 두 면 모두 같은 품목으로 센다
-  // (공정재고는 P_ASSY_RESULT_ADD 가 TOP = BOTTOM 품목이면 면마다 절반씩 움직인다).
+  // 런카드가 양면이면 각 면을 하나의 모델 생산으로 보고 두 면 모두 같은 품목으로 센다.
   const oneSided = (type: BomExplodeType, item: string) => {
     if (sides === 'T') return result(type, item, null);
     if (sides === 'B') return result(type, null, item);
-    if (sides === 'BT') return result(type, item, item, '런카드가 양면이다 — 면마다 실적을 세고 공정재고는 면마다 절반씩 움직인다');
+    if (sides === 'BT') return result(type, item, item, '런카드가 양면이다 — 면마다 한 모델로 실적을 센다');
     return result(type, null, null, `최근 SMT 런카드가 없다 — 실적을 셀 면에 ${label(item)}을 지정한다`);
   };
 

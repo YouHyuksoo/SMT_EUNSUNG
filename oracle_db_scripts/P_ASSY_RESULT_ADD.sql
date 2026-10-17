@@ -16,7 +16,6 @@ CREATE OR REPLACE PROCEDURE P_ASSY_RESULT_ADD (
    * 작성일     : 2026-10-17
    * 수정이력:
    *   2026-10-17 - AI(Claude) - 조립실적 한 건을 넣고 공정재고를 움직인다 (AOI 실시간 · 수기 작업실적 · 보정 공용)
-   *   2026-10-17 - AI(Claude) - TOP = BOTTOM 품목(양면 런, 면마다 한 모델로 셈)이면 공정재고는 면마다 절반만 움직인다
    * ================================================================
    * 기능 설명:
    *   설계: docs/specs/2026-10-17-wip-semi-product-from-aoi-design.md
@@ -29,7 +28,6 @@ CREATE OR REPLACE PROCEDURE P_ASSY_RESULT_ADD (
    *     TIME_DIVISION = F_GET_WORKTIME_ZONE (센서실적과 같은 A~J 시간대). WORKSTAGE_ISSUE_YN = 소모 여부(Y/N).
    *   - 공정재고 (실적 시각 >= ISYS_CONFIG WIP_DIRECT_CONSUME_FROM 일 때만):
    *       공정입고 생산 품목 +수량, 공정출고 직속 자품목 × 소요량 × 수량.
-   *       TOP_ITEM_CODE = BOTTOM_ITEM_CODE 이면 실적은 면마다 다 세고 공정재고 수량은 × 0.5 (두 면을 거쳐 보드 한 장).
    *       자품목이 AOI 로 만들지 않는 반제품(이 모델 TOP·BOTTOM 품목이 아니면서 BOM 아래가 있는 것)이면 한 단계씩 더 펼친다.
    *       자기 BOM 이 따로 있는 말단 품목(자체 생산 반제품)은 빼지 않는다 (P_WIP_ISSUE_CREATE 와 같다).
    *       AOI    : 시간대·품목별 한 행에 더한다 (ENTER_BY = 'AOI_RT', 구분 1·3).
@@ -58,7 +56,6 @@ IS
    v_enter_by  VARCHAR2(20);
    v_ws_by     VARCHAR2(20);
    v_key       VARCHAR2(20);
-   v_wip_qty   NUMBER;
 BEGIN
    p_result := 'OK';
    IF p_run_no IS NULL OR NVL(p_qty, 0) = 0 THEN p_result := '런 또는 수량 없음'; RETURN; END IF;
@@ -133,18 +130,16 @@ BEGIN
    p_product_seq := v_seq;
 
    IF v_flag <> 'Y' THEN RETURN; END IF;
-   -- 두 면이 같은 품목이면 면마다 절반 — 보드 한 장이 두 면을 거쳐 1개가 된다
-   v_wip_qty := p_qty * CASE WHEN v_top = v_bottom THEN 0.5 ELSE 1 END;
 
    IF p_source = 'AOI' THEN
       -- 공정입고: 생산 품목 (시간대·품목별 한 행)
       MERGE INTO IM_ITEM_WORKSTAGE_RECEIPT t
       USING (SELECT v_hour d, v_item c FROM DUAL) s
          ON (t.ENTER_BY = 'AOI_RT' AND t.RECEIPT_DATE = s.d AND t.ITEM_CODE = s.c AND t.ORGANIZATION_ID = 1)
-       WHEN MATCHED THEN UPDATE SET t.RECEIPT_QTY = t.RECEIPT_QTY + v_wip_qty, t.LAST_MODIFY_DATE = SYSDATE
+       WHEN MATCHED THEN UPDATE SET t.RECEIPT_QTY = t.RECEIPT_QTY + p_qty, t.LAST_MODIFY_DATE = SYSDATE
        WHEN NOT MATCHED THEN INSERT (RECEIPT_DATE, RECEIPT_SEQUENCE, ORGANIZATION_ID, ITEM_CODE, RECEIPT_DEFICIT, RECEIPT_QTY,
                                      ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY)
-                             VALUES (s.d, SEQ_WORKSTAGE_RECEIPT_SEQ.NEXTVAL, 1, s.c, '1', v_wip_qty, SYSDATE, 'AOI_RT', SYSDATE, 'AOI_RT');
+                             VALUES (s.d, SEQ_WORKSTAGE_RECEIPT_SEQ.NEXTVAL, 1, s.c, '1', p_qty, SYSDATE, 'AOI_RT', SYSDATE, 'AOI_RT');
       -- 공정출고: 직속 자품목
       MERGE INTO IM_ITEM_WORKSTAGE_ISSUE t
       USING (
@@ -162,7 +157,7 @@ BEGIN
                AND NVL(b.DATESET, DATE '1900-01-01') <= SYSDATE AND NVL(b.DATEEND, DATE '9999-12-31') >= TRUNC(SYSDATE)
              WHERE tr.child NOT IN (NVL(v_top, '#'), NVL(v_bottom, '#'))
          )
-         SELECT v_hour d, tr.child c, SUM(tr.qty) * v_wip_qty q
+         SELECT v_hour d, tr.child c, SUM(tr.qty) * p_qty q
            FROM tr
           WHERE tr.child IN (NVL(v_top, '#'), NVL(v_bottom, '#'))
              OR (NOT EXISTS (SELECT 1 FROM ID_ENG_BOM s WHERE s.ITEM_CODE = v_product AND s.PARENT_ITEM_CODE = tr.child
@@ -182,7 +177,7 @@ BEGIN
       v_key := TO_CHAR(v_date, 'YYYYMMDD') || '-' || v_seq;
       INSERT INTO IM_ITEM_WORKSTAGE_RECEIPT (RECEIPT_DATE, RECEIPT_SEQUENCE, ORGANIZATION_ID, ITEM_CODE, RECEIPT_DEFICIT, RECEIPT_QTY,
                                              ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY)
-      VALUES (v_time, SEQ_WORKSTAGE_RECEIPT_SEQ.NEXTVAL, 1, v_item, CASE WHEN v_wip_qty >= 0 THEN '1' ELSE '2' END, v_wip_qty,
+      VALUES (v_time, SEQ_WORKSTAGE_RECEIPT_SEQ.NEXTVAL, 1, v_item, CASE WHEN p_qty >= 0 THEN '1' ELSE '2' END, p_qty,
               SYSDATE, v_ws_by, SYSDATE, v_key);
       INSERT INTO IM_ITEM_WORKSTAGE_ISSUE (ISSUE_DATE, ISSUE_SEQUENCE, ORGANIZATION_ID, ITEM_CODE, ISSUE_DEFICIT, ISSUE_QTY,
                                            ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY)
@@ -203,7 +198,7 @@ BEGIN
                AND NVL(b.DATESET, DATE '1900-01-01') <= SYSDATE AND NVL(b.DATEEND, DATE '9999-12-31') >= TRUNC(SYSDATE)
              WHERE tr.child NOT IN (NVL(v_top, '#'), NVL(v_bottom, '#'))
          )
-         SELECT tr.child c, SUM(tr.qty) * v_wip_qty q
+         SELECT tr.child c, SUM(tr.qty) * p_qty q
            FROM tr
           WHERE tr.child IN (NVL(v_top, '#'), NVL(v_bottom, '#'))
              OR (NOT EXISTS (SELECT 1 FROM ID_ENG_BOM s WHERE s.ITEM_CODE = v_product AND s.PARENT_ITEM_CODE = tr.child

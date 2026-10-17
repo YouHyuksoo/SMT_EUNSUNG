@@ -225,7 +225,6 @@ AOI 테이블에 트리거를 걸지 않는다. 장비 인터페이스가 넣는
 - **센서실적 적재:** `P_INTERLOCK_SENSOR_ACTUAL_NEO` 는 장비 쪽 호출이 남아 있어 그대로 둔다. 화면·뷰는 더 이상 읽지 않는다.
 - **양면 런 단면 모델** (사용자: "단면 자체도 한개의 모델로 봐야함"):
   - 원자재만(RAW)·단면 반제품(SINGLE)인데 런카드가 T·B 둘 다인 모델은 각 면을 하나의 모델 생산으로 본다. TOP_ITEM_CODE = BOTTOM_ITEM_CODE = 같은 품목, 실적은 면마다 다 센다.
-  - BOM 에 면 구분이 없어 자재를 면별로 나눌 수 없다. 그래서 `P_ASSY_RESULT_ADD` 는 TOP = BOTTOM 이면 공정입고·출고를 면마다 × 0.5 로 움직인다(두 면을 거쳐 1개).
   - 적용 모델 6개: SM100-SUB-PCB ASSY, SDH110_PCB ASSY, IG-MAIN-PCB ASSY, IG-MAIN-PCB A'SSY, EOP36-LF-PCB ASSY, OS-EV-19MY-FILTER. 오늘(10-17) AOI 는 보정 잡으로 다시 채웠다(SM100 T 25,620 / B 40,068).
 - **SMT 반제품 + 조립 SUB ASSY 모델** (DN8-PE-HOUSING-ASSY, MV-EV-CURRENT-SENSOR, NE-EV-VOLT-SNSG-FRT/RR-2P6S):
   - SMT 런카드는 T면뿐이고, 면이 빈 런카드는 61·62 조립라인 런이다(T·B 를 생산하면 면마다 작업지시·런카드를 따로 발행한다).
