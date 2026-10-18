@@ -365,6 +365,22 @@ export class OracleService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * 큰 SELECT — 한 번에 fetchArraySize 행씩 가져온다. DB 왕복이 느린 곳(실측 1.9초)에서 기본 100행씩이면
+   * 수만 행 조회가 수십 초 걸린다. 칼럼 별칭은 SQL 그대로 돌려준다 (camelCase 변환 없음).
+   */
+  async queryAll<T = OracleRow>(sql: string, binds: Record<string, unknown> = {}, fetchArraySize = 5000): Promise<T[]> {
+    const conn = await this.pool.getConnection();
+    try {
+      const result = await conn.execute<T>(sql, binds as oracledb.BindParameters, {
+        outFormat: oracledb.OUT_FORMAT_OBJECT, fetchArraySize, prefetchRows: fetchArraySize,
+      });
+      return result.rows ?? [];
+    } finally {
+      await conn.close();
+    }
+  }
+
+  /**
    * 프로시저 익명블록 실행 — 패키지 상태 폐기(ORA-04068 등) 시 같은 커넥션에서 1회 재시도.
    * ORA-04068은 본문 실행 전에 발생하고 상태가 재설정되므로 재시도가 안전하다(이중 실행 없음).
    */

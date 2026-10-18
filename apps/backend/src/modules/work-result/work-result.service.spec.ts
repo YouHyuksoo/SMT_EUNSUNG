@@ -1,39 +1,48 @@
 import { BadRequestException } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { ProductWorkResult } from '../../entities/product-work-result.entity';
-import { AssemblyResultService } from '../assembly-result/assembly-result.service';
+import { DataSource } from 'typeorm';
 import { WorkResultService } from './work-result.service';
+
+/** 작업지시 · 라인구분 · 채번 · 상태 조회에 답하는 트랜잭션 매니저 */
+function upsertManager(opts: { div?: string; fixed?: string | null; status?: string } = {}) {
+  return {
+    query: jest.fn().mockImplementation((sql: string) => {
+      if (sql.includes('FROM IP_PRODUCT_RUN_CARD') && sql.includes('FOR UPDATE'))
+        return Promise.resolve([{ lineCode: '50', workstageCode: opts.fixed ?? null, itemCode: 'E1', lotNo: 'MI1', runDate: '2026-10-19' }]);
+      if (sql.includes('LINE_DIVISION')) return Promise.resolve([{ div: opts.div ?? 'L' }]);
+      if (sql.includes('MAX(TO_NUMBER(SEQ_NO))')) return Promise.resolve([{ seq: '01' }]);
+      if (sql.includes("SELECT NVL(RESULT_STATUS,'WIP')")) return Promise.resolve([{ st: opts.status ?? 'WIP' }]);
+      if (sql.includes('SELECT WORKSTAGE_ISSUE_YN')) return Promise.resolve([{ flag: 'Y', msg: null }]);
+      return Promise.resolve([]);
+    }),
+  };
+}
 
 describe('WorkResultService tenancy', () => {
   const query = jest.fn();
   const transaction = jest.fn();
-  const add = jest.fn();
-  const repository = {
-    manager: { query, transaction },
-  } as unknown as Repository<ProductWorkResult>;
-  const service = new WorkResultService(repository, { add } as unknown as AssemblyResultService);
+  const dataSource = { manager: { query, transaction } } as unknown as DataSource;
+  const service = new WorkResultService(dataSource);
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // 라인구분 조회는 SMT('D')로 답한다 — 생산실적(조립실적)은 SMT 라인만 받는다
-    query.mockImplementation((sql: string) =>
-      Promise.resolve(sql.includes('LINE_DIVISION') ? [{ div: 'D' }] : []),
-    );
-    add.mockResolvedValue({ itemCode: 'SEMI-1', productDate: new Date(), productSeq: 1 });
+    query.mockResolvedValue([]);
   });
 
-  it('does not put a non-SMT line result into the assembly result and marks it X', async () => {
-    query.mockImplementation((sql: string) =>
-      Promise.resolve(sql.includes('LINE_DIVISION') ? [{ div: 'W' }] : []),
-    );
-    const manager = {
-      query: jest.fn().mockImplementation((sql: string) => {
-        if (sql.includes('MAX(TO_NUMBER(SEQ_NO))')) return Promise.resolve([{ seq: '01' }]);
-        if (sql.includes('SELECT LINE_CODE')) return Promise.resolve([{ lineCode: '34' }]);
-        return Promise.resolve([]);
-      }),
-    };
+  function useManager(manager: ReturnType<typeof upsertManager>) {
     transaction.mockImplementation((callback: (value: typeof manager) => unknown) => callback(manager));
+    return manager;
+  }
+
+  it('refuses SMT line results — SMT actuals come from AOI', async () => {
+    const manager = useManager(upsertManager({ div: 'D' }));
+    await expect(service.upsertResult(
+      { runNo: 'RUN-1', resultQty: 10, resultStatus: 'DONE' } as never, 7, 'user-7',
+    )).rejects.toThrow('SMT');
+    expect(manager.query.mock.calls.some(([s]) => String(s).includes('INSERT INTO IP_PRODUCT_RESULT'))).toBe(false);
+  });
+
+  it('keeps a non-assembly line result without inventory and marks it X', async () => {
+    const manager = useManager(upsertManager({ div: 'W' }));
 
     const res = await service.upsertResult(
       { runNo: 'RUN-1', machineCode: 'MC-1', workstageCode: 'WS-1', resultQty: 10, resultStatus: 'DONE' } as never,
@@ -41,10 +50,13 @@ describe('WorkResultService tenancy', () => {
       'user-7',
     );
 
-    expect(add).not.toHaveBeenCalled();
     expect(res).toEqual({ seqNo: '01', sensorApplyYn: 'X' });
-    const marked = query.mock.calls.find(([sql]) => String(sql).includes("SENSOR_APPLY_YN='X'"));
-    expect(marked?.[1]).toEqual(['RUN-1', '01', 7]);
+    expect(manager.query.mock.calls.some(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'))).toBe(false);
+    const marked = query.mock.calls.find(([sql]) => String(sql).includes('SET WORKSTAGE_ISSUE_YN=:1'));
+    expect(marked?.[1]).toEqual(['X', null, 'RUN-1', '01', 7]);
+    // 가공 라인 → 작업구분 W
+    const insert = manager.query.mock.calls.find(([s]) => String(s).includes('INSERT INTO IP_PRODUCT_RESULT'));
+    expect(insert?.[1]?.[2]).toBe('W');
   });
 
   it('requires an authenticated organization', () => {
@@ -59,6 +71,7 @@ describe('WorkResultService tenancy', () => {
     expect(sql).toContain('r.ORGANIZATION_ID = :1');
     expect(sql).not.toContain('ORGANIZATION_ID = 1');
     expect(sql).toContain('WHERE ROWNUM <= 500');
+    expect(sql).toContain('FROM IP_PRODUCT_RESULT wr');
     expect(params).toEqual([7, '2026-08-01', '2026-08-25']);
   });
 
@@ -139,23 +152,12 @@ describe('WorkResultService tenancy', () => {
     expect(params).toEqual([7, '2026-08-01', '2026-08-25', 'D', 'SMT']);
   });
 
-  it('uses the authenticated user and organization for writes', async () => {
-    const manager = {
-      query: jest.fn().mockImplementation((sql: string) => {
-        if (sql.includes('MAX(TO_NUMBER(SEQ_NO))'))
-          return Promise.resolve([{ seq: '01' }]);
-        return Promise.resolve([]);
-      }),
-    };
-    transaction.mockImplementation(
-      (callback: (value: typeof manager) => unknown) => callback(manager),
-    );
+  it('writes the run card product into IP_PRODUCT_RESULT with the authenticated user and organization', async () => {
+    const manager = useManager(upsertManager());
 
     await service.upsertResult(
       {
         runNo: 'RUN-1',
-        machineCode: 'MC-1',
-        workstageCode: 'WS-1',
         resultQty: 10,
         resultStatus: 'WIP',
         userId: 'forged-user',
@@ -164,71 +166,38 @@ describe('WorkResultService tenancy', () => {
       'authenticated-user',
     );
 
-    // 2026-09-30: 실적 이력 원장이 IP_PRODUCT_WORK_RESULT로 되돌아갔다.
     const insertCall = manager.query.mock.calls.find(([sql]) =>
-      String(sql).includes('INSERT INTO IP_PRODUCT_WORK_RESULT'),
+      String(sql).includes('INSERT INTO IP_PRODUCT_RESULT'),
     );
-    expect(insertCall?.[1]).toContain(7);
-    expect(insertCall?.[1]).toContain('authenticated-user');
-    expect(insertCall?.[1]).not.toContain('forged-user');
-  });
-
-  it('binds null equipment and preserves the process when creating a result', async () => {
-    const manager = {
-      query: jest.fn().mockImplementation((sql: string) => {
-        if (sql.includes('MAX(TO_NUMBER(SEQ_NO))'))
-          return Promise.resolve([{ seq: '01' }]);
-        return Promise.resolve([]);
-      }),
-    };
-    transaction.mockImplementation(
-      (callback: (value: typeof manager) => unknown) => callback(manager),
-    );
-
-    await service.upsertResult(
-      {
-        runNo: 'RUN-1',
-        workstageCode: 'WS-1',
-        resultQty: 10,
-        resultStatus: 'WIP',
-      } as never,
-      7,
-      'user-7',
-    );
-
-    const insertCall = manager.query.mock.calls.find(([sql]) =>
-      String(sql).includes('INSERT INTO IP_PRODUCT_WORK_RESULT'),
-    );
-    const runCardCall = manager.query.mock.calls.find(([sql]) =>
-      String(sql).includes('UPDATE IP_PRODUCT_RUN_CARD'),
-    );
-    // [0]=runNo, [1]=seqNo, [2]=organization, [3]=machineCode(미지정 → null), [4]=workstageCode
-    expect(insertCall?.[1]?.[1]).toBe('01');
-    expect(insertCall?.[1]?.[3]).toBeNull();
-    expect(insertCall?.[1]?.[4]).toBe('WS-1');
+    const binds = insertCall?.[1] as unknown[];
+    // [0]=org [1]=runDate [2]=workDivision [3]=item [4]=mfs(lot) [5]=line [6]=workstage [7]=machine [8]=qty
+    // [9]=runNo [10]=seqNo ... [15]=user
+    expect(binds[0]).toBe(7);
+    expect(binds[2]).toBe('P');
+    expect(binds[3]).toBe('E1');
+    expect(binds[4]).toBe('MI1');
+    // 공정이 빈 조립라인 지시 = 포장 공정
+    expect(binds[6]).toBe('W220');
+    expect(binds[7]).toBeNull();
+    expect(binds[9]).toBe('RUN-1');
+    expect(binds[10]).toBe('01');
+    expect(binds).toContain('authenticated-user');
+    expect(binds).not.toContain('forged-user');
+    const runCardCall = manager.query.mock.calls.find(([sql]) => String(sql).includes('UPDATE IP_PRODUCT_RUN_CARD'));
     expect(runCardCall?.[1]?.[0]).toBeNull();
     // 공정은 발행 때 정해지고 실적이 런카드에 다시 쓰지 않는다
     expect(String(runCardCall?.[0])).not.toContain('WORKSTAGE_CODE');
   });
 
   it('normalizes whitespace equipment on an existing result update', async () => {
-    const manager = {
-      query: jest.fn().mockImplementation((sql: string) => {
-        if (sql.includes("SELECT NVL(RESULT_STATUS,'WIP')"))
-          return Promise.resolve([{ st: 'WIP' }]);
-        return Promise.resolve([]);
-      }),
-    };
-    transaction.mockImplementation(
-      (callback: (value: typeof manager) => unknown) => callback(manager),
-    );
+    const manager = useManager(upsertManager());
 
     await service.upsertResult(
       {
         runNo: 'RUN-1',
         seqNo: '01',
         machineCode: '   ',
-        workstageCode: 'WS-1',
+        workstageCode: 'W220',
         resultQty: 10,
         resultStatus: 'WIP',
       },
@@ -237,158 +206,132 @@ describe('WorkResultService tenancy', () => {
     );
 
     const updateCall = manager.query.mock.calls.find(([sql]) =>
-      String(sql).includes('UPDATE IP_PRODUCT_WORK_RESULT SET'),
-    );
-    const runCardCall = manager.query.mock.calls.find(([sql]) =>
-      String(sql).includes('UPDATE IP_PRODUCT_RUN_CARD'),
+      String(sql).includes('UPDATE IP_PRODUCT_RESULT SET'),
     );
     // [0]=machineCode(공백 정규화 → null), [1]=workstageCode
     expect(updateCall?.[1]?.[0]).toBeNull();
-    expect(updateCall?.[1]?.[1]).toBe('WS-1');
-    expect(runCardCall?.[1]?.[0]).toBeNull();
-    // 공정은 발행 때 정해지고 실적이 런카드에 다시 쓰지 않는다
-    expect(String(runCardCall?.[0])).not.toContain('WORKSTAGE_CODE');
+    expect(updateCall?.[1]?.[1]).toBe('W220');
   });
 
-  it('does not put an in-progress result into the assembly result', async () => {
-    const manager = {
-      query: jest.fn().mockImplementation((sql: string) => {
-        if (sql.includes('MAX(TO_NUMBER(SEQ_NO))'))
-          return Promise.resolve([{ seq: '01' }]);
-        return Promise.resolve([]);
-      }),
-    };
-    transaction.mockImplementation(
-      (callback: (value: typeof manager) => unknown) => callback(manager),
-    );
+  it('does not move inventory for an in-progress result', async () => {
+    useManager(upsertManager());
 
     const res = await service.upsertResult(
-      { runNo: 'RUN-1', workstageCode: 'WS-1', resultQty: 10, resultStatus: 'WIP' } as never,
+      { runNo: 'RUN-1', resultQty: 10, resultStatus: 'WIP' } as never,
       7,
       'user-7',
     );
 
-    expect(add).not.toHaveBeenCalled();
     expect(res.sensorApplyYn).toBe('N');
+    expect(transaction).toHaveBeenCalledTimes(1);
   });
 
-  it('puts a completed SMT result into the assembly result once (MANUAL)', async () => {
-    const manager = {
-      query: jest.fn().mockImplementation((sql: string) => {
-        if (sql.includes('MAX(TO_NUMBER(SEQ_NO))'))
-          return Promise.resolve([{ seq: '01' }]);
-        if (sql.includes('SELECT LINE_CODE'))
-          return Promise.resolve([{ lineCode: 'L1' }]);
-        return Promise.resolve([]);
-      }),
-    };
-    transaction.mockImplementation(
-      (callback: (value: typeof manager) => unknown) => callback(manager),
-    );
+  it('moves inventory once for a completed assembly line result', async () => {
+    const manager = useManager(upsertManager());
 
     const res = await service.upsertResult(
-      {
-        runNo: 'RUN-1',
-        machineCode: 'MC-1',
-        workstageCode: 'WS-1',
-        resultQty: 10,
-        resultStatus: 'DONE',
-      } as never,
+      { runNo: 'RUN-1', machineCode: 'MC-1', resultQty: 10, resultStatus: 'DONE' } as never,
       7,
       'user-7',
     );
 
-    expect(add).toHaveBeenCalledTimes(1);
-    const [input] = add.mock.calls[0] as [Record<string, unknown>];
-    expect(input).toMatchObject({ runNo: 'RUN-1', lineCode: 'L1', qty: 10, source: 'MANUAL', remark: 'RUN-1-01', user: 'user-7' });
+    const call = manager.query.mock.calls.find(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'));
+    expect(call?.[1]).toEqual(['RUN-1', '01', 7, 1]);
     expect(res.sensorApplyYn).toBe('Y');
     expect(res.sensorWarning).toBeUndefined();
   });
 
-  it('keeps the result and warns when the assembly result is refused', async () => {
-    add.mockRejectedValue(new BadRequestException('조립실적을 넣지 못했습니다: M1 T면 생산 품목 미지정'));
-    const manager = {
-      query: jest.fn().mockImplementation((sql: string) => {
-        if (sql.includes('MAX(TO_NUMBER(SEQ_NO))'))
-          return Promise.resolve([{ seq: '01' }]);
-        if (sql.includes('SELECT LINE_CODE'))
-          return Promise.resolve([{ lineCode: 'L1' }]);
-        return Promise.resolve([]);
-      }),
-    };
-    transaction.mockImplementation(
-      (callback: (value: typeof manager) => unknown) => callback(manager),
-    );
+  it('keeps the result and warns when the inventory step fails', async () => {
+    const manager = upsertManager();
+    let calls = 0;
+    transaction.mockImplementation((callback: (value: typeof manager) => unknown) => {
+      calls += 1;
+      if (calls === 1) return callback(manager);
+      return Promise.reject(new Error('ORA-01400: cannot insert NULL'));
+    });
 
     const res = await service.upsertResult(
-      { runNo: 'RUN-1', workstageCode: 'WS-1', resultQty: 10, resultStatus: 'DONE' } as never,
+      { runNo: 'RUN-1', resultQty: 10, resultStatus: 'DONE' } as never,
       7,
       'user-7',
     );
 
     expect(res.sensorApplyYn).toBe('N');
-    expect(res.sensorWarning).toContain('생산 품목 미지정');
+    expect(res.sensorWarning).toContain('ORA-01400');
     // 반영 실패를 실적 행에 기록해 화면이 빨간색으로 표기할 수 있게 한다.
-    const flagCall = query.mock.calls.find(([sql]) =>
-      String(sql).includes('SET SENSOR_APPLY_YN'),
-    );
+    const flagCall = query.mock.calls.find(([sql]) => String(sql).includes('SET WORKSTAGE_ISSUE_YN=:1'));
     expect(flagCall?.[1]?.[0]).toBe('N');
-    expect(String(flagCall?.[1]?.[1])).toContain('생산 품목 미지정');
+    expect(String(flagCall?.[1]?.[1])).toContain('ORA-01400');
   });
 
-  it('refuses to re-apply a result already reflected in the assembly result', async () => {
-    query.mockResolvedValue([
-      {
-        workstageCode: 'WS-1',
-        machineCode: 'MC-1',
-        resultQty: 10,
-        resultStatus: 'DONE',
-        sensorApplyYn: 'Y',
-        lineCode: 'L1',
-      },
-    ]);
+  it('refuses to re-apply a result already reflected in the inventory', async () => {
+    query.mockResolvedValue([{ resultStatus: 'DONE', sensorApplyYn: 'Y', workDiv: 'P' }]);
 
     await expect(
       service.applySensor({ runNo: 'RUN-1', seqNo: '01' }, 7),
     ).rejects.toThrow(BadRequestException);
-    expect(add).not.toHaveBeenCalled();
+    expect(transaction).not.toHaveBeenCalled();
   });
 
-  it('re-applies a completed result that has not been reflected yet', async () => {
-    const row = {
-      workstageCode: 'WS-1',
-      machineCode: 'MC-1',
-      resultQty: 25,
-      resultStatus: 'DONE',
-      sensorApplyYn: 'N',
-      lineCode: 'L1',
-    };
-    query.mockImplementation((sql: string) =>
-      Promise.resolve(sql.includes('LINE_DIVISION') ? [{ div: 'D' }] : [row]),
-    );
+  it('re-applies a completed assembly line result that has not been reflected yet', async () => {
+    query.mockResolvedValue([{ resultStatus: 'DONE', sensorApplyYn: 'N', workDiv: 'P' }]);
+    const manager = useManager(upsertManager());
 
     const res = await service.applySensor({ runNo: 'RUN-1', seqNo: '01' }, 7);
 
-    expect(add).toHaveBeenCalledTimes(1);
-    expect((add.mock.calls[0] as [Record<string, unknown>])[0]).toMatchObject({ qty: 25, source: 'MANUAL' });
+    expect(manager.query.mock.calls.some(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'))).toBe(true);
     expect(res.sensorApplyYn).toBe('Y');
+  });
+
+  it('keeps a processing-workstage result on an assembly line without inventory (W, X)', async () => {
+    const manager = useManager(upsertManager({ fixed: 'W091' }));
+
+    const res = await service.upsertResult(
+      { runNo: 'RUN-1', workstageCode: 'W091', resultQty: 10, resultStatus: 'DONE' } as never, 7, 'user-7',
+    );
+
+    expect(res.sensorApplyYn).toBe('X');
+    const insert = manager.query.mock.calls.find(([s]) => String(s).includes('INSERT INTO IP_PRODUCT_RESULT'));
+    expect(insert?.[1]?.[2]).toBe('W');
+    expect(manager.query.mock.calls.some(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'))).toBe(false);
+  });
+
+  it('refuses a different process than the packing process on an assembly work order without a process', async () => {
+    useManager(upsertManager());
+    await expect(service.upsertResult(
+      { runNo: 'RUN-1', workstageCode: 'W040', resultQty: 10, resultStatus: 'WIP' } as never, 7, 'user-7',
+    )).rejects.toThrow('W220');
+  });
+
+  it('reverts the inventory with sign -1 when a reflected result is cancelled', async () => {
+    const manager = {
+      query: jest.fn().mockImplementation((sql: string) => {
+        if (sql.includes('FOR UPDATE')) return Promise.resolve([{ st: 'DONE', applied: 'Y', today: 'Y' }]);
+        if (sql.includes('SELECT WORKSTAGE_ISSUE_YN')) return Promise.resolve([{ flag: 'C', msg: null }]);
+        return Promise.resolve([]);
+      }),
+    };
+    transaction.mockImplementation((callback: (value: typeof manager) => unknown) => callback(manager));
+
+    const res = await service.cancelResult({ runNo: 'RUN-1', seqNo: '01' } as never, 7, 'user-7');
+
+    expect(res).toEqual({ cancelled: true });
+    const cancel = manager.query.mock.calls.find(([s]) => String(s).includes("RESULT_STATUS='CANCEL'"));
+    expect(String(cancel?.[0])).toContain("PRODUCT_ACTUAL_STATUS='C'");
+    const call = manager.query.mock.calls.find(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'));
+    expect(call?.[1]).toEqual(['RUN-1', '01', 7, -1]);
   });
 });
 
 describe('WorkResultService process-bound run cards', () => {
   const query = jest.fn();
   const transaction = jest.fn();
-  const repository = { manager: { query, transaction } } as unknown as Repository<ProductWorkResult>;
-  const service = new WorkResultService(repository, { add: jest.fn() } as unknown as AssemblyResultService);
+  const dataSource = { manager: { query, transaction } } as unknown as DataSource;
+  const service = new WorkResultService(dataSource);
 
   function managerFor(fixed: string | null) {
-    const manager = {
-      query: jest.fn().mockImplementation((sql: string) => {
-        if (sql.includes('MAX(TO_NUMBER(SEQ_NO))')) return Promise.resolve([{ seq: '01' }]);
-        if (sql.includes('SELECT LINE_CODE')) return Promise.resolve([{ lineCode: '34', workstageCode: fixed }]);
-        return Promise.resolve([]);
-      }),
-    };
+    // 가공 라인(W) 지시 — 공정이 빈 예전 지시는 어느 공정 실적도 받는다
+    const manager = upsertManager({ fixed, div: 'W' });
     transaction.mockImplementation((callback: (value: typeof manager) => unknown) => callback(manager));
     return manager;
   }
@@ -410,7 +353,7 @@ describe('WorkResultService process-bound run cards', () => {
     await expect(service.upsertResult(
       { runNo: 'R1', machineCode: 'M1', workstageCode: 'W120', resultQty: 5, resultStatus: 'WIP' } as never, 7, 'U',
     )).rejects.toThrow('W091');
-    expect(manager.query.mock.calls.some(([s]) => String(s).startsWith('INSERT INTO IP_PRODUCT_WORK_RESULT'))).toBe(false);
+    expect(manager.query.mock.calls.some(([s]) => String(s).startsWith('INSERT INTO IP_PRODUCT_RESULT'))).toBe(false);
   });
 
   it('keeps a legacy run card without a process unassigned (only the machine is written back)', async () => {
@@ -427,8 +370,8 @@ describe('WorkResultService process-bound run cards', () => {
 describe('WorkResultService machine downtime core', () => {
   const query = jest.fn();
   const transaction = jest.fn();
-  const repository = { manager: { query, transaction } } as unknown as Repository<ProductWorkResult>;
-  const service = new WorkResultService(repository, {} as unknown as AssemblyResultService);
+  const dataSource = { manager: { query, transaction } } as unknown as DataSource;
+  const service = new WorkResultService(dataSource);
 
   /** 설비 잠금·진행중 조회·채번에 답하는 트랜잭션 매니저 */
   function managerWith(opts: {

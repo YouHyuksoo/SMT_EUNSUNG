@@ -6,7 +6,7 @@
  * 0. getSummary() 카드 4개의 출처
  *    - 설비: IMCN_MACHINE (온도계 TEMP 제외) + 진행중 비가동 IP_EQUIP_DOWNTIME_RESULT(END_TIME 없음)
  *    - 생산: SMD 는 당일 계획 IP_PRODUCT_SMD_PLAN 의 PLAN_QTY 합, 제품은 당일 후공정 생산지시(런카드) 지시수량 합
- *            vs 당일 실적: SMD 는 IP_ASSEMBLY_ACTUAL_TIME_V 시간대 합, 제품은 후공정 지시 확정 실적(IP_PRODUCT_WORK_RESULT)
+ *            vs 당일 실적: SMD 는 IP_ASSEMBLY_ACTUAL_TIME_V 시간대 합, 제품은 후공정 지시 확정 실적(IP_PRODUCT_RESULT)
  *            (계획 테이블 ACTUAL_QTY 는 갱신되지 않아 0 이다)
  *    - 자재: 사용중 솔더(IM_ITEM_SOLDER_MASTER) · MSL 관리 LOT(IM_ITEM_MSL_CHECK_VIEW 2A 이상)
  *            + NG 건수는 display 31/29 와 같은 @smt/shared SQL

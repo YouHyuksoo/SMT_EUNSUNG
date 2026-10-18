@@ -12,7 +12,7 @@
  *    바인드로 쓴다(WHERE 안에서 직접 부르면 뷰 인덱스를 못 타 10초 걸린다).
  * 3. 실적은 시간대 뷰의 A~J 10칸 합이다 (계획 테이블 ACTUAL_QTY 는 갱신되지 않아 0).
  *    - SMD: IP_ASSEMBLY_ACTUAL_TIME_V (날짜·라인·모델·서픽스·PCB 면으로 계획과 맞춘다)
- *    - 제품: 런카드의 IP_PRODUCT_WORK_RESULT 확정(DONE) 실적 합. 시간대는 실적 입력 시각으로 칸에 넣는다.
+ *    - 제품: 런카드의 완제품 실적(IP_PRODUCT_RESULT) 확정(DONE) 실적 합. 시간대는 실적 입력 시각으로 칸에 넣는다.
  *      공정 통과 이력은 실적이 아니다 (planning/order-result.sql.ts).
  *    같은 키의 계획이 여러 줄이면 실적은 우선순위·순번이 가장 앞선 한 줄에만 붙인다(이중 집계 방지).
  * 4. KPI 의 계획/실적 합은 대시보드(getSummary)와 같은 정의다 — 실적은 계획과 못 맞춘 뷰 행도 포함한다.
@@ -208,7 +208,7 @@ export const MI_ORDER_SQL = `
          5 AS "priority", r.LINE_CODE AS "lineCode", r.ITEM_CODE AS "itemCode",
          NVL(i.ITEM_NAME, r.MODEL_NAME) AS "itemName", r.MODEL_NAME AS "modelName",
          r.LOT_SIZE AS "planQty",
-         NVL((SELECT SUM(wr.RESULT_QTY) FROM IP_PRODUCT_WORK_RESULT wr
+         NVL((SELECT SUM(wr.PRODUCT_ACTUAL_QTY) FROM IP_PRODUCT_RESULT wr
                WHERE wr.RUN_NO = r.RUN_NO AND wr.ORGANIZATION_ID = r.ORGANIZATION_ID
                  AND wr.RESULT_STATUS = 'DONE'), 0) AS "goodQty",
          -- 수기 실적은 입력 간격이 길어 마지막 실적 시각으로 '대기' 판정하지 않는다 (SMD 센서 실적만 쓴다)

@@ -1,6 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { comCodeCell } from '@/components/shared/codeCells';
-import type { WorkstageInventoryRow, WorkstageProductRow } from './types';
+import type { WorkstageByWsRow, WorkstageInventoryRow, WorkstageMoveRow, WorkstageProductRow } from './types';
 
 const quantity = (value: unknown) => value == null ? '' : Number(value).toLocaleString(undefined, { maximumFractionDigits: 6 });
 const dateTime = (value: unknown) => {
@@ -26,6 +26,31 @@ export const workstageInventoryColumns: ColumnDef<WorkstageInventoryRow>[] = [
   { accessorKey: 'lastModifyDate', header: '최종수정일시', size: 160, cell: context => dateTime(context.getValue()) },
   { accessorKey: 'lastModifyBy', header: '최종수정자', size: 110 },
   { accessorKey: 'organizationId', header: '조직 ID', size: 90, meta: { align: 'right' } },
+];
+
+const wsLabel = (code: string | null, name: string | null) => (name ? `${name} (${code})` : code ?? '');
+
+export const workstageByWsColumns: ColumnDef<WorkstageByWsRow>[] = [
+  { id: 'workstage', header: '공정', size: 150, accessorFn: row => wsLabel(row.workstageCode, row.workstageName) },
+  { accessorKey: 'itemCode', header: '품목코드', size: 160 },
+  { accessorKey: 'itemName', header: '품목명', size: 240 },
+  { accessorKey: 'itemDivision', header: '품목구분', size: 90, cell: comCodeCell('ITEM DIVISION') },
+  { accessorKey: 'inventoryQty', header: '공정재고수량', size: 130, meta: { align: 'right' }, cell: context => quantity(context.getValue()) },
+  { accessorKey: 'lastModifyDate', header: '최종변경', size: 140 },
+  { accessorKey: 'lastModifyBy', header: '최종변경 구분', size: 120 },
+];
+
+export const workstageMoveColumns: ColumnDef<WorkstageMoveRow>[] = [
+  { accessorKey: 'moveDate', header: '이동시각', size: 160 },
+  { accessorKey: 'magazineLabelNo', header: '매거진 라벨', size: 130 },
+  { id: 'from', header: '출발 공정', size: 140, accessorFn: row => wsLabel(row.fromWorkstageCode, row.fromWorkstageName) },
+  { id: 'to', header: '도착 공정', size: 140, accessorFn: row => wsLabel(row.toWorkstageCode, row.toWorkstageName) },
+  { accessorKey: 'itemCode', header: '반제품', size: 160 },
+  { accessorKey: 'itemName', header: '품목명', size: 220 },
+  { accessorKey: 'moveQty', header: '수량', size: 100, meta: { align: 'right' }, cell: context => quantity(context.getValue()) },
+  { accessorKey: 'runNo', header: '런카드', size: 130 },
+  { accessorKey: 'lineCode', header: '라인', size: 70 },
+  { accessorKey: 'enterBy', header: '스캔', size: 90 },
 ];
 
 export const workstageProductColumns: ColumnDef<WorkstageProductRow>[] = [

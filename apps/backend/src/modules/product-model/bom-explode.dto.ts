@@ -10,7 +10,7 @@ export class UpdateBomExplodeDto {
   modelName!: string;
 
   @ApiProperty({ description: 'BOM 전개 방식 (공통코드 BOM EXPLODE TYPE)', enum: BOM_EXPLODE_TYPES })
-  @IsIn(BOM_EXPLODE_TYPES as unknown as string[])
+  @IsIn([...BOM_EXPLODE_TYPES])
   bomExplodeType!: string;
 
   @ApiPropertyOptional({ description: 'AOI T면 실적이 만드는 품목' })

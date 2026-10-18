@@ -20,6 +20,7 @@ import {
   WorkstageLedgerQueryDto,
 } from '../dto/receipt-issue-ledger.dto';
 import { namedBinds } from '../../../common/utils/named-binds.util';
+import { notWipMoveSql } from '../../inventory-query/wip-bom';
 
 type OracleRow = Record<string, unknown>;
 
@@ -183,7 +184,7 @@ export class ReceiptIssueLedgerService {
     return this.paged(select, from, order, binds, query.page, query.limit);
   }
 
-  /** 모드 2 — 공정 수불원장 (IM_ITEM_WORKSTAGE_RECEIPT ∪ IM_ITEM_WORKSTAGE_ISSUE). */
+  /** 모드 2 — 공정 수불원장 (IM_ITEM_WORKSTAGE_RECEIPT ∪ IM_ITEM_WORKSTAGE_ISSUE). 공정간 이동(WS_MOVE)은 품목 합계로 0 이라 뺀다. */
   async findWorkstageLedger(query: WorkstageLedgerQueryDto, organizationId: number): Promise<PagedResult> {
     const binds: Record<string, unknown> = {
       dateFrom: query.dateFrom,
@@ -204,6 +205,7 @@ export class ReceiptIssueLedgerService {
            AND RECEIPT_DATE < TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
            AND ITEM_CODE LIKE :itemCode
            AND ORGANIZATION_ID = :organizationId
+           AND ${notWipMoveSql('ENTER_BY')}
         UNION ALL
         SELECT 'I' AS RCV_ISS_CODE, ISSUE_SEQUENCE AS RECEIPT_ISSUE_SEQUENCE,
                ISSUE_DATE AS RECEIPT_ISSUE_DATE, ORGANIZATION_ID,
@@ -214,6 +216,7 @@ export class ReceiptIssueLedgerService {
            AND ISSUE_DATE < TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
            AND ITEM_CODE LIKE :itemCode
            AND ORGANIZATION_ID = :organizationId
+           AND ${notWipMoveSql('ENTER_BY')}
       ) A, ID_ITEM B
      WHERE A.ITEM_CODE = B.ITEM_CODE
        AND A.RCV_ISS_CODE LIKE :rcvIssCode`;

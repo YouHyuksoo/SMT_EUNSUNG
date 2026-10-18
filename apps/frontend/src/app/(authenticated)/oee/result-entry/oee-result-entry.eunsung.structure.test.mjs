@@ -31,7 +31,7 @@ test('left workspace keeps compact two-row conditions above the work-order list'
 
 test('line picker uses the shared modal, staged multi-line controls, and scoped persistence', () => {
   assert.match(page, /<Modal/);
-  assert.match(page, /PROCESS_CODES: OeeProcessCode\[\] = \['SMT', 'ASSY'\]/);
+  assert.match(page, /PROCESS_CODES: OeeProcessCode\[\] = \['ASSY'\]/);
   assert.match(page, /role="tablist"/);
   assert.match(page, /setDraftLineCodes\(\[\]\)/);
   assert.match(page, /data-testid="oee-result-entry-line-card"/);

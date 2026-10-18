@@ -51,5 +51,5 @@ PK: `XPKIP_PRODUCT_SMD_PLAN_NOTE (PLAN_DATE, ORGANIZATION_ID, LINE_CODE, NOTE_SE
 ## 운영 포인트
 
 - 같은 블록을 동시에 저장하면 뒤 트랜잭션이 `ORA-00001` 로 실패할 수 있습니다. 다시 저장하면 됩니다.
-- 현황판의 주간·야간 합계는 생산실적(조립실적 — AOI 자동·수기·보정, 2026-10-17 센서실적에서 바꿈)만 더합니다. 반제품생산실적관리의 주야 수기실적(`IP_PRODUCT_SMD_SHIFT_MANUAL`)은 반영하지 않습니다.
+- 현황판의 주간·야간 합계는 생산실적(조립실적 — AOI 자동·보정, 2026-10-17 센서실적에서 바꿈)만 더합니다. 반제품생산실적관리의 주야 수기실적(`IP_PRODUCT_SMD_SHIFT_MANUAL`)은 반영하지 않습니다.
 - 업무일은 08:30 에 바뀝니다(`F_GET_WORKTIME_SMT_ZONE`). 화면의 기본 조회일은 달력상 오늘입니다.

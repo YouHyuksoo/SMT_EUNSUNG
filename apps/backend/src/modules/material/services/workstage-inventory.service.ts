@@ -75,7 +75,7 @@ export class WorkstageInventoryService {
    * 공정재고 장부는 원자재만 들고 있고, 이 박스의 자재도 아직 장부에 있다(입고 때 생산투입으로 빠진다).
    */
   async findProducts(organizationId: number) {
-    return this.dataSource.query(
+    return (await this.dataSource.query(
       `SELECT p.MODEL_NAME AS "modelName",
               p.PART_NO AS "itemCode",
               item.ITEM_NAME AS "itemName",
@@ -93,7 +93,45 @@ export class WorkstageInventoryService {
         GROUP BY p.MODEL_NAME, p.PART_NO, item.ITEM_NAME, item.ITEM_DIVISION
         ORDER BY p.MODEL_NAME, p.PART_NO`,
       namedBinds({ organizationId }),
-    ) as Promise<OracleRow[]>;
+    )) as OracleRow[];
+  }
+
+  /**
+   * 공정별 공정재고 (IM_ITEM_WORKSTAGE_INV_WS). 공정이 정해진 행만 — 공정 미지정('*')은 자재 탭 장부에 있다.
+   * W180(SMT) = AOI 실적으로 들어온 반제품과 그 소비, 후공정 = 매거진 스캔으로 옮겨 온 반제품.
+   */
+  async findByWorkstage(organizationId: number) {
+    return (await this.dataSource.query(
+      `SELECT w.WORKSTAGE_CODE AS "workstageCode", ws.WORKSTAGE_NAME AS "workstageName",
+              w.ITEM_CODE AS "itemCode", item.ITEM_NAME AS "itemName", item.ITEM_DIVISION AS "itemDivision",
+              w.INVENTORY_QTY AS "inventoryQty",
+              TO_CHAR(w.LAST_MODIFY_DATE, 'YYYY-MM-DD HH24:MI') AS "lastModifyDate", w.LAST_MODIFY_BY AS "lastModifyBy"
+         FROM IM_ITEM_WORKSTAGE_INV_WS w
+         LEFT JOIN ID_ITEM item ON item.ITEM_CODE = w.ITEM_CODE AND item.ORGANIZATION_ID = w.ORGANIZATION_ID
+         LEFT JOIN IP_PRODUCT_WORKSTAGE ws ON ws.WORKSTAGE_CODE = w.WORKSTAGE_CODE AND ws.ORGANIZATION_ID = w.ORGANIZATION_ID
+        WHERE w.ORGANIZATION_ID = :organizationId AND w.WORKSTAGE_CODE <> '*' AND w.INVENTORY_QTY <> 0
+        ORDER BY w.WORKSTAGE_CODE, w.ITEM_CODE`,
+      namedBinds({ organizationId }),
+    )) as OracleRow[];
+  }
+
+  /** 공정간 이동 — 최근 days 일 (기본 7일). 이동 원장(ENTER_BY = 'WS_MOVE') 한 쌍마다 한 줄 */
+  async findMoves(organizationId: number, days = 7) {
+    return (await this.dataSource.query(
+      `SELECT TO_CHAR(m.MOVE_DATE, 'YYYY-MM-DD HH24:MI:SS') AS "moveDate", m.MAGAZINE_LABEL_NO AS "magazineLabelNo",
+              m.FROM_WORKSTAGE_CODE AS "fromWorkstageCode", fw.WORKSTAGE_NAME AS "fromWorkstageName",
+              m.TO_WORKSTAGE_CODE AS "toWorkstageCode", tw.WORKSTAGE_NAME AS "toWorkstageName",
+              m.ITEM_CODE AS "itemCode", item.ITEM_NAME AS "itemName", m.MOVE_QTY AS "moveQty",
+              m.RUN_NO AS "runNo", m.LINE_CODE AS "lineCode", m.ENTER_BY AS "enterBy"
+         FROM IM_ITEM_WS_MOVE m
+         LEFT JOIN ID_ITEM item ON item.ITEM_CODE = m.ITEM_CODE AND item.ORGANIZATION_ID = m.ORGANIZATION_ID
+         LEFT JOIN IP_PRODUCT_WORKSTAGE fw ON fw.WORKSTAGE_CODE = m.FROM_WORKSTAGE_CODE AND fw.ORGANIZATION_ID = m.ORGANIZATION_ID
+         LEFT JOIN IP_PRODUCT_WORKSTAGE tw ON tw.WORKSTAGE_CODE = m.TO_WORKSTAGE_CODE AND tw.ORGANIZATION_ID = m.ORGANIZATION_ID
+        WHERE m.ORGANIZATION_ID = :organizationId AND m.MOVE_DATE >= TRUNC(SYSDATE) - :days
+        ORDER BY m.MOVE_DATE DESC
+        FETCH FIRST 5000 ROWS ONLY`,
+      namedBinds({ organizationId, days }),
+    )) as OracleRow[];
   }
 
   private like(value?: string): string {

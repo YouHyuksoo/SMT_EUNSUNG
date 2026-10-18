@@ -30,7 +30,7 @@ export interface ResultHistoryRow {
   workerName: string | null;
   /** WIP | DONE | CANCEL */
   resultStatus: string;
-  /** Y=센서 반영 / N=미반영 / C=취소로 차감됨 */
+  /** 공정재고 반영: Y=반영 / N=미반영 / X=대상 아님 / C=취소로 되돌림 */
   sensorApplyYn: string;
   sensorApplyMsg: string | null;
   /** 'YYYY-MM-DD HH24:MI:SS' */

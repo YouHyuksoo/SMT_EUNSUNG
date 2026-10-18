@@ -12,7 +12,7 @@ describe('PlanBaseService.find actual columns', () => {
   it('MI plan actual comes from DONE work results of run cards whose LOT_NO is the plan MFS', async () => {
     const { sql } = await findSql('mi');
     expect(sql).not.toMatch(/ACTUAL_TIME_V|WORKSTAGE_IO|p\.ACTUAL_QTY/);
-    expect(sql).toContain('IP_PRODUCT_WORK_RESULT');
+    expect(sql).toContain('IP_PRODUCT_RESULT');
     expect(sql).toContain("RESULT_STATUS = 'DONE'");
     expect(sql).toContain('ma.LOT_NO = p.MFS');
     expect(sql).toContain('v.LOT_NO = p.MFS');
@@ -36,6 +36,6 @@ describe('PlanBaseService.find actual columns', () => {
     const { sql } = await findSql('smd');
     expect(sql).toContain('LEFT JOIN IP_ASSEMBLY_ACTUAL_TIME_V v');
     expect(sql).toContain('p.ACTUAL_QTY AS "actualQty"');
-    expect(sql).not.toContain('IP_PRODUCT_WORK_RESULT');
+    expect(sql).not.toContain('IP_PRODUCT_RESULT');
   });
 });

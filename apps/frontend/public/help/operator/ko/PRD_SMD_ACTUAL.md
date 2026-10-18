@@ -18,12 +18,12 @@ related: []
 ## 데이터 구조
 
 - 모든 생산실적 쓰기는 `P_ASSY_RESULT_ADD(p_run_no, p_line_code, p_time, p_qty, p_source, p_remark, p_user, …)` 하나를 거칩니다.
-  - 생산 품목: 런카드(`IP_PRODUCT_RUN_CARD`)의 MODEL_NAME·PCB_ITEM(T/B) → `IP_PRODUCT_MODEL_MASTER.TOP_ITEM_CODE`/`BOTTOM_ITEM_CODE`.
+  - 생산 품목: 런카드(`IP_PRODUCT_RUN_CARD`)의 제품(ITEM_CODE)·면(PCB_ITEM T/B) → 제품 BOM(`ID_ENG_BOM`) 반제품 행 중 `PCB_ITEM` 이 그 면 또는 `*`(양면)인 품목. 모델 분류(`BOM_EXPLODE_TYPE`)가 RAW 면 제품 자신.
   - `PRODUCT_DATE` = `F_GET_WORK_ACTUAL_DATE(p_time,'A')` 작업일, `TIME_DIVISION` = `F_GET_WORKTIME_ZONE` 시간대(A~E 주간, F~J 야간).
   - 전환 시각(`ISYS_CONFIG.WIP_DIRECT_CONSUME_FROM`) 이후 실적은 같은 트랜잭션에서 공정입고(반제품)·공정출고(직속 자품목)를 만들고 `WORKSTAGE_ISSUE_YN='Y'` 로 남깁니다.
 - 구분(`ENTER_BY`, 뷰 `ACTUAL_SOURCE`):
   - `AOI_JOB` — `TRG_IQ_AOI_ASSY_RESULT` 가 AOI 양품 PID 를 실시간으로 더합니다(`P_ASSY_RESULT_ADD_PID`, PID·면 중복 제거, 수량 = 모델 `PCB_TOTAL_QTY` 또는 1). 같은 시간·시간대 행에 누적합니다. 놓친 PID 는 매일 07:40 잡(`P_ASSY_RESULT_FROM_AOI(48)`)이 채웁니다. 실패는 `ISYS_BATCHJOBERRLOG`(BATCH_JOB_OBJECT_NAME=`TRG_IQ_AOI_ASSY_RESULT`, NG)에 남습니다.
-  - `WORK_RESULT` — 작업실적 완료(SMT 라인) 시 MANUAL 로 넣습니다. REMARK = `런-순번`, 취소는 같은 실적 시각의 음수 행(REMARK `… 취소`).
+  - `WORK_RESULT` — 2026-10-18까지 작업실적 완료(SMT 라인) 시 MANUAL 로 넣었습니다. 2026-10-19부터 OEE 작업실적은 SMT 지시를 받지 않아 새로 생기지 않습니다. REMARK = `런-순번`, 취소는 같은 실적 시각의 음수 행(REMARK `… 취소`).
   - `ASSY_ADJUST` — 보정. REMARK = 사유. 뷰의 `ADJUST_QTY` 는 보정 행의 수량입니다.
 - 뷰의 `RECEIPT_DATE` = 작업일(PRODUCT_DATE), `LAST_RECEIPT_DATE` = 실적 시각(PRODUCT_ACTUAL_TIME).
 
@@ -71,5 +71,5 @@ related: []
 ## 운영 포인트
 
 - 자동 실적은 계획일과 같은 작업일의 생산실적만 붙습니다. 계획일보다 앞당기거나 다음날 이어서 생산한 수량은 해당 계획에 붙지 않습니다.
-- AOI 자동 실적이 안 생기면 순서대로 확인합니다: AOI 행 RUN_NO 가 `*`/빈 값인지 → 런카드 PCB_ITEM 이 T/B 인지 → 모델 마스터의 그 면 품목(TOP/BOTTOM_ITEM_CODE)이 있는지 → `ID_ITEM` 에 품목이 있는지 → `ISYS_BATCHJOBERRLOG` NG 로그.
+- AOI 자동 실적이 안 생기면 순서대로 확인합니다: AOI 행 RUN_NO 가 `*`/빈 값인지 → 런카드 PCB_ITEM 이 T/B 인지 → 제품 BOM 에 그 면(또는 `*`) 표시된 반제품 행이 있는지 → `ID_ITEM` 에 품목이 있는지 → `ISYS_BATCHJOBERRLOG` NG 로그.
 - 전환 이전(`WORKSTAGE_ISSUE_YN='N'`) 실적을 보정하면 공정재고는 움직이지 않습니다.

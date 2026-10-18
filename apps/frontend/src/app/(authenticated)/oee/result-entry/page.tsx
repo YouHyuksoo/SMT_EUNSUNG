@@ -32,7 +32,8 @@ interface LineSelectionModalProps {
   onApply: (processCode: OeeProcessCode, lineCodes: string[]) => void;
 }
 
-const PROCESS_CODES: OeeProcessCode[] = ['SMT', 'ASSY'];
+// SMT 실적은 AOI 로 자동 집계된다 — 이 화면은 조립 공정 지시만 받는다
+const PROCESS_CODES: OeeProcessCode[] = ['ASSY'];
 const LINE_SELECTION_STORAGE_PREFIX = 'oee-result-entry-line-selection';
 
 function currentKstDate(): string {
@@ -47,7 +48,7 @@ function currentKstDate(): string {
 }
 
 function isProcessCode(value: unknown): value is OeeProcessCode {
-  return value === 'SMT' || value === 'ASSY';
+  return value === 'ASSY';
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -293,7 +294,7 @@ export default function OeeResultEntryPage() {
   const [resources, setResources] = useState<OeeResource[]>([]);
   const [resourcesLoading, setResourcesLoading] = useState(true);
   const [resourceError, setResourceError] = useState('');
-  const [appliedProcessCode, setAppliedProcessCode] = useState<OeeProcessCode>('SMT');
+  const [appliedProcessCode, setAppliedProcessCode] = useState<OeeProcessCode>('ASSY');
   const [appliedLineCodes, setAppliedLineCodes] = useState<string[]>([]);
   const [lineModalOpen, setLineModalOpen] = useState(false);
   const [selectionHydratedFor, setSelectionHydratedFor] = useState<string | null>(null);
@@ -376,7 +377,7 @@ export default function OeeResultEntryPage() {
     if (resourcesLoading || selectionHydratedFor === selectionScope) return;
 
     const stored = lineSelectionStorageKey ? readStoredSelection(lineSelectionStorageKey) : null;
-    const restoredProcessCode = stored?.processCode ?? 'SMT';
+    const restoredProcessCode = stored?.processCode ?? 'ASSY';
     const availableLineCodes = new Set(
       resources.filter((resource) => resource.processCode === restoredProcessCode).map((resource) => resource.lineCode),
     );

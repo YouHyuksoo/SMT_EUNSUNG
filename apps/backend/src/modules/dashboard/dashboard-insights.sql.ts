@@ -6,7 +6,7 @@
  * 1. 바인드는 :day 하나(YYYY-MM-DD, 비면 오늘). 선택일 포함 7일을 달력(calendar)으로 만들어 빈 날도 행이 나온다
  * 2. 계획: SMD 는 IP_PRODUCT_SMD_PLAN 의 PLAN_QTY 합, 제품은 후공정 생산지시(런카드) 지시수량 합(공정마다 지시가 따로라 지시 대비로 본다)
  * 3. 실적: SMD 는 IP_ASSEMBLY_ACTUAL_TIME_V 시간대 10칸(A~J) 합, 제품은 후공정 생산지시 확정 실적
- *    (IP_PRODUCT_WORK_RESULT, planning/order-result.sql.ts)을 입력 시각의 작업일(08:30 시작)로 묶는다
+ *    (IP_PRODUCT_RESULT, planning/order-result.sql.ts)을 입력 시각의 작업일(08:30 시작)로 묶는다
  * 4. 실적만 있고 계획이 없는 라인도 UNION ALL 로 합쳐서 남긴다 (한쪽만 JOIN 하면 사라진다)
  * 5. 조직(ORGANIZATION_ID)은 getSummary 와 같이 1 이다. 실적 뷰에는 조직 컬럼이 없다
  */

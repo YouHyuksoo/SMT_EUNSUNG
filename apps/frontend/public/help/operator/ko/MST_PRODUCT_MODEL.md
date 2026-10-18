@@ -2,29 +2,39 @@
 
 `IP_PRODUCT_MODEL_MASTER`의 모델 목록과 BOM 전개 방식을 다룹니다. 설계: `docs/specs/2026-10-17-wip-semi-product-from-aoi-design.md`.
 
-## 저장 칼럼 (IP_PRODUCT_MODEL_MASTER)
+## 저장 위치
+
+모델 마스터에는 분류 기준만 두고, 면별 생산 품목은 BOM 이 정본입니다.
+
+### 모델 마스터 (IP_PRODUCT_MODEL_MASTER)
 
 | 칼럼 | 뜻 |
 |---|---|
 | `BOM_EXPLODE_TYPE` | 공통코드 `BOM EXPLODE TYPE` — TB · SUB · NEST · SINGLE · RAW · NONE |
-| `TOP_ITEM_CODE` | AOI T면 실적이 만드는 품목 |
-| `BOTTOM_ITEM_CODE` | AOI B면 실적이 만드는 품목 |
 | `INSERT_ITEM_CODE` | SUB 공정 품목 (SUB-Assy). SUB-Assy 아래 TOP·BOT 구조에서만 자동으로 채운다 |
 | `BOM_EXPLODE_SOURCE` | A = 자동 분류, M = 사람이 정함 |
 | `BOM_EXPLODE_NOTE` | 자동 분류 메모 |
 
 - 모델 키는 `MODEL_NAME` 입니다(PK). 고객사품번(`PART_NO`)은 여러 모델이 같은 값을 씁니다(2026-10-17 기준 12개 품번).
-- `TOP_ITEM_CODE`·`BOTTOM_ITEM_CODE`·`INSERT_ITEM_CODE` 는 원래 있던 칼럼입니다(`INSERT_ITEM_CODE` 는 SUB 공정 모델 항목). 2026-10-17 기준 전부 비어 있었고 다른 코드에서 쓰지 않았습니다.
+- `INSERT_ITEM_CODE` 는 원래 있던 칼럼입니다(SUB 공정 모델 항목). `TOP_ITEM_CODE`·`BOTTOM_ITEM_CODE` 는 쓰지 않습니다(면별 생산 품목은 BOM).
+
+### 면별 생산 품목 (ID_ENG_BOM.PCB_ITEM)
+
+- 제품 BOM 의 **반제품 행**(자식이 있는 행, 부모 `*` 제외) `PCB_ITEM` 에 `T` / `B` / `*`(양면 — 같은 반제품을 두 면에서 생산)를 씁니다.
+- 말단 부품 행의 `PCB_ITEM`(부품 실장 면)은 다루지 않습니다.
+- 분류 RAW(원자재만)는 제품 자신이 생산 품목이라 BOM 에 쓰지 않습니다.
+- 실적 프로시저 `P_ASSY_RESULT_ADD` 는 런카드 제품·면으로 이 표시를 찾습니다(같은 면 우선, 없으면 `*`). 제품 입고 소비 `P_WIP_ISSUE_CREATE` 의 직속 규칙도 이 표시를 씁니다(RAW 는 SMT 런카드가 있는 제품만).
+- 면 표시는 제품 BOM 에 하나라서 같은 제품을 쓰는 모델 모두에 적용됩니다. 2026-10-17 분류 결과로 191행을 채웠습니다. 원복: `docs/sql/bom-semi-pcb-item-rollback-2026-10-17.sql`
 - 마이그레이션: `apps/backend/src/migrations/2026-10-17_model_master_bom_explode.sql`
 
 ## API
 
 | 경로 | 동작 |
 |---|---|
-| `GET /master/product-models/bom-explode` | 모델 목록 + 전개 방식 |
-| `POST /master/product-models/bom-explode/classify` | 자동 분류. 사람이 정한 행(M)은 건너뜀. `modelNames` 로 범위 지정 가능 |
+| `GET /master/product-models/bom-explode` | 모델 목록 + 전개 방식. 면별 품목은 BOM 면 표시에서 읽음 |
+| `POST /master/product-models/bom-explode/classify` | 자동 분류. 사람이 정한 행(M)과 그 제품 BOM 은 건너뜀. `modelNames` 로 범위 지정 가능 |
 | `GET /master/product-models/bom-explode/candidates?modelName=` | 제품 자신 + 그 BOM 반제품 (면 추정 포함) |
-| `PATCH /master/product-models/bom-explode` (본문 `modelName`) | 사람이 정함 (M) |
+| `PATCH /master/product-models/bom-explode` (본문 `modelName`) | 사람이 정함 (M). 분류 기준은 모델 마스터, 면별 품목은 BOM 반제품 행 면 표시로 저장 |
 
 ## 자동 분류 규칙 (`bom-explode.classify.ts`)
 

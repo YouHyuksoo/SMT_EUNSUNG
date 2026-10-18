@@ -19,6 +19,18 @@ export class WorkstageInventoryController {
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
+  @Get('by-workstage')
+  @ApiOperation({ summary: '공정별 공정재고 — 공정이 정해진 행 (W180 SMT 반제품·후공정 이동분)' })
+  async findByWorkstage(@OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.findByWorkstage(organizationId));
+  }
+
+  @Get('moves')
+  @ApiOperation({ summary: '공정간 이동 — 후공정 매거진 스캔 (최근 7일)' })
+  async findMoves(@OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.findMoves(organizationId));
+  }
+
   @Get('products')
   @ApiOperation({ summary: '공정에 있는 제품 — 포장 후 제품창고 미입고 박스' })
   async findProducts(@OrganizationId() organizationId: number) {

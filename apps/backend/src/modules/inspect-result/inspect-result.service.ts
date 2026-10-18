@@ -1,7 +1,7 @@
 // 설비별 검사실적관리 — 검사공정(공정유형 Q) 설비에서 작업지시별 판정(합격/불합격)·수량·불량원인을 쌓는다.
 //
 // 원장: IQ_EQUIP_INSPECT_RESULT (migrations/2026-10-14_iq_equip_inspect_result.sql)
-//   생산실적(IP_PRODUCT_WORK_RESULT)과 별개다. 작업지시(IP_PRODUCT_RUN_CARD)·센서 누적
+//   완제품 실적(IP_PRODUCT_RESULT)과 별개다. 작업지시(IP_PRODUCT_RUN_CARD)·센서 누적
 //   (P_INTERLOCK_SENSOR_ACTUAL_NEO)은 읽기만 하고 쓰지 않는다.
 //   SEQ_NO         = 작업지시별 일련번호 (1부터)
 //   INSPECT_RESULT = P=합격, R=불합격

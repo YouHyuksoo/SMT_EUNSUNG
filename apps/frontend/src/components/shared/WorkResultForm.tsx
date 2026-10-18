@@ -14,7 +14,7 @@
  *    현장 모드는 이력을 다시 읽지 않고 onSaved()만 부른다 — 쓰는 쪽이 모달을 닫는다.
  * 4. fieldMode(현장 화면 전용): 신규 실적 폼을 펼친 채로 열어 탭을 한 번 줄이고,
  *    모달(max-h-75vh) 안에서 스크롤이 생기지 않도록 조밀한 열 배치를 쓴다.
- * 5. 처리구분이 '완료'가 되면 서버가 센서 누적 프로시저를 호출한다. 호출이 실패해도 실적은
+ * 5. 처리구분이 '완료'가 되면 서버가 공정재고 반영(조립라인)을 한다. 호출이 실패해도 실적은
  *    저장되므로, 미반영 실적은 처리구분을 빨간색으로 표기하고 [실적반영]으로 다시 시도한다.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -46,11 +46,11 @@ interface ResultRow {
   seqNo: string; machineCode: string; workstageCode: string; resultQty: number; workTime: number;
   workerCount: number; workerName: string; resultStatus: string; itemCode: string; modelName: string;
   defectQty: number; updatedAt: string;
-  /** 센서 누적 반영 여부. 진행(WIP)은 호출하지 않으므로 'N'이지만 실패가 아니다 */
+  /** 공정재고 반영 여부. 진행(WIP)은 반영하지 않으므로 'N'이지만 실패가 아니다 */
   sensorApplyYn?: string; sensorApplyMsg?: string | null;
 }
 
-/** 완료인데 센서에 아직 반영되지 않은 실적 — 처리구분을 빨간색으로 표기한다 */
+/** 완료인데 공정재고에 아직 반영되지 않은 실적 — 처리구분을 빨간색으로 표기한다 */
 function isSensorPending(h: ResultRow) {
   return sensorPending(h.resultStatus, h.sensorApplyYn);
 }
@@ -70,8 +70,8 @@ const historyColumns: ColumnDef<ResultRow>[] = [
       const h = row.original;
       if (h.resultStatus !== 'DONE') return '진행';
       return isSensorPending(h)
-        // 센서 미반영 — 빨간색으로 구분하고 사유는 title로 보여준다
-        ? <span className="text-red-600 font-semibold" title={h.sensorApplyMsg ?? '생산실적에 반영되지 않았습니다'}>완료</span>
+        // 공정재고 미반영 — 빨간색으로 구분하고 사유는 title로 보여준다
+        ? <span className="text-red-600 font-semibold" title={h.sensorApplyMsg ?? '공정재고에 반영되지 않았습니다'}>완료</span>
         : <span className="text-blue-600 font-semibold">완료</span>;
     } },
 ];
@@ -182,7 +182,7 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
   const readOnly = form?.savedStatus === 'DONE';
 
   // [실적반영]은 선택한 실적이 '완료 + 미반영'일 때만 누를 수 있다. 이미 반영된 건을 다시
-  // 부르면 센서 수량이 가산되므로 서버도 거부한다.
+  // 부르면 공정재고가 두 번 움직이므로 서버도 거부한다.
   const selectedRow = history.find((h) => h.seqNo === form?.seqNo);
   const canApplySensor = !!selectedRow && isSensorPending(selectedRow);
 
@@ -196,14 +196,14 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
         runNo: run.runNo, seqNo: selectedRow.seqNo,
       });
       const warning = res.data?.data?.sensorWarning as string | undefined;
-      if (warning) toast.error(`생산실적 반영 실패 — ${warning}`);
-      else toast.success('생산실적에 반영되었습니다');
+      if (warning) toast.error(`공정재고 반영 실패 — ${warning}`);
+      else toast.success('공정재고에 반영되었습니다');
       await loadHistory();
       await onSaved?.();
     } catch (e: unknown) {
       const msg = e && typeof e === 'object' && 'response' in e
         ? (e as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
-      toast.error(msg || '생산실적 반영에 실패했습니다');
+      toast.error(msg || '공정재고 반영에 실패했습니다');
     } finally {
       setApplying(false);
     }
@@ -223,10 +223,10 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
       const res = form.seqNo
         ? await api.put('/oee/work-result/results', payload)
         : await api.post('/oee/work-result/results', payload);
-      // 처리구분을 '완료'로 저장하면 서버가 센서 누적 프로시저를 부른다. 실패해도 실적은
+      // 처리구분을 '완료'로 저장하면 서버가 공정재고에 반영한다. 실패해도 실적은
       // 저장되므로 경고만 띄우고, 미반영 상태는 이력의 처리구분 색으로 남는다.
       const warning = res.data?.data?.sensorWarning as string | undefined;
-      if (warning) toast.error(`실적은 저장됐지만 생산실적 반영에 실패했습니다 — ${warning}`);
+      if (warning) toast.error(`실적은 저장됐지만 공정재고 반영에 실패했습니다 — ${warning}`);
       else toast.success('실적이 저장되었습니다');
       // 현장 모드는 저장하면 바로 모달을 닫는다(onSaved가 닫는다).
       // 이력을 다시 읽거나 폼을 접으면 닫히기 직전에 이력 화면이 잠깐 비친다.
@@ -290,10 +290,10 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold text-text">{form.seqNo ? `실적 상세 (일련 ${form.seqNo})` : '신규 실적'}</span>
-              {/* 생산실적 반영에 실패한 실적을 다시 프로시저로 넘긴다 — 선택한 실적에만 해당한다 */}
+              {/* 공정재고 반영에 실패한 실적을 다시 반영한다 — 선택한 실적에만 해당한다 */}
               {canApplySensor && (
                 <button type="button" onClick={applySensorNow} disabled={applying}
-                  title={selectedRow?.sensorApplyMsg ?? '생산실적에 반영되지 않았습니다'}
+                  title={selectedRow?.sensorApplyMsg ?? '공정재고에 반영되지 않았습니다'}
                   className="text-xs rounded px-2 py-1 flex items-center gap-1 border border-red-500 text-red-600 hover:bg-red-50 disabled:opacity-50">
                   <RefreshCw className={`w-3 h-3 ${applying ? 'animate-spin' : ''}`} />실적반영
                 </button>

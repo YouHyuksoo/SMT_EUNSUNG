@@ -16,10 +16,16 @@ CREATE OR REPLACE PROCEDURE P_ASSY_RESULT_ADD (
    * 작성일     : 2026-10-17
    * 수정이력:
    *   2026-10-17 - AI(Claude) - 조립실적 한 건을 넣고 공정재고를 움직인다 (AOI 실시간 · 수기 작업실적 · 보정 공용)
+   *   2026-10-17 - AI(Claude) - 생산 품목을 모델 마스터 면 품목이 아니라 BOM 면(ID_ENG_BOM.PCB_ITEM)으로 찾는다
+   *   2026-10-18 - AI(Claude) - 생산 품목 판정을 F_GET_ASSY_SEMI_ITEM 으로 옮기고, 공정재고 행을 SMT 공정(W180)에 남긴다
+   *                             (후공정에서 매거진을 스캔하면 P_WIP_MOVE_BY_MAGAZINE 이 W180 에서 그 공정으로 옮긴다)
+   *   2026-10-18 - AI(Claude) - 원자재 소비는 공정 미지정('*')에서 뺀다 (라인 출고 공정입고가 '*' 로 들어온다). 반제품만 W180
    * ================================================================
    * 기능 설명:
    *   설계: docs/specs/2026-10-17-wip-semi-product-from-aoi-design.md
-   *   - 생산 품목: 런카드(RUN_NO) 면(PCB_ITEM T/B)과 모델(MODEL_NAME) → 모델 마스터 TOP_ITEM_CODE / BOTTOM_ITEM_CODE.
+   *   - 생산 품목 (BOM 기준): 런카드(RUN_NO)의 제품(ITEM_CODE)·면(PCB_ITEM T/B)으로 찾는다.
+   *       모델 분류(IP_PRODUCT_MODEL_MASTER.BOM_EXPLODE_TYPE)가 RAW(원자재만)면 제품 자신.
+   *       그 외는 제품 BOM 에서 면(PCB_ITEM)이 런카드 면 또는 '*'(양면)인 반제품(자식이 있는 행). 같은 면이 우선.
    *     생산 품목이 없거나 품목·라인 마스터에 없으면 넣지 않고 p_result 에 이유를 돌려준다 (예외를 던지지 않는다).
    *   - 조립실적 (IP_ASSEMBLY_RESULT):
    *       AOI    : (작업일, 런, 라인, 품목, 시각의 시(時), 시간대 A~J, 소모 여부) 한 행에 수량을 더한다. ENTER_BY = 'AOI_JOB'.
@@ -27,8 +33,9 @@ CREATE OR REPLACE PROCEDURE P_ASSY_RESULT_ADD (
    *       ADJUST : 한 건 한 행. ENTER_BY = 'ASSY_ADJUST', REMARK = 사유.
    *     TIME_DIVISION = F_GET_WORKTIME_ZONE (센서실적과 같은 A~J 시간대). WORKSTAGE_ISSUE_YN = 소모 여부(Y/N).
    *   - 공정재고 (실적 시각 >= ISYS_CONFIG WIP_DIRECT_CONSUME_FROM 일 때만):
+   *       공정(WORKSTAGE_CODE): 반제품 입고와 반제품 자품목 출고는 W180(SMT), 원자재 출고는 '*'(라인 출고와 같은 곳).
    *       공정입고 생산 품목 +수량, 공정출고 직속 자품목 × 소요량 × 수량.
-   *       자품목이 AOI 로 만들지 않는 반제품(이 모델 TOP·BOTTOM 품목이 아니면서 BOM 아래가 있는 것)이면 한 단계씩 더 펼친다.
+   *       자품목이 AOI 로 만들지 않는 반제품(BOM 면 표시가 없으면서 BOM 아래가 있는 것)이면 한 단계씩 더 펼친다.
    *       자기 BOM 이 따로 있는 말단 품목(자체 생산 반제품)은 빼지 않는다 (P_WIP_ISSUE_CREATE 와 같다).
    *       AOI    : 시간대·품목별 한 행에 더한다 (ENTER_BY = 'AOI_RT', 구분 1·3).
    *       MANUAL : 건별 행 (ENTER_BY = 'ASSY_MANUAL'), ADJUST : 건별 행 (ENTER_BY = 'ASSY_ADJ').
@@ -37,12 +44,11 @@ CREATE OR REPLACE PROCEDURE P_ASSY_RESULT_ADD (
    * ================================================================ */
 IS
    c_aoi_ws    CONSTANT VARCHAR2(10) := 'W060';   -- AOI 공정 (IP_PRODUCT_WORKSTAGE)
+   c_smt_ws    CONSTANT VARCHAR2(10) := 'W180';   -- 공정재고 공정: SMT(1층). 매거진 라벨도 이 공정에서 발행한다
    v_side      VARCHAR2(1);
    v_model     VARCHAR2(100);
    v_product   VARCHAR2(30);
    v_item      VARCHAR2(30);
-   v_top       VARCHAR2(30);
-   v_bottom    VARCHAR2(30);
    v_line      VARCHAR2(20);
    v_cnt       NUMBER;
    v_time      DATE := NVL(p_time, SYSDATE);
@@ -67,13 +73,8 @@ BEGIN
        WHERE r.RUN_NO = p_run_no AND r.ORGANIZATION_ID = 1 AND r.PCB_ITEM IN ('T', 'B') AND ROWNUM = 1;
    EXCEPTION WHEN NO_DATA_FOUND THEN p_result := 'SMT 런카드(면 T/B) 없음'; RETURN;
    END;
-   BEGIN
-      SELECT m.TOP_ITEM_CODE, m.BOTTOM_ITEM_CODE INTO v_top, v_bottom
-        FROM IP_PRODUCT_MODEL_MASTER m WHERE m.MODEL_NAME = v_model AND m.ORGANIZATION_ID = 1;
-   EXCEPTION WHEN NO_DATA_FOUND THEN p_result := '모델 마스터 없음 ' || v_model; RETURN;
-   END;
-   v_item := CASE v_side WHEN 'T' THEN v_top ELSE v_bottom END;
-   IF v_item IS NULL THEN p_result := v_model || ' ' || v_side || '면 생산 품목 미지정'; RETURN; END IF;
+   v_item := F_GET_ASSY_SEMI_ITEM(p_run_no);
+   IF v_item IS NULL THEN p_result := v_product || ' BOM 에 ' || v_side || '면 반제품 표시 없음'; RETURN; END IF;
    SELECT COUNT(*) INTO v_cnt FROM ID_ITEM WHERE ITEM_CODE = v_item AND ORGANIZATION_ID = 1;
    IF v_cnt = 0 THEN p_result := '품목 마스터에 없음 ' || v_item; RETURN; END IF;
    v_line := NVL(p_line_code, '*');
@@ -138,12 +139,20 @@ BEGIN
          ON (t.ENTER_BY = 'AOI_RT' AND t.RECEIPT_DATE = s.d AND t.ITEM_CODE = s.c AND t.ORGANIZATION_ID = 1)
        WHEN MATCHED THEN UPDATE SET t.RECEIPT_QTY = t.RECEIPT_QTY + p_qty, t.LAST_MODIFY_DATE = SYSDATE
        WHEN NOT MATCHED THEN INSERT (RECEIPT_DATE, RECEIPT_SEQUENCE, ORGANIZATION_ID, ITEM_CODE, RECEIPT_DEFICIT, RECEIPT_QTY,
-                                     ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY)
-                             VALUES (s.d, SEQ_WORKSTAGE_RECEIPT_SEQ.NEXTVAL, 1, s.c, '1', p_qty, SYSDATE, 'AOI_RT', SYSDATE, 'AOI_RT');
+                                     ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, WORKSTAGE_CODE)
+                             VALUES (s.d, SEQ_WORKSTAGE_RECEIPT_SEQ.NEXTVAL, 1, s.c, '1', p_qty, SYSDATE, 'AOI_RT', SYSDATE, 'AOI_RT', c_smt_ws);
       -- 공정출고: 직속 자품목
       MERGE INTO IM_ITEM_WORKSTAGE_ISSUE t
       USING (
-         WITH tr (child, qty) AS (
+         WITH semi AS (
+            SELECT DISTINCT b.CHILD_ITEM_CODE c
+              FROM ID_ENG_BOM b
+             WHERE b.ITEM_CODE = v_product AND b.ORGANIZATION_ID = 1 AND b.PARENT_ITEM_CODE <> '*'
+               AND b.PCB_ITEM IN ('T', 'B', '*') AND b.CHILD_ITEM_CODE <> b.PARENT_ITEM_CODE
+               AND EXISTS (SELECT 1 FROM ID_ENG_BOM k WHERE k.ITEM_CODE = v_product AND k.PARENT_ITEM_CODE = b.CHILD_ITEM_CODE
+                                                      AND k.ORGANIZATION_ID = 1 AND k.CHILD_ITEM_CODE <> k.PARENT_ITEM_CODE)
+         ),
+         tr (child, qty) AS (
             SELECT b.CHILD_ITEM_CODE, b.ITEM_UNIT_QTY
               FROM ID_ENG_BOM b
              WHERE b.ITEM_CODE = v_product AND b.PARENT_ITEM_CODE = v_item AND b.ORGANIZATION_ID = 1
@@ -155,36 +164,44 @@ BEGIN
                 ON b.ITEM_CODE = v_product AND b.PARENT_ITEM_CODE = tr.child AND b.ORGANIZATION_ID = 1
                AND b.CHILD_ITEM_CODE <> b.PARENT_ITEM_CODE
                AND NVL(b.DATESET, DATE '1900-01-01') <= SYSDATE AND NVL(b.DATEEND, DATE '9999-12-31') >= TRUNC(SYSDATE)
-             WHERE tr.child NOT IN (NVL(v_top, '#'), NVL(v_bottom, '#'))
+             WHERE tr.child NOT IN (SELECT c FROM semi)
          )
-         SELECT v_hour d, tr.child c, SUM(tr.qty) * p_qty q
-           FROM tr
-          WHERE tr.child IN (NVL(v_top, '#'), NVL(v_bottom, '#'))
+         SELECT v_hour d, tr.child c, SUM(tr.qty) * p_qty q, CASE WHEN sm.c IS NOT NULL THEN c_smt_ws ELSE '*' END w
+           FROM tr LEFT JOIN semi sm ON sm.c = tr.child
+          WHERE sm.c IS NOT NULL
              OR (NOT EXISTS (SELECT 1 FROM ID_ENG_BOM s WHERE s.ITEM_CODE = v_product AND s.PARENT_ITEM_CODE = tr.child
                                                           AND s.ORGANIZATION_ID = 1 AND s.CHILD_ITEM_CODE <> s.PARENT_ITEM_CODE)
                  AND NOT EXISTS (SELECT 1 FROM ID_ENG_BOM m WHERE m.ITEM_CODE = tr.child AND m.ORGANIZATION_ID = 1))
-          GROUP BY tr.child
+          GROUP BY tr.child, sm.c
          HAVING SUM(tr.qty) > 0
       ) s
          ON (t.ENTER_BY = 'AOI_RT' AND t.ISSUE_DATE = s.d AND t.ITEM_CODE = s.c AND t.ORGANIZATION_ID = 1)
        WHEN MATCHED THEN UPDATE SET t.ISSUE_QTY = t.ISSUE_QTY + s.q, t.LAST_MODIFY_DATE = SYSDATE
        WHEN NOT MATCHED THEN INSERT (ISSUE_DATE, ISSUE_SEQUENCE, ORGANIZATION_ID, ITEM_CODE, ISSUE_DEFICIT, ISSUE_QTY,
-                                     ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY)
-                             VALUES (s.d, SEQ_WORKSTAGE_ISSUE_SEQ.NEXTVAL, 1, s.c, '3', s.q, SYSDATE, 'AOI_RT', SYSDATE, 'AOI_RT');
+                                     ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, WORKSTAGE_CODE)
+                             VALUES (s.d, SEQ_WORKSTAGE_ISSUE_SEQ.NEXTVAL, 1, s.c, '3', s.q, SYSDATE, 'AOI_RT', SYSDATE, 'AOI_RT', s.w);
    ELSE
       -- 수기·보정: 건별 행. 부호에 따라 구분을 바꾼다 (체크 제약: 입고 1 ≥ 0 / 2 ≤ 0, 출고 3 ≥ 0 / 4 ≤ 0)
       v_ws_by := CASE p_source WHEN 'MANUAL' THEN 'ASSY_MANUAL' ELSE 'ASSY_ADJ' END;
       v_key := TO_CHAR(v_date, 'YYYYMMDD') || '-' || v_seq;
       INSERT INTO IM_ITEM_WORKSTAGE_RECEIPT (RECEIPT_DATE, RECEIPT_SEQUENCE, ORGANIZATION_ID, ITEM_CODE, RECEIPT_DEFICIT, RECEIPT_QTY,
-                                             ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY)
+                                             ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, WORKSTAGE_CODE)
       VALUES (v_time, SEQ_WORKSTAGE_RECEIPT_SEQ.NEXTVAL, 1, v_item, CASE WHEN p_qty >= 0 THEN '1' ELSE '2' END, p_qty,
-              SYSDATE, v_ws_by, SYSDATE, v_key);
+              SYSDATE, v_ws_by, SYSDATE, v_key, c_smt_ws);
       INSERT INTO IM_ITEM_WORKSTAGE_ISSUE (ISSUE_DATE, ISSUE_SEQUENCE, ORGANIZATION_ID, ITEM_CODE, ISSUE_DEFICIT, ISSUE_QTY,
-                                           ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY)
+                                           ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, WORKSTAGE_CODE)
       SELECT v_time, SEQ_WORKSTAGE_ISSUE_SEQ.NEXTVAL, 1, x.c, CASE WHEN x.q >= 0 THEN '3' ELSE '4' END, x.q,
-             SYSDATE, v_ws_by, SYSDATE, v_key
+             SYSDATE, v_ws_by, SYSDATE, v_key, x.w
         FROM (
-         WITH tr (child, qty) AS (
+         WITH semi AS (
+            SELECT DISTINCT b.CHILD_ITEM_CODE c
+              FROM ID_ENG_BOM b
+             WHERE b.ITEM_CODE = v_product AND b.ORGANIZATION_ID = 1 AND b.PARENT_ITEM_CODE <> '*'
+               AND b.PCB_ITEM IN ('T', 'B', '*') AND b.CHILD_ITEM_CODE <> b.PARENT_ITEM_CODE
+               AND EXISTS (SELECT 1 FROM ID_ENG_BOM k WHERE k.ITEM_CODE = v_product AND k.PARENT_ITEM_CODE = b.CHILD_ITEM_CODE
+                                                      AND k.ORGANIZATION_ID = 1 AND k.CHILD_ITEM_CODE <> k.PARENT_ITEM_CODE)
+         ),
+         tr (child, qty) AS (
             SELECT b.CHILD_ITEM_CODE, b.ITEM_UNIT_QTY
               FROM ID_ENG_BOM b
              WHERE b.ITEM_CODE = v_product AND b.PARENT_ITEM_CODE = v_item AND b.ORGANIZATION_ID = 1
@@ -196,15 +213,15 @@ BEGIN
                 ON b.ITEM_CODE = v_product AND b.PARENT_ITEM_CODE = tr.child AND b.ORGANIZATION_ID = 1
                AND b.CHILD_ITEM_CODE <> b.PARENT_ITEM_CODE
                AND NVL(b.DATESET, DATE '1900-01-01') <= SYSDATE AND NVL(b.DATEEND, DATE '9999-12-31') >= TRUNC(SYSDATE)
-             WHERE tr.child NOT IN (NVL(v_top, '#'), NVL(v_bottom, '#'))
+             WHERE tr.child NOT IN (SELECT c FROM semi)
          )
-         SELECT tr.child c, SUM(tr.qty) * p_qty q
-           FROM tr
-          WHERE tr.child IN (NVL(v_top, '#'), NVL(v_bottom, '#'))
+         SELECT tr.child c, SUM(tr.qty) * p_qty q, CASE WHEN sm.c IS NOT NULL THEN c_smt_ws ELSE '*' END w
+           FROM tr LEFT JOIN semi sm ON sm.c = tr.child
+          WHERE sm.c IS NOT NULL
              OR (NOT EXISTS (SELECT 1 FROM ID_ENG_BOM s WHERE s.ITEM_CODE = v_product AND s.PARENT_ITEM_CODE = tr.child
                                                           AND s.ORGANIZATION_ID = 1 AND s.CHILD_ITEM_CODE <> s.PARENT_ITEM_CODE)
                  AND NOT EXISTS (SELECT 1 FROM ID_ENG_BOM m WHERE m.ITEM_CODE = tr.child AND m.ORGANIZATION_ID = 1))
-          GROUP BY tr.child
+          GROUP BY tr.child, sm.c
          HAVING SUM(tr.qty) > 0
         ) x;
    END IF;

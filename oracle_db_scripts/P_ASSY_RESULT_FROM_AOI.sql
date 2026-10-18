@@ -36,7 +36,7 @@ BEGIN
    IF p_from IS NOT NULL THEN
       v_from := p_from;
    ELSE
-      SELECT MAX(INSPECT_DATE) INTO v_last FROM IP_ASSEMBLY_RESULT_AOI_PID WHERE ORGANIZATION_ID = 1;
+      SELECT MAX(INSPECT_DATE) INTO v_last FROM IP_ASSEMBLY_RESULT_PID WHERE ORGANIZATION_ID = 1;
       v_from := NVL(TO_CHAR(TO_DATE(v_last, 'YYYY/MM/DD HH24:MI:SS') - p_lookback_hours / 24, 'YYYY/MM/DD HH24:MI:SS'), v_start);
    END IF;
    IF v_from < v_start THEN v_from := v_start; END IF;
@@ -55,7 +55,7 @@ BEGIN
                          AND (RESULT IS NULL OR UPPER(TRIM(RESULT)) NOT IN ('MASTEROK', 'MASTERNG'))) a) c
        WHERE c.RN = 1 AND c.GOOD = 1
          -- 미리 거르기만 한다. 정확한 중복 판정(PID·면)은 P_ASSY_RESULT_ADD_PID 가 한다
-         AND NOT EXISTS (SELECT 1 FROM IP_ASSEMBLY_RESULT_AOI_PID p
+         AND NOT EXISTS (SELECT 1 FROM IP_ASSEMBLY_RESULT_PID p
                           WHERE p.PID = c.PID AND p.RUN_NO = c.RUN_NO AND p.ORGANIZATION_ID = 1))
    LOOP
       v_seen := v_seen + 1;

@@ -1,22 +1,23 @@
 // 설비별 작업 실적관리 — IP_PRODUCT_RUN_CARD 기준 실적/불량/비가동 실 구현
 //
-// 실적 저장 테이블(2026-09-30 복원): IP_PRODUCT_SENSOR_ACTUAL -> IP_PRODUCT_WORK_RESULT
-//   건별 실적 이력은 IP_PRODUCT_WORK_RESULT가 원장이다.
-//   2026-10-17: SMT 라인 완료 실적은 생산실적(조립실적 IP_ASSEMBLY_RESULT)에 MANUAL 로 넣는다
-//   (예전에는 센서 누적 프로시저 P_INTERLOCK_SENSOR_ACTUAL_NEO). AssemblyResultService → P_ASSY_RESULT_ADD 가
-//   생산 품목·시간대를 정하고, 전환 이후면 공정재고(반제품 입고 + 직속 자품목 출고)도 같은 규칙으로 움직인다.
-//   설계: docs/specs/2026-10-17-wip-semi-product-from-aoi-design.md
+// 실적 저장 테이블(2026-10-19): 완제품 실적 IP_PRODUCT_RESULT 가 건별 실적 원장이다 (IP_PRODUCT_WORK_RESULT 는 안 쓴다).
+//   OEE 화면은 SMT 실적을 받지 않는다 — SMT(반제품) 실적은 AOI 로 IP_ASSEMBLY_RESULT 에 자동으로 쌓인다.
+//   조립라인(라인구분 L) 포장 공정(W220) 지시의 완료(DONE) 실적이 완제품 실적이고, P_PRODUCT_RESULT_WIP 로 공정재고를 움직인다
+//   (제품 공정입고 + 반제품·자재 소모). 포장은 공정재고를 움직이지 않고, 제품창고 입고 때 제품을 공정출고한다.
+//   설계: docs/specs/2026-10-17-wip-semi-product-from-aoi-design.md 5-7
 //
-//   SEQ_NO           = 실적 일련번호 (작업지시별 01~99)
-//   RESULT_QTY       = 실적수량
-//   RESULT_STATUS    = 처리구분 (WIP=진행, DONE=완료/수정불가)
-//   SENSOR_APPLY_YN  = 생산실적(조립실적) 반영여부 (칼럼 이름은 예전 그대로). 처리구분이 DONE이 되는 순간
-//                      1회 넣고 결과를 남긴다. WIP는 넣지 않으므로 'N'이지만 실패가 아니다.
-//                      Y 반영 / N 미반영 / X 대상 아님(SMT 아님) / C 취소 차감 완료
+//   RUN_NO · SEQ_NO      = 작업지시 · 실적 일련번호 (작업지시별 01~99). 테이블 키는 PRODUCT_DATE · PRODUCT_SEQUENCE
+//   PRODUCT_ACTUAL_QTY   = 실적수량
+//   RESULT_STATUS        = 처리구분 (WIP=진행, DONE=완료/수정불가, CANCEL=취소 — 취소면 PRODUCT_ACTUAL_STATUS 'C')
+//   WORKSTAGE_ISSUE_YN   = 공정재고 반영여부 (API 이름은 예전 그대로 sensorApplyYn). 처리구분이 DONE이 되는 순간
+//                          1회 반영하고 결과를 남긴다. WIP는 반영하지 않으므로 'N'이지만 실패가 아니다.
+//                          Y 반영 / N 미반영 / X 대상 아님(조립라인 아님·전환 전) / C 취소 되돌림 완료
+//   WORK_DIVISION        = 조립라인 포장 공정 → P(생산), REPAIR → R(수리), 그 밖(조립라인 가공 공정 포함) → W(가공).
+//                          공정재고는 P 만 움직인다. 지금 조립라인 지시는 포장 공정뿐이고(공정 없이 발행되면
+//                          TRG_IP_RUN_CARD_WS_DEFAULT 가 W220), 앞으로 내릴 가공 공정 지시 실적은 실적만 남는다.
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
-import { ProductWorkResult } from '../../entities/product-work-result.entity';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { downtimeTargetMachineSql } from '../../common/utils/downtime-target';
 import {
   ApplySensorDto,
@@ -26,34 +27,44 @@ import {
   WorkResultUpsertDto,
 } from './work-result.dto';
 import { SMT_LINE_DIVISIONS } from '@smt/shared';
-import { AssemblyResultService } from '../assembly-result/assembly-result.service';
 
 const DEFAULT_USER = 'ADMIN';
+
+/** 조립라인 라인구분 */
+const ASSEMBLY_LINE_DIVISION = 'L';
+/** 완제품 실적 공정 — 조립라인의 포장 공정 실적이 완제품 실적이다 */
+const PACKING_WORKSTAGE = 'W220';
+
+/**
+ * 라인구분·공정 → IP_PRODUCT_RESULT.WORK_DIVISION (기초코드 WORK DIVISION: P 생산 · R 수리 · W 가공).
+ * P(조립라인 포장 공정)만 공정재고를 움직인다.
+ */
+function workDivision(lineDivision: string, workstageCode: string): 'P' | 'R' | 'W' {
+  if (lineDivision === ASSEMBLY_LINE_DIVISION && workstageCode === PACKING_WORKSTAGE) return 'P';
+  if (lineDivision === 'REPAIR') return 'R';
+  return 'W';
+}
 
 
 @Injectable()
 export class WorkResultService {
-  constructor(
-    @InjectRepository(ProductWorkResult)
-    private readonly repo: Repository<ProductWorkResult>,
-    private readonly assembly: AssemblyResultService,
-  ) {}
+  constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
   private q<T = Record<string, unknown>>(
     sql: string,
     params: unknown[] = [],
   ): Promise<T[]> {
-    return this.repo.manager.query(sql, params);
+    return this.dataSource.manager.query(sql, params);
   }
 
-  /** 라인이 SMT(라인구분 SMT_LINE_DIVISIONS)인지 — 생산실적(조립실적)은 SMT 런(면 T/B)만 받는다 */
-  private async isSmtLine(lineCode: string | null, organization: number): Promise<boolean> {
-    if (!lineCode) return false;
-    const rows = await this.q<{ div: string | null }>(
+  /** 라인구분 (IP_PRODUCT_LINE.LINE_DIVISION) */
+  private async lineDivision(mgr: EntityManager, lineCode: string | null, organization: number): Promise<string> {
+    if (!lineCode) return '';
+    const rows = (await mgr.query(
       `SELECT MAX(LINE_DIVISION) AS "div" FROM IP_PRODUCT_LINE WHERE LINE_CODE=:1 AND ORGANIZATION_ID=:2`,
       [lineCode, organization],
-    );
-    return (SMT_LINE_DIVISIONS as readonly string[]).includes(rows[0]?.div ?? '');
+    )) as Array<{ div: string | null }>;
+    return rows[0]?.div ?? '';
   }
 
   private requireOrganization(organizationId?: number): number {
@@ -140,9 +151,9 @@ export class WorkResultService {
              AND bc.CODE_NAME = (SELECT MAX(mm.PRODUCT_CLASS) FROM IP_PRODUCT_MODEL_MASTER mm WHERE mm.ITEM_CODE=r.ITEM_CODE AND mm.ORGANIZATION_ID=r.ORGANIZATION_ID)) AS "carModel",
           (SELECT MAX(st.CT_VALUE) FROM IP_PRODUCT_ST_MASTER st WHERE st.MODEL_NAME=r.MODEL_NAME AND st.ORGANIZATION_ID=r.ORGANIZATION_ID) AS "ct",
           r.LOT_SIZE AS "planQty",
-          NVL((SELECT SUM(wr.RESULT_QTY) FROM IP_PRODUCT_WORK_RESULT wr WHERE wr.RUN_NO=r.RUN_NO AND wr.ORGANIZATION_ID=r.ORGANIZATION_ID AND NVL(wr.RESULT_STATUS,'WIP')<>'CANCEL'),0) AS "resultQty",
-          (SELECT COUNT(*) FROM IP_PRODUCT_WORK_RESULT wc WHERE wc.RUN_NO=r.RUN_NO AND wc.ORGANIZATION_ID=r.ORGANIZATION_ID AND NVL(wc.RESULT_STATUS,'WIP')<>'CANCEL') AS "resultCount",
-          (SELECT COUNT(*) FROM IP_PRODUCT_WORK_RESULT ww WHERE ww.RUN_NO=r.RUN_NO AND ww.ORGANIZATION_ID=r.ORGANIZATION_ID AND NVL(ww.RESULT_STATUS,'WIP') NOT IN ('DONE','CANCEL')) AS "wipCount",
+          NVL((SELECT SUM(wr.PRODUCT_ACTUAL_QTY) FROM IP_PRODUCT_RESULT wr WHERE wr.RUN_NO=r.RUN_NO AND wr.ORGANIZATION_ID=r.ORGANIZATION_ID AND NVL(wr.RESULT_STATUS,'WIP')<>'CANCEL'),0) AS "resultQty",
+          (SELECT COUNT(*) FROM IP_PRODUCT_RESULT wc WHERE wc.RUN_NO=r.RUN_NO AND wc.ORGANIZATION_ID=r.ORGANIZATION_ID AND NVL(wc.RESULT_STATUS,'WIP')<>'CANCEL') AS "resultCount",
+          (SELECT COUNT(*) FROM IP_PRODUCT_RESULT ww WHERE ww.RUN_NO=r.RUN_NO AND ww.ORGANIZATION_ID=r.ORGANIZATION_ID AND NVL(ww.RESULT_STATUS,'WIP') NOT IN ('DONE','CANCEL')) AS "wipCount",
           NVL((SELECT df.BAD_QTY FROM IP_PRODUCT_WORK_DEFECT df WHERE df.RUN_NO=r.RUN_NO AND df.ORGANIZATION_ID=r.ORGANIZATION_ID),0) AS "defectQty",
           (SELECT COUNT(*) FROM IP_EQUIP_DOWNTIME_RESULT dr WHERE dr.MACHINE_CODE=r.MACHINE_CODE AND dr.ORGANIZATION_ID=r.ORGANIZATION_ID AND dr.END_TIME IS NULL) AS "openDowntime"
         FROM IP_PRODUCT_RUN_CARD r
@@ -158,15 +169,15 @@ export class WorkResultService {
     const organization = this.requireOrganization(organizationId);
     return this.q(
       `SELECT wr.SEQ_NO AS "seqNo", wr.MACHINE_CODE AS "machineCode", wr.WORKSTAGE_CODE AS "workstageCode",
-              wr.RESULT_QTY AS "resultQty", wr.WORK_TIME AS "workTime", wr.WORKER_COUNT AS "workerCount",
+              wr.PRODUCT_ACTUAL_QTY AS "resultQty", wr.WORK_TIME AS "workTime", wr.WORKER_COUNT AS "workerCount",
               wr.WORKER_NAME AS "workerName",
               NVL(wr.RESULT_STATUS,'WIP') AS "resultStatus",
-              NVL(wr.SENSOR_APPLY_YN,'N') AS "sensorApplyYn", wr.SENSOR_APPLY_MSG AS "sensorApplyMsg",
+              NVL(wr.WORKSTAGE_ISSUE_YN,'N') AS "sensorApplyYn", wr.WIP_APPLY_MSG AS "sensorApplyMsg",
               (SELECT r.ITEM_CODE FROM IP_PRODUCT_RUN_CARD r WHERE r.RUN_NO=wr.RUN_NO AND r.ORGANIZATION_ID=wr.ORGANIZATION_ID AND ROWNUM=1) AS "itemCode",
               (SELECT r.MODEL_NAME FROM IP_PRODUCT_RUN_CARD r WHERE r.RUN_NO=wr.RUN_NO AND r.ORGANIZATION_ID=wr.ORGANIZATION_ID AND ROWNUM=1) AS "modelName",
               TO_CHAR(NVL(wr.LAST_MODIFY_DATE, wr.ENTER_DATE),'YYYY-MM-DD HH24:MI') AS "updatedAt",
               TO_CHAR(wr.ENTER_DATE,'YYYY-MM-DD HH24:MI:SS') AS "enteredAt"
-         FROM IP_PRODUCT_WORK_RESULT wr
+         FROM IP_PRODUCT_RESULT wr
         WHERE wr.RUN_NO = :1 AND wr.ORGANIZATION_ID = :2
         ORDER BY wr.SEQ_NO`,
       [runNo, organization],
@@ -181,11 +192,11 @@ export class WorkResultService {
         await this.q(
           `SELECT RUN_NO AS "runNo", SEQ_NO AS "seqNo", MACHINE_CODE AS "machineCode",
               WORKSTAGE_CODE AS "workstageCode",
-              RESULT_QTY AS "resultQty", WORK_TIME AS "workTime", WORKER_COUNT AS "workerCount",
+              PRODUCT_ACTUAL_QTY AS "resultQty", WORK_TIME AS "workTime", WORKER_COUNT AS "workerCount",
               WORKER_NAME AS "workerName",
               NVL(RESULT_STATUS,'WIP') AS "resultStatus",
-              NVL(SENSOR_APPLY_YN,'N') AS "sensorApplyYn", SENSOR_APPLY_MSG AS "sensorApplyMsg"
-         FROM IP_PRODUCT_WORK_RESULT WHERE RUN_NO=:1 AND SEQ_NO=:2 AND ORGANIZATION_ID=:3`,
+              NVL(WORKSTAGE_ISSUE_YN,'N') AS "sensorApplyYn", WIP_APPLY_MSG AS "sensorApplyMsg"
+         FROM IP_PRODUCT_RESULT WHERE RUN_NO=:1 AND SEQ_NO=:2 AND ORGANIZATION_ID=:3`,
           [runNo, seqNo, organization],
         )
       )[0] ?? null;
@@ -193,10 +204,11 @@ export class WorkResultService {
   }
 
   /**
-   * 실적 신규/수정 — 완료(DONE) 실적은 수정 불가. 설비/공정을 run card에 write-back.
+   * 실적 신규/수정 — 완료(DONE) 실적은 수정 불가. 설비를 run card에 write-back.
    *
-   * 처리구분이 DONE이면 실적을 커밋한 뒤 센서 누적 프로시저를 1회 호출한다. 호출이 실패해도
-   * 실적은 남기고 경고만 돌려준다 — 활성 계획이 없는 설비도 실적 등록은 되어야 한다.
+   * SMT 라인 지시는 받지 않는다 (SMT 실적은 AOI 로 자동 집계, 보정은 SMD 생산실적 화면).
+   * 처리구분이 DONE이면 실적을 커밋한 뒤 공정재고 반영을 1회 한다. 반영이 실패해도 실적은 남기고
+   * 경고만 돌려준다(재반영으로 다시 시도).
    */
   async upsertResult(
     dto: WorkResultUpsertDto,
@@ -208,23 +220,37 @@ export class WorkResultService {
     const machineCode = dto.machineCode?.trim() || null;
     const isDone = dto.resultStatus === 'DONE';
 
-    const { seqNo, lineCode } = await this.repo.manager.transaction(async (mgr) => {
+    const { seqNo, workDiv } = await this.dataSource.manager.transaction(async (mgr) => {
       // 라인코드는 작업지시에서 가져온다. 설비의 LINE_CODE는 전부 '*'(미배정)라 쓰지 않는다.
       const runCard = (await mgr.query(
-        `SELECT LINE_CODE AS "lineCode", WORKSTAGE_CODE AS "workstageCode" FROM IP_PRODUCT_RUN_CARD
+        `SELECT LINE_CODE AS "lineCode", WORKSTAGE_CODE AS "workstageCode", ITEM_CODE AS "itemCode",
+                LOT_NO AS "lotNo", TO_CHAR(RUN_DATE,'YYYY-MM-DD') AS "runDate"
+           FROM IP_PRODUCT_RUN_CARD
           WHERE RUN_NO=:1 AND ORGANIZATION_ID=:2 FOR UPDATE`,
         [dto.runNo, organization],
-      )) as Array<{ lineCode: string | null; workstageCode: string | null }>;
-      const line = runCard[0]?.lineCode ?? null;
+      )) as Array<{
+        lineCode: string | null; workstageCode: string | null; itemCode: string | null;
+        lotNo: string | null; runDate: string | null;
+      }>;
+      const card = runCard[0];
+      if (!card) throw new NotFoundException('작업지시를 찾을 수 없습니다');
+      const div = await this.lineDivision(mgr, card.lineCode, organization);
+      if ((SMT_LINE_DIVISIONS as readonly string[]).includes(div))
+        throw new BadRequestException('SMT 라인 실적은 AOI 로 자동 집계됩니다. 보정은 SMD 생산실적 화면에서 하세요.');
       // 생산지시(런카드)는 공정 단위다. 공정이 정해진 지시에 다른 공정 실적을 넣지 않는다.
-      const fixed = runCard[0]?.workstageCode ?? null;
-      if (fixed && dto.workstageCode && fixed !== dto.workstageCode) {
+      // 공정이 빈 조립라인 지시는 포장 공정 지시다 (발행 트리거가 채우기 전 런카드 대비).
+      const fixed = card.workstageCode ?? (div === ASSEMBLY_LINE_DIVISION ? PACKING_WORKSTAGE : null);
+      const requested = dto.workstageCode?.trim() || null;
+      if (fixed && requested && fixed !== requested) {
         throw new BadRequestException(`이 작업지시는 ${fixed} 공정 지시입니다. 다른 공정 실적은 그 공정 지시로 넣으세요.`);
       }
+      const workstage = fixed ?? requested;
+      if (!workstage) throw new BadRequestException('공정이 없습니다. 작업지시나 설비의 공정을 확인하세요.');
+      const wd = workDivision(div, workstage);
       let seq = dto.seqNo;
       if (seq) {
         const cur = (await mgr.query(
-          `SELECT NVL(RESULT_STATUS,'WIP') AS "st" FROM IP_PRODUCT_WORK_RESULT
+          `SELECT NVL(RESULT_STATUS,'WIP') AS "st" FROM IP_PRODUCT_RESULT
             WHERE RUN_NO=:1 AND SEQ_NO=:2 AND ORGANIZATION_ID=:3`,
           [dto.runNo, seq, organization],
         )) as Array<{ st: string }>;
@@ -234,14 +260,15 @@ export class WorkResultService {
           throw new BadRequestException('완료된 실적은 수정할 수 없습니다');
         if (cur[0].st === 'CANCEL')
           throw new BadRequestException('취소된 실적은 수정할 수 없습니다');
+        // 실적 시각(PRODUCT_ACTUAL_TIME)은 마지막 저장(완료) 순간으로 둔다 — 공정재고 전환 판정 기준이다
         await mgr.query(
-          `UPDATE IP_PRODUCT_WORK_RESULT SET MACHINE_CODE=:1, WORKSTAGE_CODE=:2,
-             RESULT_QTY=:3, WORK_TIME=:4, WORKER_COUNT=:5, WORKER_NAME=:6, RESULT_STATUS=:7,
-             LAST_MODIFY_BY=:8, LAST_MODIFY_DATE=SYSDATE
+          `UPDATE IP_PRODUCT_RESULT SET MACHINE_CODE=:1, WORKSTAGE_CODE=:2,
+             PRODUCT_ACTUAL_QTY=:3, WORK_TIME=:4, WORKER_COUNT=:5, WORKER_NAME=:6, RESULT_STATUS=:7,
+             PRODUCT_ACTUAL_TIME=SYSDATE, LAST_MODIFY_BY=:8, LAST_MODIFY_DATE=SYSDATE
            WHERE RUN_NO=:9 AND SEQ_NO=:10 AND ORGANIZATION_ID=:11`,
           [
             machineCode,
-            dto.workstageCode,
+            workstage,
             dto.resultQty,
             dto.workTime ?? 0,
             dto.workerCount ?? 0,
@@ -254,27 +281,36 @@ export class WorkResultService {
           ],
         );
       } else {
-        // 일련번호는 작업지시별 2자리(01~99)다. PK가 (RUN_NO, SEQ_NO, ORG)라 작업지시 안에서만
-        // 유일하면 된다. 센서 누적 쪽 항번(SEQ_PRODUCT_SENSOR)은 프로시저가 알아서 채번한다.
+        // 일련번호는 작업지시별 2자리(01~99)다. 테이블 키는 실적일자(업무일) · SEQ_PRODUCT_ACTUAL.
         const nx = (await mgr.query(
           `SELECT LPAD(TO_CHAR(NVL(MAX(TO_NUMBER(SEQ_NO)),0) + 1),2,'0') AS "seq"
-             FROM IP_PRODUCT_WORK_RESULT WHERE RUN_NO=:1 AND ORGANIZATION_ID=:2`,
+             FROM IP_PRODUCT_RESULT WHERE RUN_NO=:1 AND ORGANIZATION_ID=:2`,
           [dto.runNo, organization],
         )) as Array<{ seq: string }>;
         seq = nx[0]?.seq ?? '01';
+        // NOT NULL 칸 기본값: 제품구분 T(자작), LQC·OQC W(대기 — 검사 안 함), 입고 N, 실적상태 N(정상)
         await mgr.query(
-          `INSERT INTO IP_PRODUCT_WORK_RESULT
-             (RUN_NO, SEQ_NO, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE,
-              RESULT_QTY, WORK_TIME, WORKER_COUNT, WORKER_NAME, RESULT_STATUS,
-              SENSOR_APPLY_YN, ENTER_BY, ENTER_DATE)
-           VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,'N',:11,SYSDATE)`,
+          `INSERT INTO IP_PRODUCT_RESULT
+             (PRODUCT_DATE, PRODUCT_SEQUENCE, ORGANIZATION_ID, PRODUCT_LINE_TYPE, LQC_INSPECT_RESULT, OQC_INSPECT_RESULT,
+              PLAN_DATE, WORK_DIVISION, RECEIPT_YN, PRODUCT_ACTUAL_STATUS, ITEM_CODE, MFS, LINE_CODE, WORKSTAGE_CODE,
+              MACHINE_CODE, PRODUCT_ACTUAL_QTY, PRODUCT_ACTUAL_TIME, RUN_NO, SEQ_NO, WORK_TIME, WORKER_COUNT, WORKER_NAME,
+              RESULT_STATUS, WORKSTAGE_ISSUE_YN, ENTER_BY, ENTER_DATE)
+           VALUES (TRUNC(F_GET_WORK_ACTUAL_DATE(SYSDATE,'A')), SEQ_PRODUCT_ACTUAL.NEXTVAL, :1, 'T', 'W', 'W',
+              NVL(TO_DATE(:2,'YYYY-MM-DD'), TRUNC(SYSDATE)), :3, 'N', 'N', :4, :5, :6, :7,
+              :8, :9, SYSDATE, :10, :11, :12, :13, :14,
+              :15, 'N', :16, SYSDATE)`,
           [
+            organization,
+            card.runDate,
+            wd,
+            card.itemCode,
+            card.lotNo || dto.runNo,
+            card.lineCode,
+            workstage,
+            machineCode,
+            dto.resultQty,
             dto.runNo,
             seq,
-            organization,
-            machineCode,
-            dto.workstageCode,
-            dto.resultQty,
             dto.workTime ?? 0,
             dto.workerCount ?? 0,
             dto.workerName ?? null,
@@ -289,68 +325,88 @@ export class WorkResultService {
         `UPDATE IP_PRODUCT_RUN_CARD SET MACHINE_CODE=:1 WHERE RUN_NO=:2 AND ORGANIZATION_ID=:3`,
         [machineCode, dto.runNo, organization],
       );
-      return { seqNo: seq!, lineCode: line };
+      return { seqNo: seq!, workDiv: wd };
     });
 
     if (!isDone) return { seqNo, sensorApplyYn: 'N' };
 
-    // 생산실적(조립실적)은 SMT 런만 받는다. 조립·가공 등 SMT 가 아닌 라인은 넣지 않고
-    // 실적 원장(IP_PRODUCT_WORK_RESULT)만 기준으로 둔다. 'X' = 반영 대상 아님.
-    if (!(await this.isSmtLine(lineCode, organization))) {
-      await this.q(
-        `UPDATE IP_PRODUCT_WORK_RESULT SET SENSOR_APPLY_YN='X', SENSOR_APPLY_MSG=NULL
-          WHERE RUN_NO=:1 AND SEQ_NO=:2 AND ORGANIZATION_ID=:3`,
-        [dto.runNo, seqNo, organization],
-      );
+    // 공정재고는 완제품 실적(조립라인 포장 공정)만 움직인다. 그 밖의 실적은 실적만 남긴다. 'X' = 반영 대상 아님.
+    if (workDiv !== 'P') {
+      await this.setApply(dto.runNo, seqNo, organization, 'X', null);
       return { seqNo, sensorApplyYn: 'X' };
     }
 
-    // 실적은 위 트랜잭션에서 이미 커밋됐다. 조립실적 반영이 실패해도 실적은 남는다.
-    const applied = await this.applyToAssembly(dto.runNo, seqNo, organization, lineCode, dto.resultQty, userId ?? DEFAULT_USER);
+    // 실적은 위 트랜잭션에서 이미 커밋됐다. 공정재고 반영이 실패해도 실적은 남는다.
+    const applied = await this.applyWip(dto.runNo, seqNo, organization, 1);
     return {
       seqNo,
-      sensorApplyYn: applied.ok ? 'Y' : 'N',
+      sensorApplyYn: applied.flag,
       ...(applied.ok ? {} : { sensorWarning: applied.message }),
     };
   }
 
-  /**
-   * 생산실적(조립실적) 반영 + 반영 상태 기록. 실적 시각은 지금(완료 시점)이다.
-   * 조립실적 REMARK 에 작업실적 키(런-순번)를 남겨 취소 때 같은 시각으로 차감한다.
-   */
-  private async applyToAssembly(
-    runNo: string,
-    seqNo: string,
-    organization: number,
-    lineCode: string | null,
-    resultQty: number,
-    user: string,
-  ): Promise<{ ok: boolean; message: string }> {
-    let message = 'OK';
-    try {
-      await this.assembly.add({
-        runNo, lineCode, time: new Date(), qty: resultQty, source: 'MANUAL', remark: `${runNo}-${seqNo}`, user,
-      });
-    } catch (error: unknown) {
-      // Oracle·프로시저 원문을 보존한다 — 요약으로 덮지 않는다.
-      message = error instanceof Error ? error.message : String(error);
-    }
-    const ok = message === 'OK';
+  private async setApply(runNo: string, seqNo: string, organization: number, flag: string, message: string | null) {
     await this.q(
-      `UPDATE IP_PRODUCT_WORK_RESULT SET SENSOR_APPLY_YN=:1, SENSOR_APPLY_MSG=:2
+      `UPDATE IP_PRODUCT_RESULT SET WORKSTAGE_ISSUE_YN=:1, WIP_APPLY_MSG=:2
         WHERE RUN_NO=:3 AND SEQ_NO=:4 AND ORGANIZATION_ID=:5`,
-      [ok ? 'Y' : 'N', ok ? null : message.slice(0, 1000), runNo, seqNo, organization],
+      [flag, message, runNo, seqNo, organization],
     );
-    return { ok, message };
   }
 
   /**
-   * 실적 취소 — 행은 지우지 않고 RESULT_STATUS='CANCEL' 로 남긴다(합계에서 빠진다).
+   * 공정재고 반영(sign 1) · 되돌림(sign -1) — P_PRODUCT_RESULT_WIP 와 반영 상태 기록을 한 블록(한 트랜잭션)으로 한다.
+   * 프로시저가 'SKIP:...' 을 돌려주면(전환 전 실적 등) 아무것도 넣지 않은 것이고 'X' 로 남긴다.
+   */
+  private async applyWip(
+    runNo: string,
+    seqNo: string,
+    organization: number,
+    sign: 1 | -1,
+  ): Promise<{ ok: boolean; flag: string; message: string }> {
+    try {
+      const rows = await this.dataSource.manager.transaction(async (mgr) => {
+        await mgr.query(
+          `DECLARE
+             v_date DATE;
+             v_seq  NUMBER;
+             v_res  VARCHAR2(200);
+             v_run  VARCHAR2(30) := :1;  -- PL/SQL 위치 바인드는 처음 나오는 순서대로라 여기서 한 번씩만 받는다
+             v_no   VARCHAR2(2)  := :2;
+             v_org  NUMBER := :3;
+             v_sign NUMBER := :4;
+           BEGIN
+             SELECT PRODUCT_DATE, PRODUCT_SEQUENCE INTO v_date, v_seq FROM IP_PRODUCT_RESULT
+              WHERE RUN_NO = v_run AND SEQ_NO = v_no AND ORGANIZATION_ID = v_org;
+             P_PRODUCT_RESULT_WIP(v_date, v_seq, v_org, v_sign, v_res);
+             UPDATE IP_PRODUCT_RESULT
+                SET WORKSTAGE_ISSUE_YN = CASE WHEN v_res LIKE 'SKIP%' THEN 'X' WHEN v_sign < 0 THEN 'C' ELSE 'Y' END,
+                    WIP_APPLY_MSG = CASE WHEN v_res LIKE 'SKIP%' THEN v_res END
+              WHERE PRODUCT_DATE = v_date AND PRODUCT_SEQUENCE = v_seq AND ORGANIZATION_ID = v_org;
+           END;`,
+          [runNo, seqNo, organization, sign],
+        );
+        return (await mgr.query(
+          `SELECT WORKSTAGE_ISSUE_YN AS "flag", WIP_APPLY_MSG AS "msg" FROM IP_PRODUCT_RESULT
+            WHERE RUN_NO=:1 AND SEQ_NO=:2 AND ORGANIZATION_ID=:3`,
+          [runNo, seqNo, organization],
+        )) as Array<{ flag: string; msg: string | null }>;
+      });
+      return { ok: true, flag: rows[0]?.flag ?? 'N', message: rows[0]?.msg ?? 'OK' };
+    } catch (error: unknown) {
+      // Oracle·프로시저 원문을 보존한다 — 요약으로 덮지 않는다.
+      const message = error instanceof Error ? error.message : String(error);
+      const flag = sign < 0 ? 'Y' : 'N';
+      await this.setApply(runNo, seqNo, organization, flag, (sign < 0 ? `취소 되돌림 실패: ${message}` : message).slice(0, 1000));
+      return { ok: false, flag, message };
+    }
+  }
+
+  /**
+   * 실적 취소 — 행은 지우지 않고 RESULT_STATUS='CANCEL', PRODUCT_ACTUAL_STATUS='C' 로 남긴다(합계에서 빠진다).
    *
    * 오늘 업무일(F_GET_WORK_ACTUAL_DATE) 실적만 취소한다. 지난 업무일 실적이 바뀌면 이미 본 집계가 틀어진다.
-   * 생산실적(조립실적)에 반영된 실적이면 음수 수량 행을 넣어 차감한다. 반영했던 행과 같은 실적 시각으로 넣어
-   * 작업일·시간대가 같다 (공정재고도 같은 규칙으로 되돌린다).
-   * 차감에 실패해도 취소는 유지하고 경고를 돌려준다(SENSOR_APPLY_YN 은 'Y' 로 남아 재확인할 수 있다).
+   * 공정재고에 반영된 실적이면 같은 수량을 음수로 넣어 되돌린다.
+   * 되돌림에 실패해도 취소는 유지하고 경고를 돌려준다(반영여부는 'Y' 로 남아 재확인할 수 있다).
    */
   async cancelResult(
     dto: CancelResultDto,
@@ -360,105 +416,65 @@ export class WorkResultService {
     const organization = this.requireOrganization(organizationId);
     const user = userId ?? DEFAULT_USER;
 
-    const row = await this.repo.manager.transaction(async (mgr) => {
+    const row = await this.dataSource.manager.transaction(async (mgr) => {
       const rows = (await mgr.query(
-        `SELECT NVL(wr.RESULT_STATUS,'WIP') AS "st", NVL(wr.SENSOR_APPLY_YN,'N') AS "applied",
-                wr.RESULT_QTY AS "resultQty", wr.WORKSTAGE_CODE AS "workstageCode", wr.MACHINE_CODE AS "machineCode",
+        `SELECT NVL(wr.RESULT_STATUS,'WIP') AS "st", NVL(wr.WORKSTAGE_ISSUE_YN,'N') AS "applied",
                 CASE WHEN F_GET_WORK_ACTUAL_DATE(wr.ENTER_DATE,'A') = F_GET_WORK_ACTUAL_DATE(SYSDATE,'A')
                      THEN 'Y' ELSE 'N' END AS "today"
-           FROM IP_PRODUCT_WORK_RESULT wr
+           FROM IP_PRODUCT_RESULT wr
           WHERE wr.RUN_NO=:1 AND wr.SEQ_NO=:2 AND wr.ORGANIZATION_ID=:3
           FOR UPDATE`,
         [dto.runNo, dto.seqNo, organization],
-      )) as Array<{
-        st: string; applied: string; resultQty: number | null;
-        workstageCode: string | null; machineCode: string | null; today: string;
-      }>;
+      )) as Array<{ st: string; applied: string; today: string }>;
       const cur = rows[0];
       if (!cur) throw new NotFoundException('실적을 찾을 수 없습니다');
       if (cur.st === 'CANCEL') throw new BadRequestException('이미 취소된 실적입니다');
       if (cur.today !== 'Y') throw new BadRequestException('오늘 업무일 실적만 취소할 수 있습니다');
       await mgr.query(
-        `UPDATE IP_PRODUCT_WORK_RESULT SET RESULT_STATUS='CANCEL', LAST_MODIFY_BY=:1, LAST_MODIFY_DATE=SYSDATE
+        `UPDATE IP_PRODUCT_RESULT SET RESULT_STATUS='CANCEL', PRODUCT_ACTUAL_STATUS='C', LAST_MODIFY_BY=:1, LAST_MODIFY_DATE=SYSDATE
           WHERE RUN_NO=:2 AND SEQ_NO=:3 AND ORGANIZATION_ID=:4`,
         [user, dto.runNo, dto.seqNo, organization],
       );
-      const line = (await mgr.query(
-        `SELECT LINE_CODE AS "lineCode" FROM IP_PRODUCT_RUN_CARD WHERE RUN_NO=:1 AND ORGANIZATION_ID=:2`,
-        [dto.runNo, organization],
-      )) as Array<{ lineCode: string | null }>;
-      return { ...cur, lineCode: line[0]?.lineCode ?? null };
+      return cur;
     });
 
-    // 생산실적에 반영되지 않은 실적은 뺄 것이 없다
+    // 공정재고에 반영되지 않은 실적은 되돌릴 것이 없다
     if (row.applied !== 'Y') return { cancelled: true };
 
-    const key = `${dto.runNo}-${dto.seqNo}`;
-    const orig = (await this.q<{ t: Date | null }>(
-      `SELECT MAX(PRODUCT_ACTUAL_TIME) AS "t" FROM IP_ASSEMBLY_RESULT
-        WHERE ENTER_BY='WORK_RESULT' AND REMARK=:1 AND PRODUCT_ACTUAL_QTY > 0 AND ORGANIZATION_ID=:2`,
-      [key, organization],
-    ))[0]?.t;
-    let message = 'OK';
-    try {
-      await this.assembly.add({
-        runNo: dto.runNo, lineCode: row.lineCode, time: orig ? new Date(orig) : new Date(),
-        qty: -Number(row.resultQty ?? 0), source: 'MANUAL', remark: `${key} 취소`, user,
-      });
-    } catch (error: unknown) {
-      message = error instanceof Error ? error.message : String(error);
-    }
-    const ok = message === 'OK';
-    await this.q(
-      `UPDATE IP_PRODUCT_WORK_RESULT SET SENSOR_APPLY_YN=:1, SENSOR_APPLY_MSG=:2
-        WHERE RUN_NO=:3 AND SEQ_NO=:4 AND ORGANIZATION_ID=:5`,
-      [ok ? 'C' : 'Y', ok ? null : `취소 차감 실패: ${message}`.slice(0, 1000), dto.runNo, dto.seqNo, organization],
-    );
-    return ok ? { cancelled: true } : { cancelled: true, sensorWarning: message };
+    const reverted = await this.applyWip(dto.runNo, dto.seqNo, organization, -1);
+    return reverted.ok ? { cancelled: true } : { cancelled: true, sensorWarning: reverted.message };
   }
 
-  /** 생산실적(조립실적) 반영 재시도 — 완료 상태인데 미반영인 실적만 대상이다 */
+  /** 공정재고 반영 재시도 — 완료 상태인데 미반영인 실적만 대상이다 */
   async applySensor(
     dto: ApplySensorDto,
     organizationId?: number,
-    userId?: string,
   ): Promise<{ sensorApplyYn: string; sensorWarning?: string }> {
     const organization = this.requireOrganization(organizationId);
     const rows = (await this.q(
-      `SELECT wr.WORKSTAGE_CODE AS "workstageCode", wr.MACHINE_CODE AS "machineCode",
-              wr.RESULT_QTY AS "resultQty", NVL(wr.RESULT_STATUS,'WIP') AS "resultStatus",
-              NVL(wr.SENSOR_APPLY_YN,'N') AS "sensorApplyYn",
-              (SELECT r.LINE_CODE FROM IP_PRODUCT_RUN_CARD r
-                WHERE r.RUN_NO=wr.RUN_NO AND r.ORGANIZATION_ID=wr.ORGANIZATION_ID AND ROWNUM=1) AS "lineCode"
-         FROM IP_PRODUCT_WORK_RESULT wr
+      `SELECT NVL(wr.RESULT_STATUS,'WIP') AS "resultStatus", NVL(wr.WORKSTAGE_ISSUE_YN,'N') AS "sensorApplyYn",
+              wr.WORK_DIVISION AS "workDiv"
+         FROM IP_PRODUCT_RESULT wr
         WHERE wr.RUN_NO=:1 AND wr.SEQ_NO=:2 AND wr.ORGANIZATION_ID=:3`,
       [dto.runNo, dto.seqNo, organization],
-    )) as Array<{
-      workstageCode: string | null;
-      machineCode: string | null;
-      resultQty: number | null;
-      resultStatus: string;
-      sensorApplyYn: string;
-      lineCode: string | null;
-    }>;
+    )) as Array<{ resultStatus: string; sensorApplyYn: string; workDiv: string | null }>;
     const row = rows[0];
     if (!row) throw new NotFoundException('실적을 찾을 수 없습니다');
     if (row.resultStatus !== 'DONE')
-      throw new BadRequestException('완료된 실적만 생산실적에 반영할 수 있습니다');
+      throw new BadRequestException('완료된 실적만 공정재고에 반영할 수 있습니다');
     // 이미 반영된 건을 다시 넣으면 수량이 가산된다 — 반드시 막는다.
     if (row.sensorApplyYn === 'Y')
-      throw new BadRequestException('이미 생산실적에 반영된 실적입니다');
-    if (row.sensorApplyYn === 'X' || !(await this.isSmtLine(row.lineCode, organization)))
-      throw new BadRequestException('SMT 라인이 아니라 생산실적 반영 대상이 아닙니다');
+      throw new BadRequestException('이미 공정재고에 반영된 실적입니다');
+    if (row.sensorApplyYn === 'X' || row.workDiv !== 'P')
+      throw new BadRequestException('완제품 실적(조립라인 포장 공정)이 아니라 공정재고 반영 대상이 아닙니다');
 
-    const applied = await this.applyToAssembly(dto.runNo, dto.seqNo, organization, row.lineCode, row.resultQty ?? 0, userId ?? DEFAULT_USER);
+    const applied = await this.applyWip(dto.runNo, dto.seqNo, organization, 1);
     return {
-      sensorApplyYn: applied.ok ? 'Y' : 'N',
+      sensorApplyYn: applied.flag,
       ...(applied.ok ? {} : { sensorWarning: applied.message }),
     };
   }
 
-  /** 작업지시 대표불량 조회 (단일) */
   async getDefect(runNo: string, organizationId?: number) {
     const organization = this.requireOrganization(organizationId);
     return (
@@ -486,7 +502,7 @@ export class WorkResultService {
     const info = (
       await this.q(
         `SELECT NVL(r.LOT_SIZE,0) AS "planQty",
-              NVL((SELECT SUM(wr.RESULT_QTY) FROM IP_PRODUCT_WORK_RESULT wr WHERE wr.RUN_NO=r.RUN_NO AND wr.ORGANIZATION_ID=r.ORGANIZATION_ID AND NVL(wr.RESULT_STATUS,'WIP')<>'CANCEL'),0) AS "resultQty"
+              NVL((SELECT SUM(wr.PRODUCT_ACTUAL_QTY) FROM IP_PRODUCT_RESULT wr WHERE wr.RUN_NO=r.RUN_NO AND wr.ORGANIZATION_ID=r.ORGANIZATION_ID AND NVL(wr.RESULT_STATUS,'WIP')<>'CANCEL'),0) AS "resultQty"
          FROM IP_PRODUCT_RUN_CARD r WHERE r.RUN_NO=:1 AND r.ORGANIZATION_ID=:2`,
         [runNo, organization],
       )
@@ -504,7 +520,7 @@ export class WorkResultService {
       throw new BadRequestException(
         `불량수량(${qty})이 실적수량(${result})을 초과할 수 없습니다`,
       );
-    await this.repo.manager.transaction(async (mgr) => {
+    await this.dataSource.manager.transaction(async (mgr) => {
       const ex = (await mgr.query(
         `SELECT COUNT(*) AS "cnt" FROM IP_PRODUCT_WORK_DEFECT WHERE RUN_NO=:1 AND ORGANIZATION_ID=:2`,
         [runNo, organization],
@@ -661,7 +677,7 @@ export class WorkResultService {
     }
     const user = userId ?? dto.userId ?? DEFAULT_USER;
 
-    return this.repo.manager.transaction(async (mgr) => {
+    return this.dataSource.manager.transaction(async (mgr) => {
       // 설비의 공정코드·라인코드를 한 번에 확보한다(일자 수만큼 재조회하지 않기 위함).
       const binds = dto.machineCodes.map((_, i) => `:${i + 2}`).join(',');
       const wsRows = (await mgr.query(
@@ -767,7 +783,7 @@ export class WorkResultService {
       [dtSeq],
     )) as Array<{ dtSeq: number }>;
     if (!rows.length) throw new NotFoundException(`비가동 이력을 찾을 수 없습니다: ${dtSeq}`);
-    await this.repo.manager.query(
+    await this.dataSource.manager.query(
       `DELETE FROM IP_EQUIP_DOWNTIME_RESULT WHERE ORGANIZATION_ID=${organization} AND DT_SEQ=:1`,
       [dtSeq],
     );
@@ -901,7 +917,7 @@ export class WorkResultService {
     const user = userId ?? dto.userId ?? DEFAULT_USER;
     const isEnd = dto.action === 'END';
 
-    return this.repo.manager.transaction(async (mgr) => {
+    return this.dataSource.manager.transaction(async (mgr) => {
       // 대상 설비 확정 — 설비 직접 지정이 우선, 없으면 라인 배정 설비(비가동 대상만)
       let targets: string[];
       if (dto.machineCodes?.length) {

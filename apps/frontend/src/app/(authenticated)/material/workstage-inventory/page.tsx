@@ -9,15 +9,17 @@ import SupplierSelect from '@/components/shared/SupplierSelect';
 import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent } from '@/components/ui';
 import api from '@/services/api';
-import { workstageInventoryColumns, workstageProductColumns } from './columns';
-import type { WorkstageInventoryRow, WorkstageProductRow } from './types';
+import { workstageByWsColumns, workstageInventoryColumns, workstageMoveColumns, workstageProductColumns } from './columns';
+import type { WorkstageByWsRow, WorkstageInventoryRow, WorkstageMoveRow, WorkstageProductRow } from './types';
 
-type TabKey = 'material' | 'product';
+type TabKey = 'material' | 'byWorkstage' | 'move' | 'product';
 
 export default function WorkstageInventoryPage() {
   const [rows, setRows] = useState<WorkstageInventoryRow[]>([]);
   const [total, setTotal] = useState(0);
   const [products, setProducts] = useState<WorkstageProductRow[]>([]);
+  const [byWs, setByWs] = useState<WorkstageByWsRow[]>([]);
+  const [moves, setMoves] = useState<WorkstageMoveRow[]>([]);
   const [tab, setTab] = useState<TabKey>('material');
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -29,7 +31,7 @@ export default function WorkstageInventoryPage() {
 
   const search = useCallback(async () => {
     setLoading(true);
-    const [material, product] = await Promise.allSettled([
+    const [material, product, wsRows, moveRows] = await Promise.allSettled([
       api.get('/material/workstage-inventory', {
         params: {
           limit: 5000,
@@ -41,10 +43,14 @@ export default function WorkstageInventoryPage() {
         },
       }),
       api.get('/material/workstage-inventory/products'),
+      api.get('/material/workstage-inventory/by-workstage'),
+      api.get('/material/workstage-inventory/moves'),
     ]);
     setRows(material.status === 'fulfilled' ? material.value.data?.data ?? [] : []);
     setTotal(material.status === 'fulfilled' ? Number(material.value.data?.meta?.total ?? 0) : 0);
     setProducts(product.status === 'fulfilled' ? product.value.data?.data ?? [] : []);
+    setByWs(wsRows.status === 'fulfilled' ? wsRows.value.data?.data ?? [] : []);
+    setMoves(moveRows.status === 'fulfilled' ? moveRows.value.data?.data ?? [] : []);
     setSearched(true);
     setLoading(false);
   }, [includeZero, itemClass, itemCode, itemDivision, supplierCode]);
@@ -69,7 +75,9 @@ export default function WorkstageInventoryPage() {
       <ScreenTabs
         tabs={[
           { key: 'material' as TabKey, label: '자재', count: rows.length, tooltip: '공정재고 장부. 공정으로 출고된 자재의 남은 수량' },
-          { key: 'product' as TabKey, label: '제품(미입고 박스)', count: products.length, tooltip: '포장했지만 제품창고에 입고 안 한 박스 (2026-10-01 이후 포장)' },
+          { key: 'byWorkstage' as TabKey, label: '공정별', count: byWs.length, tooltip: '반제품이 있는 공정. 1층(SMT) = AOI 실적 반제품, 후공정 = 매거진 스캔으로 옮겨 온 반제품' },
+          { key: 'move' as TabKey, label: '공정 이동', count: moves.length, tooltip: '후공정에서 매거진을 스캔해 반제품을 옮긴 기록 (최근 7일)' },
+          { key: 'product' as TabKey, label: '제품(미입고 박스)', count: products.length, tooltip: '포장했지만 제품창고에 입고 안 한 박스 (2026-10-01 ~ 완제품 실적 전환 전 포장). 전환 뒤 제품은 실적으로 자재 탭에 제품 품목으로 있습니다' },
         ]}
         active={tab}
         onChange={setTab}
@@ -87,6 +95,18 @@ export default function WorkstageInventoryPage() {
       <div className="text-sm text-text-muted">공정재고 합계: <strong className="text-text">{inventoryQty.toLocaleString(undefined, { maximumFractionDigits: 6 })}</strong></div>
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3"><DataGrid data={rows} columns={workstageInventoryColumns} isLoading={loading} pageSize={50} enableColumnFilter enableExport exportFileName="공정재고조회" emptyMessage={searched ? '조회 결과가 없습니다.' : '조회 버튼을 눌러 공정재고를 확인하세요.'} /></CardContent>
+      </Card>
+      </>}
+      {tab === 'byWorkstage' && <>
+      <div className="text-sm text-text-muted">공정이 정해진 공정재고만 보입니다. 공정이 정해지지 않은 자재(라인 출고분 등)는 자재 탭 장부에 있습니다. 원자재는 공정을 나누지 않습니다(자재 탭).</div>
+      <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
+        <CardContent className="h-full p-3"><DataGrid data={byWs} columns={workstageByWsColumns} isLoading={loading} pageSize={50} enableColumnFilter enableExport exportFileName="공정재고조회_공정별" emptyMessage={searched ? '공정이 정해진 공정재고가 없습니다.' : '조회 버튼을 눌러 공정별 공정재고를 확인하세요.'} /></CardContent>
+      </Card>
+      </>}
+      {tab === 'move' && <>
+      <div className="text-sm text-text-muted">후공정에서 매거진 라벨을 스캔하면 그 매거진의 반제품이 출발 공정에서 스캔한 공정으로 옮겨집니다. 같은 매거진을 같은 공정에서 다시 스캔해도 한 번만 옮깁니다.</div>
+      <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
+        <CardContent className="h-full p-3"><DataGrid data={moves} columns={workstageMoveColumns} isLoading={loading} pageSize={50} enableColumnFilter enableExport exportFileName="공정재고조회_공정이동" emptyMessage={searched ? '최근 7일 공정 이동이 없습니다.' : '조회 버튼을 눌러 공정 이동을 확인하세요.'} /></CardContent>
       </Card>
       </>}
       {tab === 'product' && <>

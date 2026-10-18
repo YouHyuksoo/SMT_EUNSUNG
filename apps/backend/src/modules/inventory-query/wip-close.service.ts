@@ -7,6 +7,7 @@
  * 0. **월은 마감 기간이다.** 마감일자설정에 등록한 시작일~종료일(없으면 달력 월)의 입출고만 그 달로 센다 (close-period.ts).
  * 1. 기말 = 기초 + 입고 − 출고. 공정입고(IM_ITEM_WORKSTAGE_RECEIPT)·공정출고(IM_ITEM_WORKSTAGE_ISSUE)는
  *    품목 단위이고 수량이 부호를 가진다 (입고취소는 음수). 그래서 수량을 그냥 더한다.
+ *    공정간 이동(ENTER_BY = 'WS_MOVE', 출고·입고 한 쌍)은 품목 합계로 0 이라 입고·출고 칸에서 뺀다.
  *    출고에 공정실사 조정(LAST_MODIFY_BY = 'INV ADJUST')이 들어 있으면 출고 합계에는 포함하고
  *    조정 칸에도 따로 보인다 (자재 마감의 조정 칸과 같다). 모자람 +, 남음 −.
  * 2. **기초**: 직전 달을 마감했으면 그 달 기말. 첫 마감이면 **전월 말 공정재고를 0 으로 본다.**
@@ -30,7 +31,7 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { clobBind } from '../../common/services/oracle.service';
 import { namedBinds } from '../../common/utils/named-binds.util';
 import { firstCloseGate, getCloseStartMonth, getClosePeriod, periodBoundsSql, periodEnded, shiftMonth } from './close-period';
-import { catchUpWipIssue, wipMovedSql, wipPendingPackWhere } from './wip-bom';
+import { catchUpWipIssue, notWipMoveSql, wipMovedSql, wipPendingPackWhere } from './wip-bom';
 
 /** 공정실사 조정 출고를 찾는 표시 (wip-stocktake.service.ts 의 WIP_ADJUST_MARK 와 같다) */
 const ADJUST_MARK = 'INV ADJUST';
@@ -96,14 +97,14 @@ export const wipCloseAggregateSql = (previousClose: boolean) => `
       SELECT ITEM_CODE, SUM(RECEIPT_QTY) AS RC_Q, 0 AS IS_Q, 0 AS AD_Q, 0 AS PREV_Q, 0 AS PREV_A
         FROM IM_ITEM_WORKSTAGE_RECEIPT
        WHERE ORGANIZATION_ID = :organizationId AND RECEIPT_DATE >= TO_DATE(:startDate, 'YYYY-MM-DD')
-         AND RECEIPT_DATE < TO_DATE(:endDate, 'YYYY-MM-DD')
+         AND RECEIPT_DATE < TO_DATE(:endDate, 'YYYY-MM-DD') AND ${notWipMoveSql('ENTER_BY')}
        GROUP BY ITEM_CODE
       UNION ALL
       SELECT ITEM_CODE, 0, SUM(ISSUE_QTY),
              SUM(CASE WHEN LAST_MODIFY_BY = '${ADJUST_MARK}' THEN ISSUE_QTY ELSE 0 END), 0, 0
         FROM IM_ITEM_WORKSTAGE_ISSUE
        WHERE ORGANIZATION_ID = :organizationId AND ISSUE_DATE >= TO_DATE(:startDate, 'YYYY-MM-DD')
-         AND ISSUE_DATE < TO_DATE(:endDate, 'YYYY-MM-DD')
+         AND ISSUE_DATE < TO_DATE(:endDate, 'YYYY-MM-DD') AND ${notWipMoveSql('ENTER_BY')}
        GROUP BY ITEM_CODE
       ${previousClose ? `UNION ALL
       SELECT ITEM_CODE, 0, 0, 0, SUM(MM_INVENTORY_QTY), SUM(MM_INVENTORY_AMT)

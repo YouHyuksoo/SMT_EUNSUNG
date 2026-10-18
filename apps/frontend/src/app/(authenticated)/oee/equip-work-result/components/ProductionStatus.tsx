@@ -85,7 +85,7 @@ export default function ProductionStatus({ run, history, now, onCancel }: Props)
         const h = row.original;
         if (h.resultStatus === 'CANCEL') return <span className="text-text-muted">취소됨</span>;
         if (isSensorPending(h.resultStatus, h.sensorApplyYn))
-          return <span className="text-red-600 font-semibold" title={h.sensorApplyMsg ?? '생산현황에 반영되지 않았습니다'}>미반영</span>;
+          return <span className="text-red-600 font-semibold" title={h.sensorApplyMsg ?? '공정재고에 반영되지 않았습니다'}>미반영</span>;
         return <span className="text-blue-600 dark:text-blue-400">확정</span>;
       } },
     { id: 'cancel', header: '', size: 110, meta: { align: 'center', filterType: 'none' as const },

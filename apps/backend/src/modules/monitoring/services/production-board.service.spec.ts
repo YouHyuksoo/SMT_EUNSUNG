@@ -40,7 +40,7 @@ describe('ProductionBoardService', () => {
     if (sql.includes('F_GET_WORK_ACTUAL_DATE')) return [{ day: '2026-10-06', startFrac: 0.354 }];
     if (sql.includes('FROM IP_PRODUCT_SMD_PLAN')) return smdRows;
     if (sql.includes('FROM IP_PRODUCT_RUN_CARD r') && sql.includes('"planSequence"')) return miRows;
-    if (sql.includes('FROM IP_PRODUCT_WORK_RESULT wr') && sql.includes('"hhmm"')) return [{ hhmm: '0840', qty: '7' }, { hhmm: '0800', qty: 3 }];
+    if (sql.includes('FROM IP_PRODUCT_RESULT wr') && sql.includes('"hhmm"')) return [{ hhmm: '0840', qty: '7' }, { hhmm: '0800', qty: 3 }];
     if (sql.includes('FROM IP_ASSEMBLY_ACTUAL_TIME_V v')) return slotSum([10, 20, 0, 0, 0, 0, 5, 0, 0, 0]);
     if (sql.includes('FROM IP_PRODUCT_WORK_QC')) return [{ hhmm: '0900', cnt: '2' }, { hhmm: '2300', cnt: 1 }];
     if (sql.includes('FROM ICOM_WORKTIME_RANGES')) return [];

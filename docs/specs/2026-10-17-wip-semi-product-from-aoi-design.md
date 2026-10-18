@@ -107,7 +107,7 @@ AOI 테이블에 트리거를 걸지 않는다. 장비 인터페이스가 넣는
      - **기준정보** (제품 1행): 전개 방식, 면별 AOI 생산 품목(T·B), 실적을 세는 면(④⑤), 입고 소비 품목 목록(자동 계산 결과를 저장해 사람이 확인).
      - **구현 (2026-10-17, 사용자 지시 "ip_product_model_master 에 분류기준을 등록해서 관리"):** `IP_PRODUCT_MODEL_MASTER` 에 둔다.
        - 칼럼: `BOM_EXPLODE_TYPE`, `BOM_EXPLODE_SOURCE`(A 자동 / M 사람), `BOM_EXPLODE_NOTE`
-       - 면별 생산 품목은 기존 `TOP_ITEM_CODE`·`BOTTOM_ITEM_CODE` 를 쓴다.
+       - 면별 생산 품목은 BOM 반제품 행 `PCB_ITEM`(T/B/`*`)으로 정한다 (5-4 참고).
        - 세는 면은 생산 품목이 채워진 면이다.
        - 화면: 제품모델관리 (자동 분류 · 행 편집). 키는 `MODEL_NAME` 이다.
      - **자동 분류:** BOM과 품목명(TOP/BOT)으로 ①~⑤를 먼저 채운다. 애매한 품목(SUB-Assy 여러 개, 이름에 면 없음)은 미분류로 두고 화면에서 사람이 정한다.
@@ -151,9 +151,9 @@ AOI 테이블에 트리거를 걸지 않는다. 장비 인터페이스가 넣는
 
 - **프로시저** `P_ASSY_RESULT_FROM_AOI(p_lookback_hours, p_from, p_to)` — 소스 `oracle_db_scripts/P_ASSY_RESULT_FROM_AOI.sql`
   - 판정: (PID, 면)의 최신 검사 행 `NVL(REVIEW_RESULT, RESULT)` 가 OK·GOOD·PASS·USEROK 면 양품이다. Master 판정은 뺀다. 같은 시각에 판정이 엇갈리면 불량으로 본다.
-  - 면은 런카드 `PCB_ITEM` 이고, 생산 품목은 런카드 모델의 `TOP_ITEM_CODE`/`BOTTOM_ITEM_CODE` 다.
+  - 면은 런카드 `PCB_ITEM` 이고, 생산 품목은 런카드 제품 BOM 에서 그 면이 표시된 반제품이다 (5-4).
   - 생산 품목이 없거나, 품목 마스터·라인 마스터에 없으면 넣지 않는다(조립실적 외래키). 기준정보를 채운 뒤 `p_from` 으로 다시 돌린다.
-  - 중복 방지: `IP_ASSEMBLY_RESULT_AOI_PID` (PID, 면, 조직 PK).
+  - 중복 방지: `IP_ASSEMBLY_RESULT_PID` (PID, 면, 조직 PK).
   - 조립실적 1행 = (작업일, 런, 라인, 면, 생산 품목).
     - 공정 W060, LQC·OQC = P, 작업구분 P
     - `WORKSTAGE_ISSUE_YN = 'N'`, `ENTER_BY = 'AOI_JOB'`
@@ -224,13 +224,103 @@ AOI 테이블에 트리거를 걸지 않는다. 장비 인터페이스가 넣는
   - 백엔드: 반제품생산실적관리, 330 조회, 설비현황판·생산현황판 마지막 실적, 피더 모니터, 런카드 실적 건수·삭제 차단.
 - **센서실적 적재:** `P_INTERLOCK_SENSOR_ACTUAL_NEO` 는 장비 쪽 호출이 남아 있어 그대로 둔다. 화면·뷰는 더 이상 읽지 않는다.
 - **양면 런 단면 모델** (사용자: "단면 자체도 한개의 모델로 봐야함"):
-  - 원자재만(RAW)·단면 반제품(SINGLE)인데 런카드가 T·B 둘 다인 모델은 각 면을 하나의 모델 생산으로 본다. TOP_ITEM_CODE = BOTTOM_ITEM_CODE = 같은 품목, 실적은 면마다 다 센다.
+  - 원자재만(RAW)·단면 반제품(SINGLE)인데 런카드가 T·B 둘 다인 모델은 각 면을 하나의 모델 생산으로 본다. BOM 반제품 행 면을 `*`(양면)로 둔다. 실적은 면마다 다 센다.
   - 적용 모델 6개: SM100-SUB-PCB ASSY, SDH110_PCB ASSY, IG-MAIN-PCB ASSY, IG-MAIN-PCB A'SSY, EOP36-LF-PCB ASSY, OS-EV-19MY-FILTER. 오늘(10-17) AOI 는 보정 잡으로 다시 채웠다(SM100 T 25,620 / B 40,068).
 - **SMT 반제품 + 조립 SUB ASSY 모델** (DN8-PE-HOUSING-ASSY, MV-EV-CURRENT-SENSOR, NE-EV-VOLT-SNSG-FRT/RR-2P6S):
   - SMT 런카드는 T면뿐이고, 면이 빈 런카드는 61·62 조립라인 런이다(T·B 를 생산하면 면마다 작업지시·런카드를 따로 발행한다).
   - T면 = SMT 반제품(PCB ASSY), 분류 SINGLE, 사람 지정(BOM_EXPLODE_SOURCE = 'M')으로 넣었다.
 - **런카드 번호가 `*` 인 AOI 행**은 2D 바코드·마킹(LOTID)·SPI 어디에도 런이 없어 넣지 않는다.
 - **배포 파일:** `apps/backend/src/migrations/2026-10-17_assy_result_as_production_actual.sql`, `2026-10-17_line_dashboard_assy_result.sql`, `oracle_db_scripts/P_ASSY_RESULT_ADD.sql`
+
+## 5-4. 면별 생산 품목 = BOM (2026-10-17 적용)
+
+사용자 지시: "모델마스터에 면 품목으로 하는게 아니고 원래는 모두 bom 기준으로 해야 하는건데"
+
+- **정본:** 제품 BOM(`ID_ENG_BOM`)의 반제품 행(자식이 있는 행, 부모 `*` 제외) `PCB_ITEM` = T / B / `*`(양면).
+  - 모델 마스터에는 분류 기준만 둔다: `BOM_EXPLODE_TYPE`(RAW 판정에 씀), `INSERT_ITEM_CODE`, 출처·메모. `TOP_ITEM_CODE`·`BOTTOM_ITEM_CODE` 는 쓰지 않는다.
+  - 기존 BOM 의 T/B 표시 137행은 전부 말단 부품 행(실장 면)이었다. 반제품 행 판정은 자식 유무로 한다.
+- **채움:** 분류 결과(TB·SUB·NEST·SINGLE 188개 조합)로 반제품 행 191행. 원복: `docs/sql/bom-semi-pcb-item-rollback-2026-10-17.sql`.
+- **실적:** `P_ASSY_RESULT_ADD` — 분류 RAW 면 제품 자신, 아니면 런카드 제품 BOM 에서 런카드 면(없으면 `*`) 반제품. 직속 자품목 펼침도 BOM 면 표시 반제품에서 멈춘다.
+  - 최근 6개월 런카드 119개(모델·면) 조합 모두 기존 모델 마스터 기준과 같은 품목이 나왔다.
+- **제품 입고 소비:** `P_WIP_ISSUE_CREATE` 직속 규칙 = (분류 RAW 이면서 SMT 런카드 T/B 가 있는 제품) 또는 (BOM 에 면 표시 반제품이 있는 제품).
+  - RAW 라도 AOI 를 거치지 않는 조립 제품은 말단 규칙 — 제품 공정입고 없이 "제품 1개 출고"만 생기는 것을 막는다.
+  - 롤백 시험(박스 4개): NONE → 말단, RAW → 제품 자신, SINGLE → 반제품 + 코팅, TB → T·B 반제품.
+- **화면:** 제품모델관리 목록은 면별 품목을 BOM 에서 읽고, 저장·자동 분류는 BOM 반제품 행 면 표시를 쓴다(사람이 정한 모델의 제품 BOM 은 자동 분류가 건드리지 않는다).
+
+## 5-5. 공정간 이동 — 후공정 매거진 스캔 (2026-10-18 적용)
+
+사용자 지시: "매거진을 후공정에서 스캔할때 해당공정으로 이동이 되는 처리를 통해 공정간 이동이 되어야함"
+전체 흐름: AOI 검사 → 매거진 구성(W180) → 후공정 이동 → 후공정 투입 → 완제품 포장 차감. 이번에는 이동까지다.
+
+- **위치:** 공정입고·출고에 `WORKSTAGE_CODE`(기본 `*` = 공정 미지정). 공정은 반제품에만 붙인다.
+  - AOI 실적: 반제품 입고 `W180`, 원자재 출고 `*`(라인 출고 공정입고가 `*` 로 들어온다), 반제품 자품목(NEST 의 B면 등) 출고 `W180`.
+  - 제품 입고 차감(`P_WIP_ISSUE_CREATE`): 반제품은 지금 있는 공정(`IM_ITEM_WORKSTAGE_INV_WS` — 후공정 우선, 수량 많은 곳, 없으면 W180), 그 밖의 자재는 `*`.
+  - 공정별 현재고는 새 테이블 `IM_ITEM_WORKSTAGE_INV_WS`(품목·공정). 기존 `IM_ITEM_WORKSTAGE_INVENTORY`(품목 합계)는 그대로 둔다 — DB 함수 9개가 품목 한 행으로 읽는다.
+  - 시작값: 기존 품목 현재고 전부 `*`. 배포 직후 품목 합계 불일치 0.
+- **이동:** 공정 IO(`IP_PRODUCT_WORKSTAGE_IO`)에 W180 이 아닌 공정의 투입(`I`) 행 → 트리거 `TRG_IP_PRODUCT_WS_IO_WIP_MOVE`(자율 트랜잭션, 스캔은 막지 않음) → `P_WIP_MOVE_BY_MAGAZINE`.
+  - 매거진 라벨 → 런카드 IO(`IX_IP_RUN_CARD_IO_MAG_LABEL`) → 런 → 반제품(`F_GET_ASSY_SEMI_ITEM`, AOI 실적과 같은 BOM 규칙).
+  - 출발 = 라벨의 마지막 도착 공정(`IM_ITEM_WS_MOVE`), 처음이면 W180. 공정출고(출발, 구분 3) + 공정입고(도착, 구분 1), `ENTER_BY = 'WS_MOVE'`.
+  - 라벨·도착 공정당 한 번. 전환 전에 발행한 매거진은 옮기지 않는다(W180 에 반제품 입고가 없다).
+  - 놓친 스캔: 매일 07:45 잡 161 `P_WIP_MOVE_FROM_WS_IO(48)`.
+- **품목 합계에서 뺀다:** 이동은 품목 합계로 0 → 재고마감(wip-close)·공정 수불원장·공정재고 원장에서 `WS_MOVE` 행을 빼고, 인팩 입고 트리거도 뺀다.
+- **화면:** 공정재고조회 '공정별'(`WORKSTAGE_CODE <> '*'`) · '공정 이동'(최근 7일) 탭.
+- **위치 규칙 (2026-10-18 보완):** 처음에는 원자재 소비도 W180 에 남겨 W180 원자재가 음수로 보였고, 제품 입고가 반제품을 `*` 에서 빼 W180·후공정 반제품이 쌓이기만 했다. 원자재는 `*`, 반제품은 있는 공정에서 빼도록 고쳤다.
+  - 롤백 시험: AOI 400(W180 반제품 +400, 원자재 `*` −) → 매거진 이동(W090 +400) → 제품 입고 225(반제품 W090 −225, 코팅 `*` −33.75).
+- **결정 (2026-10-18 오전, 사용자: "제품입고떄로 하자" — 같은 날 5-6 으로 바뀜):** 완제품 차감과 후공정 자재(코팅·하우징 등) 소비는 제품창고 입고 때 `P_WIP_ISSUE_CREATE` 가 한다. 후공정 투입 시점 소비는 하지 않는다 — BOM `WORKSTAGE_CODE` 가 전 행 `*` 이고, 후공정 매거진 스캔은 최근 30일 ICT(W090) 93건뿐이다. 후공정 스캔은 반제품 위치 이동만 한다.
+- **검증 (롤백 시험):** AOI 10개 → W180 반제품 +10·원자재 31품목 출고. 매거진 076AG9540(W090, 400) → W180 −400 / W090 +400, 품목 합계 0, 재스캔 '이미 이동', 다음 공정 W130 은 W090 → W130, 인팩 변화 없음.
+- **배포 파일:** `apps/backend/src/migrations/2026-10-18_wip_workstage_move.sql`, `oracle_db_scripts/` (F_GET_ASSY_SEMI_ITEM, P_ASSY_RESULT_ADD, P_WIP_MOVE_BY_MAGAZINE, P_WIP_MOVE_FROM_WS_IO, TRG_IP_PRODUCT_WS_IO_WIP_MOVE)
+
+## 5-6. 포장 시점 소비 — 제품은 입고 전까지 공정재고 (2026-10-18 12:47:48 적용 → 처리된 박스 0건인 채 2026-10-19 5-7 로 바뀜)
+
+사용자 지시: "포장시점에서 빼고 그게 공정에 재고로 되어 있다가 입고 잡으로 공정에서 빠지고 제품재고가 되어야 한다"
+
+- **전환:** `ISYS_CONFIG WIP_PACK_CONSUME_FROM = 2026/10/18 12:47:48`. 이 뒤 포장 박스부터. 그 전 포장 박스는 입고 때 자재를 빼는 예전 규칙.
+- **`P_WIP_ISSUE_CREATE` 박스 처리 표시:**
+  - N →Q→ K 포장: 반제품·자재 공정출고(5-3·5-4 소요 규칙, 출고일 = 포장일) + 제품 공정입고(PACK_QTY, `ENTER_BY = 'PACK'`, 공정 `*`)
+  - K →S→ Y 제품창고 입고: 제품 공정출고(`ENTER_BY = 'FG_RECEIPT'`, 출고일 = 입고일)
+  - Y →T→ K 입고취소: 제품 공정출고 취소(음수, 구분 4) — 제품이 공정재고로 돌아온다
+  - 분할 자식(`PARENT_BARCODE`)은 N → K 만. 원래 박스가 입고취소(T)로 제품을 돌려놓고 자식들이 입고될 때 나눠서 뺀다. 원래 박스 포장일로 규칙을 고른다.
+- **잡:** 101·102(06:10·17:10, 인팩 전송) + 162(10분마다 `P_WIP_ISSUE_CREATE`). 포장 처리 지연은 최대 10분, 출고일은 포장일.
+- **인팩 전송용:** 예전처럼 입고(S)·입고취소(T) 때 BOM 말단으로. 제품 공정입고(PACK)는 인팩 입고 트리거에서 뺀다.
+- **백엔드:** `wip-bom.ts` 대기 판정에 N(포장 처리 전)·K+입고(제품 출고 전)를 더했고, 미입고 박스(자재 몫) 판정은 전환 전 포장분만 본다. 전환 뒤 미입고 박스는 제품 품목으로 공정재고 장부(자재 탭)에 있다.
+- **검증 (롤백 시험, 전환 시각을 10/16 로 두고):** 미입고 76박스 → K, 제품 공정입고 76건 3,512개. 한 박스(70개) 입고 → 제품 −70(Y), 입고취소 → +70(K).
+- **남은 일:** 공정 실사(`wipCountedSql`·`wipMovedSql`)는 "장부는 원자재뿐, 센 반제품·제품·박스는 BOM 말단으로 푼다" 전제다. 전환 뒤에는 장부에 반제품(W180·후공정)과 포장 제품이 품목 그대로 있다 — 11월 말 실사 전에 실사 계산을 바꿔야 한다. 기록: `docs/reports/2026-10-18-wip-stocktake-after-pack-consume.md`.
+- **배포 파일:** `apps/backend/src/migrations/2026-10-18_wip_pack_consume.sql`, `oracle_db_scripts/P_WIP_ISSUE_CREATE.sql`
+
+## 5-7. 완제품 실적 = IP_PRODUCT_RESULT, 실적 때 소비 (2026-10-19)
+
+사용자 지시: "IP_PRODUCT_RESULT 를 이용하자 실적과 포장은 다른 이야기 임", "OEE 관리메뉴에서 작업지시별로 실적을 등록하는 화면이 있음",
+"IP_PRODUCT_WORK_RESULT 를 쓰지말고 IP_PRODUCT_RESULT 로 통일하는걸로 진행해", "oee 에서는 smt 실적을 입력받지 않음"
+
+- **실적 원장:** OEE 실적입력(`/oee/result-entry`)·설비별 작업실적관리(`/oee/equip-work-result`)가 쓰는 `/oee/work-result/results` 는
+  `IP_PRODUCT_RESULT` 에 쌓는다 (`IP_PRODUCT_WORK_RESULT` 는 안 쓴다, 테이블은 시험 1건으로 남김).
+  - 칼럼 추가: `RUN_NO`·`SEQ_NO`·`WORK_TIME`·`WORKER_COUNT`·`WORKER_NAME`·`RESULT_STATUS`(WIP/DONE/CANCEL)·`WIP_APPLY_MSG`. 유일 인덱스 (RUN_NO, SEQ_NO, ORG).
+  - 키: `PRODUCT_DATE` = 업무일(`F_GET_WORK_ACTUAL_DATE(SYSDATE,'A')`), `PRODUCT_SEQUENCE` = `SEQ_PRODUCT_ACTUAL`.
+  - NOT NULL 기본값: 제품구분 T, LQC·OQC W(대기), 입고 N, `PRODUCT_ACTUAL_STATUS` N(취소 C), `MFS` = 런카드 LOT_NO, `PLAN_DATE` = 런카드 RUN_DATE.
+  - `WORK_DIVISION`: 조립라인(L) 포장 공정(W220) → P, REPAIR → R, 그 밖(조립라인 가공 공정 포함) → W.
+  - 반영 여부 `WORKSTAGE_ISSUE_YN`: Y 반영 / N 미반영 / X 대상 아님 / C 취소 되돌림. (API 이름은 예전 `sensorApplyYn`)
+  - 기존 트리거 4개(사출용 계획·금형·LQC, 모두 INVALID)는 삭제. 원본 `docs/sql/ip-product-result-triggers-before-2026-10-19.sql`.
+- **SMT 실적은 받지 않는다:** SMT 라인 지시에 실적을 넣으면 거절한다. SMT(반제품) 실적은 AOI → `IP_ASSEMBLY_RESULT`, 보정은 SMD 생산실적 화면.
+- **완제품 실적 공정 = 포장(W220):** 사용자 "지금은 포장공정밖에 작업지시를 안내려서 묵시적으로 포장공정이 실적공정인데 향후에는 조립라인에 가공공정도 작업지시를 내릴 예정이라서 공정이 있어야 하는건 맞아".
+  - 공정이 빈 조립라인 런카드 19,200건(2022-04~)을 W220 으로 채웠다 (원복 목록 `backups/run-card-workstage-null-L-2026-10-19.csv`).
+  - `TRG_IP_RUN_CARD_WS_DEFAULT`: 공정 없이 발행되는 조립라인 런카드(PB 롯트카드 화면)에 W220. 새 MES 롯트카드 화면은 후공정 지시에 공정을 꼭 고른다.
+  - 실적 저장: 공정이 빈 조립라인 지시는 W220 으로 본다. 배포: `apps/backend/src/migrations/2026-10-19_run_card_packing_workstage.sql`.
+- **공정재고:** 조립라인 포장 공정(W220) 지시의 완료(DONE) 실적(`WORK_DIVISION = 'P'`)이 `P_PRODUCT_RESULT_WIP` 로
+  - 제품 공정입고(`ENTER_BY = 'PROD_RT'`, 공정 '*') + 반제품·자재 공정출고(`ENTER_BY = 'PROD_RT'`, 소요 규칙은 5-3·5-4 와 같다)
+  - 취소(오늘 업무일만)는 같은 수량 음수(입고 구분 2, 출고 구분 4)
+  - 전환 시각 `ISYS_CONFIG WIP_RESULT_CONSUME_FROM` 전 실적은 SKIP(X). 가공·수리·검사 라인과 조립라인 가공 공정 실적은 실적만(X).
+  - 인팩 전송용은 움직이지 않는다 (`TRG_IM_WS_RECEIPT_INFAC` 가 PROD_RT 제외, 인팩은 예전처럼 제품창고 입고 때 BOM 말단).
+- **포장·제품창고 입고 (`P_WIP_ISSUE_CREATE`):** 전환 뒤 포장 박스는 소비 없이 N → K, 입고되면 제품 공정출고(`FG_RECEIPT`, K → S → Y), 입고취소 되돌림(Y → T → K).
+  전환 전 포장 박스는 입고 때 자재 소비(예전 규칙). 잡 162(10분) 제거 — 06:10·17:10 잡.
+- **읽는 쪽:** 계획 대비 실적(`planning/order-result.sql.ts`, 실적 시각 = `PRODUCT_ACTUAL_TIME`), 생산 보드, 대시보드, 작업지시 목록이 `IP_PRODUCT_RESULT` 를 본다.
+  DB 함수 `F_GET_PLAN_ACTUAL_QTY_BY_MFS/ONO`·`F_GET_PLAN_PRODUCT_ACTUAL_QTY` 는 `PRODUCT_ACTUAL_STATUS = 'N'` 합이라 취소 행은 빠지고 진행(WIP) 행은 들어간다.
+- **알려진 경계:** 전환 전에 실적(또는 생산)했고 전환 뒤 포장된 제품은 실적 공정입고 없이 제품창고 입고 때 제품만 빠진다(마이너스) — 11월 실사로 맞춘다.
+  조립라인 실적 등록이 빠지면 그 제품은 소모 없이 입고 때 제품만 빠진다. 실적 등록이 전제다.
+- **검증 (롤백 시험):** 소요 규칙 세 가지(D 직속 E2010000470 · RAW E2021400030 · L 말단 E2500000010)가 예전 입고 때 소비와 품목당 수량 일치.
+  E2010000480 실적 100 → 제품 +100(*), 반제품 E2040100510 −100(W180), 자재 E0070100040 −140(*). 취소 → 순합 0, C.
+  전환 전 → SKIP. 박스 → K(소비 없음), 입고 → 제품 −64(FG_RECEIPT), Y. 인팩 변동 없음.
+- **배포 파일:** `apps/backend/src/migrations/2026-10-19_product_result_unify.sql`, `oracle_db_scripts/P_PRODUCT_RESULT_WIP.sql`, `oracle_db_scripts/P_WIP_ISSUE_CREATE.sql`.
+  전환 설정(`WIP_RESULT_CONSUME_FROM`)은 백엔드 배포와 같은 때 넣는다 (마이그레이션 파일 아래쪽).
 
 ## 6. 단계
 

@@ -15,7 +15,8 @@ export class WorkResultUpsertDto {
   @IsString() @IsNotEmpty() runNo: string;
   @IsOptional() @IsString() seqNo?: string; // 신규면 미지정(서버 생성), 수정이면 지정
   @IsOptional() @IsString() machineCode?: string;
-  @IsString() @IsNotEmpty() workstageCode: string;
+  // 공정: 작업지시에 공정이 있으면 그 공정이다. 비어 있는 조립라인 지시는 서버가 포장 공정(W220)으로 둔다.
+  @IsOptional() @IsString() workstageCode?: string;
   @IsInt() resultQty: number;
   @IsOptional() @IsInt() workTime?: number;
   @IsOptional() @IsInt() workerCount?: number;
@@ -23,13 +24,13 @@ export class WorkResultUpsertDto {
   @IsIn(['WIP', 'DONE']) resultStatus: string;
 }
 
-// 생산실적(조립실적) 반영 재시도 — 완료 상태인데 반영이 실패한 실적 대상
+// 공정재고 반영 재시도 — 완료 상태인데 반영이 실패한 조립라인 실적 대상
 export class ApplySensorDto {
   @IsString() @IsNotEmpty() runNo: string;
   @IsString() @IsNotEmpty() seqNo: string;
 }
 
-// 실적 취소 — 행은 남기고 RESULT_STATUS='CANCEL', 센서 누적에서는 그 수량을 뺀다
+// 실적 취소 — 행은 남기고 RESULT_STATUS='CANCEL', 공정재고에 반영된 실적이면 되돌린다
 export class CancelResultDto {
   @IsString() @IsNotEmpty() runNo: string;
   @IsString() @IsNotEmpty() seqNo: string;

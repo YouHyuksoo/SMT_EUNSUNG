@@ -2,7 +2,7 @@ import { validateSync } from 'class-validator';
 import { WorkResultUpsertDto } from './work-result.dto';
 
 describe('WorkResultUpsertDto', () => {
-  it('allows machineCode to be omitted while workstageCode remains required', () => {
+  it('allows machineCode and workstageCode to be omitted (server resolves the work order process)', () => {
     const valid = Object.assign(new WorkResultUpsertDto(), {
       runNo: 'RUN-1',
       workstageCode: 'WS-1',
@@ -16,6 +16,6 @@ describe('WorkResultUpsertDto', () => {
       resultQty: 10,
       resultStatus: 'WIP',
     });
-    expect(validateSync(missingWorkstage).some((error) => error.property === 'workstageCode')).toBe(true);
+    expect(validateSync(missingWorkstage).some((error) => error.property === 'workstageCode')).toBe(false);
   });
 });

@@ -9,6 +9,10 @@
  * 2. 그래서 공정재고 장부에는 원자재만 있다. 라인의 반제품·미포장 제품·입고 안 한 박스는
  *    그 안의 원자재로 장부에 남아 있다. 실사에서 이것들을 세면 같은 BOM 규칙으로 원자재로 풀어 더한다.
  * 3. `bomLeafSql` 은 P_WIP_ISSUE_CREATE 의 tree/leaf 와 같은 규칙이다. 한쪽을 바꾸면 다른 쪽도 바꾼다.
+ * 4. **2026-10-19 완제품 실적 소비** (ISYS_CONFIG WIP_RESULT_CONSUME_FROM 이후): 조립라인 완료 실적(IP_PRODUCT_RESULT)이
+ *    제품을 공정재고로 넣고 반제품·자재를 뺀다(P_PRODUCT_RESULT_WIP). 포장은 재고를 움직이지 않는다(박스 표시 N → K).
+ *    제품창고 입고 때 제품을 공정재고에서 뺀다(K → Y). 그 전 포장 박스는 위 1·2 규칙(입고 때 자재 소비)을 그대로 쓴다.
+ *    (2026-10-18 의 포장 시점 소비는 처리된 박스 없이 이것으로 바뀌었다.)
  */
 import { BadRequestException } from '@nestjs/common';
 import { namedBinds } from '../../common/utils/named-binds.util';
@@ -20,6 +24,19 @@ const num = (v: unknown) => Number(v ?? 0);
 /** 이 포장일부터 전체 BOM 으로 뺐다 (그 전 포장은 입고취소돼도 되돌리지 않는다). P_WIP_ISSUE_CREATE 의 c_full_from */
 export const WIP_FULL_CONSUME_FROM = '2026-10-01';
 
+/**
+ * 공정간 이동 원장 표시 (ENTER_BY). 후공정에서 매거진을 스캔하면 P_WIP_MOVE_BY_MAGAZINE 이
+ * 출발 공정 출고 + 도착 공정 입고 한 쌍을 넣는다. 품목 합계로는 0 이라 품목 단위 합계·마감·원장에서는 뺀다.
+ * 공정별 수량은 IM_ITEM_WORKSTAGE_INV_WS 에 있다.
+ */
+export const WIP_MOVE_MARK = 'WS_MOVE';
+/** 공정간 이동 행 제외 조건 */
+export const notWipMoveSql = (enterByCol: string) => `NVL(${enterByCol}, '*') <> '${WIP_MOVE_MARK}'`;
+
+/** 완제품 실적 소비 전환 시각 (없으면 먼 미래 — 전부 입고 때 소비). P_WIP_ISSUE_CREATE 의 v_result_from */
+export const wipResultConsumeFromSql = `NVL((SELECT MAX(TO_DATE(c.CONFIG_VALUE, 'YYYY/MM/DD HH24:MI:SS')) FROM ISYS_CONFIG c
+  WHERE c.CONFIG_NAME = 'WIP_RESULT_CONSUME_FROM' AND c.ORGANIZATION_ID = 1 AND NVL(c.USE_YN, 'Y') = 'Y'), DATE '9999-12-31')`;
+
 /** 생산투입 잡이 빼지 않는 모델 (P_WIP_ISSUE_CREATE 와 같다) */
 const EXCLUDED_MODELS = `('DANA-LPS-680pF')`;
 
@@ -27,22 +44,25 @@ const EXCLUDED_MODELS = `('DANA-LPS-680pF')`;
 export const wipBoxKeySql = (barcodeCol: string) => `'#B' || ORA_HASH(${barcodeCol}, 4294967295)`;
 
 /**
- * 생산투입 잡이 아직 처리하지 않은 박스 — 입고됐는데 안 뺀 것, 입고취소됐는데 이미 뺀 것.
- * P_WIP_ISSUE_CREATE 가 'P' · 'R' 로 묶는 대상과 같다.
+ * 생산투입 잡이 아직 처리하지 않은 박스 — 입고됐는데 안 뺀 것, 입고취소됐는데 이미 뺀 것,
+ * 완제품 실적 소비 박스 중 입고됐는데 제품을 안 뺀 것(K). 포장만 한 박스(N → K)는 재고 변동이 없어 기다리지 않는다.
+ * P_WIP_ISSUE_CREATE 가 'P' · 'R' · 'S' 로 묶는 대상과 같다.
  */
 export const wipPendingPackWhere = (p = 'p') => `(
   (${p}.RECEIPT_FLAG = 'Y' AND NVL(${p}.WIP_PROCESS_FLAG, 'N') = 'N')
   OR (NVL(${p}.RECEIPT_FLAG, 'N') = 'N' AND ${p}.WIP_PROCESS_FLAG = 'Y'
-      AND ${p}.PACK_DATE >= DATE '${WIP_FULL_CONSUME_FROM}'))`;
+      AND ${p}.PACK_DATE >= DATE '${WIP_FULL_CONSUME_FROM}')
+  OR (${p}.RECEIPT_FLAG = 'Y' AND ${p}.WIP_PROCESS_FLAG = 'K'))`;
 
 /**
  * 포장했지만 제품창고에 입고 안 한 박스 — 공정에 있는 제품. 출하된 박스와 생산투입 제외 모델은 뺀다.
  * WIP_FULL_CONSUME_FROM(2026-10-01) 이후 포장만 센다. 그 뒤 박스는 자재가 아직 공정재고 장부(원자재)에 있고,
  * 그 전 박스는 옛 규칙으로 포장 때 자재를 이미 일부 뺐다.
+ * 완제품 실적 소비 박스(WIP_RESULT_CONSUME_FROM 이후 포장)는 뺀다 — 실적으로 제품 품목 그대로 공정재고 장부에 있다.
  */
 export const wipUnreceivedPackWhere = (p = 'p') => `(
   NVL(${p}.RECEIPT_FLAG, 'N') = 'N' AND NVL(${p}.SHIP_FLAG, 'N') = 'N'
-  AND ${p}.PACK_DATE >= DATE '${WIP_FULL_CONSUME_FROM}'
+  AND ${p}.PACK_DATE >= DATE '${WIP_FULL_CONSUME_FROM}' AND ${p}.PACK_DATE < ${wipResultConsumeFromSql}
   AND NVL(${p}.MODEL_NAME, '*') NOT IN ${EXCLUDED_MODELS})`;
 
 /**
