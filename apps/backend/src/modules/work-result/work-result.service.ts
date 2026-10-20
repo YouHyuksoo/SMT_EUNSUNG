@@ -790,24 +790,40 @@ export class WorkResultService {
     return { deleted: 1 };
   }
 
-  /** OEE 비가동 입력 보드 — 공정(SMT/ASSY)의 라인과 그 라인의 비가동 대상 설비, 설비별 진행중 비가동을 한 번에.
-   *  라인은 묶음일 뿐이고 상태는 설비 기준이다(ADR 0002). 설비가 없는 라인도 목록에 남긴다(설비 미지정 안내용). */
+  /** OEE 비가동 입력 보드 — 공정(SMT/ASSY)의 묶음과 그 묶음의 비가동 대상 설비, 설비별 진행중 비가동을 한 번에.
+   *  묶음은 화면 구분일 뿐이고 상태는 설비 기준이다(ADR 0002).
+   *  SMT 는 라인별 묶음이고 설비가 없는 라인도 목록에 남긴다(설비 미지정 안내용).
+   *  ASSY 설비는 라인에 묶여 있지 않아(LINE_CODE='*') 후공정(WORKSTAGE_CODE_GROUP='PBA') 설비를 공정별로 묶는다
+   *  (설비가 있는 공정만, lineCode=공정코드). */
   async downtimeBoard(processCode: string, organizationId?: number) {
     const organization = this.requireOrganization(organizationId);
     if (processCode !== 'SMT' && processCode !== 'ASSY') throw new BadRequestException('지원하지 않는 공정입니다.');
+    const assy = processCode === 'ASSY';
     // 오라클 배열 바인드는 이름이 아니라 등장 순서로 채워진다 — 같은 :n 을 두 번 쓰지 않는다
     const lineFilter = (org: number, proc: number) =>
       `l.ORGANIZATION_ID=:${org} AND l.PROCESS_CODE=:${proc} AND l.RESOURCE_TYPE IN ('LINE','CELL')
                         AND l.LINE_CODE IS NOT NULL AND l.LINE_NAME IS NOT NULL`;
-    const lines = await this.q<{ lineCode: string; lineName: string }>(
-      `SELECT l.LINE_CODE AS "lineCode", l.LINE_NAME AS "lineName" FROM IP_PRODUCT_LINE l WHERE ${lineFilter(1, 2)} ORDER BY l.LINE_CODE`,
-      [organization, processCode],
-    );
+    const lines = assy
+      ? await this.q<{ lineCode: string; lineName: string }>(
+          `SELECT w.WORKSTAGE_CODE AS "lineCode", NVL(w.WORKSTAGE_NAME, w.WORKSTAGE_CODE) AS "lineName"
+             FROM IP_PRODUCT_WORKSTAGE w
+            WHERE w.ORGANIZATION_ID=:1 AND w.WORKSTAGE_CODE_GROUP='PBA'
+              AND EXISTS (SELECT 1 FROM IMCN_MACHINE m
+                           WHERE m.ORGANIZATION_ID=w.ORGANIZATION_ID AND m.WORKSTAGE_CODE=w.WORKSTAGE_CODE
+                             AND ${downtimeTargetMachineSql('m')})
+            ORDER BY w.WORKSTAGE_SORT_ORDER, w.WORKSTAGE_CODE`,
+          [organization],
+        )
+      : await this.q<{ lineCode: string; lineName: string }>(
+          `SELECT l.LINE_CODE AS "lineCode", l.LINE_NAME AS "lineName" FROM IP_PRODUCT_LINE l WHERE ${lineFilter(1, 2)} ORDER BY l.LINE_CODE`,
+          [organization, processCode],
+        );
     const rows = await this.q<{
       machineCode: string; machineName: string | null; lineCode: string; workstageCode: string | null; workstageName: string | null;
       dtSeq: number | null; reasonCode: string | null; reasonName: string | null; startAt: string | null; closedSecToday: number | null;
     }>(
-      `SELECT m.MACHINE_CODE AS "machineCode", m.MACHINE_NAME AS "machineName", m.LINE_CODE AS "lineCode",
+      `SELECT m.MACHINE_CODE AS "machineCode", m.MACHINE_NAME AS "machineName",
+              ${assy ? 'm.WORKSTAGE_CODE' : 'm.LINE_CODE'} AS "lineCode",
               m.WORKSTAGE_CODE AS "workstageCode",
               (SELECT MAX(w.WORKSTAGE_NAME) FROM IP_PRODUCT_WORKSTAGE w
                 WHERE w.WORKSTAGE_CODE=m.WORKSTAGE_CODE AND w.ORGANIZATION_ID=m.ORGANIZATION_ID) AS "workstageName",
@@ -824,9 +840,15 @@ export class WorkResultService {
          LEFT JOIN IP_EQUIP_DOWNTIME_REASON r
            ON r.REASON_CODE=d.REASON_CODE AND r.ORGANIZATION_ID=d.ORGANIZATION_ID
         WHERE m.ORGANIZATION_ID=:1 AND ${downtimeTargetMachineSql('m')}
-          AND m.LINE_CODE IN (SELECT l.LINE_CODE FROM IP_PRODUCT_LINE l WHERE ${lineFilter(2, 3)})
+          AND ${
+            assy
+              ? `EXISTS (SELECT 1 FROM IP_PRODUCT_WORKSTAGE g
+                          WHERE g.WORKSTAGE_CODE=m.WORKSTAGE_CODE AND g.ORGANIZATION_ID=m.ORGANIZATION_ID
+                            AND g.WORKSTAGE_CODE_GROUP='PBA')`
+              : `m.LINE_CODE IN (SELECT l.LINE_CODE FROM IP_PRODUCT_LINE l WHERE ${lineFilter(2, 3)})`
+          }
         ORDER BY m.LINE_CODE, m.WORKSTAGE_CODE, m.MACHINE_CODE, d.DT_SEQ`,
-      [organization, organization, processCode],
+      assy ? [organization] : [organization, organization, processCode],
     );
     // 설비 1대에 진행중 행이 둘 이상이면(정상은 아님) 가장 최근 것을 보인다
     const machines = new Map<string, (typeof rows)[number]>();

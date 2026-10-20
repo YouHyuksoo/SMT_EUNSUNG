@@ -5,7 +5,7 @@
  * @description OEE 비가동 입력 본체 — SMT·ASSY 페이지가 작업장을 고정해서 쓴다.
  *
  * 비가동의 주체는 설비다(ADR 0002). 라인은 설비를 묶어 보여 주는 단위일 뿐이다.
- * - 좌: 가동 설비, 우: 비가동 설비. 카드는 라인별로 묶는다.
+ * - 좌: 가동 설비, 우: 비가동 설비. 카드는 SMT 는 라인별, ASSY 는 후공정 공정별로 묶고 위 필터로 한 묶음만 볼 수 있다.
  * - 가동 설비를 누르면 비가동 시작, 비가동 설비를 누르면 비가동 종료 대상이 된다.
  * - 누르면 바로 처리하고 그 자리에서 다시 읽는다. 비가동 카드는 경과 시간이 1초마다 올라가고,
  *   종료하면 그 시간이 설비의 오늘 누적 비가동에 더해진다(누적 = 오늘 종료분 + 진행중 경과).
@@ -137,6 +137,9 @@ export default function MultiEntryBoard({ processCode }: { processCode: OeeProce
 
   const [lines, setLines] = useState<BoardLine[] | null>(null);
   const [boardError, setBoardError] = useState<string | null>(null);
+  // 묶음 필터 — null 이면 전체. 기기마다 마지막 선택을 기억한다
+  const groupFilterKey = `oee-multi-entry-group:${processCode}`;
+  const [groupFilter, setGroupFilter] = useState<string | null>(null);
   // DB 시각 − 브라우저 시각, 오늘 0시(DB 기준) — 경과·누적 시간을 DB 시계로 센다
   const [clock, setClock] = useState<{ skewMs: number; todayStart: number | null }>({ skewMs: 0, todayStart: null });
   const boardGeneration = useRef(0);
@@ -275,6 +278,14 @@ export default function MultiEntryBoard({ processCode }: { processCode: OeeProce
     void loadBoard();
   }, [loadBoard]);
 
+  useEffect(() => {
+    try {
+      setGroupFilter(window.localStorage.getItem(groupFilterKey));
+    } catch {
+      // 저장소를 못 쓰면 전체로 둔다
+    }
+  }, [groupFilterKey]);
+
   const machineByCode = useMemo(() => {
     const map = new Map<string, { line: BoardLine; machine: BoardMachine }>();
     for (const line of lines ?? []) for (const machine of line.machines) map.set(machine.machineCode, { line, machine });
@@ -294,6 +305,22 @@ export default function MultiEntryBoard({ processCode }: { processCode: OeeProce
     setReasonCode('');
     setMemo('');
   }, []);
+
+  /** 묶음 필터 변경 — 안 보이게 된 설비가 선택에 남지 않도록 선택을 비운다 */
+  const selectGroupFilter = useCallback(
+    (code: string | null) => {
+      if (submitting) return;
+      setGroupFilter(code);
+      clearSelection();
+      try {
+        if (code) window.localStorage.setItem(groupFilterKey, code);
+        else window.localStorage.removeItem(groupFilterKey);
+      } catch {
+        // 저장 실패는 무시한다 — 이번 화면에서만 적용된다
+      }
+    },
+    [clearSelection, groupFilterKey, submitting],
+  );
 
   const toggleMachine = useCallback(
     (machine: BoardMachine) => {
@@ -411,14 +438,18 @@ export default function MultiEntryBoard({ processCode }: { processCode: OeeProce
     ? new Date(lastCommunicationAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     : t('oeeMultiEntry.notYet');
 
+  const filterGroups = (lines ?? []).filter((line) => line.machines.length > 0);
+  // 저장된 묶음이 지금 목록에 없으면 전체로 본다
+  const activeGroup = groupFilter && filterGroups.some((line) => line.lineCode === groupFilter) ? groupFilter : null;
   const zones = useMemo(() => {
     const build = (zoneMode: Mode) =>
       (lines ?? [])
+        .filter((line) => !activeGroup || line.lineCode === activeGroup)
         .map((line) => ({ line, machines: line.machines.filter((m) => (zoneMode === 'START' ? !m.open : Boolean(m.open))) }))
         .filter((group) => group.machines.length > 0);
     return { START: build('START'), END: build('END') };
-  }, [lines]);
-  const unassignedLines = (lines ?? []).filter((line) => line.machines.length === 0);
+  }, [activeGroup, lines]);
+  const unassignedLines = activeGroup ? [] : (lines ?? []).filter((line) => line.machines.length === 0);
 
   return (
     <div className="oee-multi-entry-board flex h-full min-h-0 flex-col overflow-hidden bg-background text-text">
@@ -580,6 +611,32 @@ export default function MultiEntryBoard({ processCode }: { processCode: OeeProce
             {mode === 'START' ? t('oeeMultiEntry.startAction') : t('oeeMultiEntry.endAction')}
           </button>
         </section>
+
+        {/* 묶음 필터 — 라인(SMT) 또는 후공정 공정(ASSY) */}
+        {filterGroups.length > 1 && (
+          <nav data-testid="oee-multi-group-filter" className="flex shrink-0 gap-2 overflow-x-auto overscroll-contain rounded-2xl border border-border bg-card p-2">
+            {[{ code: null, name: t('common.all'), total: filterGroups.reduce((sum, line) => sum + line.machines.length, 0), down: filterGroups.reduce((sum, line) => sum + line.machines.filter((m) => m.open).length, 0) },
+              ...filterGroups.map((line) => ({ code: line.lineCode, name: line.lineName, total: line.machines.length, down: line.machines.filter((m) => m.open).length }))].map((group) => {
+              const active = activeGroup === group.code;
+              return (
+                <button
+                  key={group.code ?? '__all__'}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => selectGroupFilter(group.code)}
+                  disabled={submitting}
+                  className={`inline-flex min-h-[44px] shrink-0 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                    active ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-text hover:border-primary/70'
+                  }`}
+                >
+                  <span className="whitespace-nowrap">{group.name}</span>
+                  <span className="font-mono text-xs font-normal text-text-muted">{group.total}</span>
+                  {group.down > 0 && <span className="font-mono text-xs font-bold text-error">{group.down}</span>}
+                </button>
+              );
+            })}
+          </nav>
+        )}
 
         {/* 본문 — 좌: 가동 · 우: 비가동. 처음 불러올 때만 가운데 스피너 */}
         {lines === null ? (
