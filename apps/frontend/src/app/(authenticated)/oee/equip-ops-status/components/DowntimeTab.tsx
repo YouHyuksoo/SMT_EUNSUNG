@@ -19,7 +19,7 @@ import DowntimeReasonGrid from '@/components/shared/DowntimeReasonGrid';
 import api from '@/services/api';
 import DailyMetrics from './DailyMetrics';
 import { recentColumns, targetMachineColumns } from './downtime-columns';
-import type { OpsLine, OpsMachine, RecentRow, RefreshInterval } from '../types';
+import { EMPTY_SUMMARY, type DailySummary, type OpsLine, type OpsMachine, type RecentRow, type RefreshInterval } from '../types';
 
 interface Code { code: string; name: string; }
 type ScopeMode = 'LINE' | 'MACHINE';
@@ -40,7 +40,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
 
   const [reasons, setReasons] = useState<Code[]>([]);
   const [reasonPick, setReasonPick] = useState<string | null>(null);
-  const [summary, setSummary] = useState({ downMinutes: 0, stopCount: 0 });
+  const [summary, setSummary] = useState<DailySummary>(EMPTY_SUMMARY);
   const [recent, setRecent] = useState<{ list: RecentRow[]; totalCount: number; totalMinutes: number }>({ list: [], totalCount: 0, totalMinutes: 0 });
   const [busy, setBusy] = useState(false);
 
@@ -82,7 +82,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
   /** 지표·이전 30일 이력·사유·진행중 시작시각을 한 번에 읽는다 */
   const loadScope = useCallback(async () => {
     if (!scopeParams) {
-      setSummary({ downMinutes: 0, stopCount: 0 });
+      setSummary(EMPTY_SUMMARY);
       setRecent({ list: [], totalCount: 0, totalMinutes: 0 });
       return;
     }
@@ -91,7 +91,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
         api.get('/oee/equip-ops/summary', { params: scopeParams }),
         api.get('/oee/equip-ops/recent', { params: scopeParams }),
       ]);
-      setSummary(s.data?.data ?? { downMinutes: 0, stopCount: 0 });
+      setSummary(s.data?.data ?? EMPTY_SUMMARY);
       setRecent(m.data?.data ?? { list: [], totalCount: 0, totalMinutes: 0 });
     } catch { /* 조회 실패는 빈 화면으로 둔다 */ }
   }, [scopeParams]);
@@ -196,7 +196,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
       {/* 본문 3분할 */}
       <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.5fr)_minmax(0,1.2fr)] gap-3 overflow-hidden">
         {/* 좌 — 당일 지표 */}
-        <DailyMetrics downMinutes={summary.downMinutes} stopCount={summary.stopCount} scopeLabel={scopeLabel} />
+        <DailyMetrics summary={summary} scopeLabel={scopeLabel} />
 
         {/* 중앙 — 비가동 대상 설비 + 처리 */}
         <Card className="h-full overflow-hidden" padding="none">

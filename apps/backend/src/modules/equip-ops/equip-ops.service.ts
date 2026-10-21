@@ -3,7 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EquipDowntimeResult } from '../../entities/equip-downtime-result.entity';
+import { availability, oee, quality } from '@smt/shared';
 import { downtimeTargetMachineSql } from '../../common/utils/downtime-target';
+import { DASHBOARD_ACTUAL_SUM } from '../dashboard/dashboard-insights.sql';
+import { WORK_DAY_SQL } from '../monitoring/services/production-board.service';
 
 const ORG = 1;
 
@@ -11,6 +14,8 @@ const ORG = 1;
 interface ScopeParams {
   machineCode?: string;
   lineCode?: string;
+  /** 후공정(ASSY) 설비는 라인이 없어 공정으로 묶는다 */
+  workstageCode?: string;
 }
 
 @Injectable()
@@ -24,7 +29,7 @@ export class EquipOpsService {
     return this.repo.manager.query(sql, params);
   }
 
-  /** 조회 대상 설비를 좁히는 조건. 설비코드 우선, 없으면 라인코드, 둘 다 없으면 전체 */
+  /** 조회 대상 설비를 좁히는 조건. 설비코드 → 라인코드 → 공정코드 순, 모두 없으면 전체 */
   private scopeClause(scope: ScopeParams, alias: string, params: unknown[]) {
     if (scope.machineCode) {
       params.push(scope.machineCode);
@@ -33,6 +38,10 @@ export class EquipOpsService {
     if (scope.lineCode) {
       params.push(scope.lineCode);
       return ` AND ${alias}.MACHINE_CODE IN (SELECT MACHINE_CODE FROM IMCN_MACHINE WHERE ORGANIZATION_ID=${ORG} AND LINE_CODE = :${params.length})`;
+    }
+    if (scope.workstageCode) {
+      params.push(scope.workstageCode);
+      return ` AND ${alias}.MACHINE_CODE IN (SELECT MACHINE_CODE FROM IMCN_MACHINE WHERE ORGANIZATION_ID=${ORG} AND WORKSTAGE_CODE = :${params.length})`;
     }
     return '';
   }
@@ -58,6 +67,8 @@ export class EquipOpsService {
               m.WORKSTAGE_CODE AS "workstageCode",
               (SELECT MAX(w.WORKSTAGE_NAME) FROM IP_PRODUCT_WORKSTAGE w
                 WHERE w.WORKSTAGE_CODE=m.WORKSTAGE_CODE AND w.ORGANIZATION_ID=m.ORGANIZATION_ID) AS "workstageName",
+              (SELECT MAX(w.WORKSTAGE_CODE_GROUP) FROM IP_PRODUCT_WORKSTAGE w
+                WHERE w.WORKSTAGE_CODE=m.WORKSTAGE_CODE AND w.ORGANIZATION_ID=m.ORGANIZATION_ID) AS "workstageGroup",
               m.MACHINE_MODEL_NAME AS "modelName",
               m.LINE_CODE AS "lineCode",
               (SELECT MAX(d.DT_SEQ) FROM IP_EQUIP_DOWNTIME_RESULT d
@@ -83,26 +94,105 @@ export class EquipOpsService {
     );
   }
 
-  /** 당일 지표 — 달력 자정 기준. 비가동 분·정지 회수만 실측이고 나머지 산식은 미확정 */
+  /**
+   * 당일 지표 — 업무일(작업 시작 시각 ~ 다음날 같은 시각, 생산 현황판과 같은 정의) 기준.
+   *
+   * 시간 가동율 = (부하 − 비가동) / 부하. 부하는 설비마다 월력 계획분(라인 월력 우선, 없으면 전사 월력)을
+   *   지금까지 지난 시간으로 자른 값이고, 비가동은 업무일 안으로 자른 뒤 그 부하를 넘지 않게 한다.
+   * 양품율 = AOI 양품 / (AOI 양품 + QC 불량). 생산수량이 라인에만 있어 라인에 속한 설비만 계산한다.
+   * 성능 가동율은 당일 생산 모델의 표준시간(S/T)이 등록돼 있지 않아 계산하지 않는다.
+   * 셋 중 하나라도 없으면 종합(OEE)도 없다.
+   */
   async summary(scope: ScopeParams) {
-    const params: unknown[] = [];
-    const scopeSql = this.scopeClause(scope, 'd', params);
-    // 진행중 비가동은 지금(SYSDATE)까지, 당일 이전에 시작한 건은 자정부터 센다
-    const rows = await this.q<{ downMinutes: number; stopCount: number }>(
-      `SELECT NVL(ROUND(SUM(
-                (LEAST(NVL(d.END_TIME, SYSDATE), TRUNC(SYSDATE) + 1)
-                 - GREATEST(d.START_TIME, TRUNC(SYSDATE))) * 24 * 60
-              )), 0) AS "downMinutes",
-              COUNT(*) AS "stopCount"
-         FROM IP_EQUIP_DOWNTIME_RESULT d
-        WHERE d.ORGANIZATION_ID = ${ORG}
-          AND d.START_TIME < TRUNC(SYSDATE) + 1
-          AND NVL(d.END_TIME, SYSDATE) >= TRUNC(SYSDATE)${scopeSql}`,
+    const [wd] = await this.q<{ day: string; startFrac: number }>(WORK_DAY_SQL);
+    const day = wd.day;
+    const startFrac = Number(wd.startFrac);
+
+    const params: unknown[] = [day, startFrac];
+    const scopeSql = this.scopeClause(scope, 'm', params);
+    const rows = await this.q<{ machineCode: string; lineCode: string | null; planMin: number; downMin: number; stops: number; elapsedMin: number }>(
+      `WITH b AS (SELECT x.DAY, x.DAY + x.F AS DS FROM (SELECT TO_DATE(:1, 'YYYY-MM-DD') AS DAY, :2 AS F FROM DUAL) x),
+       mc AS (
+         SELECT m.MACHINE_CODE, m.LINE_CODE FROM IMCN_MACHINE m
+          WHERE m.ORGANIZATION_ID = ${ORG} AND ${downtimeTargetMachineSql('m')}${scopeSql}
+       ),
+       dt AS (
+         SELECT d.MACHINE_CODE,
+                SUM((LEAST(NVL(d.END_TIME, SYSDATE), SYSDATE, b.DS + 1) - GREATEST(d.START_TIME, b.DS)) * 24 * 60) AS DOWN_MIN,
+                COUNT(*) AS STOPS
+           FROM IP_EQUIP_DOWNTIME_RESULT d, b
+          WHERE d.ORGANIZATION_ID = ${ORG}
+            AND d.START_TIME < LEAST(SYSDATE, b.DS + 1) AND NVL(d.END_TIME, SYSDATE) > b.DS
+            AND d.MACHINE_CODE IN (SELECT MACHINE_CODE FROM mc)
+          GROUP BY d.MACHINE_CODE
+       )
+       SELECT mc.MACHINE_CODE AS "machineCode", mc.LINE_CODE AS "lineCode",
+              NVL(NVL((SELECT c.WORK_MINUTES + c.OT_MINUTES FROM IP_PRODUCT_LINE_CALENDAR c
+                        WHERE c.ORGANIZATION_ID = ${ORG} AND c.LINE_CODE = mc.LINE_CODE AND c.PLAN_DATE = b.DAY),
+                      (SELECT c.WORK_MINUTES + c.OT_MINUTES FROM IP_PRODUCT_COMPANY_CALENDAR c
+                        WHERE c.ORGANIZATION_ID = ${ORG} AND c.PLAN_DATE = b.DAY)), 0) AS "planMin",
+              NVL(dt.DOWN_MIN, 0) AS "downMin", NVL(dt.STOPS, 0) AS "stops",
+              GREATEST(0, LEAST(SYSDATE, b.DS + 1) - b.DS) * 24 * 60 AS "elapsedMin"
+         FROM mc CROSS JOIN b LEFT JOIN dt ON dt.MACHINE_CODE = mc.MACHINE_CODE`,
       params,
     );
+
+    let loadMin = 0, lossMin = 0, downMin = 0, stopCount = 0, planMin = 0;
+    for (const r of rows) {
+      const load = Math.min(Number(r.planMin), Number(r.elapsedMin));
+      loadMin += load;
+      lossMin += Math.min(Number(r.downMin), load);
+      downMin += Number(r.downMin);
+      stopCount += Number(r.stops);
+      planMin = Math.max(planMin, Number(r.planMin));
+    }
+    const timeRate = loadMin > 0 ? availability(loadMin - lossMin, loadMin) : null;
+
+    // 양품율 — 대상 설비가 속한 라인. 후공정 공정·미배정 설비는 라인이 없어 계산하지 않는다.
+    const lineCodes = [...new Set(rows.map((r) => r.lineCode).filter((c): c is string => !!c && c !== '*'))];
+    let goodQty = 0, defectQty = 0;
+    if (lineCodes.length) {
+      // 위치 바인드라 같은 자리표시자를 두 번 쓰지 않는다 — 날짜·라인 목록은 CTE 로 한 번만 받는다
+      const lineRows = lineCodes.map((_, i) => `SELECT :${i + 3} AS LINE_CODE FROM DUAL`).join(' UNION ALL ');
+      const [qty] = await this.q<{ goodQty: number; defectQty: number }>(
+        `WITH b AS (SELECT x.DAY, x.DAY + x.F AS DS FROM (SELECT TO_DATE(:1, 'YYYY-MM-DD') AS DAY, :2 AS F FROM DUAL) x),
+              ln AS (${lineRows})
+         SELECT (SELECT NVL(SUM(${DASHBOARD_ACTUAL_SUM}), 0) FROM IP_ASSEMBLY_ACTUAL_TIME_V v, b
+                  WHERE v.RECEIPT_DATE >= b.DAY AND v.RECEIPT_DATE < b.DAY + 1
+                    AND v.LINE_CODE IN (SELECT LINE_CODE FROM ln)) AS "goodQty",
+                (SELECT COUNT(*) FROM IP_PRODUCT_WORK_QC q, b
+                  WHERE q.ORGANIZATION_ID = ${ORG} AND q.QC_RESULT = 'N'
+                    AND q.QC_DATE >= b.DS AND q.QC_DATE < b.DS + 1
+                    AND q.LINE_CODE IN (SELECT LINE_CODE FROM ln)) AS "defectQty"
+           FROM DUAL`,
+        [day, startFrac, ...lineCodes],
+      );
+      goodQty = Number(qty?.goodQty ?? 0);
+      defectQty = Number(qty?.defectQty ?? 0);
+    }
+    const qualityRate = goodQty + defectQty > 0 ? quality(goodQty, goodQty + defectQty) : null;
+    const performanceRate: number | null = null;
+
     return {
-      downMinutes: Number(rows[0]?.downMinutes ?? 0),
-      stopCount: Number(rows[0]?.stopCount ?? 0),
+      workDay: day,
+      downMinutes: Math.round(downMin),
+      stopCount,
+      machineCount: rows.length,
+      planMinutes: planMin,
+      loadMinutes: Math.round(loadMin),
+      lossMinutes: Math.round(lossMin),
+      goodQty,
+      defectQty,
+      timeRate,
+      performanceRate,
+      qualityRate,
+      oeeRate: timeRate != null && performanceRate != null && qualityRate != null
+        ? oee(timeRate, performanceRate, qualityRate) : null,
+      reasons: {
+        timeRate: timeRate == null ? (rows.length ? '계획 가동시간 없음' : '대상 설비 없음') : null,
+        performanceRate: '표준시간(S/T) 미등록',
+        qualityRate: qualityRate == null ? (lineCodes.length ? '당일 생산 없음' : '라인 단위 생산수량만 있음') : null,
+      },
     };
   }
 

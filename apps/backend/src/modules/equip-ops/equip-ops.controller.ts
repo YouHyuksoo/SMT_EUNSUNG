@@ -37,19 +37,29 @@ export class EquipOpsController {
 
   /** 당일 지표 (비가동 분·정지 회수) */
   @Get('summary')
-  async summary(@Query('machineCode') machineCode?: string, @Query('lineCode') lineCode?: string) {
+  async summary(
+    @Query('machineCode') machineCode?: string,
+    @Query('lineCode') lineCode?: string,
+    @Query('workstageCode') workstageCode?: string,
+  ) {
     return await this.service.summary({
       machineCode: machineCode || undefined,
       lineCode: lineCode || undefined,
+      workstageCode: workstageCode || undefined,
     });
   }
 
   /** 이전 30일 비가동 이력 + 합계 */
   @Get('recent')
-  async recent(@Query('machineCode') machineCode?: string, @Query('lineCode') lineCode?: string) {
+  async recent(
+    @Query('machineCode') machineCode?: string,
+    @Query('lineCode') lineCode?: string,
+    @Query('workstageCode') workstageCode?: string,
+  ) {
     return await this.service.recent({
       machineCode: machineCode || undefined,
       lineCode: lineCode || undefined,
+      workstageCode: workstageCode || undefined,
     });
   }
 }
