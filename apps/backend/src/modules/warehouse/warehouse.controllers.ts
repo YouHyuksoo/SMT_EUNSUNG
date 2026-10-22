@@ -60,7 +60,11 @@ import {
   BarcodeIssueHistoryQueryDto,
   BarcodeIssueScanDto,
   BarcodeIssueWaitingQueryDto,
-  KittingBomQueryDto,
+  IssueBomQueryDto,
+  BarcodeIssueUnlockDto,
+  BarcodeIssueReturnLookupDto,
+  BarcodeIssueReturnDto,
+  BarcodeIssueCancelDto,
   BarcodeCompareReceiveDto,
   BarcodeReceiptHistoryQueryDto,
   BarcodeScanLookupDto,
@@ -672,16 +676,85 @@ export class BarcodeIssueController {
     return paged(await this.service.findWaiting(query, organizationId));
   }
 
-  @Get('kitting-bom')
+  @Get('options')
   @ApiOperation({
-    summary: '238 키팅 BOM — 모델에 들어가는 자재 목록. 대체품을 함께 낸다'
-      + ' (대체품으로 찍어도 통과해야 한다).',
+    summary: '238 출고 옵션 기본값 — PB f_config_setup 처럼 ISYS_CONFIG 값, 없으면 PB NVL 기본값'
+      + ' (MATERIAL_ISSUE_COMPARE_YN 은 없으면 Y).',
   })
-  async kittingBom(
-    @Query() query: KittingBomQueryDto,
+  async options(@OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.getOptions(organizationId));
+  }
+
+  @Get('line-defaults')
+  @ApiOperation({ summary: '238 라인을 고르면 채우는 값 — 생산유형(Inv Type) · SMT 공정 · 생산계획 모델·면' })
+  async lineDefaults(@Query('lineCode') lineCode: string, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.getLineDefaults(lineCode ?? '', organizationId));
+  }
+
+  @Get('run-card-model')
+  @ApiOperation({ summary: '238 런카드 번호로 모델 찾기 (PB 모델 칸에 9자리 런카드를 찍던 기능)' })
+  async runCardModel(@Query('runNo') runNo: string, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.getRunCardModel(runNo ?? '', organizationId));
+  }
+
+  @Post('unlock')
+  @ApiOperation({ summary: '238 잠금 옵션 해제 확인 — ISYS_CONFIG.FIFO_ISSUE_PASSWORD (값은 내보내지 않는다)' })
+  async unlock(@Body() dto: BarcodeIssueUnlockDto) {
+    return ResponseUtil.success(await this.service.verifyUnlock(dto.password));
+  }
+
+  @Post('cancel/lookup')
+  @ApiOperation({ summary: '238 출고 취소할 바코드 풀어 보기 (읽기 전용) — 그 롯트의 가장 늦은 살아 있는 출고' })
+  async cancelLookup(@Body() dto: BarcodeIssueCancelDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.lookupCancel(dto, organizationId));
+  }
+
+  @Post('cancel')
+  @ApiOperation({ summary: '238 출고 취소 (**쓰기**) — 바코드 원장을 출고 전으로 + 그 출고를 역분개 (한 트랜잭션)' })
+  async cancel(@Body() dto: BarcodeIssueCancelDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(await this.service.cancelBarcode(dto, organizationId, userId || DEFAULT_USER));
+  }
+
+  @Post('return/lookup')
+  @ApiOperation({ summary: '238 출고반품 바코드 풀어 보기 (읽기 전용) — PB Mass Issue Return 스캔' })
+  async returnLookup(@Body() dto: BarcodeIssueReturnLookupDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.lookupReturn(dto, organizationId));
+  }
+
+  @Post('return')
+  @ApiOperation({
+    summary: '238 출고반품 (**쓰기**) — 양품: 원장 되돌림 + 마이너스 출고 + 로스 ·'
+      + ' Bad: 불량 창고(M02)로 마이너스 출고. 판정을 다시 해서 통과할 때만 넣는다.',
+  })
+  async returnBarcode(
+    @Body() dto: BarcodeIssueReturnDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(await this.service.returnBarcode(dto, organizationId, userId || DEFAULT_USER));
+  }
+
+  @Get('reel-label')
+  @ApiOperation({ summary: '238 릴 라벨 내용 (PB d_mat_receipt_lot_barcode_rpt) — 반품 Auto Print' })
+  async reelLabel(
+    @Query('itemCode') itemCode: string,
+    @Query('lotNo') lotNo: string,
     @OrganizationId() organizationId: number,
   ) {
-    return paged(await this.service.findKittingBom(query, organizationId));
+    return ResponseUtil.success(await this.service.findReelLabel(itemCode ?? '', lotNo ?? '', organizationId));
+  }
+
+  @Get('bom')
+  @ApiOperation({
+    summary: '238 출고 BOM — 출고 형태별 대조 목록. P: 제품 모델 설계BOM(PKG_DESIGN.BOM_QUERY)'
+      + ' · K: SMT 모델·라인·TOP/BOTTOM 피더 BOM. 대체품을 함께 낸다 (대체품으로 찍어도 통과한다).',
+  })
+  async issueBom(
+    @Query() query: IssueBomQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    const rows = await this.service.findIssueBom(query, organizationId);
+    return paged({ data: rows, total: rows.length });
   }
 
   @Get('fifo')

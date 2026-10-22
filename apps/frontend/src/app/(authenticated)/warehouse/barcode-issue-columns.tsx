@@ -68,24 +68,31 @@ export interface IssueWaitingRow {
   scanDate: string | null;
 }
 
-/** 238 키팅 BOM 한 줄. */
-export interface KittingBomRow {
-  modelName: string | null;
+/** 238 출고 형태 — P: PCB Assy 출고 (PB 기본값) · K: SMT 출고. */
+export type IssueMode = 'P' | 'K';
+
+/** 238 출고 BOM 한 줄 — 찍은 자재를 대조하는 목록 (P: 설계BOM · K: 피더 BOM). */
+export interface IssueBomRow {
+  div: 'BOM' | 'REPLACE';
   parentItemCode: string | null;
-  itemCode: string | null;
+  itemCode: string;
   itemName: string | null;
   itemSpec: string | null;
-  itemClass: string | null;
+  /** 대체품이면 원래 자재 */
+  replaceFor: string | null;
   bomQty: number | null;
-  lineCode: string | null;
   workstageCode: string | null;
-  feederLocationCode: string | null;
-  locationInfo: string | null;
-  feederShaft: string | null;
   pcbItem: string | null;
-  markingNo: string | null;
-  bomVersion: string | null;
-  replaceItems: string | null;
+  feederLocationCode: string | null;
+  inventoryQty: number | null;
+  /** 이 화면에서 출고한 릴 수 (화면에서 센다) */
+  issuedCount?: number;
+  /** K 만 — 피더 테이블 · 공급/실적/미공급 수량 · 보관위치 */
+  tableId?: string | null;
+  feedingQty?: number | null;
+  actualQty?: number | null;
+  unfeedingQty?: number | null;
+  locationAddress?: string | null;
 }
 
 /** 238 FIFO 위반 후보 한 줄 — 이 릴을 먼저 써야 한다. */
@@ -118,6 +125,14 @@ export interface BarcodeIssueScanResult {
   issuable: boolean;
   reason: string | null;
   fifoCount?: number;
+  /** 출고구분으로 들어갈 출고 형태 */
+  issueMode?: IssueMode;
+  /** K 에서 맞은 피더 BOM 줄의 피더 위치 */
+  feederLocationCode?: string | null;
+  /** 출고 원장에 남을 원라벨 (No Origin Barcode 면 -NB) */
+  supplierBarcode?: string | null;
+  /** 이 판정에 쓴 생산유형 (Inv Type) */
+  inventoryType?: string | null;
   checks: ScanCheck[];
   item: {
     itemName?: string | null;
@@ -200,27 +215,44 @@ export const issueWaitingColumns: ColumnDef<IssueWaitingRow>[] = [
   { accessorKey: 'scanDate', header: '발행시각', size: 160, cell: (c) => ts(c.getValue()) },
 ];
 
-export const kittingBomColumns: ColumnDef<KittingBomRow>[] = [
-  { accessorKey: 'itemCode', header: '자재코드', size: 140 },
-  { accessorKey: 'itemName', header: '자재명', size: 170 },
-  { accessorKey: 'workstageCode', header: '공정', size: 120, meta: center, cell: processNameCell() },
-  { accessorKey: 'feederLocationCode', header: '피더 위치', size: 110 },
-  { accessorKey: 'feederShaft', header: '피더 축', size: 90, meta: center },
-  { accessorKey: 'itemSpec', header: '규격', size: 150 },
-  { accessorKey: 'bomQty', header: '소요량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'locationInfo', header: '회로 기호', size: 180 },
+export const issueBomColumns = (mode: IssueMode): ColumnDef<IssueBomRow>[] => [
   {
-    accessorKey: 'replaceItems',
-    header: '대체품',
-    size: 200,
-    // 대체품으로 찍어도 통과한다.
-    cell: (c) => (c.getValue()
-      ? <span className="text-emerald-500">{String(c.getValue())}</span>
+    accessorKey: 'issuedCount',
+    header: '출고',
+    size: 70,
+    meta: center,
+    cell: (c) => (Number(c.getValue() ?? 0) > 0
+      ? <span className="font-semibold text-emerald-500">✓ {Number(c.getValue())}</span>
       : ''),
   },
-  { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
-  { accessorKey: 'markingNo', header: '마킹번호', size: 110 },
-  { accessorKey: 'bomVersion', header: '판번', size: 80, meta: center },
+  {
+    accessorKey: 'div',
+    header: '구분',
+    size: 70,
+    meta: center,
+    // 대체품으로 찍어도 통과한다.
+    cell: (c) => (c.getValue() === 'REPLACE' ? <span className="text-emerald-500">대체</span> : 'BOM'),
+  },
+  { accessorKey: 'itemCode', header: '자재코드', size: 140 },
+  { accessorKey: 'itemName', header: '자재명', size: 170 },
+  { accessorKey: 'itemSpec', header: '규격', size: 160 },
+  { accessorKey: 'replaceFor', header: '대체 대상', size: 130 },
+  { accessorKey: 'bomQty', header: '소요량', size: 90, meta: right, cell: (c) => num(c.getValue()) },
+  ...(mode === 'P'
+    ? [
+      { accessorKey: 'workstageCode', header: '공정', size: 120, meta: center, cell: processNameCell() },
+      { accessorKey: 'parentItemCode', header: '상위 품목', size: 150 },
+      { accessorKey: 'inventoryQty', header: '재고', size: 100, meta: right, cell: (c) => num(c.getValue()) },
+    ] as ColumnDef<IssueBomRow>[]
+    : [
+      { accessorKey: 'feederLocationCode', header: '피더 위치', size: 110 },
+      { accessorKey: 'pcbItem', header: '면', size: 80, meta: center, cell: comCodeCell('TOP BOTTOM') },
+      { accessorKey: 'tableId', header: '테이블', size: 80, meta: center },
+      { accessorKey: 'locationAddress', header: '보관위치', size: 100 },
+      { accessorKey: 'feedingQty', header: '공급수량', size: 90, meta: right, cell: (c) => num(c.getValue()) },
+      { accessorKey: 'actualQty', header: '실적수량', size: 90, meta: right, cell: (c) => num(c.getValue()) },
+      { accessorKey: 'unfeedingQty', header: '미공급', size: 90, meta: right, cell: (c) => num(c.getValue()) },
+    ] as ColumnDef<IssueBomRow>[]),
 ];
 
 export const fifoCandidateColumns: ColumnDef<FifoCandidateRow>[] = [

@@ -3,7 +3,7 @@ sources:
   - apps/frontend/scripts/data/pb-function-catalog.json
   - docs/database/generated/pb-function-inventory.json
 generator: apps/frontend/scripts/gen-function-status.mjs
-verifiedCommit: eb43cfa8
+verifiedCommit: 09fb8e57
 ---
 
 # PB 함수 처리 현황 (자동 생성)
@@ -23,8 +23,8 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | PB 창(실측) | 596 |
 | SQL 안 호출 = DB 함수 (조치 불필요) | 196 |
 | SQL 밖 호출 = PB 함수 | 226 |
-| 카탈로그 등록(처리 완료) | 91 |
-| 미처리 전환 후보 | 44 |
+| 카탈로그 등록(처리 완료) | 93 |
+| 미처리 전환 후보 | 43 |
 
 ## 처리 완료 (카탈로그)
 
@@ -75,7 +75,7 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_set_column_dddw` | — | PB DataWindow 의 드롭다운 목록을 런타임에 채우는 유틸. 웹은 기초코드 선택 컴포넌트가 대신한다. |
 | `f_update` | — | PB DataWindow Update 래퍼. 웹은 백엔드 저장 API 가 대신한다. |
 
-### 서비스에 이식 (`inlined`) — 18건
+### 서비스에 이식 (`inlined`) — 20건
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
@@ -97,6 +97,8 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_get_order_property` | `OrderPlanService.netRequirements 안의 PL/SQL 블록` | DB 에 동명 함수가 없다 (실측). IM_ITEM_MASTER 에서 최소주문량·포장단위·불량율을 읽어 발주량을 올린다. PB 의 'A' 분기(최소 적용 후 포장 올림)만 쓰인다. 불량율 반올림 자릿수는 단위가 EA·SET 이면 0, 아니면 4 — PB 와 같다. DB 오브젝트를 새로 만들지 않으려고 블록 안에 옮겼다. 안에서 부르는 f_get_uom 은 ID_ITEM.ITEM_UOM 한 줄 조회뿐이라 같은 블록에서 바로 읽는다. |
 | `f_mat_issue_cancel` | `IssueManageService.cancelIssue (한 트랜잭션: 공정이관 확인 → 원건 상태 'C' → 반납요청 확정 해제 → 부호 뒤집은 행 INSERT)` | DB 에 동명 함수가 없다 (실측). 역분개 패턴이라 f_mat_receipt_cancel → PKG_MES_MAC.SP_RECEIPT_CANCEL 과 같은 성격이지만, PB 와 웹을 한 건에 대해 같이 쓰지 않는다는 사용자 결정에 따라 DB 오브젝트를 만들지 않고 TypeScript 트랜잭션으로 옮겼다. 상태 변경을 UPDATE 조건에 넣어 PB 에 없던 중복취소 방어를 더했다. |
 | `f_replace_string` | `String.prototype.replaceAll (대소문자 무시)` | SQL 없는 순수 문자열 치환. PB 는 소문자·대문자를 번갈아 찾는 방식이라 대소문자 무시 치환과 같다. |
+| `f_get_new_scan_qty` | `DECODE(NVL(NEW_SCAN_QTY,0),0,SCAN_QTY,NEW_SCAN_QTY) FROM IM_ITEM_RECEIPT_BARCODE` | 반품 바코드의 현재 릴 수량 (Issue Return Auto Set Qty · 로스 계산). PB 본문이 SELECT 한 줄이라 그대로 인라인했다. |
+| `f_set_replace_item_4_issue_bom_query` | `ID_ITEM_REPLACE 를 출고 BOM SQL 에 UNION ALL ('REPLACE')` | PB 는 dw_5 를 다 읽은 뒤 행마다 ID_ITEM_REPLACE 를 커서로 열어 대체품 행을 끼워 넣었다. 웹은 같은 조건(유효기간 오늘)을 한 SQL 로 붙인다. |
 
 ### 웹에서 직접 (`native`) — 31건
 
@@ -175,7 +177,6 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_mat_issue_return` | 2 | 2 | w_mat_mass_issue_return_master, w_mat_receipt_barcode_reprint_master |
 | `f_mat_receipt_return` | 2 | 2 | w_mat_other_receipt_barcode_return_master, w_mat_receipt_return_master |
 | `f_get_line_division` | 2 | 2 | w_product_run_card, w_product_run_card_duckil |
-| `f_get_new_scan_qty` | 6 | 1 | w_mat_other_issue_barcode_master |
 | `f_get_line_code_group` | 6 | 1 | w_pln_assembly_master_plan_master |
 | `f_check_return_request_slip_exists` | 2 | 1 | w_mat_other_receipt_rental_borrowing_barcode_master |
 | `f_call_db_sql` | 1 | 1 | w_default_value_popup |

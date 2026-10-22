@@ -1009,15 +1009,31 @@ export class BarcodeIssueWaitingQueryDto {
   lotNo?: string;
 }
 
-/** 238 키팅 BOM 조회 조건. */
-export class KittingBomQueryDto {
-  @ApiProperty({ description: '모델명' })
+/**
+ * 238 출고 형태 (PB Category 라디오).
+ *   P — PCB Assy 출고 (`rb_issue_plan`, PB 기본값). 제품 모델의 설계BOM 을 풀어 대조한다.
+ *   K — SMT 출고 (`rb_kitting`). SMT 모델·라인·TOP/BOTTOM 의 피더 BOM 으로 대조한다.
+ */
+export const ISSUE_MODES = ['P', 'K'] as const;
+export type IssueMode = (typeof ISSUE_MODES)[number];
+
+/** 238 출고 BOM 조회 조건 — 출고 형태별 대조 목록. */
+export class IssueBomQueryDto {
+  @ApiProperty({ description: '출고 형태 — P: PCB Assy(설계BOM) · K: SMT(피더 BOM)', enum: ISSUE_MODES })
+  @IsIn(ISSUE_MODES)
+  issueMode!: IssueMode;
+
+  @ApiProperty({ description: '모델명 (P: 제품 모델 · K: SMT 모델)' })
   @IsString() @Length(1, 50)
   modelName!: string;
 
-  @ApiPropertyOptional({ description: '라인코드 (앞부분 일치)' })
+  @ApiPropertyOptional({ description: '라인코드 (K 는 필수 — 피더 BOM 이 라인별이다)' })
   @IsOptional() @IsString() @Length(0, 20)
   lineCode?: string;
+
+  @ApiPropertyOptional({ description: 'TOP/BOTTOM (K 만, PCB_ITEM). 비우면 전체' })
+  @IsOptional() @IsString() @Length(0, 10)
+  topBottom?: string;
 }
 
 /**
@@ -1040,6 +1056,47 @@ export class BarcodeIssueScanDto {
   workstageCode!: string;
 
   @ApiPropertyOptional({
+    description: '출고 형태 — P: PCB Assy(PB 기본값) · K: SMT. 출고구분(ISSUE_DIVISION)으로 들어간다.',
+    enum: ISSUE_MODES, default: 'P',
+  })
+  @IsOptional() @IsIn(ISSUE_MODES)
+  issueMode?: IssueMode;
+
+  @ApiProperty({ description: '모델명 (필수 — 찍은 자재가 이 모델 BOM 에 있어야 한다)' })
+  @IsString() @Length(1, 50)
+  modelName!: string;
+
+  @ApiPropertyOptional({ description: 'TOP/BOTTOM (K 만, PCB_ITEM). 비우면 전체' })
+  @IsOptional() @IsString() @Length(0, 10)
+  topBottom?: string;
+
+  @ApiPropertyOptional({ description: '원라벨(거래처 바코드). ORIGIN_MFS 로 들어간다' })
+  @IsOptional() @IsString() @Length(0, 100)
+  supplierBarcode?: string;
+
+  @ApiPropertyOptional({ description: 'No Origin Barcode — 원라벨 없이 출고 (잠금 옵션, 비밀번호 필요)' })
+  @IsOptional() @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  noOriginBarcode?: boolean;
+
+  @ApiPropertyOptional({ description: 'Model Not Check — PCB Assy BOM 대조를 끈다 (잠금 옵션, 비밀번호 필요)' })
+  @IsOptional() @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  modelNotCheck?: boolean;
+
+  @ApiPropertyOptional({ description: '잠금 옵션(FIFO 끔 · Model Not Check · No Origin Barcode)을 쓸 때의 비밀번호' })
+  @IsOptional() @IsString() @Length(0, 50)
+  unlockPassword?: string;
+
+  @ApiPropertyOptional({ description: 'Inv Type — 생산 유형 (공통코드 INVENTORY TYPE, P 양산 · S 샘플). 라인 생산유형이 기본' })
+  @IsOptional() @IsString() @Length(0, 10)
+  inventoryType?: string;
+
+  @ApiPropertyOptional({ description: 'MFS — 생산계획에서 고른 MFS. 비우면 *' })
+  @IsOptional() @IsString() @Length(0, 60)
+  mfs?: string;
+
+  @ApiPropertyOptional({
     description: 'FIFO(선입선출) 검사. **PB 기본 ON.** 먼저 들어온 릴이 창고에 남아'
       + ' 있으면 거절한다. PB 에는 평문 비밀번호로 뚫는 장치가 있었지만 옮기지 않았다.',
     default: true,
@@ -1047,11 +1104,6 @@ export class BarcodeIssueScanDto {
   @IsOptional() @Transform(({ value }) => value !== false && value !== 'false')
   @IsBoolean()
   checkFifo?: boolean;
-
-  @ApiPropertyOptional({ description: 'MSL 허용시간 검사. **PB 기본 ON.**', default: true })
-  @IsOptional() @Transform(({ value }) => value !== false && value !== 'false')
-  @IsBoolean()
-  checkMslTime?: boolean;
 
   @ApiPropertyOptional({ description: 'PCB 코팅일 검사. **PB 기본 ON.**', default: true })
   @IsOptional() @Transform(({ value }) => value !== false && value !== 'false')
@@ -1072,37 +1124,55 @@ export class BarcodeIssueScanDto {
 }
 
 /** 238 출고대조 + 출고 기록 (**쓰기**). 판정 항목은 스캔과 같다. */
-export class BarcodeIssueDto extends BarcodeIssueScanDto {
-  @ApiPropertyOptional({ description: '모델명 (FEEDING_MODEL · MODEL_NAME 으로 들어간다)' })
-  @IsOptional() @IsString() @Length(0, 50)
-  modelName?: string;
+export class BarcodeIssueDto extends BarcodeIssueScanDto {}
 
-  @ApiPropertyOptional({ description: '피더 위치 (바코드의 LOCATION_CODE 로도 들어간다)' })
-  @IsOptional() @IsString() @Length(0, 30)
-  feederLocationCode?: string;
+/** 238 잠금 옵션 해제 — PB w_lock_by_config('FIFO_ISSUE_PASSWORD'). */
+export class BarcodeIssueUnlockDto {
+  @ApiProperty({ description: '비밀번호 (ISYS_CONFIG.FIFO_ISSUE_PASSWORD 와 맞춘다)' })
+  @IsString() @Length(1, 50)
+  password!: string;
+}
 
-  @ApiPropertyOptional({ description: '창고코드 (출고 원장의 LOCATION_CODE)' })
-  @IsOptional() @IsString() @Length(0, 20)
-  locationCode?: string;
+/** 238 출고 취소 (PB w_mat_issue_cancel_4_barcode_popup) — 출고된 바코드를 찍어 그 출고를 취소한다. */
+export class BarcodeIssueCancelDto {
+  @ApiProperty({ description: '출고를 취소할 자재 바코드' })
+  @IsString() @Length(1, 100)
+  barcode!: string;
+}
 
-  @ApiPropertyOptional({ description: '협력사 롯트 (MFS). 비우면 *' })
-  @IsOptional() @IsString() @Length(0, 60)
-  mfs?: string;
+/** 238 출고반품 조건 (PB Mass Return · Process · Mass Issue Return 묶음). */
+export class BarcodeIssueReturnLookupDto {
+  @ApiProperty({ description: '반품할 자재 바코드' })
+  @IsString() @Length(1, 100)
+  barcode!: string;
 
-  @ApiPropertyOptional({ description: '협력사 바코드 (ORIGIN_MFS 로 들어간다)' })
-  @IsOptional() @IsString() @Length(0, 100)
-  supplierBarcode?: string;
-
-  @ApiPropertyOptional({
-    description: "키팅 모드. 켜면 출고구분이 'K' 로 들어간다 (PB rb_kitting).",
-  })
+  @ApiPropertyOptional({ description: 'Bad — 불량 반품. 불량창고(M02)·현장불량 라인(28)으로 들어간다' })
   @IsOptional() @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
-  kitting?: boolean;
+  bad?: boolean;
 
-  @ApiPropertyOptional({ description: '출고구분 (키팅이 아닐 때 직접 넣는다)' })
-  @IsOptional() @IsString() @Length(0, 10)
-  issueDivision?: string;
+  @ApiPropertyOptional({ description: 'Line Manual Check — 켜면 마지막 출고 라인 대신 입력한 라인을 쓴다' })
+  @IsOptional() @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  lineManual?: boolean;
+
+  @ApiPropertyOptional({ description: '라인 (Line Manual Check 일 때)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  lineCode?: string;
+}
+
+export class BarcodeIssueReturnDto extends BarcodeIssueReturnLookupDto {
+  @ApiProperty({ description: '반품 수량' })
+  @Type(() => Number) @IsInt() @Min(1)
+  returnQty!: number;
+
+  @ApiPropertyOptional({ description: 'Invoice — 불량 반품의 전표번호. 비우면 채번한다' })
+  @IsOptional() @IsString() @Length(0, 40)
+  invoiceNo?: string;
+
+  @ApiPropertyOptional({ description: '모델명 (출고 조건의 모델 — 반품·로스 행에 남는다)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  modelName?: string;
 }
 
 // ══════════════════════════════════ 240 자재분할관리 · 261 베이킹이력관리

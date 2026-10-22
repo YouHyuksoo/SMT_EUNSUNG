@@ -27,7 +27,7 @@
  * 6. **쓰기는 실행하지 않고 parse 로만 검증했다** (사용자 결정).
  */
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
 import { applyIssuePacking, likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
@@ -326,8 +326,10 @@ export class IssueManageService {
    * **원장을 지우지 않는다.** 원래 건을 'C' 로 바꾸고 부호를 뒤집은 행을 한 건 넣는다 —
    * 그래야 무엇이 언제 취소됐는지 이력에 남는다.
    */
-  async cancelIssue(dto: IssueCancelDto, organizationId: number, userId: string) {
-    return this.tx.run(async (qr) => {
+  async cancelIssue(dto: IssueCancelDto, organizationId: number, userId: string, outer?: QueryRunner) {
+    // outer 를 넘기면 그 트랜잭션 안에서 한다 — 238 자재바코드출고의 출고 취소가 바코드 원장
+    // 되돌리기와 한 트랜잭션으로 묶는다 (PB w_mat_issue_cancel_4_barcode_popup).
+    const work = async (qr: QueryRunner) => {
       // 취소할 건이 있고 아직 취소되지 않았는지 본다. PB 는 화면이 고른 행을 그대로
       // 믿었지만, 화면을 우회하면 이미 취소된 건을 또 취소해 원장이 두 번 뒤집힌다.
       const originals = (await qr.query(
@@ -488,6 +490,7 @@ export class IssueManageService {
           affectedRows(requestCleared) ?? 0,
         ),
       };
-    });
+    };
+    return outer ? work(outer) : this.tx.run(work);
   }
 }
