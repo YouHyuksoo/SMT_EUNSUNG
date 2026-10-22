@@ -9,23 +9,30 @@
  *    IP_PRODUCT_WORK_QC 에 검사처리 'D'(폐기) 행이 1건 쌓인다. 행 삭제가 아니다.
  * 2. **반품/반품취소**: 폐기 행의 불량구분을 1(입고) ↔ 2(반품) 로 토글한다.
  * 3. **이력조회 모드**: 검사처리 'D' 만 모아 본다.
+ * 4. **팀별 양식 (26.10.22 요청)**: 생산1팀(SMT)·생산2팀(조립)마다 불량유형·공정 칸이 다르다 (DestroyDetailFields).
+ * 5. **품번 + 수량**: 바코드 미각인 제품은 품번과 수량으로 등록한다. 시리얼이 바코드 이력에 없을 때도 고른 품번을 쓴다.
+ * 6. **폐기현황 탭**: 팀별 월 불량유형·주야·원인별 수량/금액. **LCR 폐기 탭**: LCR 측정 자재 폐기 등록·월 집계.
  */
 import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
-import { RotateCcw, Search, Trash2, X } from 'lucide-react';
+import { Plus, RotateCcw, Search, Trash2, X } from 'lucide-react';
 import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
 import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
-import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DepartmentSelect from '@/components/shared/DepartmentSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import ScreenTabs from '@/components/shared/ScreenTabs';
 import LineSelect from '@/components/shared/LineSelect';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProcessSelect from '@/components/shared/ProcessSelect';
+import PartSearchField from '@/components/shared/PartSearchField';
+import QtyInput from '@/components/shared/QtyInput';
 import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
 import { destroyHistoryColumns, serialColumns } from './columns';
-import type { DestroyResponse, ProductDestroyMode, ProductDestroyRow } from './types';
+import type { DestroyItemEntry, DestroyResponse, DestroyTeam, ProductDestroyMode, ProductDestroyRow } from './types';
+import DestroyDetailFields, { emptyDetail, isDetailComplete, type DestroyDetail } from './components/DestroyDetailFields';
+import DestroySummaryTab from './components/DestroySummaryTab';
+import LcrDestroyTab from './components/LcrDestroyTab';
 
 import { getTodayLocal } from '@/utils/date';
 const today = () => getTodayLocal();
@@ -38,10 +45,13 @@ export default function ProductDestroyPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   // 폐기등록 모드
+  const [team, setTeam] = useState<DestroyTeam>('1');
+  const [detail, setDetail] = useState<DestroyDetail>(emptyDetail);
   const [serials, setSerials] = useState<string[]>([]);
-  const [badReasonCode, setBadReasonCode] = useState('');
+  const [items, setItems] = useState<DestroyItemEntry[]>([]);
+  const [itemCode, setItemCode] = useState('');
+  const [itemQty, setItemQty] = useState(1);
   const [departmentCode, setDepartmentCode] = useState('');
-  const [fallbackLineCode, setFallbackLineCode] = useState('');
   const [fallbackWorkstageCode, setFallbackWorkstageCode] = useState('');
   const [destroyList, setDestroyList] = useState<ProductDestroyRow[]>([]);
   const [issueList, setIssueList] = useState<ProductDestroyRow[]>([]);
@@ -80,6 +90,20 @@ export default function ProductDestroyPage() {
     await loadSerial(scanned[scanned.length - 1]);
   }, [loadSerial]);
 
+  // 팀마다 불량유형·공정 코드가 달라 팀을 바꾸면 그 칸들을 비운다
+  const changeTeam = useCallback((next: DestroyTeam) => {
+    setTeam(next);
+    setDetail(prev => ({ ...prev, badReasonCode: '', detectProcessCode: '', occurProcessCode: '', badCategory: '', causeBy: 'M' }));
+  }, []);
+
+  const addItem = useCallback(() => {
+    const code = itemCode.trim();
+    if (!code || itemQty < 1) return;
+    setItems(prev => [...prev.filter(i => i.itemCode !== code), { itemCode: code, qty: itemQty }]);
+    setItemCode('');
+    setItemQty(1);
+  }, [itemCode, itemQty]);
+
   const searchHistory = useCallback(async (scannedSerial?: string) => {
     const serial = scannedSerial ?? serialNo;
     setLoading(true);
@@ -111,16 +135,27 @@ export default function ProductDestroyPage() {
     setRunning(true);
     try {
       const response = await api.post('/quality/product-destroy', {
-        badReasonCode,
+        team,
+        badReasonCode: detail.badReasonCode,
+        productType: detail.productType,
+        shiftCode: detail.shiftCode,
+        causeBy: detail.causeBy,
+        detectProcessCode: detail.detectProcessCode,
+        occurProcessCode: team === '2' ? detail.occurProcessCode : undefined,
+        badCategory: team === '2' ? detail.badCategory : undefined,
+        worker: detail.worker.trim(),
+        lineCode: detail.lineCode || undefined,
         departmentCode,
-        fallbackLineCode: fallbackLineCode || undefined,
         fallbackWorkstageCode: fallbackWorkstageCode || undefined,
+        fallbackItemCode: itemCode.trim() || undefined,
         serialNos: serials,
+        items,
       });
       const result: DestroyResponse = response.data?.data;
       setOutcome(result);
       toast.success(`폐기 ${result.ok}건 · 건너뜀 ${result.skip}건 · 실패 ${result.fail}건`);
       setConfirmOpen(false);
+      setItems([]);
       if (serials.length > 0) await loadSerial(serials[0]);
     } catch (error: unknown) {
       const apiMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -128,7 +163,7 @@ export default function ProductDestroyPage() {
     } finally {
       setRunning(false);
     }
-  }, [badReasonCode, departmentCode, fallbackLineCode, fallbackWorkstageCode, loadSerial, serials]);
+  }, [departmentCode, detail, fallbackWorkstageCode, itemCode, items, loadSerial, serials, team]);
 
   const toggleIssue = useCallback(async (path: 'issue' | 'issue-cancel', row: ProductDestroyRow | null) => {
     if (!row) return;
@@ -159,29 +194,58 @@ export default function ProductDestroyPage() {
         tabs={[
           { key: 'DESTROY', label: '폐기등록' },
           { key: 'HISTORY', label: '폐기이력', count: searched ? total : undefined },
+          { key: 'SUMMARY', label: '폐기현황' },
+          { key: 'LCR', label: 'LCR 폐기' },
         ]}
         active={mode}
         onChange={setMode}
       />
 
+      {mode === 'SUMMARY' && <DestroySummaryTab />}
+      {mode === 'LCR' && <LcrDestroyTab />}
       {mode === 'DESTROY' ? (
         <>
           <Card className="shrink-0" padding="sm">
             <div className="flex flex-wrap items-center gap-2">
-              <BarcodeScanInput aria-label="시리얼 스캔" placeholder="시리얼 스캔" autoClear onScan={addSerials} className="w-52" />
-              <ComCodeSelect groupCode="BAD REASON CODE" includeAll={false} aria-label="불량사유" placeholder="불량사유 선택" value={badReasonCode} onChange={value => setBadReasonCode(value)} className="w-40" />
-              <DepartmentSelect aria-label="부서" placeholder="부서 선택" value={departmentCode} onChange={value => setDepartmentCode(value)} className="w-36" />
-              <LineSelect aria-label="라인(대체값)" labelPrefix="라인" value={fallbackLineCode} onChange={value => setFallbackLineCode(value)} className="w-36" />
-              <ProcessSelect aria-label="공정(대체값)" labelPrefix="공정" value={fallbackWorkstageCode} onChange={value => setFallbackWorkstageCode(value)} className="w-40" />
-              <Button size="sm" onClick={() => setConfirmOpen(true)} disabled={serials.length === 0 || !badReasonCode || !departmentCode || running}>
-                <Trash2 className="mr-1 h-4 w-4" />폐기 실행
+              <div className="flex overflow-hidden rounded-md border border-border" role="group" aria-label="팀">
+                {(['1', '2'] as const).map(value => (
+                  <button key={value} type="button" onClick={() => changeTeam(value)}
+                    className={`px-3 py-1.5 text-sm ${team === value ? 'bg-primary text-primary-foreground' : 'bg-background text-text hover:bg-surface'}`}>
+                    {value === '1' ? '생산1팀 (SMT)' : '생산2팀 (조립)'}
+                  </button>
+                ))}
+              </div>
+              <BarcodeScanInput aria-label="시리얼 스캔" placeholder="시리얼 스캔" autoClear onScan={addSerials} className="w-48" />
+              <PartSearchField aria-label="품번" placeholder="품번 (미각인 제품)" value={itemCode} onChange={e => setItemCode(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') addItem(); }} className="w-44" />
+              <QtyInput aria-label="수량" placeholder="수량" value={itemQty} onChange={setItemQty} className="w-20" />
+              <Button size="sm" variant="secondary" onClick={addItem} disabled={!itemCode.trim() || itemQty < 1}
+                data-tooltip="바코드가 없는 제품을 품번과 수량으로 목록에 넣는다">
+                <Plus className="mr-1 h-4 w-4" />품번 추가
               </Button>
-              <Button variant="secondary" size="sm" onClick={() => { setSerials([]); setOutcome(null); setDestroyList([]); setIssueList([]); }}>
+              <DepartmentSelect aria-label="부서" placeholder="부서 선택" value={departmentCode} onChange={value => setDepartmentCode(value)} className="w-32" />
+              <ProcessSelect aria-label="공정(대체값)" labelPrefix="공정" value={fallbackWorkstageCode} onChange={value => setFallbackWorkstageCode(value)} className="w-40" />
+              <Button variant="secondary" size="sm" data-tooltip="스캔·품번 목록과 아래 폐기/반품 목록을 비운다" onClick={() => { setSerials([]); setItems([]); setOutcome(null); setDestroyList([]); setIssueList([]); }}>
                 <RotateCcw className="mr-1 h-4 w-4" />초기화
               </Button>
             </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <DestroyDetailFields team={team} value={detail} onChange={setDetail} />
+              <Button size="sm" onClick={() => setConfirmOpen(true)}
+                disabled={(serials.length === 0 && items.length === 0) || !isDetailComplete(team, detail) || !departmentCode || running}>
+                <Trash2 className="mr-1 h-4 w-4" />폐기 실행
+              </Button>
+            </div>
             <div className="mt-2 flex max-h-20 flex-wrap items-center gap-1 overflow-y-auto text-xs">
-              <span className="mr-1 text-text-muted">스캔 {serials.length}건</span>
+              <span className="mr-1 text-text-muted">스캔 {serials.length}건 · 품번 {items.length}건</span>
+              {items.map(item => (
+                <span key={item.itemCode} className="flex items-center gap-1 rounded border border-primary/40 bg-surface px-1.5 py-0.5 font-mono text-text">
+                  {item.itemCode} × {item.qty.toLocaleString()}
+                  <button type="button" aria-label={`${item.itemCode} 빼기`} onClick={() => setItems(prev => prev.filter(i => i.itemCode !== item.itemCode))} className="text-text-muted hover:text-red-600">
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
               {serials.map(serial => (
                 <span key={serial} className="flex items-center gap-1 rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-text">
                   <button type="button" data-tooltip="이 시리얼의 폐기·반품 현황 보기" onClick={() => loadSerial(serial)} className="hover:text-primary">{serial}</button>
@@ -228,7 +292,7 @@ export default function ProductDestroyPage() {
             </Card>
           </div>
         </>
-      ) : (
+      ) : mode === 'HISTORY' && (
         <>
           <Card className="shrink-0" padding="sm">
             <div className="flex flex-wrap items-center gap-2">
@@ -263,9 +327,10 @@ export default function ProductDestroyPage() {
         confirmText="폐기 실행"
         message={
           <span>
-            시리얼 <strong>{serials.length}</strong>건을 폐기 처리합니다.
+            시리얼 <strong>{serials.length}</strong>건{items.length > 0 && <>, 품번 <strong>{items.length}</strong>건(수량 {items.reduce((sum, i) => sum + i.qty, 0).toLocaleString()})</>}을 폐기 처리합니다.
             <br />
-            각 시리얼마다 검사처리 <strong>D(폐기)</strong> 이력이 1건 생성됩니다. 이미 폐기된 시리얼은 건너뜁니다.
+            시리얼·품번마다 검사처리 <strong>D(폐기)</strong> 이력이 1건 생성됩니다. 이미 폐기된 시리얼은 건너뜁니다.
+            {itemCode.trim() && <><br />바코드 이력에 없는 시리얼은 품번 <strong>{itemCode.trim()}</strong> 으로 등록합니다.</>}
           </span>
         }
       />

@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import {
-  ArrayMaxSize, ArrayNotEmpty, IsArray, IsInt, IsISO8601,
-  IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min,
+  ArrayMaxSize, IsArray, IsIn, IsInt, IsISO8601,
+  IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min, ValidateNested,
 } from 'class-validator';
 
 /** 폐기이력 조회 — PB d_pln_product_destroy_hst (QC_INSPECT_HANDLING='D' 고정) */
@@ -10,6 +10,8 @@ export class ProductDestroyHistoryQueryDto {
   @IsOptional() @IsString() workstageCode?: string;
   @IsOptional() @IsString() modelName?: string;
   @IsOptional() @IsString() serialNo?: string;
+  /** 1=생산1팀(SMT), 2=생산2팀(조립). 비우면 팀 구분 없이 */
+  @IsOptional() @IsIn(['1', '2']) team?: string;
   @IsOptional() @IsISO8601() dateFrom?: string;
   @IsOptional() @IsISO8601() dateTo?: string;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page = 1;
@@ -21,16 +23,53 @@ export class ProductDestroySerialQueryDto {
   @IsString() @IsNotEmpty() serialNo!: string;
 }
 
-/** 폐기 등록 — PB cb_2(Destroy) 가 시리얼 목록을 순회하며 실행한다 */
+/** 바코드 미각인 제품 — 품번 + 수량으로 폐기한다 */
+export class ProductDestroyItemDto {
+  @IsString() @IsNotEmpty() itemCode!: string;
+  @Type(() => Number) @IsInt() @Min(1) @Max(100000) qty!: number;
+}
+
+/**
+ * 폐기 등록 — PB cb_2(Destroy) 가 시리얼 목록을 순회하며 실행한다.
+ * 10/22 요청으로 팀별 세분화 항목과 품번 + 수량 등록을 더했다.
+ */
 export class ProductDestroyExecuteDto {
+  /** 1=생산1팀(SMT), 2=생산2팀(조립) — 팀마다 입력 양식이 다르다 */
+  @IsIn(['1', '2']) team!: string;
+  /** 불량유형 (DESTROY BAD TYPE SMT / ASSY) */
   @IsString() @IsNotEmpty() badReasonCode!: string;
+  /** 제품구분 (DESTROY PRODUCT TYPE) */
+  @IsString() @IsNotEmpty() productType!: string;
+  /** 주(A) / 야(B) */
+  @IsIn(['A', 'B']) shiftCode!: string;
+  /** 원인 (BAD CAUSE BY: M 작업자, S 원자재, E 설비) */
+  @IsIn(['M', 'S', 'E']) causeBy!: string;
+  /** 검출공정 (DESTROY PROCESS SMT / ASSY) */
+  @IsString() @IsNotEmpty() detectProcessCode!: string;
+  /** 생산2팀: 발생공정 (DESTROY PROCESS ASSY) */
+  @IsOptional() @IsString() occurProcessCode?: string;
+  /** 생산2팀: 불량구분1 (DESTROY BAD CATEGORY) */
+  @IsOptional() @IsString() badCategory?: string;
+  /** 작업자 — 수기 입력 (CHARGER, 20byte) */
+  @IsString() @IsNotEmpty() @MaxLength(20) worker!: string;
   /** 폐기를 낸 부서 (ISYS_DEPARTMENT.DEPARTMENT_CODE) */
   @IsString() @IsNotEmpty() departmentCode!: string;
-  /** IP_PRODUCT_WORKSTAGE_IO 에 이력이 없을 때 쓰는 대체값 (PB 드롭다운). 없으면 '*' */
-  @IsOptional() @IsString() fallbackLineCode?: string;
+  /** 라인. 고르면 이 값을 쓰고, 비우면 시리얼의 최신 공정이력 라인을 쓴다 */
+  @IsOptional() @IsString() lineCode?: string;
+  /** IP_PRODUCT_WORKSTAGE_IO 에 이력이 없을 때 쓰는 대체 공정 (PB 드롭다운). 없으면 '*' */
   @IsOptional() @IsString() fallbackWorkstageCode?: string;
-  @IsArray() @ArrayNotEmpty() @ArrayMaxSize(1000) @IsString({ each: true })
-  serialNos!: string[];
+  /** 시리얼이 2D 바코드 이력에 없을 때 쓰는 품번 */
+  @IsOptional() @IsString() fallbackItemCode?: string;
+  @IsOptional() @IsArray() @ArrayMaxSize(1000) @IsString({ each: true })
+  serialNos: string[] = [];
+  @IsOptional() @IsArray() @ArrayMaxSize(200) @ValidateNested({ each: true }) @Type(() => ProductDestroyItemDto)
+  items: ProductDestroyItemDto[] = [];
+}
+
+/** 팀별 월 폐기 요약 */
+export class ProductDestroySummaryQueryDto {
+  @Matches(/^\d{4}-\d{2}$/) month!: string;
+  @IsIn(['1', '2']) team!: string;
 }
 
 /** 반품처리(Issue) / 반품취소(Issue Cancel) — RECEIPT_DEFICIT 를 1 ↔ 2 로 토글 */

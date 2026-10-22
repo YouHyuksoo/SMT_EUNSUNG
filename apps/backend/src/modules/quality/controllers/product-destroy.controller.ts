@@ -8,6 +8,7 @@ import {
   ProductDestroyHistoryQueryDto,
   ProductDestroyIssueDto,
   ProductDestroySerialQueryDto,
+  ProductDestroySummaryQueryDto,
 } from '../dto/product-destroy.dto';
 import { ProductDestroyService } from '../services/product-destroy.service';
 
@@ -22,6 +23,12 @@ export class ProductDestroyController {
   async history(@Query() query: ProductDestroyHistoryQueryDto, @OrganizationId() organizationId: number) {
     const result = await this.service.findHistory(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
+  }
+
+  @Get('summary')
+  @ApiOperation({ summary: '팀별 월 폐기 요약 — 불량유형·주야·원인별 수량/금액' })
+  async summary(@Query() query: ProductDestroySummaryQueryDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.summary(query, organizationId));
   }
 
   @Get('serial')
