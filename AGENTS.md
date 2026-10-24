@@ -1,6 +1,7 @@
 # AGENTS.md
 
 This file defines how coding agents should work in this repository.
+이 파일은 이 저장소에서 작업하는 AI 에이전트(Claude Code, Codex, Grok)를 위한 단일 프로젝트 지침이다.
 
 The document has three layers:
 
@@ -97,6 +98,7 @@ pnpm dev:backend                           # @eunsung/backend   → http://local
 
 # 검증 (focused typecheck 우선)
 pnpm --filter @eunsung/frontend typecheck  # registry 자동 생성·전수 검증 + tsc
+pnpm --filter @eunsung/frontend exec tsc --noEmit --pretty false  # tsc 단독 (registry 생성·검증 없음)
 pnpm --filter @eunsung/backend  exec tsc --noEmit --pretty false
 pnpm --filter @eunsung/frontend lint
 pnpm --filter @eunsung/frontend test       # node --test 구조 테스트
@@ -262,7 +264,7 @@ TRUNC(SYSDATE - (7.5 / 24)) + (7.5 / 24)
 
 ## Browser Automation
 
-- 브라우저 자동화는 `Codex-in-chrome`을 기본으로 사용한다. 사용자의 기존 크롬 세션에 붙어 로그인 상태를 유지한 채 화면을 조작/캡처한다.
+- 브라우저 작업(화면 확인·조작·캡처)은 `aside-browser` 스킬(aside)을 기본으로 사용한다. `claude-in-chrome`(Claude Code 전용, 사용자의 기존 크롬 세션에 붙어 로그인 상태를 유지한 채 화면을 조작/캡처)은 사용자가 명시할 때만 쓴다.
 - devtools 전용 기능(lighthouse, heap snapshot, 정밀 트레이스)이 필요할 때만 예외적으로 다른 도구를 쓴다.
 
 ## Docs & Coordination
