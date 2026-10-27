@@ -9,8 +9,8 @@ const TOOLTIP_WIDTH = 288; // px (max-w-72)
 export interface HelpTooltipProps {
   /** 컬럼/필드의 용도 설명 */
   description: string;
-  /** 실제 DB 컬럼 위치 (예: ITEM_MASTERS.ITEM_CODE) */
-  db: string;
+  /** 실제 DB 컬럼 위치 (예: ITEM_MASTERS.ITEM_CODE). 조회 조건 설명처럼 컬럼이 없으면 생략 */
+  db?: string;
   /** data-* 식별자 (테스트/디버깅용) */
   dataField?: string;
 }
@@ -42,7 +42,7 @@ export default function HelpTooltip({ description, db, dataField }: HelpTooltipP
       type="button"
       tabIndex={-1}
       data-field-help={dataField}
-      aria-label={`${description} DB 컬럼 ${db}`}
+      aria-label={db ? `${description} DB 컬럼 ${db}` : description}
       onMouseEnter={open}
       onMouseLeave={close}
       onFocus={open}
@@ -65,12 +65,14 @@ export default function HelpTooltip({ description, db, dataField }: HelpTooltipP
               <p className="whitespace-pre-line px-3.5 pb-2.5 pt-3 text-[12.5px] leading-relaxed text-slate-100">
                 {description}
               </p>
+              {db && (
               <div className="flex items-center gap-2 border-t border-slate-700/80 bg-slate-950/60 px-3.5 py-2 dark:border-slate-600/70 dark:bg-slate-900/60">
                 <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
                   DB
                 </span>
                 <code className="font-mono text-[11px] font-medium text-emerald-300">{db}</code>
               </div>
+              )}
             </div>
           </div>,
           document.body,

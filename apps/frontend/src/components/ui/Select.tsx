@@ -33,6 +33,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
       ? [...options, { value: strValue, label: strValue }]
       : options;
     // 폭을 채우지 않는 셀렉트는 감싸는 칸도 박스 폭에 맞춘다. 칸이 줄 전체면 화살표가 박스 밖 오른쪽 끝에 뜬다.
+    // 박스는 max-w-full 로 부모 폭을 넘지 않는다 — 긴 옵션이 고정폭 칸 밖으로 넘쳐 옆 버튼을 덮지 않게.
     const fill = fullWidth || /(^|\s)w-full(\s|$)/.test(className);
 
     return (
@@ -57,7 +58,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
               text-text text-sm transition-all duration-200
               focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
               disabled:opacity-50 disabled:cursor-not-allowed
-              appearance-none cursor-pointer
+              appearance-none cursor-pointer max-w-full
               ${error ? 'border-red-500 focus:ring-red-500' : ''}
               ${fullWidth ? 'w-full' : ''}
               ${!value ? 'text-text-muted' : ''}

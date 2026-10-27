@@ -19,6 +19,7 @@ import toast from 'react-hot-toast';
 import { Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateFilter from '@/components/shared/DateFilter';
+import HelpTooltip from '@/components/shared/HelpTooltip';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -100,20 +101,22 @@ export default function MaterialLongTermPage() {
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           {/* 기간이 아니라 기준일이다 — 여기서 개월수를 거꾸로 센다. */}
-          <label className="flex items-center gap-2 text-sm text-text">
+          <label className="flex items-center gap-1 text-sm text-text">
             기준일
+            <HelpTooltip description="이 날짜에서 개월수를 거꾸로 세어 기간을 정합니다." />
             <DateFilter value={baseDate} onChange={setBaseDate} />
           </label>
           <label className="flex items-center gap-1 text-sm text-text">
+            개월수
+            <HelpTooltip description="마지막 입고가 기준일에서 이 개월수보다 오래된 재고만 봅니다." />
             <Input aria-label="개월수" value={termMonths} className="w-16"
               onChange={(e) => setTermMonths(e.target.value.replace(/\D/g, ''))} />
-            개월 이상 입고 없음
           </label>
           <label className="flex items-center gap-1 text-sm text-text">
-            그 기간 출고율
-            <Input aria-label="출고율 기준(%)" value={maxIssueRate} className="w-16"
-              onChange={(e) => setMaxIssueRate(e.target.value.replace(/[^d.]/g, ''))} />
-            % 이하
+            출고율(%)
+            <HelpTooltip description={'그 기간 출고량 ÷ 품목 재고 × 100 이 이 값 이하인 재고만 봅니다.\n0 이면 그 기간 출고가 없는 품목만 나옵니다.'} />
+            <Input aria-label="출고율(%)" value={maxIssueRate} className="w-16"
+              onChange={(e) => setMaxIssueRate(e.target.value.replace(/[^\d.]/g, ''))} />
           </label>
           <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
             onChange={(e) => setItemCode(e.target.value)}
