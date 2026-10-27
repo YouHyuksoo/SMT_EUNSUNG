@@ -296,7 +296,7 @@
     "inventory.matPhysicalInvHistory": "자재재고실사조회",
     "productInventory.hold": "제품재고홀드관리",
     "material": "자재수불관리",
-    "materialMgmt": "자재관리",
+    "materialMgmt": "자재수불관리",
     "processTransaction": "공정수불관리",
     "wipLedger": "공정입출고내역",
     "magazine": "매거진관리",
