@@ -1,11 +1,12 @@
 import {
-  Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Query, UnauthorizedException, UseGuards,
+  Body, Controller, Get, Param, ParseIntPipe, Post, Query, UnauthorizedException, UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OrganizationId, UserId } from '../../../common/decorators/tenant.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import {
+  LcrDestroyCancelDto,
   LcrDestroyCreateDto,
   LcrDestroyListQueryDto,
   LcrDestroyMonthlyQueryDto,
@@ -61,9 +62,15 @@ export class LcrDestroyController {
     return ResponseUtil.success(await this.service.create(dto, organizationId, userId));
   }
 
-  @Delete(':lcrSeq')
-  @ApiOperation({ summary: 'LCR 폐기 등록 삭제' })
-  async remove(@Param('lcrSeq', ParseIntPipe) lcrSeq: number, @OrganizationId() organizationId: number) {
-    return ResponseUtil.success(await this.service.remove(lcrSeq, organizationId));
+  @Post(':lcrSeq/cancel')
+  @ApiOperation({ summary: 'LCR 폐기 취소 — 행을 지우지 않고 취소일시·취소자·사유를 남긴다. 월 누계에서 빠진다' })
+  async cancel(
+    @Param('lcrSeq', ParseIntPipe) lcrSeq: number,
+    @Body() dto: LcrDestroyCancelDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId: string | undefined,
+  ) {
+    if (!userId) throw new UnauthorizedException('사용자 정보를 확인할 수 없습니다.');
+    return ResponseUtil.success(await this.service.cancel(lcrSeq, dto.reason, organizationId, userId));
   }
 }

@@ -131,6 +131,11 @@ export interface LcrDestroyRow {
   destroyAmount: number;
   measurer: string | null;
   comments: string | null;
+  /** Y=취소 (행은 남고 월 누계에서 빠진다), N=정상 */
+  cancelYn: 'Y' | 'N';
+  cancelDate: string | null;
+  cancelBy: string | null;
+  cancelReason: string | null;
   enterBy: string | null;
   enterDate: string | null;
 }

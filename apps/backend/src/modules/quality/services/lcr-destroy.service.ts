@@ -10,6 +10,8 @@
  * 3. 실장수 = Σ 자재 실장수량, 단가 = Σ 자재 단가, 폐기금액 = Σ(실장수량 × 단가) × 진행 수량.
  *    요청서 예시 MQ4KH_LDC_PWR-005 BOT(30 / 73 / 133)·TOP(48 / 1017.4 / 3263)와 맞춰 확인했다.
  * 4. 등록 시점의 BOM·단가를 IP_LCR_DESTROY(_DETAIL)에 그대로 남긴다. 나중에 BOM·단가가 바뀌어도 지난 달 금액은 그대로다.
+ * 5. 잘못 등록한 건은 지우지 않고 취소(CANCEL_YN='Y')로 남긴다 (사용자 지시 2026-10-27).
+ *    취소일시·취소자·사유를 기록하고, 목록에는 보이되 월 누계에서는 뺀다.
  */
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource, QueryRunner } from 'typeorm';
@@ -177,6 +179,8 @@ export class LcrDestroyService {
               d.ARRAY_QTY AS "arrayQty", d.MOUNT_QTY AS "mountQty", d.UNIT_PRICE_SUM AS "unitPriceSum",
               d.USE_QTY AS "useQty", d.DESTROY_AMOUNT AS "destroyAmount",
               d.MEASURER AS "measurer", d.COMMENTS AS "comments",
+              d.CANCEL_YN AS "cancelYn", d.CANCEL_DATE AS "cancelDate",
+              d.CANCEL_BY AS "cancelBy", d.CANCEL_REASON AS "cancelReason",
               d.ENTER_BY AS "enterBy", d.ENTER_DATE AS "enterDate"
          FROM IP_LCR_DESTROY d
         WHERE d.ORGANIZATION_ID = :organizationId
@@ -196,6 +200,7 @@ export class LcrDestroyService {
               SUM(d.USE_QTY) AS "useQty", SUM(d.DESTROY_AMOUNT) AS "destroyAmount"
          FROM IP_LCR_DESTROY d
         WHERE d.ORGANIZATION_ID = :organizationId
+          AND d.CANCEL_YN = 'N'
           AND d.MEASURE_DATE >= TO_DATE(:year || '-01-01', 'YYYY-MM-DD')
           AND d.MEASURE_DATE < ADD_MONTHS(TO_DATE(:year || '-01-01', 'YYYY-MM-DD'), 12)
         GROUP BY TO_CHAR(d.MEASURE_DATE, 'YYYY-MM')
@@ -218,19 +223,24 @@ export class LcrDestroyService {
     ) as OracleRow[];
   }
 
-  async remove(lcrSeq: number, organizationId: number) {
+  /** 잘못 등록한 건을 취소로 바꾼다. 행과 자재 내역은 그대로 둔다 */
+  async cancel(lcrSeq: number, reason: string, organizationId: number, userId: string) {
     return this.tx.run(async qr => {
       const found = await qr.query(
-        `SELECT 1 AS "x" FROM IP_LCR_DESTROY WHERE LCR_SEQ = :lcrSeq AND ORGANIZATION_ID = :organizationId`,
+        `SELECT CANCEL_YN AS "cancelYn" FROM IP_LCR_DESTROY
+          WHERE LCR_SEQ = :lcrSeq AND ORGANIZATION_ID = :organizationId FOR UPDATE`,
         namedBinds({ lcrSeq, organizationId }),
       ) as OracleRow[];
       if (found.length === 0) throw new BadRequestException('대상 등록을 찾을 수 없습니다.');
-      await qr.query(`DELETE FROM IP_LCR_DESTROY_DETAIL WHERE LCR_SEQ = :lcrSeq`, namedBinds({ lcrSeq }));
+      if (found[0].cancelYn === 'Y') throw new BadRequestException('이미 취소된 등록입니다.');
       await qr.query(
-        `DELETE FROM IP_LCR_DESTROY WHERE LCR_SEQ = :lcrSeq AND ORGANIZATION_ID = :organizationId`,
-        namedBinds({ lcrSeq, organizationId }),
+        `UPDATE IP_LCR_DESTROY
+            SET CANCEL_YN = 'Y', CANCEL_DATE = SYSDATE, CANCEL_BY = :userId, CANCEL_REASON = :reason,
+                LAST_MODIFY_BY = :userId, LAST_MODIFY_DATE = SYSDATE
+          WHERE LCR_SEQ = :lcrSeq AND ORGANIZATION_ID = :organizationId`,
+        namedBinds({ lcrSeq, organizationId, userId, reason: reason.trim() }),
       );
-      return { lcrSeq };
+      return { lcrSeq, cancelYn: 'Y' };
     });
   }
 

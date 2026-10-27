@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Plus, Search, Trash2 } from 'lucide-react';
+import { Ban, Plus, Search } from 'lucide-react';
 import { Button, Card, CardContent, ConfirmModal, Input, Select } from '@/components/ui';
 import QtyInput from '@/components/shared/QtyInput';
 import DataGrid from '@/components/data-grid/DataGrid';
@@ -26,8 +26,9 @@ const num = (value: unknown, digits = 1) =>
 const apiMessage = (error: unknown) =>
   (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
 
+/** 취소된 등록은 합계에서 뺀다 */
 const sumOf = (rows: LcrDestroyRow[], key: 'arrayQty' | 'useQty' | 'destroyAmount') =>
-  rows.reduce((sum, r) => sum + Number(r[key] ?? 0), 0);
+  rows.filter(r => r.cancelYn !== 'Y').reduce((sum, r) => sum + Number(r[key] ?? 0), 0);
 
 const partColumns: ColumnDef<LcrPart>[] = [
   { accessorKey: 'childItemCode', header: '품번', size: 130 },
@@ -56,7 +57,8 @@ export default function LcrDestroyTab() {
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<LcrDestroyRow | null>(null);
   const [selectedParts, setSelectedParts] = useState<LcrPart[] | null>(null);
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
   const searchItems = useCallback(async () => {
     try {
@@ -121,17 +123,23 @@ export default function LcrDestroyTab() {
     }
   }, [arrayQty, comments, itemCode, loadList, measureDate, measurer, month]);
 
-  const remove = useCallback(async () => {
+  const cancel = useCallback(async () => {
     if (!selected) return;
+    const reason = cancelReason.trim();
+    if (!reason) {
+      toast.error('취소 사유를 넣으세요');
+      return;
+    }
     try {
-      await api.delete(`/quality/lcr-destroy/${selected.lcrSeq}`);
-      toast.success('삭제했습니다');
-      setDeleteOpen(false);
+      await api.post(`/quality/lcr-destroy/${selected.lcrSeq}/cancel`, { reason });
+      toast.success('취소했습니다');
+      setCancelOpen(false);
+      setCancelReason('');
       await loadList();
     } catch (error: unknown) {
-      toast.error(apiMessage(error) || '삭제에 실패했습니다');
+      toast.error(apiMessage(error) || '취소에 실패했습니다');
     }
-  }, [loadList, selected]);
+  }, [cancelReason, loadList, selected]);
 
   const selectRow = useCallback(async (row: LcrDestroyRow) => {
     setSelected(row);
@@ -156,6 +164,8 @@ export default function LcrDestroyTab() {
 
   const listColumns = useMemo<ColumnDef<LcrDestroyRow>[]>(() => [
     { accessorKey: 'measureDate', header: '측정일자', size: 100, footer: '합계' },
+    { accessorKey: 'cancelYn', header: '상태', size: 70,
+      cell: ctx => ctx.getValue() === 'Y' ? <span className="font-medium text-red-600">취소</span> : <span className="text-text-muted">정상</span> },
     { accessorKey: 'customerName', header: '고객사', size: 90, cell: ctx => ctx.getValue() ?? ctx.row.original.customerCode ?? '' },
     { accessorKey: 'itemCode', header: '품번', size: 150 },
     { accessorKey: 'itemName', header: '품명', size: 220 },
@@ -166,6 +176,8 @@ export default function LcrDestroyTab() {
     { accessorKey: 'destroyAmount', header: '폐기금액', size: 110, meta: { align: 'right' }, cell: ctx => num(ctx.getValue()), footer: () => num(sumOf(rows, 'destroyAmount')) },
     { accessorKey: 'measurer', header: '측정자', size: 90 },
     { accessorKey: 'comments', header: '비고', size: 160 },
+    { accessorKey: 'cancelBy', header: '취소자', size: 90 },
+    { accessorKey: 'cancelReason', header: '취소사유', size: 180 },
     { accessorKey: 'enterBy', header: '등록자', size: 90 },
   ], [rows]);
 
@@ -211,10 +223,12 @@ export default function LcrDestroyTab() {
             <span className="text-sm font-semibold text-text">LCR 폐기 목록</span>
             <Input type="month" aria-label="조회월" value={month} onChange={e => setMonth(e.target.value)} className="w-36" />
             <span className="text-sm text-text-muted">
-              {rows.length}건 · 월 누계 {num(sumOf(rows, 'destroyAmount'))}원
+              {rows.filter(r => r.cancelYn !== 'Y').length}건 · 월 누계 {num(sumOf(rows, 'destroyAmount'))}원
             </span>
-            <Button size="sm" variant="secondary" className="ml-auto" onClick={() => setDeleteOpen(true)} disabled={!selected}>
-              <Trash2 className="mr-1 h-4 w-4" />삭제
+            <Button size="sm" variant="secondary" className="ml-auto" onClick={() => setCancelOpen(true)}
+              disabled={!selected || selected.cancelYn === 'Y'}
+              data-tooltip="잘못 등록한 건을 취소로 바꾼다. 행은 남고 월 누계에서 빠진다">
+              <Ban className="mr-1 h-4 w-4" />취소
             </Button>
           </div>
           <CardContent className="min-h-0 flex-1 p-3">
@@ -267,13 +281,19 @@ export default function LcrDestroyTab() {
       </div>
 
       <ConfirmModal
-        isOpen={deleteOpen}
-        onClose={() => setDeleteOpen(false)}
-        onConfirm={remove}
+        isOpen={cancelOpen}
+        onClose={() => setCancelOpen(false)}
+        onConfirm={cancel}
         variant="danger"
-        title="LCR 폐기 삭제"
-        confirmText="삭제"
-        message={selected ? <span>{selected.measureDate} · {selected.itemCode} · 진행 {selected.arrayQty} 건을 삭제합니다.</span> : ''}
+        title="LCR 폐기 취소"
+        confirmText="취소 처리"
+        message={selected ? (
+          <span className="flex flex-col gap-2">
+            <span>{selected.measureDate} · {selected.itemCode} · 진행 {selected.arrayQty} 건을 취소로 바꿉니다. 이력은 남고 월 누계에서 빠집니다.</span>
+            <Input aria-label="취소 사유" placeholder="취소 사유 (필수)" value={cancelReason} maxLength={150}
+              onChange={e => setCancelReason(e.target.value)} fullWidth />
+          </span>
+        ) : ''}
       />
     </>
   );

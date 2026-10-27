@@ -35,3 +35,9 @@ export class LcrDestroyListQueryDto {
 export class LcrDestroyMonthlyQueryDto {
   @Matches(/^\d{4}$/) year!: string;
 }
+
+/** LCR 폐기 취소 — 행은 지우지 않고 취소로 남긴다 */
+export class LcrDestroyCancelDto {
+  /** 취소 사유 (CANCEL_REASON, 500byte) */
+  @IsString() @IsNotEmpty() @MaxLength(150) reason!: string;
+}
