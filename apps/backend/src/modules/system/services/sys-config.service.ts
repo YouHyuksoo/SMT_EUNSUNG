@@ -8,8 +8,11 @@
  * 3. getValue: 특정 키의 값 조회 (서비스 로직에서 사용)
  * 4. isEnabled: BOOLEAN 타입 설정의 활성 여부 (서비스 로직에서 사용)
  * 5. bulkUpdate: 여러 설정을 한번에 저장 (관리 페이지에서 저장 버튼)
+ * 6. 관리자 전용 키(@smt/shared ADMIN_ONLY_CONFIG_KEYS, 예: PRODUCT_FIFO_YN)는
+ *    ADMIN 이 아니면 값 변경·사용여부 변경·등록·삭제를 거절한다. 값이 그대로면 통과한다.
  */
-import { BadRequestException, Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { isAdminOnlyConfigKey } from '@smt/shared';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { SysConfig } from '../../../entities/sys-config.entity';
@@ -31,6 +34,13 @@ export class SysConfigService {
     return {
       ...(organizationId != null ? { organizationId } : {}),
     };
+  }
+
+  /** 관리자 전용 키는 ADMIN 만 바꾼다 */
+  private assertCanChange(configKey: string, role?: string) {
+    if (isAdminOnlyConfigKey(configKey) && role !== 'ADMIN') {
+      throw new ForbiddenException(`${configKey} 설정은 관리자만 바꿀 수 있습니다.`);
+    }
   }
 
   private inferConfigGroup(configKey: string): string {
@@ -159,7 +169,8 @@ export class SysConfigService {
   }
 
   /** 설정 생성 */
-  async create(dto: CreateSysConfigDto, organizationId?: number) {
+  async create(dto: CreateSysConfigDto, organizationId?: number, role?: string) {
+    this.assertCanChange(dto.configKey, role);
     const existing = await this.sysConfigRepository.findOne({
       where: {
         configKey: dto.configKey,
@@ -189,12 +200,17 @@ export class SysConfigService {
     id: string,
     dto: UpdateSysConfigDto,
     organizationId?: number,
+    role?: string,
   ) {
     const config = await this.sysConfigRepository.findOne({
       where: { configKey: id, ...this.tenantWhere(organizationId) },
     });
     if (!config) throw new NotFoundException(`설정을 찾을 수 없습니다: ${id}`);
     this.assertSameTenant('시스템 설정', config, organizationId);
+    if ((dto.configValue !== undefined && dto.configValue !== config.configValue)
+      || (dto.isActive !== undefined && dto.isActive !== config.isActive)) {
+      this.assertCanChange(config.configKey, role);
+    }
     const updateData: Partial<SysConfig> = {
       ...(dto.configValue !== undefined ? { configValue: dto.configValue } : {}),
       ...(dto.label !== undefined || dto.description !== undefined
@@ -221,7 +237,16 @@ export class SysConfigService {
   async bulkUpdate(
     dto: BulkUpdateSysConfigDto,
     organizationId?: number,
+    role?: string,
   ) {
+    // 하나라도 막히면 아무것도 저장하지 않도록 먼저 전부 검사한다
+    for (const item of dto.items) {
+      if (!isAdminOnlyConfigKey(item.id)) continue;
+      const current = await this.sysConfigRepository.findOne({
+        where: { configKey: item.id, ...this.tenantWhere(organizationId) },
+      });
+      if (current && current.configValue !== item.configValue) this.assertCanChange(item.id, role);
+    }
     const results = [];
     for (const item of dto.items) {
       await this.sysConfigRepository.update(
@@ -240,7 +265,8 @@ export class SysConfigService {
   }
 
   /** 설정 삭제 */
-  async remove(id: string, organizationId?: number) {
+  async remove(id: string, organizationId?: number, role?: string) {
+    this.assertCanChange(id, role);
     const config = await this.sysConfigRepository.findOne({
       where: { configKey: id, ...this.tenantWhere(organizationId) },
     });

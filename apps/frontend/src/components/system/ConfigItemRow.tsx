@@ -10,9 +10,10 @@
  * 3. NUMBER: 숫자 입력 필드
  * 4. TEXT: 텍스트 입력 필드
  * 5. 변경된 항목은 좌측 파란 보더로 강조
+ * 6. locked 면 값을 바꾸거나 지울 수 없다 (관리자 전용 키를 관리자가 아닌 사람이 볼 때)
  */
 import { useMemo } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Lock, Trash2 } from 'lucide-react';
 import { Input, Select } from '@/components/ui';
 import type { SysConfigItem } from '@/stores/sysConfigStore';
 
@@ -22,9 +23,11 @@ interface Props {
   isChanged: boolean;
   onValueChange: (value: string) => void;
   onDelete: () => void;
+  /** 관리자만 바꿀 수 있는 키라 잠근다 */
+  locked?: boolean;
 }
 
-export default function ConfigItemRow({ config, currentValue, isChanged, onValueChange, onDelete }: Props) {
+export default function ConfigItemRow({ config, currentValue, isChanged, onValueChange, onDelete, locked = false }: Props) {
   const selectOptions = useMemo(() => {
     if (config.configType !== 'SELECT' || !config.options) return [];
     try {
@@ -49,6 +52,11 @@ export default function ConfigItemRow({ config, currentValue, isChanged, onValue
           <div className="text-xs text-text-muted mt-0.5 line-clamp-2">{config.description}</div>
         )}
         <div className="text-xs text-text-muted/60 mt-0.5 font-mono truncate">{config.configKey}</div>
+        {locked && (
+          <div className="mt-0.5 flex items-center gap-1 text-xs text-text-muted">
+            <Lock className="h-3 w-3" />관리자만 바꿀 수 있습니다
+          </div>
+        )}
       </div>
 
       {/* 입력 UI */}
@@ -56,8 +64,9 @@ export default function ConfigItemRow({ config, currentValue, isChanged, onValue
         {config.configType === 'BOOLEAN' && (
           <button
             type="button"
+            disabled={locked}
             onClick={() => onValueChange(currentValue === 'Y' ? 'N' : 'Y')}
-            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
               currentValue === 'Y'
                 ? 'bg-primary'
                 : 'bg-gray-300 dark:bg-gray-600'
@@ -77,6 +86,7 @@ export default function ConfigItemRow({ config, currentValue, isChanged, onValue
             options={selectOptions}
             value={currentValue}
             onChange={onValueChange}
+            disabled={locked}
             fullWidth
           />
         )}
@@ -86,6 +96,7 @@ export default function ConfigItemRow({ config, currentValue, isChanged, onValue
             type="number"
             value={currentValue}
             onChange={(e) => onValueChange(e.target.value)}
+            disabled={locked}
             fullWidth
           />
         )}
@@ -94,6 +105,7 @@ export default function ConfigItemRow({ config, currentValue, isChanged, onValue
           <Input
             value={currentValue}
             onChange={(e) => onValueChange(e.target.value)}
+            disabled={locked}
             fullWidth
           />
         )}
@@ -103,7 +115,8 @@ export default function ConfigItemRow({ config, currentValue, isChanged, onValue
       <button
         type="button"
         onClick={onDelete}
-        className="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+        disabled={locked}
+        className="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-40"
         title="삭제"
       >
         <Trash2 className="w-4 h-4" />

@@ -41,6 +41,14 @@ export const UserId = createParamDecorator(
  * req.user.company 값을 파라미터로 추출하는 데코레이터
  * @example @Company() company: string
  */
+/** 로그인 사용자 역할 — ADMIN(레벨 9 이상) / MANAGER(5 이상) / OPERATOR */
+export const UserRole = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): string | undefined => {
+    const req = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
+    return req.user?.role;
+  },
+);
+
 export const Company = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): string | undefined => {
     const req = ctx.switchToHttp().getRequest<AuthenticatedRequest>();

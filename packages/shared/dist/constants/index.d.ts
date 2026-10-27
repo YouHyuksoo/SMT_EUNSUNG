@@ -164,4 +164,5 @@ export * from './menu';
 export * from './status';
 export * from './process';
 export * from './com-code-values';
+export * from './sys-config';
 //# sourceMappingURL=index.d.ts.map

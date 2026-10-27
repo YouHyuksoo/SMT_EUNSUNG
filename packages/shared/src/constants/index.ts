@@ -102,3 +102,6 @@ export * from './process';
 
 // 공통코드 값 상수
 export * from './com-code-values';
+
+// 환경설정 관리자 전용 키
+export * from './sys-config';

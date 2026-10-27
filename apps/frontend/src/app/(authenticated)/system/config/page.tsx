@@ -23,6 +23,8 @@ import { api } from '@/services/api';
 import { useSysConfigStore } from '@/stores/sysConfigStore';
 import type { SysConfigItem } from '@/stores/sysConfigStore';
 import ConfigItemRow from '@/components/system/ConfigItemRow';
+import { useAuthStore } from '@/stores/authStore';
+import { isAdminOnlyConfigKey } from '@smt/shared';
 import AddConfigModal from '@/components/system/AddConfigModal';
 import AiConfigPanel from '@/components/system/AiConfigPanel';
 import AiEmbeddingPanel from '@/components/system/AiEmbeddingPanel';
@@ -55,6 +57,8 @@ function ConfigPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const invalidate = useInvalidateQueries();
   const { fetchConfigs } = useSysConfigStore();
+  // 관리자 전용 키(제품 선입선출 등)는 ADMIN 이 아니면 잠근다 — 서버도 같은 목록으로 막는다
+  const isAdmin = useAuthStore((s) => s.user?.role === 'ADMIN');
 
   const queryParams = activeGroup ? `?configGroup=${activeGroup}` : '';
   const { data, isLoading, refetch } = useApiQuery<ConfigListResponse>(
@@ -162,6 +166,7 @@ function ConfigPage() {
                       isChanged={getConfigId(cfg) in changes}
                       onValueChange={(val) => handleValueChange(getConfigId(cfg), val)}
                       onDelete={() => setDeleteTarget(getConfigId(cfg))}
+                      locked={!isAdmin && isAdminOnlyConfigKey(cfg.configKey)}
                     />
                   ))}
                 </div>

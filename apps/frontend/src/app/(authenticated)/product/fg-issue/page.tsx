@@ -15,7 +15,7 @@
  * 5. **기본 기간이 7일이다.** 재고일 기준으로 거른다.
  * 6. **제품납품계획(출하지시)을 고르면** 출고한 박스가 그 지시에 쌓이고 고객은 지시의 고객으로 고정된다.
  *    지시를 고르지 않으면 지금처럼 고객만 넣고 내보낸다. 취소는 박스 기록으로 지시를 찾아 되돌린다.
- * 7. **선입선출**: 환경설정 `PRODUCT_FIFO_YN` 이 Y 면 먼저 들어온 같은 모델 박스가 남아 있을 때 출하가 막힌다.
+ * 7. **선입선출**: 환경설정 `PRODUCT_FIFO_YN`(기본 Y, 관리자만 변경) 이 Y 면 먼저 들어온 같은 모델 박스가 남아 있을 때 출하가 막힌다.
  *    막히면 먼저 내보낼 박스 목록이 위에 뜬다. 장기재고 기준일보다 오래된 박스는 판정에서 뺀다.
  */
 import { useCallback, useEffect, useState } from 'react';
@@ -133,7 +133,7 @@ export default function FgIssuePage() {
             ? `출하가능 ${count.toLocaleString()}건 · 수량 ${total.toLocaleString()}`
             : '조회하세요'}
           {fifoConfig && (
-            <span data-tooltip="환경설정 PRODUCT_FIFO_YN 에서 켜고 끈다">
+            <span data-tooltip="관리자가 환경설정 PRODUCT_FIFO_YN 에서 켜고 끈다">
               {' · '}선입선출 {fifoConfig.enabled ? `사용 (최근 ${fifoConfig.days}일 입고분 기준)` : '미사용'}
             </span>
           )}

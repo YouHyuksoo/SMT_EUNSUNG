@@ -103,3 +103,5 @@ __exportStar(require("./status"), exports);
 __exportStar(require("./process"), exports);
 // 공통코드 값 상수
 __exportStar(require("./com-code-values"), exports);
+// 환경설정 관리자 전용 키
+__exportStar(require("./sys-config"), exports);

@@ -25,7 +25,7 @@
  *    (실측: 선언 127줄 · 정의 139줄 · 호출 0곳). 살아있는 인터락 게이트는 포장
  *    스캔(299)에 있고 그쪽에 옮겼다.
  * 8. **쓰기는 실행하지 않고 parse 로만 검증했다** (사용자 결정).
- * 10. **307 출하에 제품 선입선출(FIFO)을 건다** (`ISYS_CONFIG.PRODUCT_FIFO_YN`, 환경설정에서 켜고 끈다).
+ * 10. **307 출하에 제품 선입선출(FIFO)을 건다** (`ISYS_CONFIG.PRODUCT_FIFO_YN`, 기본 사용, 환경설정에서 관리자만 켜고 끈다).
  *    찍은 박스보다 먼저 들어온 같은 모델 박스가 제품창고(P01)에 남아 있으면 출하를 막는다.
  *    재고는 출하 때 지워지지 않고 트리거가 QTY 를 0 으로 깎으므로 `QTY > 0` 이 남은 박스다.
  *    실사 전 과거 재고가 2만 건 넘게 남아 있어(2022~) 장기재고 기준일(`PRODUCT_DEAD_STOCK_DAYS`)
@@ -381,7 +381,8 @@ export class ProductFgService {
     const value = (name: string) => rows.find((r) => r.name === name)?.value;
     const days = Number(value('PRODUCT_DEAD_STOCK_DAYS'));
     return {
-      enabled: String(value('PRODUCT_FIFO_YN') ?? 'N').trim().toUpperCase() === 'Y',
+      // 기본은 사용 — 설정 행이 없어도 선입선출을 건다 (사용자 지시 2026-10-27)
+      enabled: String(value('PRODUCT_FIFO_YN') ?? 'Y').trim().toUpperCase() === 'Y',
       days: Number.isFinite(days) && days > 0 ? days : DEFAULT_FIFO_DAYS,
     };
   }

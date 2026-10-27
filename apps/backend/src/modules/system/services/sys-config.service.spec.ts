@@ -9,7 +9,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { NotFoundException, ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { SysConfigService } from './sys-config.service';
 import { SysConfig } from '../../../entities/sys-config.entity';
@@ -304,6 +304,40 @@ describe('SysConfigService', () => {
 
       // Act & Assert
       await expect(target.remove('NONE')).rejects.toThrow(NotFoundException);
+    });
+  });
+  // 제품 선입선출(PRODUCT_FIFO_YN)처럼 관리자 전용 키는 ADMIN 만 바꾼다 (@smt/shared ADMIN_ONLY_CONFIG_KEYS)
+  describe('admin-only keys', () => {
+    const fifo = { configKey: 'PRODUCT_FIFO_YN', configValue: 'Y', isActive: 'Y', organizationId: 1 } as SysConfig;
+
+    it('rejects a non-admin value change and does not write', async () => {
+      mockRepo.findOne.mockResolvedValue(fifo);
+      await expect(target.update('PRODUCT_FIFO_YN', { configValue: 'N' } as never, 1, 'MANAGER'))
+        .rejects.toBeInstanceOf(ForbiddenException);
+      expect(mockRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('lets an admin change the value', async () => {
+      mockRepo.findOne.mockResolvedValue(fifo);
+      await target.update('PRODUCT_FIFO_YN', { configValue: 'N' } as never, 1, 'ADMIN');
+      expect(mockRepo.update).toHaveBeenCalled();
+    });
+
+    it('bulk save by a non-admin fails only when the admin-only value actually changes', async () => {
+      mockRepo.findOne.mockResolvedValue(fifo);
+      await expect(target.bulkUpdate({ items: [{ id: 'MAX_OPEN_TABS', configValue: '9' }, { id: 'PRODUCT_FIFO_YN', configValue: 'N' }] } as never, 1, 'OPERATOR'))
+        .rejects.toBeInstanceOf(ForbiddenException);
+      expect(mockRepo.update).not.toHaveBeenCalled();
+
+      await target.bulkUpdate({ items: [{ id: 'PRODUCT_FIFO_YN', configValue: 'Y' }] } as never, 1, 'OPERATOR');
+      expect(mockRepo.update).toHaveBeenCalled();
+    });
+
+    it('rejects non-admin create and remove of the key', async () => {
+      await expect(target.create({ configKey: 'product_fifo_yn', configValue: 'N' } as never, 1, 'MANAGER'))
+        .rejects.toBeInstanceOf(ForbiddenException);
+      await expect(target.remove('PRODUCT_FIFO_YN', 1, 'MANAGER')).rejects.toBeInstanceOf(ForbiddenException);
+      expect(mockRepo.delete).not.toHaveBeenCalled();
     });
   });
 });
