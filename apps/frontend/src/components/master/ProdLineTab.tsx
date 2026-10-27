@@ -27,7 +27,9 @@ import {
   LINE_ACTIVE_YN_LABELS,
 } from "@smt/shared";
 import api from "@/services/api";
-import { FieldInput, FieldSelect } from "@/app/(authenticated)/master/prod-line/components/ProdLineFieldHelp";
+import { Field, FieldInput, FieldSelect } from "@/app/(authenticated)/master/prod-line/components/ProdLineFieldHelp";
+import ComCodeBadge from "@/components/ui/ComCodeBadge";
+import ComCodeSelect from "@/components/shared/ComCodeSelect";
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
 
 interface ProdLine {
@@ -233,7 +235,10 @@ export default function ProdLineTab({ onHeaderActions }: Props) {
     },
     { accessorKey: "lineCodeGroup", header: t("master.prodLine.lineCodeGroup"), size: 100,
       meta: { filterType: "multi" as const },
-      cell: ({ getValue }) => (getValue() as string) || "-",
+      cell: ({ getValue }) => {
+        const v = getValue() as string;
+        return v ? <ComCodeBadge groupCode="LINE CODE GROUP" code={v} /> : <span className="text-text-muted">-</span>;
+      },
     },
     { accessorKey: "lineProductDivision", header: t("master.prodLine.lineProductDivision"), size: 100,
       meta: { filterType: "multi" as const },
@@ -376,8 +381,10 @@ export default function ProdLineTab({ onHeaderActions }: Props) {
 
               <FieldSelect field="lineDivision" label={t("master.prodLine.lineDivision")} options={LINE_DIVISION_OPTIONS}
                 value={formData.lineDivision || ""} onChange={(v) => setFormData((p) => ({ ...p, lineDivision: v }))} required />
-              <FieldInput field="lineCodeGroup" label={t("master.prodLine.lineCodeGroup")} placeholder="ASM"
-                value={formData.lineCodeGroup || ""} onChange={(e) => setFormData((p) => ({ ...p, lineCodeGroup: e.target.value }))} />
+              <Field field="lineCodeGroup" label={t("master.prodLine.lineCodeGroup")}>
+                <ComCodeSelect groupCode="LINE CODE GROUP" includeAll={false} fullWidth placeholder={t("common.select")}
+                  value={formData.lineCodeGroup || ""} onChange={(v) => setFormData((p) => ({ ...p, lineCodeGroup: v }))} />
+              </Field>
 
               <FieldSelect field="lineProductDivision" label={t("master.prodLine.lineProductDivision")} options={LINE_PRODUCT_DIVISION_OPTIONS}
                 value={formData.lineProductDivision || ""} onChange={(v) => setFormData((p) => ({ ...p, lineProductDivision: v }))} />

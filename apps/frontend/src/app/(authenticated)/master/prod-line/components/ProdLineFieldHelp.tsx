@@ -10,7 +10,7 @@ export const PROD_LINE_FIELD_HELP = {
   lineCode: { db: "IP_PRODUCT_LINE.LINE_CODE", description: "MES 내부에서 생산라인을 식별하는 고유 코드입니다. 등록 후에는 변경할 수 없습니다." },
   lineName: { db: "IP_PRODUCT_LINE.LINE_NAME", description: "현장에서 식별할 생산라인 이름입니다." },
   lineDivision: { db: "IP_PRODUCT_LINE.LINE_DIVISION", description: "SMT, 조립라인, 검사라인, 가공공정 등 라인의 성격을 구분하는 코드입니다." },
-  lineCodeGroup: { db: "IP_PRODUCT_LINE.LINE_CODE_GROUP", description: "라인을 묶는 그룹 코드입니다. (예: SMD, ASM, SUB, INSP, COMMON)" },
+  lineCodeGroup: { db: "IP_PRODUCT_LINE.LINE_CODE_GROUP", description: "라인을 묶는 그룹입니다. 공통코드 LINE CODE GROUP(SMD·서브·조립·검사·공용)에서 고릅니다." },
   lineProductDivision: { db: "IP_PRODUCT_LINE.LINE_PRODUCT_DIVISION", description: "이 라인에서 생산하는 제품의 사급 구분입니다. 고정/자작/유상/무상." },
   lineStatus: { db: "IP_PRODUCT_LINE.LINE_STATUS", description: "라인의 현재 운전 상태입니다. 정상, 고장, 정지, 모델변경 등." },
   processCode: { db: "IP_PRODUCT_LINE.PROCESS_CODE", description: "OEE 집계 기준 작업장입니다. SMT 또는 조립(ASSY)을 선택합니다." },
