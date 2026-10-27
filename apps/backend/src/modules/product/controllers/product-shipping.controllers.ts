@@ -13,6 +13,7 @@ import { ResponseUtil } from '../../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ROW_LIMIT } from '../../../shared/row-limit';
 import {
+  FgFifoQueryDto,
   FgIssuableQueryDto,
   FgIssueDto,
   FgIssueQueryDto,
@@ -233,6 +234,21 @@ export class ProductFgController {
     @OrganizationId() organizationId: number,
   ) {
     return paged(await this.service.findIssuable(query, organizationId));
+  }
+
+  @Get('fifo-config')
+  @ApiOperation({ summary: '307 제품 선입선출 설정 — ISYS_CONFIG.PRODUCT_FIFO_YN · 판정 범위(PRODUCT_DEAD_STOCK_DAYS)' })
+  async fifoConfig(@OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.findFifoConfig(organizationId));
+  }
+
+  @Get('fifo')
+  @ApiOperation({ summary: '307 제품 선입선출 — 이 박스보다 먼저 들어와 남아 있는 같은 모델 박스' })
+  async fifo(
+    @Query() query: FgFifoQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(await this.service.findFifo(query, organizationId));
   }
 
   @Post('receipt')

@@ -43,7 +43,7 @@ export class SysConfigService {
       key.startsWith('WH') ||
       key.startsWith('WAREHOUSE') ||
       key.includes('INVENTORY') ||
-      key.includes('FIFO')
+      (key.includes('FIFO') && !key.startsWith('PROD'))
     ) {
       return 'MATERIAL';
     }

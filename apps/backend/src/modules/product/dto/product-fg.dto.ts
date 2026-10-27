@@ -52,6 +52,11 @@ export class FgIssuableQueryDto {
   @IsOptional() @IsString() locationCode?: string;
 }
 
+/** 307 선입선출 — 이 박스보다 먼저 내보내야 할 박스 */
+export class FgFifoQueryDto {
+  @IsString() @IsNotEmpty() barcode!: string;
+}
+
 export class FgReceiptDto {
   /** 박스 바코드. */
   @IsString() @IsNotEmpty() barcode!: string;

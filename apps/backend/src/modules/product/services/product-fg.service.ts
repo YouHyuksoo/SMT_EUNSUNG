@@ -25,6 +25,11 @@
  *    (실측: 선언 127줄 · 정의 139줄 · 호출 0곳). 살아있는 인터락 게이트는 포장
  *    스캔(299)에 있고 그쪽에 옮겼다.
  * 8. **쓰기는 실행하지 않고 parse 로만 검증했다** (사용자 결정).
+ * 10. **307 출하에 제품 선입선출(FIFO)을 건다** (`ISYS_CONFIG.PRODUCT_FIFO_YN`, 환경설정에서 켜고 끈다).
+ *    찍은 박스보다 먼저 들어온 같은 모델 박스가 제품창고(P01)에 남아 있으면 출하를 막는다.
+ *    재고는 출하 때 지워지지 않고 트리거가 QTY 를 0 으로 깎으므로 `QTY > 0` 이 남은 박스다.
+ *    실사 전 과거 재고가 2만 건 넘게 남아 있어(2022~) 장기재고 기준일(`PRODUCT_DEAD_STOCK_DAYS`)
+ *    보다 오래된 박스는 판정에서 뺀다. 모델명 하나에 품번·서픽스가 1:1 이라 모델명으로 묶는다.
  * 9. **목록은 기간을 좁혀 본다.** 이 표들은 기간 컬럼에 인덱스가 없어 한 달을 보면
  *    9,000행에 **8.7초**가 걸린다 (실측). 7일이면 1,583행 **2.4초**다 — 그래서 화면
  *    기본값을 7일로 뒀다. 인덱스 추가는 스키마 변경이라 손대지 않았다.
@@ -34,6 +39,7 @@ import { DataSource, QueryRunner } from 'typeorm';
 import { limited, ROW_LIMIT } from '../../../shared/row-limit';
 import { TransactionService } from '../../../shared/transaction.service';
 import {
+  FgFifoQueryDto,
   FgIssuableQueryDto,
   FgIssueDto,
   FgIssueQueryDto,
@@ -48,6 +54,8 @@ import { namedBinds } from '../../../common/utils/named-binds.util';
 import { ShippingOrderService } from './shipping-order.service';
 
 type Row = Record<string, unknown>;
+/** DataSource 와 QueryRunner 가 함께 가진 query — 트랜잭션 안팎에서 같은 조회를 쓴다 */
+type Queryable = { query: (sql: string, parameters?: unknown[]) => Promise<unknown> };
 /** 프로시저 호출 전후에 같은 트랜잭션으로 부르는 처리 */
 type ProcHook = (qr: QueryRunner) => Promise<void>;
 
@@ -64,6 +72,38 @@ export const FG_TXN = {
  * 프로시저 본문의 모든 `COMMIT`/`ROLLBACK` 이 `if p_commit = 'Y'` 안에 있다.
  */
 const NO_PROC_COMMIT = 'N';
+
+/** 프로시저가 출하하는 창고 — 양품 제품창고만 내보낸다 (P_PRODUCT_FG_ISSUE 실측) */
+const FG_ISSUE_LOCATION = 'P01';
+/** 선입선출 거절 때 보여 줄 먼저 나갈 박스 수 */
+const FIFO_LIST_LIMIT = 50;
+/** PRODUCT_DEAD_STOCK_DAYS 가 없을 때 판정 범위(일) */
+const DEFAULT_FIFO_DAYS = 30;
+
+/**
+ * 선입선출 위반 후보 — 찍은 박스(t)보다 먼저 들어와 아직 남은 같은 모델 박스(o).
+ * 재고 표에 모델 인덱스가 없지만 판정 범위를 일수로 잘라 0.6초 안에 끝난다 (실측).
+ */
+const FIFO_OLDER_BOXES_SQL = `
+  FROM IP_PRODUCT_FG_INVENTORY t
+  JOIN IP_PRODUCT_FG_INVENTORY o
+    ON o.MODEL_NAME = t.MODEL_NAME
+   AND o.LOCATION_CODE = t.LOCATION_CODE
+   AND o.ORGANIZATION_ID = t.ORGANIZATION_ID
+   AND o.BARCODE <> t.BARCODE
+   AND o.QTY > 0
+   AND NVL(o.PALLET_FLAG, 'N') = 'N'
+   AND o.INVENTORY_DATE < t.INVENTORY_DATE
+   AND o.INVENTORY_DATE >= TRUNC(SYSDATE) - :days
+ WHERE t.BARCODE = :barcode
+   AND t.LOCATION_CODE = '${FG_ISSUE_LOCATION}'
+   AND t.ORGANIZATION_ID = :organizationId`;
+
+export interface FgFifoConfig {
+  enabled: boolean;
+  /** 이 일수 안에 들어온 박스만 판정한다 (장기재고 기준일) */
+  days: number;
+}
 
 /**
  * 제품출하조회 합계 기준별 SELECT · GROUP BY · ORDER BY 조각. 사용자 값은 들어가지 않는다.
@@ -287,6 +327,7 @@ export class ProductFgService {
   /**
    * 출하할 수 있는 재고 (PB `d_prd_product_fg_issue_able_lst`).
    *
+   * 출하해도 재고 행은 지워지지 않고 트리거가 QTY 를 0 으로 깎으므로 `QTY > 0` 만 남은 박스다.
    * PB 고정조건 두 가지를 그대로 둔다 — 파렛트에 실리지 않은 것(`PALLET_FLAG='N'`)과
    * 제품창고(`LOCATION_CODE='P01'`). 창고코드를 화면에서 바꿀 수 있게 열어 두되
    * 기본값은 PB 와 같다.
@@ -312,6 +353,7 @@ export class ProductFgService {
           AND v.BARCODE LIKE :barcode
           AND v.MODEL_NAME LIKE :modelName
           AND NVL(v.PALLET_FLAG, 'N') = 'N'
+          AND v.QTY > 0
           AND v.LOCATION_CODE = :locationCode
           AND v.ORGANIZATION_ID = :organizationId
         ORDER BY v.PALLET_NO, v.INVENTORY_DATE
@@ -326,6 +368,58 @@ export class ProductFgService {
       }),
     )) as Row[];
     return limited(rows);
+  }
+
+  /** 307 선입선출 설정 — 화면이 켜짐 여부와 판정 범위를 보여 준다 */
+  async findFifoConfig(organizationId: number, runner: Queryable = this.dataSource): Promise<FgFifoConfig> {
+    const rows = (await runner.query(
+      `SELECT CONFIG_NAME AS "name", CONFIG_VALUE AS "value" FROM ISYS_CONFIG
+        WHERE CONFIG_NAME IN ('PRODUCT_FIFO_YN', 'PRODUCT_DEAD_STOCK_DAYS')
+          AND ORGANIZATION_ID = :organizationId AND NVL(USE_YN, 'Y') = 'Y'`,
+      namedBinds({ organizationId }),
+    )) as Row[];
+    const value = (name: string) => rows.find((r) => r.name === name)?.value;
+    const days = Number(value('PRODUCT_DEAD_STOCK_DAYS'));
+    return {
+      enabled: String(value('PRODUCT_FIFO_YN') ?? 'N').trim().toUpperCase() === 'Y',
+      days: Number.isFinite(days) && days > 0 ? days : DEFAULT_FIFO_DAYS,
+    };
+  }
+
+  /** 307 선입선출 — 이 박스보다 먼저 내보내야 할 박스 목록 (거절 뒤 화면에 띄운다) */
+  async findFifo(query: FgFifoQueryDto, organizationId: number) {
+    const config = await this.findFifoConfig(organizationId);
+    const rows = (await this.dataSource.query(
+      `SELECT o.BARCODE AS "barcode", o.MODEL_NAME AS "modelName", o.MODEL_SUFFIX AS "modelSuffix",
+              o.ITEM_CODE AS "itemCode", o.QTY AS "qty", o.LOCATION_CODE AS "locationCode",
+              o.RECEIPT_NO AS "receiptNo",
+              TO_CHAR(o.INVENTORY_DATE, 'YYYY-MM-DD HH24:MI:SS') AS "inventoryDate"
+       ${FIFO_OLDER_BOXES_SQL}
+        ORDER BY o.INVENTORY_DATE
+        FETCH FIRST ${FIFO_LIST_LIMIT} ROWS ONLY`,
+      namedBinds({ barcode: query.barcode.trim(), organizationId, days: config.days }),
+    )) as Row[];
+    return { ...config, rows };
+  }
+
+  /** 선입선출이 켜져 있으면 먼저 나갈 박스가 남았는지 보고 출하를 막는다 */
+  private async assertFifo(qr: QueryRunner, barcode: string, organizationId: number) {
+    const config = await this.findFifoConfig(organizationId, qr);
+    if (!config.enabled) return;
+    const rows = (await qr.query(
+      `SELECT COUNT(*) AS "count",
+              MIN(o.BARCODE) KEEP (DENSE_RANK FIRST ORDER BY o.INVENTORY_DATE) AS "oldestBarcode",
+              TO_CHAR(MIN(o.INVENTORY_DATE), 'YYYY-MM-DD HH24:MI') AS "oldestDate"
+       ${FIFO_OLDER_BOXES_SQL}`,
+      namedBinds({ barcode, organizationId, days: config.days }),
+    )) as Row[];
+    const count = Number(rows[0]?.count ?? 0);
+    if (count > 0) {
+      throw new BadRequestException(
+        `선입선출: 먼저 들어온 같은 모델 박스 ${count}개가 남아 있습니다. `
+          + `가장 오래된 박스 ${String(rows[0].oldestBarcode)} (${String(rows[0].oldestDate)})`,
+      );
+    }
   }
 
   // ───────────────────────────────── 입고 (쓰기)
@@ -395,7 +489,9 @@ export class ProductFgService {
         // 취소는 프로시저가 박스 기록을 바꾸기 전에 어느 지시로 나갔는지 읽어 둔다.
         before: dto.cancel
           ? async (qr) => { cancelledOrder = await this.shippingOrders.shipOrderOfBox(qr, barcode, organizationId); }
-          : undefined,
+          : (dto.barType ?? 'I') === 'I'
+            ? async (qr) => { await this.assertFifo(qr, barcode, organizationId); }
+            : undefined,
         after: async (qr) => {
           if (dto.cancel) {
             if (cancelledOrder) await this.shippingOrders.unlinkCancelledBox(qr, cancelledOrder, barcode, organizationId, userId);

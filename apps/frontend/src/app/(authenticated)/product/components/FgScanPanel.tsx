@@ -41,6 +41,8 @@ export interface FgScanPanelProps {
   fixedCustomerCode?: string;
   /** 처리 버튼 줄 앞에 그릴 내용 (예: 출하지시 선택). */
   headerSlot?: ReactNode;
+  /** 처리 실패 뒤 부른다 (예: 선입선출 거절이면 먼저 나갈 박스를 띄운다). */
+  onError?: (barcode: string, message: string | undefined) => void | Promise<void>;
 }
 
 export default function FgScanPanel({
@@ -54,6 +56,7 @@ export default function FgScanPanel({
   extraBody,
   fixedCustomerCode,
   headerSlot,
+  onError,
 }: FgScanPanelProps) {
   const [barcode, setBarcode] = useState('');
   const [qty, setQty] = useState('');
@@ -109,12 +112,13 @@ export default function FgScanPanel({
       toast.error(message ?? '처리에 실패했습니다.');
       setLastResult(null);
       setBarcode('');
+      await onError?.(barcode.trim(), message);
     } finally {
       setBusy(false);
       barcodeRef.current?.focus();
     }
   }, [blocker, endpoint, barcode, locationCode, cancel, withQty, qty,
-    withCustomer, customer, extraBody, onDone]);
+    withCustomer, customer, extraBody, onDone, onError]);
 
   return (
     <Card padding="none">
