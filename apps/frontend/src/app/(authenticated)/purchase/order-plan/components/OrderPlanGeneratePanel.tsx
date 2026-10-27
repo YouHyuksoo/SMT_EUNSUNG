@@ -15,21 +15,19 @@ import { Eye, Play, X } from 'lucide-react';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import { Button, Input, Select } from '@/components/ui';
 
-/** PB 라디오버튼(계획 원천). 어느 계획에서 BOM 을 펼지. */
+/**
+ * PB 라디오버튼(계획 원천). 어느 계획에서 BOM 을 펼지.
+ * 시간별 원천(생산계획·납품계획 시간별)은 화면에서 뺐다 (사용자 지시 2026-10-27). 서버 계산은 남아 있다.
+ */
 export const PLAN_SOURCES = [
   { value: 'productionPlan', label: '생산계획' },
-  { value: 'productionPlanByTime', label: '생산계획(시간별)' },
   { value: 'salePlan', label: '납품계획' },
-  { value: 'salePlanByTime', label: '납품계획(시간별)' },
   { value: 'manual', label: '수기계획' },
 ];
 
 export const SOURCE_TIP: Record<string, string> = {
   productionPlan: '생산계획(IP_PRODUCT_MI_PLAN)에서 아직 못 만든 수량(계획 − 실적)만 펼칩니다.',
-  productionPlanByTime: '생산계획을 같은 날 안에서도 시:분 단위로 나눠 봅니다.'
-    + ' 하루에 여러 번 투입하는 라인에 씁니다.',
   salePlan: '납품계획에서 아직 안 보낸 수량을 펼칩니다. 지시번호로 잡힌 실적까지 뺍니다.',
-  salePlanByTime: '납품계획을 시:분:초 단위로 나눠 봅니다.',
   manual: '손으로 넣어 둔 발주 기준계획(IM_ITEM_MASTER_PLAN_4_PO)을 펼칩니다.',
 };
 
