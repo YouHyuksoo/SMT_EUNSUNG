@@ -1,10 +1,10 @@
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize, IsArray, IsIn, IsInt, IsISO8601,
-  IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min, ValidateNested,
+  IsNotEmpty, IsOptional, IsString, Matches, Max, MaxLength, Min, ValidateNested,
 } from 'class-validator';
 
-/** 폐기이력 조회 — PB d_pln_product_destroy_hst (QC_INSPECT_HANDLING='D' 고정) */
+/** 폐기이력 조회 — 공정폐기 원장 IP_PRODUCT_DESTROY */
 export class ProductDestroyHistoryQueryDto {
   @IsOptional() @IsString() lineCode?: string;
   @IsOptional() @IsString() workstageCode?: string;
@@ -12,13 +12,15 @@ export class ProductDestroyHistoryQueryDto {
   @IsOptional() @IsString() serialNo?: string;
   /** 1=생산1팀(SMT), 2=생산2팀(조립). 비우면 팀 구분 없이 */
   @IsOptional() @IsIn(['1', '2']) team?: string;
+  /** D=폐기보관, R=반품, C=취소. 비우면 전체 */
+  @IsOptional() @IsIn(['D', 'R', 'C']) status?: string;
   @IsOptional() @IsISO8601() dateFrom?: string;
   @IsOptional() @IsISO8601() dateTo?: string;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page = 1;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(5000) limit = 500;
 }
 
-/** 시리얼 단건 현황 — PB dw_1(RECEIPT_DEFICIT='1') / dw_2(='2') */
+/** 시리얼 단건 현황 — PB dw_1(폐기보관 D) / dw_2(반품 R) */
 export class ProductDestroySerialQueryDto {
   @IsString() @IsNotEmpty() serialNo!: string;
 }
@@ -72,8 +74,15 @@ export class ProductDestroySummaryQueryDto {
   @IsIn(['1', '2']) team!: string;
 }
 
-/** 반품처리(Issue) / 반품취소(Issue Cancel) — RECEIPT_DEFICIT 를 1 ↔ 2 로 토글 */
+/** 반품처리(Issue) / 반품취소(Issue Cancel) — 상태를 D(폐기보관) ↔ R(반품) 로 바꾼다 */
 export class ProductDestroyIssueDto {
-  @IsString() @IsNotEmpty() serialNo!: string;
-  @Type(() => Number) @IsNumber() qcSequence!: number;
+  @Type(() => Number) @IsInt() destroySeq!: number;
+}
+
+/** 폐기 취소 — 잘못 등록한 폐기를 취소(C)로 바꾼다. 행은 지우지 않는다 */
+export class ProductDestroyCancelDto {
+  @IsArray() @ArrayMaxSize(500) @Type(() => Number) @IsInt({ each: true })
+  destroySeqs!: number[];
+  /** 취소 사유 (CANCEL_REASON, 500byte) */
+  @IsString() @IsNotEmpty() @MaxLength(150) reason!: string;
 }

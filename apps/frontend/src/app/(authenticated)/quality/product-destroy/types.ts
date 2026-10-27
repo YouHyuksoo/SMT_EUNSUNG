@@ -10,13 +10,20 @@ export const TEAM_CODE_GROUPS: Record<DestroyTeam, { badType: string; process: s
   '2': { badType: 'DESTROY BAD TYPE ASSY', process: 'DESTROY PROCESS ASSY' },
 };
 
-/** IP_PRODUCT_WORK_QC 한 행 (폐기/반품 공용) */
+/** 원장 상태 (공통코드 DESTROY STATUS) — D 폐기보관 / R 반품 / C 취소 */
+export type DestroyStatus = 'D' | 'R' | 'C';
+
+/** 공정폐기 원장 IP_PRODUCT_DESTROY 한 행 */
 export interface ProductDestroyRow {
-  qcSequence: number;
-  serialNo: string;
-  itemCode: string | null;
+  destroySeq: number;
+  destroyStatus: DestroyStatus;
+  destroyDate: string | null;
+  /** 바코드 미각인 제품(품번 + 수량 등록)은 비어 있다 */
+  serialNo: string | null;
+  itemCode: string;
   modelName: string | null;
   modelSuffix: string | null;
+  destroyQty: number;
   lineCode: string | null;
   workstageCode: string | null;
   badReasonCode: string | null;
@@ -30,25 +37,20 @@ export interface ProductDestroyRow {
   detectProcessCode: string | null;
   detectProcessName: string | null;
   badCauseBy: string | null;
-  destroyUnitPrice: number | null;
-  destroyAmount: number | null;
-  qcResult: string | null;
-  receiptDeficit: string | null;
-  qcInspectHandling: string | null;
+  shiftCode: string | null;
   departmentCode: string | null;
   departmentName: string | null;
-  badQty: number | null;
-  defectQty: number | null;
-  qcDate: string | null;
-  repairDate: string | null;
-  shiftCode: string | null;
-  charger: string | null;
-  repairBy: string | null;
-  locationCode: string | null;
+  workerName: string | null;
+  unitPrice: number | null;
+  destroyAmount: number | null;
+  returnDate: string | null;
+  returnBy: string | null;
+  cancelDate: string | null;
+  cancelBy: string | null;
+  cancelReason: string | null;
   comments: string | null;
   enterBy: string | null;
   enterDate: string | null;
-  organizationId: number;
 }
 
 /** 폐기 등록 결과 — PB 가 행별로 찍던 OK/FAIL 에 SKIP(이미 처리됨)을 더했다 */
@@ -56,7 +58,7 @@ export interface DestroyOutcome {
   serialNo: string;
   status: 'OK' | 'SKIP' | 'FAIL';
   reason?: string;
-  qcSequence?: number;
+  destroySeq?: number;
 }
 
 export interface DestroyResponse {

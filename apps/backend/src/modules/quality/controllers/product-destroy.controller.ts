@@ -4,6 +4,7 @@ import { OrganizationId, UserId } from '../../../common/decorators/tenant.decora
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import {
+  ProductDestroyCancelDto,
   ProductDestroyExecuteDto,
   ProductDestroyHistoryQueryDto,
   ProductDestroyIssueDto,
@@ -19,7 +20,7 @@ export class ProductDestroyController {
   constructor(private readonly service: ProductDestroyService) {}
 
   @Get('history')
-  @ApiOperation({ summary: 'PB d_pln_product_destroy_hst 기준 폐기이력 조회' })
+  @ApiOperation({ summary: '폐기이력 조회 — 공정폐기 원장 IP_PRODUCT_DESTROY (상태 D 폐기보관 / R 반품 / C 취소)' })
   async history(@Query() query: ProductDestroyHistoryQueryDto, @OrganizationId() organizationId: number) {
     const result = await this.service.findHistory(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
@@ -48,15 +49,36 @@ export class ProductDestroyController {
     return ResponseUtil.success(await this.service.destroy(dto, organizationId, userId));
   }
 
+  @Post('cancel')
+  @ApiOperation({ summary: '폐기 취소 — 상태를 C(취소)로 바꾸고 취소일시·취소자·사유를 남긴다. 행은 지우지 않는다' })
+  async cancel(
+    @Body() dto: ProductDestroyCancelDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId: string | undefined,
+  ) {
+    if (!userId) throw new UnauthorizedException('사용자 정보를 확인할 수 없습니다.');
+    return ResponseUtil.success(await this.service.cancel(dto, organizationId, userId));
+  }
+
   @Post('issue')
-  @ApiOperation({ summary: 'PB cb_4(Issue) — RECEIPT_DEFICIT 를 2(반품)로 변경' })
-  async issue(@Body() dto: ProductDestroyIssueDto, @OrganizationId() organizationId: number) {
-    return ResponseUtil.success(await this.service.issue(dto, organizationId));
+  @ApiOperation({ summary: 'PB cb_4(Issue) — 폐기보관(D)을 반품(R)으로' })
+  async issue(
+    @Body() dto: ProductDestroyIssueDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId: string | undefined,
+  ) {
+    if (!userId) throw new UnauthorizedException('사용자 정보를 확인할 수 없습니다.');
+    return ResponseUtil.success(await this.service.issue(dto, organizationId, userId));
   }
 
   @Post('issue-cancel')
-  @ApiOperation({ summary: 'PB cb_5(Issue Cancel) — RECEIPT_DEFICIT 를 1(입고)로 복귀' })
-  async issueCancel(@Body() dto: ProductDestroyIssueDto, @OrganizationId() organizationId: number) {
-    return ResponseUtil.success(await this.service.issueCancel(dto, organizationId));
+  @ApiOperation({ summary: 'PB cb_5(Issue Cancel) — 반품(R)을 폐기보관(D)으로 되돌린다' })
+  async issueCancel(
+    @Body() dto: ProductDestroyIssueDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId: string | undefined,
+  ) {
+    if (!userId) throw new UnauthorizedException('사용자 정보를 확인할 수 없습니다.');
+    return ResponseUtil.success(await this.service.issueCancel(dto, organizationId, userId));
   }
 }

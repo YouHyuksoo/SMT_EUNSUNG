@@ -6,17 +6,20 @@
  *
  * 초보자 가이드:
  * 1. **폐기등록 모드**: 시리얼을 스캔해 목록에 쌓고 불량사유·부서를 고른 뒤 실행하면 시리얼마다
- *    IP_PRODUCT_WORK_QC 에 검사처리 'D'(폐기) 행이 1건 쌓인다. 행 삭제가 아니다.
- * 2. **반품/반품취소**: 폐기 행의 불량구분을 1(입고) ↔ 2(반품) 로 토글한다.
- * 3. **이력조회 모드**: 검사처리 'D' 만 모아 본다.
+ *    공정폐기 원장(IP_PRODUCT_DESTROY)에 폐기보관(D) 1건이 쌓인다. 수리판정(IP_PRODUCT_WORK_QC)과는 따로다.
+ * 2. **반품/반품취소**: 원장 상태를 폐기보관(D) ↔ 반품(R) 으로 바꾼다.
+ * 3. **이력조회 모드**: 원장을 상태(폐기보관·반품·취소)별로 본다.
  * 4. **팀별 양식 (26.10.22 요청)**: 생산1팀(SMT)·생산2팀(조립)마다 불량유형·공정 칸이 다르다 (DestroyDetailFields).
  * 5. **품번 + 수량**: 바코드 미각인 제품은 품번과 수량으로 등록한다. 시리얼이 바코드 이력에 없을 때도 고른 품번을 쓴다.
- * 6. **폐기현황 탭**: 팀별 월 불량유형·주야·원인별 수량/금액. **LCR 폐기 탭**: LCR 측정 자재 폐기 등록·월 집계.
+ * 6. **폐기 취소**: 잘못 등록한 폐기를 골라 취소(C)로 바꾼다. 행은 지우지 않고 취소일시·취소자·사유를 남긴다.
+ *    취소된 건은 폐기현황 집계에서 빠지고, 같은 시리얼을 다시 폐기할 수 있다.
+ * 7. **폐기현황 탭**: 팀별 월 불량유형·주야·원인별 수량/금액. **LCR 폐기 탭**: LCR 측정 자재 폐기 등록·월 집계.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Plus, RotateCcw, Search, Trash2, X } from 'lucide-react';
-import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
+import { Ban, Plus, RotateCcw, Search, Trash2, X } from 'lucide-react';
+import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import DepartmentSelect from '@/components/shared/DepartmentSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
@@ -28,6 +31,7 @@ import PartSearchField from '@/components/shared/PartSearchField';
 import QtyInput from '@/components/shared/QtyInput';
 import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
+import { selectColumn } from '../../purchase/purchase-columns';
 import { destroyHistoryColumns, serialColumns } from './columns';
 import type { DestroyItemEntry, DestroyResponse, DestroyTeam, ProductDestroyMode, ProductDestroyRow } from './types';
 import DestroyDetailFields, { emptyDetail, isDetailComplete, type DestroyDetail } from './components/DestroyDetailFields';
@@ -69,6 +73,11 @@ export default function ProductDestroyPage() {
   const [workstageCode, setWorkstageCode] = useState('');
   const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
+  const [status, setStatus] = useState('');
+  const [checked, setChecked] = useState<Set<number>>(new Set());
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   const loadSerial = useCallback(async (target: string) => {
     if (!target) return;
@@ -115,6 +124,7 @@ export default function ProductDestroyPage() {
           modelName: modelName || undefined,
           lineCode: lineCode || undefined,
           workstageCode: workstageCode || undefined,
+          status: status || undefined,
           dateFrom: dateFrom || undefined,
           dateTo: dateTo || undefined,
         },
@@ -122,14 +132,16 @@ export default function ProductDestroyPage() {
       setRows(response.data?.data ?? []);
       setTotal(Number(response.data?.meta?.total ?? 0));
       setSearched(true);
+      setChecked(new Set());
     } catch {
       setRows([]);
       setTotal(0);
+      setChecked(new Set());
       toast.error('폐기이력 조회에 실패했습니다');
     } finally {
       setLoading(false);
     }
-  }, [dateFrom, dateTo, lineCode, modelName, serialNo, workstageCode]);
+  }, [dateFrom, dateTo, lineCode, modelName, serialNo, status, workstageCode]);
 
   const runDestroy = useCallback(async () => {
     setRunning(true);
@@ -165,12 +177,52 @@ export default function ProductDestroyPage() {
     }
   }, [departmentCode, detail, fallbackWorkstageCode, itemCode, items, loadSerial, serials, team]);
 
+  // 이미 취소된 건은 고를 수 없다
+  const cancellable = useMemo(() => rows.filter(row => row.destroyStatus !== 'C'), [rows]);
+  const allChecked = cancellable.length > 0 && cancellable.every(row => checked.has(row.destroySeq));
+  const historyColumns = useMemo(() => [
+    selectColumn<ProductDestroyRow>({
+      isSelected: row => checked.has(row.destroySeq),
+      isSelectable: row => row.destroyStatus !== 'C',
+      onToggle: row => setChecked(prev => {
+        const next = new Set(prev);
+        if (next.has(row.destroySeq)) next.delete(row.destroySeq);
+        else next.add(row.destroySeq);
+        return next;
+      }),
+      allSelected: allChecked,
+      onToggleAll: () => setChecked(allChecked ? new Set() : new Set(cancellable.map(row => row.destroySeq))),
+    }),
+    ...destroyHistoryColumns,
+  ], [allChecked, cancellable, checked]);
+
+  const cancelDestroy = useCallback(async () => {
+    const reason = cancelReason.trim();
+    if (!reason) {
+      toast.error('취소 사유를 넣으세요');
+      return;
+    }
+    setCancelling(true);
+    try {
+      const response = await api.post('/quality/product-destroy/cancel', { destroySeqs: [...checked], reason });
+      toast.success(`폐기 ${response.data?.data?.cancelled ?? 0}건을 취소했습니다`);
+      setCancelOpen(false);
+      setCancelReason('');
+      await searchHistory();
+    } catch (error: unknown) {
+      const apiMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(apiMessage || '폐기 취소에 실패했습니다');
+    } finally {
+      setCancelling(false);
+    }
+  }, [cancelReason, checked, searchHistory]);
+
   const toggleIssue = useCallback(async (path: 'issue' | 'issue-cancel', row: ProductDestroyRow | null) => {
     if (!row) return;
     try {
-      await api.post(`/quality/product-destroy/${path}`, { serialNo: row.serialNo, qcSequence: row.qcSequence });
+      await api.post(`/quality/product-destroy/${path}`, { destroySeq: row.destroySeq });
       toast.success(path === 'issue' ? '반품 처리했습니다' : '반품을 취소했습니다');
-      await loadSerial(row.serialNo);
+      if (row.serialNo) await loadSerial(row.serialNo);
       setSelectedDestroy(null);
       setSelectedIssue(null);
     } catch (error: unknown) {
@@ -186,7 +238,7 @@ export default function ProductDestroyPage() {
           <Trash2 className="h-6 w-6 text-primary" />공정폐기관리
         </h1>
         <p className="mt-1 text-sm text-text-muted">
-          시리얼별 공정 폐기를 등록하고 반품 여부를 관리합니다 · 폐기는 삭제가 아니라 검사처리 D 이력으로 쌓인다
+          시리얼별 공정 폐기를 등록하고 반품 여부를 관리합니다 · 폐기는 공정폐기 원장에 쌓이고, 잘못 등록한 건은 지우지 않고 취소로 남긴다
         </p>
       </header>
 
@@ -270,23 +322,23 @@ export default function ProductDestroyPage() {
           <div className="flex min-h-0 flex-1 gap-3">
             <Card className="flex min-h-0 flex-1 flex-col overflow-hidden" padding="none">
               <div className="flex items-center justify-between border-b border-border px-3 py-2">
-                <span className="text-sm font-semibold text-text">폐기 목록 (불량구분 1)</span>
+                <span className="text-sm font-semibold text-text">폐기보관 목록</span>
                 <Button size="sm" variant="secondary" onClick={() => toggleIssue('issue', selectedDestroy)} disabled={!selectedDestroy}>반품 처리</Button>
               </div>
               <CardContent className="min-h-0 flex-1 p-3">
                 <DataGrid data={destroyList} columns={serialColumns} pageSize={20}
-                  getRowId={row => String(row.qcSequence)} selectedRowId={selectedDestroy ? String(selectedDestroy.qcSequence) : undefined}
+                  getRowId={row => String(row.destroySeq)} selectedRowId={selectedDestroy ? String(selectedDestroy.destroySeq) : undefined}
                   onRowClick={row => setSelectedDestroy(row)} emptyMessage="시리얼을 조회하세요." />
               </CardContent>
             </Card>
             <Card className="flex min-h-0 flex-1 flex-col overflow-hidden" padding="none">
               <div className="flex items-center justify-between border-b border-border px-3 py-2">
-                <span className="text-sm font-semibold text-text">반품 목록 (불량구분 2)</span>
+                <span className="text-sm font-semibold text-text">반품 목록</span>
                 <Button size="sm" variant="secondary" onClick={() => toggleIssue('issue-cancel', selectedIssue)} disabled={!selectedIssue}>반품 취소</Button>
               </div>
               <CardContent className="min-h-0 flex-1 p-3">
                 <DataGrid data={issueList} columns={serialColumns} pageSize={20}
-                  getRowId={row => String(row.qcSequence)} selectedRowId={selectedIssue ? String(selectedIssue.qcSequence) : undefined}
+                  getRowId={row => String(row.destroySeq)} selectedRowId={selectedIssue ? String(selectedIssue.destroySeq) : undefined}
                   onRowClick={row => setSelectedIssue(row)} emptyMessage="반품 처리된 건이 없습니다." />
               </CardContent>
             </Card>
@@ -300,22 +352,44 @@ export default function ProductDestroyPage() {
               <ModelSearchField value={modelName} onChange={(v) => setModelName(v)} className="w-40" aria-label="모델명" placeholder="모델명" />
               <LineSelect aria-label="라인" labelPrefix="라인" value={lineCode} onChange={value => setLineCode(value)} className="w-40" />
               <ProcessSelect aria-label="공정" labelPrefix="공정" value={workstageCode} onChange={value => setWorkstageCode(value)} className="w-44" />
+              <ComCodeSelect groupCode="DESTROY STATUS" labelPrefix="상태" aria-label="상태" value={status} onChange={value => setStatus(value)} className="w-40" />
               <DateRangeFilter label="폐기일자" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
               <Button size="sm" onClick={() => searchHistory()} disabled={loading}>
                 <Search className="mr-1 h-4 w-4" />조회
+              </Button>
+              <Button size="sm" variant="danger" onClick={() => setCancelOpen(true)} disabled={checked.size === 0 || cancelling}
+                data-tooltip="잘못 등록한 폐기를 취소로 바꾼다. 행은 남고 폐기현황 집계에서 빠진다">
+                <Ban className="mr-1 h-4 w-4" />폐기 취소{checked.size > 0 && ` (${checked.size})`}
               </Button>
               <span className="text-sm text-text-muted">{searched ? `${rows.length}/${total}건` : '조회조건을 입력하세요'}</span>
             </div>
           </Card>
           <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
             <CardContent className="h-full p-3">
-              <DataGrid data={rows} columns={destroyHistoryColumns} isLoading={loading} pageSize={50}
+              <DataGrid data={rows} columns={historyColumns} isLoading={loading} pageSize={50} getRowId={row => String(row.destroySeq)}
                 enableColumnFilter enableExport exportFileName="공정폐기이력"
                 emptyMessage={searched ? '조회 결과가 없습니다.' : '조회 버튼을 눌러 폐기이력을 확인하세요.'} />
             </CardContent>
           </Card>
         </>
       )}
+
+      <ConfirmModal
+        isOpen={cancelOpen}
+        onClose={() => setCancelOpen(false)}
+        onConfirm={cancelDestroy}
+        isLoading={cancelling}
+        variant="danger"
+        title="폐기 취소"
+        confirmText="폐기 취소"
+        message={
+          <span className="flex flex-col gap-2">
+            <span>고른 폐기 <strong>{checked.size}</strong>건을 취소로 바꿉니다. 이력은 남고 폐기현황 집계에서 빠집니다.</span>
+            <Input aria-label="취소 사유" placeholder="취소 사유 (필수)" value={cancelReason} maxLength={150}
+              onChange={e => setCancelReason(e.target.value)} fullWidth />
+          </span>
+        }
+      />
 
       <ConfirmModal
         isOpen={confirmOpen}
@@ -329,7 +403,7 @@ export default function ProductDestroyPage() {
           <span>
             시리얼 <strong>{serials.length}</strong>건{items.length > 0 && <>, 품번 <strong>{items.length}</strong>건(수량 {items.reduce((sum, i) => sum + i.qty, 0).toLocaleString()})</>}을 폐기 처리합니다.
             <br />
-            시리얼·품번마다 검사처리 <strong>D(폐기)</strong> 이력이 1건 생성됩니다. 이미 폐기된 시리얼은 건너뜁니다.
+            시리얼·품번마다 공정폐기 원장에 <strong>폐기보관</strong> 1건이 쌓입니다. 이미 폐기된 시리얼은 건너뜁니다.
             {itemCode.trim() && <><br />바코드 이력에 없는 시리얼은 품번 <strong>{itemCode.trim()}</strong> 으로 등록합니다.</>}
           </span>
         }

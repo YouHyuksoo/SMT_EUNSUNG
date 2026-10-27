@@ -2,20 +2,19 @@
  * @file src/modules/quality/services/product-destroy.service.ts
  * @description 공정폐기관리 — PB w_pln_product_pcb_destroy_master 이식
  *
- * 폐기는 행 삭제가 아니라 **이력 적재**다. IP_PRODUCT_WORK_QC 에
- * QC_INSPECT_HANDLING='D'(폐기), RECEIPT_DEFICIT='1'(입고) 행을 시리얼당 1건 INSERT 한다.
- * 같은 테이블을 공정수리이력조회(repair-history)도 쓴다.
+ * 폐기는 **공정폐기 원장(IP_PRODUCT_DESTROY)** 에 쌓는다 (2026-10-27).
+ * PB 는 수리판정 테이블 IP_PRODUCT_WORK_QC 에 검사처리 'D' 행을 넣었지만,
+ * 사용자 지시("WORK_QC 는 수리판정일 뿐이고 폐기이력은 따로 재고처럼 모아야")로 원장을 따로 둔다.
+ * 이 서비스는 IP_PRODUCT_WORK_QC 를 읽지도 쓰지도 않는다 (옛 D 행은 마이그레이션이 원장으로 옮겼다).
  *
- * PB 원본과의 의도적 차이 (사용자 합의):
- * - Issue Cancel 이 원본에서는 WHERE 에 QC_SEQUENCE 가 빠져 있어 해당 시리얼의 모든 행이
- *   되돌아갔다. Issue 와 대칭이 되도록 QC_SEQUENCE 조건을 넣었다.
- * - 폐기이력 종료일이 원본에서는 `QC_DATE <= :dateEnd`(자정)라 종료일 당일이 빠졌다.
- *   공정수리이력조회와 동일하게 `< :dateEnd + 1` 로 맞춰 종료일을 포함한다.
+ * 원장 한 행 = 폐기 1건. 상태(DESTROY_STATUS)로 재고처럼 관리한다.
+ *   D 폐기보관(폐기 재고) → R 반품(재고에서 나감) — 반품취소로 D 로 되돌린다
+ *   C 취소 — 잘못 등록한 폐기. 행은 지우지 않고 취소일시·취소자·사유를 남긴다.
+ *            폐기현황 집계와 폐기 재고에서 빠진다.
  *
  * 2026-10-22 요청(MES 개선요청사항 26.10.22):
  * - 팀(생산1팀 SMT / 생산2팀 조립)마다 다른 불량 양식 — 불량유형·제품구분·주야·원인·발생/검출공정·작업자.
- * - 바코드 미각인 제품은 품번 + 수량으로 등록한다. 시리얼 칸에는 'NOSN-<QC순번>' 을 넣는다
- *   (PK 가 시리얼을 요구하고, 트리거가 시리얼로 2D 바코드를 갱신하므로 실제 시리얼과 겹치지 않는 값).
+ * - 바코드 미각인 제품은 품번 + 수량으로 등록한다 (시리얼 칸은 비운다).
  * - 등록 시점 단가·금액을 남긴다: 구매단가가 있으면 그것, 없으면 BOM 말단 자재원가 합.
  */
 import { BadRequestException, Injectable } from '@nestjs/common';
@@ -23,6 +22,7 @@ import { DataSource, QueryRunner } from 'typeorm';
 import { parseDateStart } from '../../../shared/date.util';
 import { TransactionService } from '../../../shared/transaction.service';
 import {
+  ProductDestroyCancelDto,
   ProductDestroyExecuteDto,
   ProductDestroyHistoryQueryDto,
   ProductDestroyIssueDto,
@@ -33,11 +33,8 @@ import { DESTROY_UNIT_PRICE_SQL } from './destroy-price.sql';
 
 type OracleRow = Record<string, unknown>;
 
-/** 시리얼 단건 조회 결과에서 쓰는 불량구분 — 1=입고(폐기대상), 2=반품(Issue 처리됨) */
-const DEFICIT_RECEIPT = '1';
-const DEFICIT_ISSUE = '2';
-/** 바코드 미각인(품번 + 수량) 폐기의 시리얼 접두어 */
-const NO_SERIAL_PREFIX = 'NOSN-';
+/** 원장 상태 (공통코드 DESTROY STATUS) */
+export const DESTROY_STATUS = { stored: 'D', returned: 'R', cancelled: 'C' } as const;
 
 /** 팀별 불량유형·공정 코드형 */
 const TEAM_CODE_TYPES: Record<string, { badType: string; process: string }> = {
@@ -52,18 +49,19 @@ interface DestroyItemInfo {
 }
 
 interface DestroyRowInput extends DestroyItemInfo {
-  serialNo: string;
-  qcSequence: number;
+  serialNo: string | null;
+  destroySeq: number;
   qty: number;
   lineCode: string;
   workstageCode: string;
 }
 
 export interface DestroyOutcome {
+  /** 시리얼, 품번 등록이면 품번 */
   serialNo: string;
   status: 'OK' | 'SKIP' | 'FAIL';
   reason?: string;
-  qcSequence?: number;
+  destroySeq?: number;
 }
 
 @Injectable()
@@ -73,7 +71,7 @@ export class ProductDestroyService {
     private readonly tx: TransactionService,
   ) {}
 
-  /** PB d_pln_product_destroy_hst — 폐기이력 */
+  /** 폐기이력 — 상태를 고르지 않으면 취소까지 모두 보인다 */
   async findHistory(query: ProductDestroyHistoryQueryDto, organizationId: number) {
     const binds: Record<string, unknown> = {
       organizationId,
@@ -82,51 +80,51 @@ export class ProductDestroyService {
       modelName: this.like(query.modelName),
       serialNo: this.like(query.serialNo),
       team: query.team ?? null,
+      status: query.status ?? null,
       dateFrom: parseDateStart(query.dateFrom) ?? new Date(1900, 0, 1),
       dateTo: parseDateStart(query.dateTo) ?? new Date(9999, 11, 30),
     };
     const from = `
-      FROM IP_PRODUCT_WORK_QC qc
-      WHERE qc.ORGANIZATION_ID = :organizationId
-        AND qc.QC_INSPECT_HANDLING = 'D'
-        AND NVL(qc.LINE_CODE, '*') LIKE :lineCode
-        AND NVL(qc.WORKSTAGE_CODE, '*') LIKE :workstageCode
-        AND NVL(qc.MODEL_NAME, '*') LIKE :modelName
-        AND NVL(qc.SERIAL_NO, '*') LIKE :serialNo
-        AND (:team IS NULL OR qc.DESTROY_TEAM = :team)
-        AND qc.QC_DATE >= :dateFrom
-        AND qc.QC_DATE < :dateTo + 1`;
-    const select = `${this.selectList()} ${from}
-      ORDER BY qc.QC_DATE DESC, qc.QC_SEQUENCE DESC
-      OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`;
+      FROM IP_PRODUCT_DESTROY d
+      WHERE d.ORGANIZATION_ID = :organizationId
+        AND NVL(d.LINE_CODE, '*') LIKE :lineCode
+        AND NVL(d.WORKSTAGE_CODE, '*') LIKE :workstageCode
+        AND NVL(d.MODEL_NAME, '*') LIKE :modelName
+        AND NVL(d.SERIAL_NO, '*') LIKE :serialNo
+        AND (:team IS NULL OR d.DESTROY_TEAM = :team)
+        AND (:status IS NULL OR d.DESTROY_STATUS = :status)
+        AND d.DESTROY_DATE >= :dateFrom
+        AND d.DESTROY_DATE < :dateTo + 1`;
     const offset = (query.page - 1) * query.limit;
     const rows = await this.dataSource.query(
-      select, namedBinds({ ...binds, offset, limit: query.limit }),
+      `${this.selectList()} ${from}
+       ORDER BY d.DESTROY_DATE DESC, d.DESTROY_SEQ DESC
+       OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
+      namedBinds({ ...binds, offset, limit: query.limit }),
     ) as OracleRow[];
     const totals = await this.dataSource.query(
-      `SELECT COUNT(*) AS "total" ${from}`, namedBinds(binds),
+      `SELECT COUNT(*) AS "total" ${from}`, namedBinds({ ...binds }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page: query.page, limit: query.limit };
   }
 
-  /** PB dw_1 / dw_2 — 시리얼 하나의 폐기(1) / 반품(2) 현황 */
+  /** PB dw_1 / dw_2 — 시리얼 하나의 폐기보관(D) / 반품(R) 현황 */
   async findBySerial(serialNo: string, organizationId: number) {
-    const binds = { organizationId, serialNo: this.like(serialNo) };
-    const load = async (deficit: string): Promise<OracleRow[]> => await this.dataSource.query(
+    const load = async (status: string): Promise<OracleRow[]> => await this.dataSource.query(
       `${this.selectList()}
-       FROM IP_PRODUCT_WORK_QC qc
-       WHERE qc.ORGANIZATION_ID = :organizationId
-         AND qc.SERIAL_NO LIKE :serialNo
-         AND qc.RECEIPT_DEFICIT = '${deficit}'
-       ORDER BY qc.QC_SEQUENCE`,
-      namedBinds(binds),
+       FROM IP_PRODUCT_DESTROY d
+       WHERE d.ORGANIZATION_ID = :organizationId
+         AND d.SERIAL_NO = :serialNo
+         AND d.DESTROY_STATUS = '${status}'
+       ORDER BY d.DESTROY_SEQ`,
+      namedBinds({ organizationId, serialNo: serialNo.trim().toUpperCase() }),
     ) as OracleRow[];
-    const [destroyList, issueList] = await Promise.all([load(DEFICIT_RECEIPT), load(DEFICIT_ISSUE)]);
+    const [destroyList, issueList] = await Promise.all([load(DESTROY_STATUS.stored), load(DESTROY_STATUS.returned)]);
     return { destroyList, issueList };
   }
 
   /**
-   * PB cb_2(Destroy) — 시리얼 목록을 순회하며 폐기 이력을 등록한다.
+   * PB cb_2(Destroy) — 시리얼 목록을 순회하며 폐기를 등록한다.
    * PB 는 행마다 OK/FAIL 을 찍고 계속 진행하므로 전체 롤백하지 않는다.
    * 다만 시리얼(또는 품번) 1건의 처리는 트랜잭션으로 묶어 부분 저장을 막는다.
    */
@@ -164,7 +162,7 @@ export class ProductDestroyService {
     if (dto.team === '2' && (!dto.badCategory || !dto.occurProcessCode)) {
       throw new BadRequestException('생산2팀은 불량구분1과 발생공정을 골라야 합니다.');
     }
-    // CHARGER 는 VARCHAR2(20 BYTE) — 한글은 글자당 3바이트
+    // WORKER_NAME 은 VARCHAR2(20 BYTE) — 한글은 글자당 3바이트
     if (Buffer.byteLength(dto.worker.trim(), 'utf8') > 20) {
       throw new BadRequestException('작업자 이름이 너무 깁니다. (한글 6자까지)');
     }
@@ -178,11 +176,11 @@ export class ProductDestroyService {
     userId: string,
     prices: Map<string, number | null>,
   ): Promise<DestroyOutcome> {
-    // PB: dw_1.retrieve 결과가 있으면 이미 처리된 것으로 보고 건너뛴다
+    // 취소되지 않은 폐기(보관·반품)가 있으면 이미 처리된 시리얼이다
     const existing = await qr.query(
-      `SELECT QC_SEQUENCE AS "qcSequence" FROM IP_PRODUCT_WORK_QC
+      `SELECT DESTROY_SEQ AS "destroySeq" FROM IP_PRODUCT_DESTROY
         WHERE ORGANIZATION_ID = :organizationId AND SERIAL_NO = :serialNo
-          AND RECEIPT_DEFICIT = '${DEFICIT_RECEIPT}'`,
+          AND DESTROY_STATUS <> '${DESTROY_STATUS.cancelled}'`,
       namedBinds({ organizationId, serialNo }),
     ) as OracleRow[];
     if (existing.length > 0) {
@@ -219,12 +217,12 @@ export class ProductDestroyService {
     const lineCode = dto.lineCode?.trim() || String(io[0]?.lineCode ?? '*');
     const workstageCode = String(io[0]?.workstageCode ?? this.fallback(dto.fallbackWorkstageCode));
 
-    const qcSequence = await this.nextSequence(qr);
-    await this.insertDestroy(qr, { ...info, serialNo, qcSequence, qty: 1, lineCode, workstageCode }, dto, organizationId, userId, prices);
-    return { serialNo, status: 'OK', qcSequence };
+    const destroySeq = await this.nextSequence(qr);
+    await this.insertDestroy(qr, { ...info, serialNo, destroySeq, qty: 1, lineCode, workstageCode }, dto, organizationId, userId, prices);
+    return { serialNo, status: 'OK', destroySeq };
   }
 
-  /** 바코드 미각인 제품 — 품번 + 수량으로 1행 */
+  /** 바코드 미각인 제품 — 품번 + 수량으로 1행, 시리얼은 비운다 */
   private async destroyItem(
     qr: QueryRunner,
     itemCode: string,
@@ -236,14 +234,13 @@ export class ProductDestroyService {
   ): Promise<DestroyOutcome> {
     const info = await this.loadItem(qr, itemCode, organizationId);
     if (!info) return { serialNo: itemCode, status: 'FAIL', reason: '품번을 찾을 수 없습니다.' };
-    const qcSequence = await this.nextSequence(qr);
-    const serialNo = `${NO_SERIAL_PREFIX}${qcSequence}`;
+    const destroySeq = await this.nextSequence(qr);
     await this.insertDestroy(qr, {
-      ...info, serialNo, qcSequence, qty,
+      ...info, serialNo: null, destroySeq, qty,
       lineCode: dto.lineCode?.trim() || '*',
       workstageCode: this.fallback(dto.fallbackWorkstageCode),
     }, dto, organizationId, userId, prices);
-    return { serialNo, status: 'OK', qcSequence };
+    return { serialNo: itemCode, status: 'OK', destroySeq };
   }
 
   private async loadItem(qr: QueryRunner, itemCode: string, organizationId: number): Promise<DestroyItemInfo | null> {
@@ -261,7 +258,7 @@ export class ProductDestroyService {
   }
 
   private async nextSequence(qr: QueryRunner): Promise<number> {
-    const rows = await qr.query(`SELECT SEQ_QC_REPAIR_SEQUENCE.NEXTVAL AS "seq" FROM DUAL`) as OracleRow[];
+    const rows = await qr.query(`SELECT SEQ_IP_PRODUCT_DESTROY.NEXTVAL AS "seq" FROM DUAL`) as OracleRow[];
     return Number(rows[0].seq);
   }
 
@@ -290,71 +287,66 @@ export class ProductDestroyService {
     const price = await this.unitPrice(qr, row.itemCode, organizationId, prices);
     const amount = price == null ? null : Math.round(price * row.qty * 100) / 100;
     await qr.query(
-      `INSERT INTO IP_PRODUCT_WORK_QC (
-         QC_SEQUENCE, SERIAL_NO, ORGANIZATION_ID,
-         ITEM_CODE, MODEL_NAME, MODEL_SUFFIX,
-         LINE_CODE, WORKSTAGE_CODE, MACHINE_CODE,
-         REPAIR_LINE_CODE, REPAIR_WORKSTAGE_CODE, LOCATION_CODE,
-         BAD_REASON_CODE, QC_RESULT, RECEIPT_DEFICIT, QC_INSPECT_HANDLING, DEPARTMENT_CODE,
-         DESTROY_TEAM, DESTROY_PRODUCT_TYPE, DESTROY_BAD_CATEGORY, OCCUR_PROCESS_CODE, DETECT_PROCESS_CODE,
-         BAD_CAUSE_BY, DESTROY_UNIT_PRICE, DESTROY_AMOUNT,
-         BAD_QTY, DEFECT_QTY, QC_DATE, SHIFT_CODE,
-         CHARGER, REPAIR_BY, ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE
+      `INSERT INTO IP_PRODUCT_DESTROY (
+         DESTROY_SEQ, ORGANIZATION_ID, DESTROY_DATE, DESTROY_STATUS,
+         SERIAL_NO, ITEM_CODE, MODEL_NAME, MODEL_SUFFIX, DESTROY_QTY,
+         LINE_CODE, WORKSTAGE_CODE,
+         DESTROY_TEAM, BAD_REASON_CODE, DESTROY_PRODUCT_TYPE, DESTROY_BAD_CATEGORY,
+         OCCUR_PROCESS_CODE, DETECT_PROCESS_CODE, BAD_CAUSE_BY, SHIFT_CODE, DEPARTMENT_CODE, WORKER_NAME,
+         UNIT_PRICE, DESTROY_AMOUNT,
+         ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE
        ) VALUES (
-         :qcSequence, :serialNo, :organizationId,
-         :itemCode, :modelName, :modelSuffix,
-         :lineCode, :workstageCode, '*',
-         '*', '*', '* *',
-         :badReasonCode, 'N', '${DEFICIT_RECEIPT}', 'D', :departmentCode,
-         :team, :productType, :badCategory, :occurProcessCode, :detectProcessCode,
-         :causeBy, :unitPrice, :amount,
-         :qty, :qty, SYSDATE, :shiftCode,
-         :worker, :userId, :userId, SYSDATE, :userId, SYSDATE
+         :destroySeq, :organizationId, SYSDATE, '${DESTROY_STATUS.stored}',
+         :serialNo, :itemCode, :modelName, :modelSuffix, :qty,
+         :lineCode, :workstageCode,
+         :team, :badReasonCode, :productType, :badCategory,
+         :occurProcessCode, :detectProcessCode, :causeBy, :shiftCode, :departmentCode, :worker,
+         :unitPrice, :amount,
+         :userId, SYSDATE, :userId, SYSDATE
        )`,
       namedBinds({
-        qcSequence: row.qcSequence, serialNo: row.serialNo, organizationId,
-        itemCode: row.itemCode, modelName: row.modelName, modelSuffix: row.modelSuffix,
+        destroySeq: row.destroySeq, organizationId,
+        serialNo: row.serialNo, itemCode: row.itemCode, modelName: row.modelName, modelSuffix: row.modelSuffix, qty: row.qty,
         lineCode: row.lineCode, workstageCode: row.workstageCode,
-        badReasonCode: dto.badReasonCode, departmentCode: dto.departmentCode,
-        team: dto.team, productType: dto.productType,
+        team: dto.team, badReasonCode: dto.badReasonCode, productType: dto.productType,
         badCategory: dto.team === '2' ? dto.badCategory ?? null : null,
         occurProcessCode: dto.team === '2' ? dto.occurProcessCode ?? null : null,
-        detectProcessCode: dto.detectProcessCode,
-        causeBy: dto.causeBy, unitPrice: price, amount,
-        qty: row.qty, shiftCode: dto.shiftCode, worker: dto.worker.trim(), userId,
+        detectProcessCode: dto.detectProcessCode, causeBy: dto.causeBy, shiftCode: dto.shiftCode,
+        departmentCode: dto.departmentCode, worker: dto.worker.trim(),
+        unitPrice: price, amount, userId,
       }),
     );
   }
 
   /**
    * 팀별 월 폐기 요약 — 불량유형별(코드 순, 0건 포함) · 주야별 · 원인별 수량과 금액.
-   * 수량은 BAD_QTY 합이다 (품번 + 수량 등록은 1행에 여러 개).
+   * 취소(C)는 빼고, 수량은 DESTROY_QTY 합이다 (품번 + 수량 등록은 1행에 여러 개).
    */
   async summary(query: ProductDestroySummaryQueryDto, organizationId: number) {
     const codeTypes = TEAM_CODE_TYPES[query.team];
-    const scope = `qc.ORGANIZATION_ID = :organizationId AND qc.QC_INSPECT_HANDLING = 'D'
-               AND qc.DESTROY_TEAM = :team
-               AND qc.QC_DATE >= TO_DATE(:month || '-01', 'YYYY-MM-DD')
-               AND qc.QC_DATE < ADD_MONTHS(TO_DATE(:month || '-01', 'YYYY-MM-DD'), 1)`;
-    const binds = { organizationId, team: query.team, month: query.month };
+    const scope = `d.ORGANIZATION_ID = :organizationId AND d.DESTROY_STATUS <> '${DESTROY_STATUS.cancelled}'
+               AND d.DESTROY_TEAM = :team
+               AND d.DESTROY_DATE >= TO_DATE(:month || '-01', 'YYYY-MM-DD')
+               AND d.DESTROY_DATE < ADD_MONTHS(TO_DATE(:month || '-01', 'YYYY-MM-DD'), 1)`;
+    const binds = () => ({ organizationId, team: query.team, month: query.month });
 
     const byType = await this.dataSource.query(
       `SELECT c.CODE_NAME AS "code", c.CODE_MEAN_KOR AS "name",
-              NVL(SUM(qc.BAD_QTY), 0) AS "qty", NVL(SUM(qc.DESTROY_AMOUNT), 0) AS "amount"
+              NVL(SUM(d.DESTROY_QTY), 0) AS "qty", NVL(SUM(d.DESTROY_AMOUNT), 0) AS "amount"
          FROM ISYS_BASECODE c
-         LEFT JOIN IP_PRODUCT_WORK_QC qc
-           ON qc.BAD_REASON_CODE = c.CODE_NAME AND ${scope}
+         LEFT JOIN IP_PRODUCT_DESTROY d
+           ON d.BAD_REASON_CODE = c.CODE_NAME AND ${scope}
         WHERE c.CODE_TYPE = :codeType AND c.ORGANIZATION_ID = :organizationId
         GROUP BY c.CODE_NAME, c.CODE_MEAN_KOR
         ORDER BY c.CODE_NAME`,
-      namedBinds({ ...binds, codeType: codeTypes.badType }),
+      namedBinds({ ...binds(), codeType: codeTypes.badType }),
     ) as OracleRow[];
     const grouped = async (column: string) => await this.dataSource.query(
-      `SELECT ${column} AS "key", NVL(SUM(qc.BAD_QTY), 0) AS "qty", NVL(SUM(qc.DESTROY_AMOUNT), 0) AS "amount"
-         FROM IP_PRODUCT_WORK_QC qc WHERE ${scope} GROUP BY ${column}`,
-      namedBinds(binds),
+      `SELECT ${column} AS "key", NVL(SUM(d.DESTROY_QTY), 0) AS "qty", NVL(SUM(d.DESTROY_AMOUNT), 0) AS "amount"
+         FROM IP_PRODUCT_DESTROY d WHERE ${scope} GROUP BY ${column}`,
+      namedBinds(binds()),
     ) as OracleRow[];
-    const [shiftRows, causeRows] = await Promise.all([grouped('qc.SHIFT_CODE'), grouped('qc.BAD_CAUSE_BY')]);
+    const [shiftRows, causeRows] = await Promise.all([grouped('d.SHIFT_CODE'), grouped('d.BAD_CAUSE_BY')]);
 
     const bucket = (rows: OracleRow[], buckets: { key: string; name: string; match: (key: string) => boolean }[]) =>
       buckets.map(b => {
@@ -380,90 +372,123 @@ export class ProductDestroyService {
     };
   }
 
-  /** PB cb_4(Issue) — 반품 처리 */
-  async issue(dto: ProductDestroyIssueDto, organizationId: number) {
-    return this.toggleDeficit(dto, organizationId, DEFICIT_ISSUE, 'SYSDATE');
+  /** PB cb_4(Issue) — 반품 처리: 폐기보관(D) → 반품(R) */
+  async issue(dto: ProductDestroyIssueDto, organizationId: number, userId: string) {
+    return this.changeStatus(dto.destroySeq, organizationId, DESTROY_STATUS.stored, DESTROY_STATUS.returned,
+      'RETURN_DATE = SYSDATE, RETURN_BY = :userId', userId, '반품할 수 있는 폐기보관 건이 아닙니다.');
   }
 
-  /** PB cb_5(Issue Cancel) — 반품 취소. 원본과 달리 QC_SEQUENCE 로 1건만 되돌린다. */
-  async issueCancel(dto: ProductDestroyIssueDto, organizationId: number) {
-    return this.toggleDeficit(dto, organizationId, DEFICIT_RECEIPT, 'NULL');
+  /** PB cb_5(Issue Cancel) — 반품 취소: 반품(R) → 폐기보관(D) */
+  async issueCancel(dto: ProductDestroyIssueDto, organizationId: number, userId: string) {
+    return this.changeStatus(dto.destroySeq, organizationId, DESTROY_STATUS.returned, DESTROY_STATUS.stored,
+      'RETURN_DATE = NULL, RETURN_BY = NULL', userId, '반품된 건이 아닙니다.');
   }
 
-  private async toggleDeficit(
-    dto: ProductDestroyIssueDto,
+  private async changeStatus(
+    destroySeq: number,
     organizationId: number,
-    deficit: string,
-    repairDate: 'SYSDATE' | 'NULL',
+    from: string,
+    to: string,
+    setExtra: string,
+    userId: string,
+    notFound: string,
   ) {
-    const key = { serialNo: dto.serialNo, qcSequence: dto.qcSequence, organizationId };
-    const found = await this.dataSource.query(
-      `SELECT RECEIPT_DEFICIT AS "deficit" FROM IP_PRODUCT_WORK_QC
-        WHERE SERIAL_NO = :serialNo AND QC_SEQUENCE = :qcSequence AND ORGANIZATION_ID = :organizationId`,
-      namedBinds(key),
-    ) as OracleRow[];
-    if (found.length === 0) throw new BadRequestException('대상 이력을 찾을 수 없습니다.');
-    if (found[0].deficit === deficit) throw new BadRequestException('이미 해당 상태입니다.');
+    return this.tx.run(async qr => {
+      const found = await qr.query(
+        `SELECT DESTROY_STATUS AS "status" FROM IP_PRODUCT_DESTROY
+          WHERE DESTROY_SEQ = :destroySeq AND ORGANIZATION_ID = :organizationId FOR UPDATE`,
+        namedBinds({ destroySeq, organizationId }),
+      ) as OracleRow[];
+      if (found.length === 0) throw new BadRequestException('대상 폐기 건을 찾을 수 없습니다.');
+      if (found[0].status !== from) throw new BadRequestException(notFound);
+      await qr.query(
+        `UPDATE IP_PRODUCT_DESTROY
+            SET DESTROY_STATUS = '${to}', ${setExtra}, LAST_MODIFY_BY = :userId, LAST_MODIFY_DATE = SYSDATE
+          WHERE DESTROY_SEQ = :destroySeq AND ORGANIZATION_ID = :organizationId`,
+        namedBinds({ destroySeq, organizationId, userId }),
+      );
+      return { destroySeq, destroyStatus: to };
+    });
+  }
 
-    await this.dataSource.query(
-      `UPDATE IP_PRODUCT_WORK_QC
-          SET RECEIPT_DEFICIT = '${deficit}', REPAIR_DATE = ${repairDate}
-        WHERE SERIAL_NO = :serialNo AND QC_SEQUENCE = :qcSequence AND ORGANIZATION_ID = :organizationId`,
-      namedBinds(key),
-    );
-    return { serialNo: dto.serialNo, qcSequence: dto.qcSequence, receiptDeficit: deficit };
+  /**
+   * 폐기 취소 — 잘못 등록한 폐기를 취소(C)로 바꾼다. 행은 지우지 않는다.
+   * 이미 취소된 건은 건너뛴다. 폐기현황 집계와 폐기 재고에서 빠지고, 같은 시리얼을 다시 폐기할 수 있다.
+   */
+  async cancel(dto: ProductDestroyCancelDto, organizationId: number, userId: string) {
+    const sequences = [...new Set(dto.destroySeqs)];
+    if (sequences.length === 0) throw new BadRequestException('취소할 폐기 건을 고르세요.');
+    const reason = dto.reason.trim();
+    const where = `ORGANIZATION_ID = :organizationId AND DESTROY_STATUS <> '${DESTROY_STATUS.cancelled}'
+                   AND DESTROY_SEQ IN (${sequences.map((_, index) => `:seq${index}`).join(', ')})`;
+    // 드라이버가 bind 객체를 바꾸므로 호출마다 새로 만든다
+    const keyBinds = () => ({ organizationId, ...Object.fromEntries(sequences.map((seq, index) => [`seq${index}`, seq])) });
+
+    return this.tx.run(async qr => {
+      const found = await qr.query(
+        `SELECT DESTROY_SEQ AS "destroySeq" FROM IP_PRODUCT_DESTROY WHERE ${where} FOR UPDATE`,
+        namedBinds(keyBinds()),
+      ) as OracleRow[];
+      if (found.length === 0) throw new BadRequestException('취소할 폐기 건이 없습니다. 이미 취소됐는지 확인하세요.');
+      await qr.query(
+        `UPDATE IP_PRODUCT_DESTROY
+            SET DESTROY_STATUS = '${DESTROY_STATUS.cancelled}', CANCEL_DATE = SYSDATE, CANCEL_BY = :userId,
+                CANCEL_REASON = :reason, LAST_MODIFY_BY = :userId, LAST_MODIFY_DATE = SYSDATE
+          WHERE ${where}`,
+        namedBinds({ ...keyBinds(), userId, reason }),
+      );
+      return { cancelled: found.length, skipped: sequences.length - found.length };
+    });
   }
 
   private selectList(): string {
     return `
-      SELECT qc.QC_SEQUENCE AS "qcSequence",
-             qc.SERIAL_NO AS "serialNo",
-             qc.ITEM_CODE AS "itemCode",
-             qc.MODEL_NAME AS "modelName",
-             qc.MODEL_SUFFIX AS "modelSuffix",
-             qc.LINE_CODE AS "lineCode",
-             qc.WORKSTAGE_CODE AS "workstageCode",
-             qc.BAD_REASON_CODE AS "badReasonCode",
+      SELECT d.DESTROY_SEQ AS "destroySeq",
+             d.DESTROY_STATUS AS "destroyStatus",
+             d.DESTROY_DATE AS "destroyDate",
+             d.SERIAL_NO AS "serialNo",
+             d.ITEM_CODE AS "itemCode",
+             d.MODEL_NAME AS "modelName",
+             d.MODEL_SUFFIX AS "modelSuffix",
+             d.DESTROY_QTY AS "destroyQty",
+             d.LINE_CODE AS "lineCode",
+             d.WORKSTAGE_CODE AS "workstageCode",
+             d.BAD_REASON_CODE AS "badReasonCode",
              NVL((SELECT MAX(b.CODE_MEAN_KOR) FROM ISYS_BASECODE b
                    WHERE b.CODE_TYPE IN ('DESTROY BAD TYPE SMT', 'DESTROY BAD TYPE ASSY')
-                     AND b.CODE_NAME = qc.BAD_REASON_CODE AND b.ORGANIZATION_ID = qc.ORGANIZATION_ID),
+                     AND b.CODE_NAME = d.BAD_REASON_CODE AND b.ORGANIZATION_ID = d.ORGANIZATION_ID),
                  (SELECT MAX(m.CODE_MEAN_KOR) FROM ISYS_CODE_MASTER m
-                   WHERE m.CODE_TYPE = 'WQC BAD REASON CODE' AND m.CODE_NAME = qc.BAD_REASON_CODE)) AS "badReasonName",
-             qc.DESTROY_TEAM AS "destroyTeam",
-             qc.DESTROY_PRODUCT_TYPE AS "destroyProductType",
-             qc.DESTROY_BAD_CATEGORY AS "destroyBadCategory",
-             qc.OCCUR_PROCESS_CODE AS "occurProcessCode",
-             ${this.processName('qc.OCCUR_PROCESS_CODE')} AS "occurProcessName",
-             qc.DETECT_PROCESS_CODE AS "detectProcessCode",
-             ${this.processName('qc.DETECT_PROCESS_CODE')} AS "detectProcessName",
-             qc.BAD_CAUSE_BY AS "badCauseBy",
-             qc.DESTROY_UNIT_PRICE AS "destroyUnitPrice",
-             qc.DESTROY_AMOUNT AS "destroyAmount",
-             qc.QC_RESULT AS "qcResult",
-             qc.RECEIPT_DEFICIT AS "receiptDeficit",
-             qc.QC_INSPECT_HANDLING AS "qcInspectHandling",
-             qc.DEPARTMENT_CODE AS "departmentCode",
-             (SELECT d.DEPARTMENT_NAME_KOR FROM ISYS_DEPARTMENT d
-               WHERE d.DEPARTMENT_CODE = qc.DEPARTMENT_CODE AND d.ORGANIZATION_ID = qc.ORGANIZATION_ID) AS "departmentName",
-             qc.BAD_QTY AS "badQty",
-             qc.DEFECT_QTY AS "defectQty",
-             qc.QC_DATE AS "qcDate",
-             qc.REPAIR_DATE AS "repairDate",
-             qc.SHIFT_CODE AS "shiftCode",
-             qc.CHARGER AS "charger",
-             qc.REPAIR_BY AS "repairBy",
-             qc.LOCATION_CODE AS "locationCode",
-             qc.COMMENTS AS "comments",
-             qc.ENTER_BY AS "enterBy",
-             qc.ENTER_DATE AS "enterDate",
-             qc.ORGANIZATION_ID AS "organizationId"`;
+                   WHERE m.CODE_TYPE = 'WQC BAD REASON CODE' AND m.CODE_NAME = d.BAD_REASON_CODE)) AS "badReasonName",
+             d.DESTROY_TEAM AS "destroyTeam",
+             d.DESTROY_PRODUCT_TYPE AS "destroyProductType",
+             d.DESTROY_BAD_CATEGORY AS "destroyBadCategory",
+             d.OCCUR_PROCESS_CODE AS "occurProcessCode",
+             ${this.processName('d.OCCUR_PROCESS_CODE')} AS "occurProcessName",
+             d.DETECT_PROCESS_CODE AS "detectProcessCode",
+             ${this.processName('d.DETECT_PROCESS_CODE')} AS "detectProcessName",
+             d.BAD_CAUSE_BY AS "badCauseBy",
+             d.SHIFT_CODE AS "shiftCode",
+             d.DEPARTMENT_CODE AS "departmentCode",
+             (SELECT p.DEPARTMENT_NAME_KOR FROM ISYS_DEPARTMENT p
+               WHERE p.DEPARTMENT_CODE = d.DEPARTMENT_CODE AND p.ORGANIZATION_ID = d.ORGANIZATION_ID) AS "departmentName",
+             d.WORKER_NAME AS "workerName",
+             d.UNIT_PRICE AS "unitPrice",
+             d.DESTROY_AMOUNT AS "destroyAmount",
+             d.RETURN_DATE AS "returnDate",
+             d.RETURN_BY AS "returnBy",
+             d.CANCEL_DATE AS "cancelDate",
+             d.CANCEL_BY AS "cancelBy",
+             d.CANCEL_REASON AS "cancelReason",
+             d.COMMENTS AS "comments",
+             d.ENTER_BY AS "enterBy",
+             d.ENTER_DATE AS "enterDate"`;
   }
 
   /** 팀별 공정 코드형에서 이름을 찾는다 */
   private processName(column: string): string {
     return `(SELECT MAX(b.CODE_MEAN_KOR) FROM ISYS_BASECODE b
-              WHERE b.CODE_TYPE = DECODE(qc.DESTROY_TEAM, '1', '${TEAM_CODE_TYPES['1'].process}', '${TEAM_CODE_TYPES['2'].process}')
-                AND b.CODE_NAME = ${column} AND b.ORGANIZATION_ID = qc.ORGANIZATION_ID)`;
+              WHERE b.CODE_TYPE = DECODE(d.DESTROY_TEAM, '1', '${TEAM_CODE_TYPES['1'].process}', '${TEAM_CODE_TYPES['2'].process}')
+                AND b.CODE_NAME = ${column} AND b.ORGANIZATION_ID = d.ORGANIZATION_ID)`;
   }
 
   /** 서버 시각은 KST 고정(main.ts) — 오늘 'YYYY-MM-DD' */
