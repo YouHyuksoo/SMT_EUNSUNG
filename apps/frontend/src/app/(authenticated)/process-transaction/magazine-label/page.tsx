@@ -23,7 +23,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import toast from 'react-hot-toast';
-import { AlertTriangle, Printer, ScanLine, Trash2, User } from 'lucide-react';
+import { Printer, ScanLine, Trash2, User } from 'lucide-react';
 import { SMT_LINE_DIVISIONS } from '@smt/shared';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ProcessSelect from '@/components/shared/ProcessSelect';
@@ -78,9 +78,6 @@ export default function MagazineLabelPage() {
   const [issued, setIssued] = useState<MagazineIssuedRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState<{ text: string; tone: 'ok' | 'error' | 'info' }>({
-    text: '작업자 ID 를 찍고 런카드를 찍으세요.', tone: 'info',
-  });
   const { truncated, rowLimit, mark } = useTruncation();
 
   // 작업자
@@ -168,7 +165,6 @@ export default function MagazineLabelPage() {
       if (!data?.runCard) {
         const reason = data?.reason ?? '런카드를 찾을 수 없습니다.';
         toast.error(reason);
-        setStatus({ text: reason, tone: 'error' });
         setRunCard(null);
         setModels([]);
         setSelected(null);
@@ -187,7 +183,6 @@ export default function MagazineLabelPage() {
     } catch (error: unknown) {
       const message = errorMessage(error, '조회에 실패했습니다.');
       toast.error(message);
-      setStatus({ text: message, tone: 'error' });
     } finally {
       setLoading(false);
     }
@@ -294,20 +289,11 @@ export default function MagazineLabelPage() {
         lineCode,
         workerId: workerId.trim().toUpperCase(),
       });
-      const result = r.data?.data as {
-        issued?: { magazineLabelNo: string; qty: number }[];
-        labelCount?: number;
-        totalQty?: number;
-      };
+      const result = r.data?.data as { issued?: { magazineLabelNo: string; qty: number }[] };
       labelNos = (result?.issued ?? []).map((l) => l.magazineLabelNo);
-      setStatus({
-        text: `발행 ${result?.labelCount ?? 0}장 (${(result?.totalQty ?? 0).toLocaleString()}개): ${labelNos.join(', ')}`,
-        tone: 'ok',
-      });
     } catch (error: unknown) {
       const message = errorMessage(error, '발행에 실패했습니다.');
       toast.error(message);
-      setStatus({ text: message, tone: 'error' });
       setBusy(false);
       return;
     }
@@ -318,7 +304,6 @@ export default function MagazineLabelPage() {
       // 발행은 이미 됐다 — 되돌리지 않고 재출력하게 한다.
       const message = `발행은 됐지만 출력하지 못했습니다: ${errorMessage(error, '출력 실패')} — 목록에서 골라 [재출력] 하세요.`;
       toast.error(message, { duration: 8000 });
-      setStatus({ text: message, tone: 'error' });
     } finally {
       await lookup(runCard.runNo);
       setBusy(false);
@@ -330,11 +315,10 @@ export default function MagazineLabelPage() {
     setBusy(true);
     try {
       await printLabels([picked.magazineLabelNo]);
-      setStatus({ text: `재출력: ${picked.magazineLabelNo}`, tone: 'ok' });
+      toast.success(`재출력: ${picked.magazineLabelNo}`);
     } catch (error: unknown) {
       const message = errorMessage(error, '재출력에 실패했습니다.');
       toast.error(message);
-      setStatus({ text: message, tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -349,24 +333,16 @@ export default function MagazineLabelPage() {
         magazineLabelNo: no,
       });
       toast.success(`폐기했습니다: ${no}`);
-      setStatus({ text: `폐기: ${no}`, tone: 'ok' });
       setDestroyNo('');
       setPicked(null);
       if (runCard) await lookup(runCard.runNo);
     } catch (error: unknown) {
       const message = errorMessage(error, '폐기에 실패했습니다.');
       toast.error(message);
-      setStatus({ text: message, tone: 'error' });
     } finally {
       setBusy(false);
     }
   }, [destroyNo, runCard, lookup]);
-
-  const statusTone = status.tone === 'error'
-    ? 'bg-red-600 text-white'
-    : status.tone === 'ok'
-      ? 'bg-emerald-600 text-white'
-      : 'bg-surface text-text border border-border';
 
   return (
     <div className="flex h-full flex-col gap-3 p-6">
@@ -383,13 +359,8 @@ export default function MagazineLabelPage() {
         </div>
       </header>
 
-      {/* 상태 메시지 — PB st_status 처럼 마지막 결과를 크게 보여 준다 */}
-      <div role="status" className={`rounded-lg px-4 py-3 text-lg font-bold break-all ${statusTone}`}>
-        {status.text}
-      </div>
-
       <Card padding="none">
-        <CardContent className="flex flex-wrap items-center gap-3 p-3">
+        <CardContent className="flex items-center gap-2 overflow-x-auto whitespace-nowrap p-2">
           <span className="flex items-center gap-1 text-sm font-semibold text-text">
             <User className="h-4 w-4" />작업자
           </span>
@@ -398,9 +369,9 @@ export default function MagazineLabelPage() {
             onChange={(e) => setWorkerId(e.target.value.toUpperCase())}
             onBlur={() => void lookupWorker()}
             onKeyDown={(e) => { if (e.key === 'Enter') void lookupWorker(); }} />
-          <span className="w-24 truncate text-sm text-text-muted">{workerName ?? ''}</span>
+          <span className="w-20 shrink-0 truncate text-sm text-text-muted">{workerName ?? ''}</span>
 
-          <span className="ml-2 flex items-center gap-1 text-sm font-semibold text-text">
+          <span className="flex shrink-0 items-center gap-1 text-sm font-semibold text-text">
             <ScanLine className="h-4 w-4" />런카드 / 매거진라벨
           </span>
           <Input aria-label="런카드번호" placeholder="런카드번호 또는 매거진라벨번호"
@@ -409,7 +380,7 @@ export default function MagazineLabelPage() {
             onKeyDown={(e) => { if (e.key === 'Enter') void lookup(); }} />
           <Button size="sm" onClick={() => void lookup()} disabled={loading}>조회</Button>
           {runCard && (
-            <span className="text-sm text-text-muted">
+            <span className="min-w-0 truncate text-sm text-text-muted">
               {runCard.masterModelName} · 지시 {Number(runCard.lotSize ?? 0).toLocaleString()}
               {runCard.pcbItem ? ` · PCB ${runCard.pcbItem}` : ''}
               {runCard.runDate ? ` · ${runCard.runDate}` : ''}
@@ -420,7 +391,7 @@ export default function MagazineLabelPage() {
 
       {/* 발행 (쓰기) */}
       <Card padding="none">
-        <CardContent className="flex flex-wrap items-center gap-3 p-3">
+        <CardContent className="flex items-center gap-2 overflow-x-auto whitespace-nowrap p-2">
           <ProdLineSelect aria-label="라인" value={lineCode} className="w-48"
             includeDivisions={SMT_LINE_DIVISIONS} placeholder="라인" onChange={setLineCode} />
           <ProcessSelect aria-label="공정" value={workstageCode} className="w-44"
@@ -452,15 +423,12 @@ export default function MagazineLabelPage() {
               <span className="font-semibold text-text">{preview.join(' + ')}</span>
             </span>
           )}
-          <Button size="sm" disabled={busy || Boolean(blocker)}
-            onClick={() => setIssueOpen(true)}>
-            <Printer className="mr-1 h-4 w-4" />발행·출력
-          </Button>
-          {blocker && (
-            <span className="flex items-center gap-1 text-sm text-amber-500">
-              <AlertTriangle className="h-4 w-4" />{blocker}
-            </span>
-          )}
+          <span title={blocker ?? undefined} className="shrink-0">
+            <Button size="sm" disabled={busy || Boolean(blocker)}
+              onClick={() => setIssueOpen(true)}>
+              <Printer className="mr-1 h-4 w-4" />발행·출력
+            </Button>
+          </span>
         </CardContent>
       </Card>
 
@@ -468,7 +436,7 @@ export default function MagazineLabelPage() {
 
       <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         <Card className="min-h-0 overflow-hidden" padding="none">
-          <CardContent className="h-full p-3">
+          <CardContent className="h-full p-2">
             <DataGrid
               data={models}
               columns={magazinePlanColumns}
@@ -486,8 +454,8 @@ export default function MagazineLabelPage() {
         </Card>
 
         <Card className="min-h-0 overflow-hidden" padding="none">
-          <CardContent className="flex h-full flex-col gap-2 p-3">
-            <div className="flex flex-wrap items-center gap-2">
+          <CardContent className="flex h-full flex-col gap-2 p-2">
+            <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
               <span className="text-sm font-semibold text-text">
                 발행된 라벨 {issued.length.toLocaleString()}장
               </span>
