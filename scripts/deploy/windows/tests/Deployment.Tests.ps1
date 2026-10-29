@@ -711,6 +711,7 @@ exit $LASTEXITCODE
     $script:runtimeTouches = 0
     $script:buildExecutables = @()
     $script:buildArguments = @()
+    $script:buildEnvironments = @()
     $adapters = @{
       TestMode = $true
       AccessValidator = { $true }
@@ -718,6 +719,7 @@ exit $LASTEXITCODE
         param($FilePath, $Arguments, $WorkingDirectory, $Environment)
         $script:buildExecutables += [string]$FilePath
         $script:buildArguments += ,@($Arguments)
+        $script:buildEnvironments += ,$Environment
         if ($FilePath -match 'pm2') { $script:runtimeTouches++ }
         if ($Arguments -contains '--version') { return @{ ExitCode=0; Output='10.28.1' } }
         return @{ ExitCode=0; Output='' }
@@ -733,6 +735,11 @@ exit $LASTEXITCODE
     Assert-True (@($script:buildExecutables | Where-Object { $_ -match '(?i)corepack' }).Count -eq 0) 'build must not depend on corepack being present in noninteractive PATH'
     Assert-Equal '--version' ([string]$script:buildArguments[0][0])
     Assert-Equal 'install' ([string]$script:buildArguments[1][0])
+    # 설치가 느려지지 않게: 저장소는 릴리스와 같은 드라이브(배포 루트 아래), Chrome 다운로드는 건너뛴다.
+    $installEnv = $script:buildEnvironments[1]
+    Assert-True ($null -ne $installEnv) 'pnpm install must receive an explicit environment'
+    Assert-Equal ([IO.Path]::GetFullPath((Join-Path $root 'pnpm-store'))) ([string]$installEnv['npm_config_store_dir'])
+    Assert-Equal '1' ([string]$installEnv['PUPPETEER_SKIP_DOWNLOAD'])
     Assert-EunsungBuiltRelease -DeployRoot $root -ReleaseDir (Join-Path $root "releases/$shaA") -CommitSha $shaA -AccessValidator { $true }
   }
 

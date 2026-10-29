@@ -1110,12 +1110,25 @@ function Copy-EunsungProtectedConfigs {
   }
 }
 
+# pnpm install 이 느렸던 두 원인을 여기서 막는다 (서버 실측: 설치 약 12분 -> 약 2.5분).
+#  1) 저장소가 C:(프로필)에 있고 릴리스는 D: 에 있으면 하드링크를 못 걸어 패키지 1,478개를
+#     전부 복사한다. 저장소를 배포 루트(릴리스와 같은 드라이브) 아래에 둔다.
+#  2) puppeteer postinstall 이 Chrome 을 내려받는다. puppeteer 는 문서 캡처 스크립트
+#     (public/manual/capture-*.js) 에서만 쓰고 서버 빌드·실행에는 필요 없다.
+function Get-EunsungInstallEnvironment {
+  param([string]$DeployRoot)
+  return @{
+    npm_config_store_dir = [IO.Path]::GetFullPath((Join-Path $DeployRoot 'pnpm-store'))
+    PUPPETEER_SKIP_DOWNLOAD = '1'
+  }
+}
+
 function Invoke-EunsungBuild {
-  param([string]$ReleaseDir, [string]$CommitSha, [scriptblock]$NativeInvoker)
+  param([string]$ReleaseDir, [string]$CommitSha, [hashtable]$InstallEnvironment, [scriptblock]$NativeInvoker)
   $pnpmPath = Get-EunsungBootstrappedToolPath -Name 'pnpm'
   $versionOutput = Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--version') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker
   if ($versionOutput.Trim() -cne '10.28.1') { throw 'Explicit pnpm version 10.28.1 was not selected' }
-  Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('install', '--frozen-lockfile') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
+  Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('install', '--frozen-lockfile') -WorkingDirectory $ReleaseDir -Environment $InstallEnvironment -NativeInvoker $NativeInvoker | Out-Null
   Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--filter', '@smt/shared', 'build') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
   Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--filter', '@eunsung/backend', 'build') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
   Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--filter', '@eunsung/frontend', 'build') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
@@ -1207,7 +1220,7 @@ function Invoke-EunsungDeployment {
       Expand-Archive -LiteralPath $archive -DestinationPath $releaseDir
       Copy-EunsungProtectedConfigs -DeployRoot $DeployRoot -ReleaseDir $releaseDir -AccessValidator $accessValidator -AttributeProvider $attributeProvider
       Set-Content -LiteralPath (Join-Path $releaseDir '.commit-sha') -Value $CommitSha -NoNewline -Encoding ASCII
-      Invoke-EunsungBuild -ReleaseDir $releaseDir -CommitSha $CommitSha -NativeInvoker $native
+      Invoke-EunsungBuild -ReleaseDir $releaseDir -CommitSha $CommitSha -InstallEnvironment (Get-EunsungInstallEnvironment -DeployRoot $DeployRoot) -NativeInvoker $native
     } catch {
       Remove-EunsungFailedRelease -DeployRoot $DeployRoot -ReleaseDir $releaseDir -AttributeProvider $attributeProvider
       throw
