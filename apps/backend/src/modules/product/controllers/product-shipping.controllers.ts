@@ -22,6 +22,7 @@ import {
   FgModelReceiptDto,
   FgReceiptDto,
   FgReceiptQueryDto,
+  FgReceiptSummaryQueryDto,
 } from '../dto/product-fg.dto';
 import {
   PackCompleteDto,
@@ -192,6 +193,24 @@ export class ProductFgController {
     @OrganizationId() organizationId: number,
   ) {
     return paged(await this.service.findReceipts(query, organizationId));
+  }
+
+  @Get('receipts/summary')
+  @ApiOperation({ summary: '제품입고조회 합계. groupBy = item(품목별) · date(일자별).' })
+  async receiptSummary(
+    @Query() query: FgReceiptSummaryQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findReceiptSummary(query, organizationId));
+  }
+
+  @Get('receipts/crosstab')
+  @ApiOperation({ summary: '제품입고조회 일자 × 모델 원자료. 피벗은 화면에서 한다.' })
+  async receiptCrosstab(
+    @Query() query: FgReceiptQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findReceiptCrosstab(query, organizationId));
   }
 
   @Get('issues')

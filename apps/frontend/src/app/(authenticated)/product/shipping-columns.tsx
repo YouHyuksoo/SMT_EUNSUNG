@@ -256,6 +256,59 @@ export const fgReceiptColumns: ColumnDef<FgReceiptRow>[] = [
   { accessorKey: 'receiptDate', header: '입고일시', size: 160, cell: (c) => ts(c.getValue()) },
 ];
 
+/** 제품입고조회 일자 × 모델 원자료 한 줄 (순입고수량: 입고 + / 취소 −) */
+export interface FgReceiptCrosstabRow {
+  receiptDate: string;
+  modelName: string | null;
+  modelSuffix: string | null;
+  locationCode: string | null;
+  qty: number | null;
+}
+
+/** 제품입고조회 합계 한 줄 — 기준(품목·일자)에 따라 앞쪽 키 컬럼만 다르다. */
+export interface FgReceiptSummaryRow {
+  receiptDate?: string | null;
+  itemCode?: string | null;
+  itemName?: string | null;
+  modelName?: string | null;
+  modelSuffix?: string | null;
+  receiptCount: number | null;
+  receiptQty: number | null;
+  cancelQty: number | null;
+  qty: number | null;
+}
+
+const fgReceiptSumColumns: ColumnDef<FgReceiptSummaryRow>[] = [
+  { accessorKey: 'receiptCount', header: '건수', size: 90, meta: right, cell: (c) => num(c.getValue()) },
+  { accessorKey: 'receiptQty', header: '입고수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
+  {
+    accessorKey: 'cancelQty',
+    header: '취소수량',
+    size: 110,
+    meta: right,
+    cell: (c) => signedQty(-Number(c.getValue() ?? 0) || 0),
+  },
+  { accessorKey: 'qty', header: '순입고수량', size: 120, meta: right, cell: (c) => signedQty(c.getValue()) },
+];
+
+const fgReceiptItemColumns: ColumnDef<FgReceiptSummaryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품명', size: 220 },
+  { accessorKey: 'modelName', header: '모델', size: 170 },
+  { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
+];
+
+export const fgReceiptItemSummaryColumns: ColumnDef<FgReceiptSummaryRow>[] = [
+  ...fgReceiptItemColumns,
+  ...fgReceiptSumColumns,
+];
+
+export const fgReceiptDateSummaryColumns: ColumnDef<FgReceiptSummaryRow>[] = [
+  { accessorKey: 'receiptDate', header: '입고일', size: 110, meta: center },
+  ...fgReceiptItemColumns,
+  ...fgReceiptSumColumns,
+];
+
 // ───────────────────────────────── 307·308 출하
 
 export interface FgIssueRow {

@@ -27,6 +27,14 @@ export class FgReceiptQueryDto {
   @IsOptional() @IsString() txnDeficit?: string;
 }
 
+/** 제품입고조회 합계 기준 — 품목별 · 일자별. */
+export const FG_RECEIPT_SUMMARY_GROUPS = ['item', 'date'] as const;
+export type FgReceiptSummaryGroup = (typeof FG_RECEIPT_SUMMARY_GROUPS)[number];
+
+export class FgReceiptSummaryQueryDto extends FgReceiptQueryDto {
+  @IsOptional() @IsIn(FG_RECEIPT_SUMMARY_GROUPS) groupBy?: FgReceiptSummaryGroup;
+}
+
 export class FgIssueQueryDto {
   @IsDateString() dateFrom!: string;
   @IsDateString() dateTo!: string;

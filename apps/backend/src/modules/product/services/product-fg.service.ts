@@ -49,9 +49,12 @@ import {
   FgModelReceiptDto,
   FgReceiptDto,
   FgReceiptQueryDto,
+  FgReceiptSummaryGroup,
+  FgReceiptSummaryQueryDto,
 } from '../dto/product-fg.dto';
 import { namedBinds } from '../../../common/utils/named-binds.util';
 import { ShippingOrderService } from './shipping-order.service';
+import { assertNoLooseStockInReceipt } from './product-fg-repack';
 
 type Row = Record<string, unknown>;
 /** DataSource 와 QueryRunner 가 함께 가진 query — 트랜잭션 안팎에서 같은 조회를 쓴다 */
@@ -138,6 +141,28 @@ const FG_ISSUE_SUMMARY_SQL: Record<
   },
 };
 
+/** 제품입고조회 합계 기준별 SELECT · GROUP BY · ORDER BY 조각. 사용자 값은 들어가지 않는다. */
+const FG_RECEIPT_ITEM_SELECT = `r.ITEM_CODE AS "itemCode",
+              MAX(it.ITEM_NAME) AS "itemName",
+              MAX(r.MODEL_NAME) AS "modelName",
+              MAX(r.MODEL_SUFFIX) AS "modelSuffix"`;
+const FG_RECEIPT_SUMMARY_SQL: Record<
+  FgReceiptSummaryGroup,
+  { select: string; groupBy: string; orderBy: string }
+> = {
+  item: {
+    select: FG_RECEIPT_ITEM_SELECT,
+    groupBy: 'r.ITEM_CODE',
+    orderBy: '"qty" DESC',
+  },
+  date: {
+    select: `TO_CHAR(TRUNC(r.RECEIPT_DATE), 'YYYY-MM-DD') AS "receiptDate",
+              ${FG_RECEIPT_ITEM_SELECT}`,
+    groupBy: 'TRUNC(r.RECEIPT_DATE), r.ITEM_CODE',
+    orderBy: 'TRUNC(r.RECEIPT_DATE) DESC, "qty" DESC',
+  },
+};
+
 @Injectable()
 export class ProductFgService {
   constructor(
@@ -183,6 +208,73 @@ export class ProductFgService {
           AND r.TXN_DEFICIT LIKE :txnDeficit
           AND r.ORGANIZATION_ID = :organizationId
         ORDER BY r.RECEIPT_DATE DESC, r.RECEIPT_SEQUENCE DESC
+        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
+      namedBinds({
+        dateFrom: query.dateFrom,
+        dateTo: query.dateTo,
+        modelName: this.like(query.modelName),
+        barcode: this.like(query.barcode),
+        txnDeficit: this.like(query.txnDeficit),
+        organizationId,
+      }),
+    )) as Row[];
+    return limited(rows);
+  }
+
+  /**
+   * 제품입고조회 합계 — 품목별 · 일자별. 이력과 같은 조건·부호(입고 1 +, 취소 2 −)로 묶는다.
+   * 일자는 조회 조건과 같은 `RECEIPT_DATE` 의 날짜다.
+   */
+  async findReceiptSummary(query: FgReceiptSummaryQueryDto, organizationId: number) {
+    const group = FG_RECEIPT_SUMMARY_SQL[query.groupBy ?? 'item'];
+    const rows = (await this.dataSource.query(
+      `SELECT ${group.select},
+              COUNT(*)          AS "receiptCount",
+              SUM(DECODE(r.TXN_DEFICIT, '1', r.QTY, 0)) AS "receiptQty",
+              SUM(DECODE(r.TXN_DEFICIT, '1', 0, r.QTY)) AS "cancelQty",
+              SUM(r.QTY * DECODE(r.TXN_DEFICIT, '1', 1, -1)) AS "qty"
+         FROM IP_PRODUCT_FG_RECEIPT r
+         LEFT JOIN ID_ITEM it
+                ON it.ITEM_CODE = r.ITEM_CODE
+               AND it.ORGANIZATION_ID = r.ORGANIZATION_ID
+        WHERE r.RECEIPT_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
+          AND r.RECEIPT_DATE <  TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
+          AND r.MODEL_NAME LIKE :modelName
+          AND r.BARCODE LIKE :barcode
+          AND r.TXN_DEFICIT LIKE :txnDeficit
+          AND r.ORGANIZATION_ID = :organizationId
+        GROUP BY ${group.groupBy}
+        ORDER BY ${group.orderBy}
+        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
+      namedBinds({
+        dateFrom: query.dateFrom,
+        dateTo: query.dateTo,
+        modelName: this.like(query.modelName),
+        barcode: this.like(query.barcode),
+        txnDeficit: this.like(query.txnDeficit),
+        organizationId,
+      }),
+    )) as Row[];
+    return limited(rows);
+  }
+
+  /** 제품입고조회 일자 × 모델 원자료 — (일자, 모델, 위치, 순입고수량). 피벗은 화면에서 한다. */
+  async findReceiptCrosstab(query: FgReceiptQueryDto, organizationId: number) {
+    const rows = (await this.dataSource.query(
+      `SELECT TO_CHAR(TRUNC(r.RECEIPT_DATE), 'YYYY-MM-DD') AS "receiptDate",
+              r.MODEL_NAME                              AS "modelName",
+              r.MODEL_SUFFIX                            AS "modelSuffix",
+              r.LOCATION_CODE                           AS "locationCode",
+              SUM(r.QTY * DECODE(r.TXN_DEFICIT, '1', 1, -1)) AS "qty"
+         FROM IP_PRODUCT_FG_RECEIPT r
+        WHERE r.RECEIPT_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
+          AND r.RECEIPT_DATE <  TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
+          AND r.MODEL_NAME LIKE :modelName
+          AND r.BARCODE LIKE :barcode
+          AND r.TXN_DEFICIT LIKE :txnDeficit
+          AND r.ORGANIZATION_ID = :organizationId
+        GROUP BY TRUNC(r.RECEIPT_DATE), r.MODEL_NAME, r.MODEL_SUFFIX, r.LOCATION_CODE
+        ORDER BY 1, 2
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       namedBinds({
         dateFrom: query.dateFrom,
@@ -438,6 +530,7 @@ export class ProductFgService {
       },
       dto.cancel ? '입고취소' : '입고',
       { barcode: dto.barcode.trim(), txn, organizationId },
+      { before: dto.cancel ? undefined : (qr) => assertNoLooseStockInReceipt(qr, dto.barcode.trim(), organizationId) },
     );
   }
 
