@@ -77,10 +77,7 @@
     "OEE": [
       "OEE_MULTI_ENTRY",
       "OEE_MULTI_ENTRY_ASSY",
-      "OEE_RESULT_ENTRY",
       "OEE_OVERALL_STATUS",
-      "OEE_EQUIP_WORK_RESULT",
-      "OEE_EQUIP_INSPECT_RESULT",
       "OEE_EQUIP_OPS_STATUS",
       "OEE_FIELD_OPS"
     ],
@@ -188,7 +185,10 @@
       "PRD_SMD_ACTUAL",
       "PRD_RUN_CARD_PID",
       "PRD_PCB_RESULT",
-      "PRD_DAILY_REPORT"
+      "PRD_DAILY_REPORT",
+      "OEE_RESULT_ENTRY",
+      "OEE_EQUIP_WORK_RESULT",
+      "OEE_EQUIP_INSPECT_RESULT"
     ],
     "TRACKING": [
       "TRK_MATERIAL_LOT",

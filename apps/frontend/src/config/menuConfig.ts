@@ -145,10 +145,7 @@ export const menuConfig: MenuConfigItem[] = [
     children: [
       { code: "OEE_MULTI_ENTRY", labelKey: "menu.oee.multiEntry", path: "/oee/multi-entry", pbLinkStatus: "web-native" },
       { code: "OEE_MULTI_ENTRY_ASSY", labelKey: "menu.oee.multiEntryAssy", path: "/oee/multi-entry-assy", pbLinkStatus: "web-native" },
-      { code: "OEE_RESULT_ENTRY", labelKey: "menu.oee.resultEntry", path: "/oee/result-entry", pbLinkStatus: "web-native" },
       { code: "OEE_OVERALL_STATUS", labelKey: "menu.oee.overallStatus", path: "/oee/overall-status", pbLinkStatus: "web-native" },
-      { code: "OEE_EQUIP_WORK_RESULT", labelKey: "menu.oee.equipWorkResult", path: "/oee/equip-work-result", pbLinkStatus: "web-native" },
-      { code: "OEE_EQUIP_INSPECT_RESULT", labelKey: "menu.oee.equipInspectResult", path: "/oee/equip-inspect-result", pbLinkStatus: "web-native" },
       { code: "OEE_EQUIP_OPS_STATUS", labelKey: "menu.oee.equipOpsStatus", path: "/oee/equip-ops-status", pbLinkStatus: "web-native" },
       { code: "OEE_FIELD_OPS", labelKey: "menu.oee.fieldOps", path: "/oee/field-ops", pbLinkStatus: "web-native" },
       // 미사용(2026-08-27): 설비별 운영 현황 및 분석 → 설비 운영 현황(OEE_EQUIP_OPS_STATUS)으로 대체.
@@ -325,6 +322,9 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "PRD_RUN_CARD_PID", labelKey: "menu.production.runCardPid", path: "/production/run-card-pid", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pcb_kitting_scan_master" },
       { code: "PRD_PCB_RESULT", labelKey: "menu.production.pcbResult", path: "/production/pcb-result", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pcb_result_query" },
       { code: "PRD_DAILY_REPORT", labelKey: "menu.production.dailyReport", path: "/production/daily-report", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pcb_result_report" },
+      { code: "OEE_RESULT_ENTRY", labelKey: "menu.oee.resultEntry", path: "/oee/result-entry", pbLinkStatus: "web-native" },
+      { code: "OEE_EQUIP_WORK_RESULT", labelKey: "menu.oee.equipWorkResult", path: "/oee/equip-work-result", pbLinkStatus: "web-native" },
+      { code: "OEE_EQUIP_INSPECT_RESULT", labelKey: "menu.oee.equipInspectResult", path: "/oee/equip-inspect-result", pbLinkStatus: "web-native" },
     ],
   },
   {

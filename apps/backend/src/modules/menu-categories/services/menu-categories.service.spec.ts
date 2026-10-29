@@ -214,7 +214,7 @@ describe('MenuCategoriesService', () => {
       expect(itemRepo.save).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({ organizationId: 7, menuCode: 'SYS_COMPANY', categoryCode: 'SYSTEM' }),
-          expect.objectContaining({ organizationId: 7, menuCode: 'OEE_RESULT_ENTRY', categoryCode: 'OEE' }),
+          expect.objectContaining({ organizationId: 7, menuCode: 'OEE_RESULT_ENTRY', categoryCode: 'PRODUCTION' }),
           expect.objectContaining({ organizationId: 7, menuCode: 'SYS_CODE', categoryCode: 'SYSTEM' }),
           expect.objectContaining({ organizationId: 7, menuCode: 'SYS_SCHEDULER', categoryCode: 'SYSTEM' }),
         ]),

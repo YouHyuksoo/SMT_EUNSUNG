@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 09fb8e57
+verifiedCommit: bad18d14
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -64,10 +64,7 @@ verifiedCommit: 09fb8e57
 | 설비관리 | 성능 검사결과조회 | `EQUIP_RESULT_PERFORMANCE` | `/equipment/result-query/performance` | PB 연결 | `w_qc_machine_inspect_data_eol_query` | PB 메뉴 인벤토리 |
 | OEE 관리 | OEE 비가동 입력(SMT) | `OEE_MULTI_ENTRY` | `/oee/multi-entry` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | OEE 비가동 입력(ASSY) | `OEE_MULTI_ENTRY_ASSY` | `/oee/multi-entry-assy` | 웹 신규 |  | PB 대응 없음 |
-| OEE 관리 | OEE 실적 입력 | `OEE_RESULT_ENTRY` | `/oee/result-entry` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | OEE 종합 현황 | `OEE_OVERALL_STATUS` | `/oee/overall-status` | 웹 신규 |  | PB 대응 없음 |
-| OEE 관리 | 설비별 작업 실적관리 | `OEE_EQUIP_WORK_RESULT` | `/oee/equip-work-result` | 웹 신규 |  | PB 대응 없음 |
-| OEE 관리 | 설비별 검사실적관리 | `OEE_EQUIP_INSPECT_RESULT` | `/oee/equip-inspect-result` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | 설비 운영 현황 | `OEE_EQUIP_OPS_STATUS` | `/oee/equip-ops-status` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | 설비 운영 및 실적관리(현장) | `OEE_FIELD_OPS` | `/oee/field-ops` | 웹 신규 |  | PB 대응 없음 |
 | 자재발주 | 자재소요량관리 | `PUR_REQUIREMENT` | `/purchase/requirement` | PB 연결 | `w_mat_requirment_plan_master` | PB 메뉴 인벤토리 |
@@ -153,6 +150,9 @@ verifiedCommit: 09fb8e57
 | 생산관리 | 롯트카드-PID 매핑관리 | `PRD_RUN_CARD_PID` | `/production/run-card-pid` | PB 연결 | `w_pln_product_pcb_kitting_scan_master` | PB 메뉴 인벤토리 |
 | 생산관리 | 기간별 생산실적 조회 | `PRD_PCB_RESULT` | `/production/pcb-result` | PB 연결 | `w_pln_product_pcb_result_query` | PB 메뉴 인벤토리 |
 | 생산관리 | 생산일보 리포트 | `PRD_DAILY_REPORT` | `/production/daily-report` | PB 연결 | `w_pln_product_pcb_result_report` | PB 메뉴 인벤토리 |
+| 생산관리 | OEE 실적 입력 | `OEE_RESULT_ENTRY` | `/oee/result-entry` | 웹 신규 |  | PB 대응 없음 |
+| 생산관리 | 설비별 작업 실적관리 | `OEE_EQUIP_WORK_RESULT` | `/oee/equip-work-result` | 웹 신규 |  | PB 대응 없음 |
+| 생산관리 | 설비별 검사실적관리 | `OEE_EQUIP_INSPECT_RESULT` | `/oee/equip-inspect-result` | 웹 신규 |  | PB 대응 없음 |
 | 추적 | 자재 제조번호 기준 추적 | `TRK_MATERIAL_LOT` | `/tracking/material-lot` | PB 연결 | `w_product_pid_tracking_rpt` | PB 메뉴 인벤토리 |
 | 추적 | 자재추적조회(동적) | `TRK_MATERIAL_DYNAMIC` | `/tracking/material-dynamic` | PB 연결 | `w_product_material_tracking_rpt` | PB 메뉴 인벤토리 |
 | 추적 | 자재사용이력조회 | `TRK_MATERIAL_USAGE` | `/tracking/material-usage` | PB 연결 | `w_product_material_tracking_msl_rpt` | PB 메뉴 인벤토리 |
