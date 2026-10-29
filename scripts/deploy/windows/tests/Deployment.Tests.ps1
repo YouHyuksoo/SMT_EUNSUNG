@@ -402,6 +402,25 @@ exit $LASTEXITCODE
     Assert-Equal 3 @((Get-ChildItem -LiteralPath $releases -Directory | Where-Object { (Test-EunsungCommitSha $_.Name) -and (Test-Path -LiteralPath (Join-Path $_.FullName 'deployment.success.json')) })).Count
   }
 
+  Test-Case 'retention removes at most MaxRemovals releases per run, oldest first' {
+    $root = Join-Path $tempRoot 'retention-cap'
+    $releases = Join-Path $root 'releases'
+    New-Item -ItemType Directory -Force -Path $releases | Out-Null
+    $names = @(1..6 | ForEach-Object { '{0:x40}' -f $_ })
+    $names | ForEach-Object {
+      $name = $_
+      $path = Join-Path $releases $name
+      New-Item -ItemType Directory -Path $path | Out-Null
+      Set-Content -LiteralPath (Join-Path $path 'deployment.success.json') -Value ('{"commitSha":"' + $name + '"}') -Encoding UTF8
+      (Get-Item -LiteralPath $path).LastWriteTimeUtc = [datetime]::UtcNow.AddMinutes(-[int]::Parse($_, [Globalization.NumberStyles]::HexNumber))
+    }
+    # 현재 = 1번, 이전 성공 2개 유지 -> 정리 대상은 4·5·6번(4개)이지만 상한 1이면 가장 오래된 6번만 지운다.
+    Remove-EunsungOldSuccessfulReleases -ReleaseRoot $releases -CurrentRelease (Join-Path $releases $names[0]) -MaxRemovals 1
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $releases $names[5]))) 'oldest expired release must be removed'
+    Assert-True (Test-Path -LiteralPath (Join-Path $releases $names[4])) 'newer expired release must wait for the next run'
+    Assert-Equal 5 @((Get-ChildItem -LiteralPath $releases -Directory)).Count
+  }
+
   Test-Case 'retention retains malformed, commit-mismatched, and releaseDir-mismatched markers' {
     $root = Join-Path $tempRoot 'retention-invalid-markers'
     $releases = Join-Path $root 'releases'

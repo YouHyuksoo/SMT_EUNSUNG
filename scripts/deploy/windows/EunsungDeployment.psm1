@@ -582,12 +582,16 @@ function Assert-EunsungBuiltRelease {
   Assert-EunsungProtectedConfig -ReleaseDir $resolved -AccessValidator $AccessValidator -AttributeProvider $AttributeProvider
 }
 
+# 배포 성공 뒤 정리가 워크플로 완료를 붙잡지 않게 한 번에 지우는 개수에 상한을 둔다.
+# 실측: 옛 릴리스 트리 하나를 Remove-Item -Recurse 로 지우는 데 20분 넘게 걸리기도 했다.
+# 오래된 것부터 지우고, 못 지우는 폴더가 있어도 다음 배포에서 다시 시도한다.
 function Remove-EunsungOldSuccessfulReleases {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)][string]$ReleaseRoot,
     [Parameter(Mandatory)][string]$CurrentRelease,
     [ValidateRange(0, 20)][int]$PriorSuccessesToKeep = 2,
+    [ValidateRange(1, 20)][int]$MaxRemovals = 2,
     [scriptblock]$AttributeProvider
   )
   if (-not (Test-Path -LiteralPath $ReleaseRoot)) { return }
@@ -608,13 +612,16 @@ function Remove-EunsungOldSuccessfulReleases {
     } catch { continue }
   }
   $prior = @($prior | Sort-Object LastWriteTimeUtc -Descending)
-  @($prior | Select-Object -Skip $PriorSuccessesToKeep) | ForEach-Object {
-    Assert-EunsungNoReparseAncestry -Root $releaseRootFull -Target $_.FullName -AttributeProvider $AttributeProvider
-    $markerPath = Join-Path $_.FullName 'deployment.success.json'
+  $expired = @($prior | Select-Object -Skip $PriorSuccessesToKeep | Sort-Object LastWriteTimeUtc | Select-Object -First $MaxRemovals)
+  foreach ($old in $expired) {
+    Assert-EunsungNoReparseAncestry -Root $releaseRootFull -Target $old.FullName -AttributeProvider $AttributeProvider
+    $markerPath = Join-Path $old.FullName 'deployment.success.json'
     Assert-EunsungOrdinaryFile -Path $markerPath -AttributeProvider $AttributeProvider
     $marker = Get-Content -Raw -LiteralPath $markerPath | ConvertFrom-Json
-    if ([string]$marker.commitSha -cne $_.Name) { throw 'Successful release marker changed before retention' }
-    Remove-Item -LiteralPath $_.FullName -Recurse -Force
+    if ([string]$marker.commitSha -cne $old.Name) { throw 'Successful release marker changed before retention' }
+    # rd /s 는 정션을 따라가지 않고 링크만 지운다. Remove-Item -Recurse 보다 node_modules 에서 훨씬 빠르다.
+    & cmd.exe /d /c ('rd /s /q "{0}"' -f $old.FullName) 2>&1 | Out-Null
+    if (Test-Path -LiteralPath $old.FullName) { Write-Warning ('Old release could not be fully removed: ' + $old.Name) }
   }
 }
 
