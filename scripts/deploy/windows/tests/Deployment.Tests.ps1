@@ -418,7 +418,7 @@ exit $LASTEXITCODE
     Remove-EunsungOldSuccessfulReleases -ReleaseRoot $releases -CurrentRelease (Join-Path $releases $names[0]) -MaxRemovals 1
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $releases $names[5]))) 'oldest expired release must be removed'
     Assert-True (Test-Path -LiteralPath (Join-Path $releases $names[4])) 'newer expired release must wait for the next run'
-    Assert-Equal 5 @((Get-ChildItem -LiteralPath $releases -Directory)).Count
+    Assert-Equal 5 @((Get-ChildItem -LiteralPath $releases -Directory | Where-Object { Test-EunsungCommitSha $_.Name })).Count
   }
 
   Test-Case 'retention retains malformed, commit-mismatched, and releaseDir-mismatched markers' {

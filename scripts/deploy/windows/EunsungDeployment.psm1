@@ -619,9 +619,16 @@ function Remove-EunsungOldSuccessfulReleases {
     Assert-EunsungOrdinaryFile -Path $markerPath -AttributeProvider $AttributeProvider
     $marker = Get-Content -Raw -LiteralPath $markerPath | ConvertFrom-Json
     if ([string]$marker.commitSha -cne $old.Name) { throw 'Successful release marker changed before retention' }
-    # rd /s 는 정션을 따라가지 않고 링크만 지운다. Remove-Item -Recurse 보다 node_modules 에서 훨씬 빠르다.
-    & cmd.exe /d /c ('rd /s /q "{0}"' -f $old.FullName) 2>&1 | Out-Null
-    if (Test-Path -LiteralPath $old.FullName) { Write-Warning ('Old release could not be fully removed: ' + $old.Name) }
+    # 서버 디스크에서 트리 하나를 지우는 데 수 분~20분이 걸린다. 배포가 그걸 기다리지 않게
+    # 이름만 먼저 바꿔(같은 볼륨이라 즉시) 다음 정리 대상에서 빼고, 삭제는 분리된 프로세스에 맡긴다.
+    # rd /s 는 정션을 따라가지 않고 링크만 지운다.
+    $expiredPath = Join-Path $releaseRootFull ($old.Name + '.expired-' + [guid]::NewGuid().ToString('N'))
+    try {
+      Move-Item -LiteralPath $old.FullName -Destination $expiredPath -ErrorAction Stop
+      Start-Process -FilePath 'cmd.exe' -ArgumentList '/d', '/c', ('rd /s /q "{0}"' -f $expiredPath) -WindowStyle Hidden | Out-Null
+    } catch {
+      Write-Warning ('Old release could not be expired: ' + $old.Name)
+    }
   }
 }
 
