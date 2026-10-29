@@ -54,7 +54,6 @@ import {
 } from '../dto/product-fg.dto';
 import { namedBinds } from '../../../common/utils/named-binds.util';
 import { ShippingOrderService } from './shipping-order.service';
-import { assertNoLooseStockInReceipt } from './product-fg-repack';
 
 type Row = Record<string, unknown>;
 /** DataSource 와 QueryRunner 가 함께 가진 query — 트랜잭션 안팎에서 같은 조회를 쓴다 */
@@ -530,7 +529,6 @@ export class ProductFgService {
       },
       dto.cancel ? '입고취소' : '입고',
       { barcode: dto.barcode.trim(), txn, organizationId },
-      { before: dto.cancel ? undefined : (qr) => assertNoLooseStockInReceipt(qr, dto.barcode.trim(), organizationId) },
     );
   }
 
