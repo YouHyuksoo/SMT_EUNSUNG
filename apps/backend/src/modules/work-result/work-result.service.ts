@@ -12,6 +12,7 @@
 //   WORKSTAGE_ISSUE_YN   = 공정재고 반영여부 (API 이름은 예전 그대로 sensorApplyYn). 처리구분이 DONE이 되는 순간
 //                          1회 반영하고 결과를 남긴다. WIP는 반영하지 않으므로 'N'이지만 실패가 아니다.
 //                          Y 반영 / N 미반영 / X 대상 아님(조립라인 아님·전환 전) / C 취소 되돌림 완료
+//   SHIFT_CODE · TIME_ZONE · ACTUAL_DATE = 근무조(작업지시의 교대) · 타임구간 A~J(작업시간 관리) · 작업일(08:30 기준). 마이그레이션 2026-11-05_product_result_time_zone.sql
 //   WORK_DIVISION        = 조립라인 포장 공정 → P(생산), REPAIR → R(수리), 그 밖(조립라인 가공 공정 포함) → W(가공).
 //                          공정재고는 P 만 움직인다. 지금 조립라인 지시는 포장 공정뿐이고(공정 없이 발행되면
 //                          TRG_IP_RUN_CARD_WS_DEFAULT 가 W220), 앞으로 내릴 가공 공정 지시 실적은 실적만 남는다.
@@ -224,13 +225,13 @@ export class WorkResultService {
       // 라인코드는 작업지시에서 가져온다. 설비의 LINE_CODE는 전부 '*'(미배정)라 쓰지 않는다.
       const runCard = (await mgr.query(
         `SELECT LINE_CODE AS "lineCode", WORKSTAGE_CODE AS "workstageCode", ITEM_CODE AS "itemCode",
-                LOT_NO AS "lotNo", TO_CHAR(RUN_DATE,'YYYY-MM-DD') AS "runDate"
+                LOT_NO AS "lotNo", SHIFT_CODE AS "shiftCode", TO_CHAR(RUN_DATE,'YYYY-MM-DD') AS "runDate"
            FROM IP_PRODUCT_RUN_CARD
           WHERE RUN_NO=:1 AND ORGANIZATION_ID=:2 FOR UPDATE`,
         [dto.runNo, organization],
       )) as Array<{
         lineCode: string | null; workstageCode: string | null; itemCode: string | null;
-        lotNo: string | null; runDate: string | null;
+        lotNo: string | null; shiftCode: string | null; runDate: string | null;
       }>;
       const card = runCard[0];
       if (!card) throw new NotFoundException('작업지시를 찾을 수 없습니다');
@@ -264,8 +265,9 @@ export class WorkResultService {
         await mgr.query(
           `UPDATE IP_PRODUCT_RESULT SET MACHINE_CODE=:1, WORKSTAGE_CODE=:2,
              PRODUCT_ACTUAL_QTY=:3, WORK_TIME=:4, WORKER_COUNT=:5, WORKER_NAME=:6, RESULT_STATUS=:7,
-             PRODUCT_ACTUAL_TIME=SYSDATE, LAST_MODIFY_BY=:8, LAST_MODIFY_DATE=SYSDATE
-           WHERE RUN_NO=:9 AND SEQ_NO=:10 AND ORGANIZATION_ID=:11`,
+             TIME_ZONE=NVL(:8, TIME_ZONE),
+             PRODUCT_ACTUAL_TIME=SYSDATE, LAST_MODIFY_BY=:9, LAST_MODIFY_DATE=SYSDATE
+           WHERE RUN_NO=:10 AND SEQ_NO=:11 AND ORGANIZATION_ID=:12`,
           [
             machineCode,
             workstage,
@@ -274,6 +276,7 @@ export class WorkResultService {
             dto.workerCount ?? 0,
             dto.workerName ?? null,
             dto.resultStatus,
+            dto.timeZone ?? null,
             user,
             dto.runNo,
             seq,
@@ -294,11 +297,11 @@ export class WorkResultService {
              (PRODUCT_DATE, PRODUCT_SEQUENCE, ORGANIZATION_ID, PRODUCT_LINE_TYPE, LQC_INSPECT_RESULT, OQC_INSPECT_RESULT,
               PLAN_DATE, WORK_DIVISION, RECEIPT_YN, PRODUCT_ACTUAL_STATUS, ITEM_CODE, MFS, LINE_CODE, WORKSTAGE_CODE,
               MACHINE_CODE, PRODUCT_ACTUAL_QTY, PRODUCT_ACTUAL_TIME, RUN_NO, SEQ_NO, WORK_TIME, WORKER_COUNT, WORKER_NAME,
-              RESULT_STATUS, WORKSTAGE_ISSUE_YN, ENTER_BY, ENTER_DATE)
+              RESULT_STATUS, WORKSTAGE_ISSUE_YN, SHIFT_CODE, TIME_ZONE, ACTUAL_DATE, ENTER_BY, ENTER_DATE)
            VALUES (TRUNC(F_GET_WORK_ACTUAL_DATE(SYSDATE,'A')), SEQ_PRODUCT_ACTUAL.NEXTVAL, :1, 'T', 'W', 'W',
               NVL(TO_DATE(:2,'YYYY-MM-DD'), TRUNC(SYSDATE)), :3, 'N', 'N', :4, :5, :6, :7,
               :8, :9, SYSDATE, :10, :11, :12, :13, :14,
-              :15, 'N', :16, SYSDATE)`,
+              :15, 'N', :16, :17, TRUNC(F_GET_WORK_ACTUAL_DATE(SYSDATE,'A')), :18, SYSDATE)`,
           [
             organization,
             card.runDate,
@@ -315,6 +318,8 @@ export class WorkResultService {
             dto.workerCount ?? 0,
             dto.workerName ?? null,
             dto.resultStatus,
+            card.shiftCode,
+            dto.timeZone ?? null,
             user,
           ],
         );

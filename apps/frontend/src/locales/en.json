@@ -538,6 +538,7 @@
     "report.carrierBarcode": "Carrier Barcode",
     "report.machine": "Machine Report",
     "report.pickupRate": "SMT Pickup Report",
+    "oee.equipWorkResultFree": "Production Result (No Plan)",
     "report.masterPlan": "Production Plan Report",
     "report.runCard": "Run Card Report",
     "report.workstageStock": "Workstage Stock Query",

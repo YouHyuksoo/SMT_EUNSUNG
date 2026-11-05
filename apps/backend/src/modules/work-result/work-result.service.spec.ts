@@ -181,6 +181,10 @@ describe('WorkResultService tenancy', () => {
     expect(binds[7]).toBeNull();
     expect(binds[9]).toBe('RUN-1');
     expect(binds[10]).toBe('01');
+    // [15]=근무조(작업지시 교대) [16]=타임구간(안 보내면 null) [17]=사용자. 작업일은 SQL 식으로 채운다
+    expect(binds[16]).toBeNull();
+    expect(binds[17]).toBe('authenticated-user');
+    expect(String(insertCall?.[0])).toMatch(/SHIFT_CODE, TIME_ZONE, ACTUAL_DATE/);
     expect(binds).toContain('authenticated-user');
     expect(binds).not.toContain('forged-user');
     const runCardCall = manager.query.mock.calls.find(([sql]) => String(sql).includes('UPDATE IP_PRODUCT_RUN_CARD'));

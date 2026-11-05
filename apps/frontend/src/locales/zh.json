@@ -534,6 +534,7 @@
     "query.materialBarcode": "物料条码状态查询",
     "query.nsnpHistory": "NSNP 处理履历查询",
     "report.itemMaster": "品目主数据报表",
+    "oee.equipWorkResultFree": "生产实绩(无计划)",
     "report.lineBarcode": "线别设备条码",
     "report.carrierBarcode": "载具条码",
     "report.machine": "设备报表",

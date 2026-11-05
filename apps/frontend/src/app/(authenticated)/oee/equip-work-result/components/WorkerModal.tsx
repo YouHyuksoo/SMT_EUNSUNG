@@ -18,9 +18,11 @@ interface Props {
   onSelect: (w: Worker) => void;
   /** 모달 위쪽 안내 문구 — 실적 입력이 막혀서 열렸을 때 이유를 알려준다 */
   notice?: string | null;
+  /** 작게 보기 — 중간 크기 창에 4열로 보여준다 (기본은 전체 화면 8열) */
+  compact?: boolean;
 }
 
-export default function WorkerModal({ isOpen, onClose, value, onSelect, notice }: Props) {
+export default function WorkerModal({ isOpen, onClose, value, onSelect, notice, compact }: Props) {
   const { workers } = useWorkerOptions();
   const [q, setQ] = useState('');
   const list = useMemo(() => {
@@ -30,7 +32,7 @@ export default function WorkerModal({ isOpen, onClose, value, onSelect, notice }
   }, [workers, q]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="작업자 선택" size="full" bodyMaxHeightClass="max-h-[85vh]"
+    <Modal isOpen={isOpen} onClose={onClose} title="작업자 선택" size={compact ? 'lg' : 'full'} bodyMaxHeightClass={compact ? 'max-h-[70vh]' : 'max-h-[85vh]'}
       headerActions={
         <button type="button" onClick={onClose}
           className="h-9 px-4 rounded-lg border border-border text-sm font-medium text-text hover:bg-surface">닫기</button>
@@ -41,7 +43,7 @@ export default function WorkerModal({ isOpen, onClose, value, onSelect, notice }
       <div className="mb-3">
         <Input placeholder="사번·이름·부서" value={q} onChange={(e) => setQ(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
       </div>
-      <div className="grid grid-cols-8 gap-2">
+      <div className={`grid gap-2 ${compact ? 'grid-cols-4' : 'grid-cols-8'}`}>
         {list.map((w) => {
           const on = value?.code === w.code;
           return (
@@ -52,7 +54,7 @@ export default function WorkerModal({ isOpen, onClose, value, onSelect, notice }
             </button>
           );
         })}
-        {!list.length && <p className="col-span-8 p-6 text-center text-sm text-text-muted">작업자가 없습니다</p>}
+        {!list.length && <p className="col-span-full p-6 text-center text-sm text-text-muted">작업자가 없습니다</p>}
       </div>
     </Modal>
   );

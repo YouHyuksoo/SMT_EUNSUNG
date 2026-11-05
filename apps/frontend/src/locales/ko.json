@@ -538,6 +538,7 @@
     "report.carrierBarcode": "캐리어바코드",
     "report.machine": "설비리포트",
     "report.pickupRate": "SMT PICKUP 리포트",
+    "oee.equipWorkResultFree": "생산실적(계획 없음)",
     "report.masterPlan": "생산계획리포트",
     "report.runCard": "런카드리포트",
     "report.workstageStock": "공정재공조회",

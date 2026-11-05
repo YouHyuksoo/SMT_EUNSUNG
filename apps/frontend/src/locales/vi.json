@@ -534,6 +534,7 @@
     "query.materialBarcode": "Trạng thái mã vạch vật tư",
     "query.nsnpHistory": "Lịch sử xử lý NSNP",
     "report.itemMaster": "Báo cáo danh mục vật tư",
+    "oee.equipWorkResultFree": "Kết quả sản xuất (không kế hoạch)",
     "report.lineBarcode": "Mã vạch thiết bị theo line",
     "report.carrierBarcode": "Mã vạch carrier",
     "report.machine": "Báo cáo thiết bị",

@@ -8,7 +8,8 @@
  * 1. 칸(수량/작업시간/인원)을 누르면 숫자패드가 그 칸에 입력한다. 기본 칸은 수량이다.
  * 2. 저장하면 바로 확정(DONE)되어 완제품 실적이 되고, 조립라인이면 공정재고(제품 입고 + 소모)에 반영된다. 잘못 넣은 실적은 이력에서 취소한다.
  * 3. 저장 후 수량·작업시간은 비우고 인원은 유지한다(같은 조가 이어서 넣는 경우가 많다).
- * 4. 입력할 수 없는 상태(작업자·작업지시 미선택 등)에서 누르면 onBlocked 로 알려 부모가 선택 창을 연다
+ * 4. 수량이 0 이면 저장 버튼이 꺼지고, 그 이유("수량을 입력하세요")를 버튼 아래에 보여준다 — 조용히 막지 않는다.
+ * 5. 입력할 수 없는 상태(작업자·작업지시 미선택 등)에서 누르면 onBlocked 로 알려 부모가 선택 창을 연다
  *    — 버튼을 조용히 막지 않는다.
  */
 import { useState } from 'react';
@@ -27,9 +28,11 @@ interface Props {
   onSave: (v: { qty: number; time: number; crew: number }) => Promise<boolean>;
   /** 입력할 수 없는 상태에서 칸·숫자패드·저장을 눌렀을 때 */
   onBlocked: () => void;
+  /** 숫자패드와 저장 버튼 사이에 넣을 내용 (예: 타임구간 선택) */
+  extra?: React.ReactNode;
 }
 
-export default function EntryPad({ disabledReason, subtitle, onSave, onBlocked }: Props) {
+export default function EntryPad({ disabledReason, subtitle, onSave, onBlocked, extra }: Props) {
   const [vals, setVals] = useState<Record<Field, string>>({ qty: '0', time: '0', crew: '1' });
   const [field, setField] = useState<Field>('qty');
   const [saving, setSaving] = useState(false);
@@ -45,6 +48,8 @@ export default function EntryPad({ disabledReason, subtitle, onSave, onBlocked }
 
   const qty = Number(vals.qty);
   const canSave = !disabledReason && qty > 0 && !saving;
+  /** 버튼 아래에 보여줄 안내 — 선택이 모자란 이유가 먼저, 없으면 수량 0 */
+  const hint = disabledReason ?? (qty > 0 ? null : '수량을 입력하세요 (숫자패드로 수량을 누르면 저장할 수 있습니다)');
 
   async function save() {
     if (disabledReason) { onBlocked(); return; }
@@ -88,12 +93,14 @@ export default function EntryPad({ disabledReason, subtitle, onSave, onBlocked }
         ))}
       </div>
 
+      {extra}
+
       <button type="button" onClick={() => void save()} disabled={!disabledReason && !canSave}
         className={`h-14 rounded-xl bg-primary text-white text-lg font-bold hover:bg-primary/90 disabled:opacity-40 ${disabledReason ? 'opacity-50' : ''}`}>
         {saving ? '저장 중…' : '실적 저장'}
       </button>
-      <p className={`text-[11px] leading-snug ${disabledReason ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-text-muted'}`}>
-        {disabledReason ?? '저장하면 바로 생산현황에 반영됩니다. 잘못 넣은 실적은 이력에서 [취소]하세요.'}
+      <p className={`text-[11px] leading-snug ${hint ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-text-muted'}`}>
+        {hint ?? '저장하면 바로 생산현황에 반영됩니다. 잘못 넣은 실적은 이력에서 [취소]하세요.'}
       </p>
     </section>
   );

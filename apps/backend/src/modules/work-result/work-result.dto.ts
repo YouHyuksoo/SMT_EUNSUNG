@@ -22,6 +22,8 @@ export class WorkResultUpsertDto {
   @IsOptional() @IsInt() workerCount?: number;
   @IsOptional() @IsString() workerName?: string;
   @IsIn(['WIP', 'DONE']) resultStatus: string;
+  // 타임구간 A~J (작업시간 관리). 안 보내면 비워 둔다
+  @IsOptional() @Matches(/^[A-J]$/) timeZone?: string;
 }
 
 // 공정재고 반영 재시도 — 완료 상태인데 반영이 실패한 조립라인 실적 대상

@@ -325,6 +325,7 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "OEE_RESULT_ENTRY", labelKey: "menu.oee.resultEntry", path: "/oee/result-entry", pbLinkStatus: "web-native" },
       { code: "OEE_EQUIP_WORK_RESULT", labelKey: "menu.oee.equipWorkResult", path: "/oee/equip-work-result", pbLinkStatus: "web-native" },
       { code: "OEE_EQUIP_INSPECT_RESULT", labelKey: "menu.oee.equipInspectResult", path: "/oee/equip-inspect-result", pbLinkStatus: "web-native" },
+      { code: "OEE_EQUIP_WORK_RESULT_FREE", labelKey: "menu.oee.equipWorkResultFree", path: "/oee/equip-work-result-free", pbLinkStatus: "web-native" },
     ],
   },
   {
