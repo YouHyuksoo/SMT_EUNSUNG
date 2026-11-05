@@ -130,10 +130,13 @@ export default function BomPage() {
 
     setLoadingRouting(true);
     try {
-      const groupsRes = await api.get("/master/routing-groups", { params: { search: selectedBomItem.itemCode, limit: 5000 } });
-      const group = (groupsRes.data?.data ?? []).find((row: BomRoutingInfo) => row.itemCode === selectedBomItem.itemCode) ?? null;
-      const processRes = group ? await api.get(`/master/routing-groups/${group.routingCode}/processes`) : null;
-      const data: BomRoutingInfo | null = group ? { ...group, processes: processRes?.data?.data ?? [] } : null;
+      // 품목이 따르는 라우팅은 ID_ITEM.ROUTING_CODE 에 있다. 후보 API 가 품목별 routingCode 를 돌려준다.
+      const itemsRes = await api.get("/master/routing-groups/candidate-items", { params: { search: selectedBomItem.itemCode, limit: 20 } });
+      const followed = (itemsRes.data?.data ?? []).find((row: { itemCode: string; routingCode: string | null }) => row.itemCode === selectedBomItem.itemCode && !!row.routingCode) ?? null;
+      const processRes = followed ? await api.get(`/master/routing-groups/${followed.routingCode}/processes`) : null;
+      const data: BomRoutingInfo | null = followed
+        ? { routingCode: followed.routingCode, routingName: followed.routingName ?? followed.routingCode, itemCode: followed.itemCode, useYn: "Y", processes: processRes?.data?.data ?? [] }
+        : null;
       setRoutingInfo(data);
       setSelectedProcess((prev) => {
         const nextProcesses = data?.processes ?? [];
@@ -146,6 +149,7 @@ export default function BomPage() {
               seq: first.seq,
               workstageCode: (first as BomRoutingProcess & { workstageCode: string }).workstageCode,
               workstageName: (first as BomRoutingProcess & { workstageName?: string }).workstageName ?? (first as BomRoutingProcess & { workstageCode: string }).workstageCode,
+              itemCode: selectedBomItem.itemCode,
             }
           : null;
       });
@@ -196,6 +200,7 @@ export default function BomPage() {
       seq: process.seq,
       workstageCode: (process as BomRoutingProcess & { workstageCode: string }).workstageCode,
       workstageName: (process as BomRoutingProcess & { workstageName?: string }).workstageName ?? (process as BomRoutingProcess & { workstageCode: string }).workstageCode,
+      itemCode: routingInfo.itemCode,
     });
   }, [routingInfo]);
 
@@ -402,11 +407,11 @@ export default function BomPage() {
 
           <Card padding="none" className="flex-1 flex flex-col min-h-0">
             <CardContent className="flex-1 flex flex-col min-h-0 p-3">
-              {selectedProcess ? (
+              {selectedProcess?.itemCode ? (
                 <>
                   <div className="mb-3 shrink-0 border-b border-border px-3 py-2 text-xs font-medium text-primary">{t("master.routing.materialEditorTitle", { defaultValue: "투입자재" })}</div>
                   <div className="flex-1 min-h-0">
-                    <RoutingMaterialEditor selectedProcess={selectedProcess} />
+                    <RoutingMaterialEditor selectedProcess={{ ...selectedProcess, itemCode: selectedProcess.itemCode }} />
                   </div>
                 </>
               ) : (

@@ -8,9 +8,6 @@ export class RoutingGroup {
   @PrimaryColumn({ name: 'ROUTING_CODE', type: 'varchar2', length: 50, nullable: false })
   routingCode!: string;
 
-  @Column({ name: 'ITEM_CODE', type: 'varchar2', length: 20, nullable: false })
-  itemCode!: string;
-
   @Column({ name: 'ROUTING_NAME', type: 'varchar2', length: 200, nullable: false })
   routingName!: string;
 

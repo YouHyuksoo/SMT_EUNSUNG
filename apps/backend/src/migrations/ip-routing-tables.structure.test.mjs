@@ -18,15 +18,31 @@ test('defines exactly the three IP routing tables and excludes retired routing f
 });
 
 test('defines master foreign keys in referenced key order', () => {
-  assert.match(compact, /FOREIGN KEY \(ITEM_CODE, ORGANIZATION_ID\) REFERENCES ID_ITEM \(ITEM_CODE, ORGANIZATION_ID\)/);
   assert.match(compact, /FOREIGN KEY \(WORKSTAGE_CODE, ORGANIZATION_ID\) REFERENCES IP_PRODUCT_WORKSTAGE \(WORKSTAGE_CODE, ORGANIZATION_ID\)/);
   assert.match(compact, /FOREIGN KEY \(SUBCON_SUPPLIER_CODE, ORGANIZATION_ID\) REFERENCES ICOM_SUPPLIER \(SUPPLIER_CODE, ORGANIZATION_ID\)/);
   assert.match(compact, /FOREIGN KEY \(CHILD_ITEM_CODE, ORGANIZATION_ID\) REFERENCES ID_ITEM \(ITEM_CODE, ORGANIZATION_ID\)/);
 });
 
-test('enforces routing uniqueness, process ownership, and positive quantities and times', () => {
-  assert.match(compact, /CREATE UNIQUE INDEX [A-Z0-9_]+ ON IP_ROUTING_GROUPS \( CASE USE_YN WHEN 'Y' THEN ORGANIZATION_ID END, CASE USE_YN WHEN 'Y' THEN ITEM_CODE END \)/);
-  assert.match(compact, /UNIQUE \(ORGANIZATION_ID, ROUTING_CODE, CHILD_ITEM_CODE\)/);
+test('the item holds the routing code and the group no longer holds the item', () => {
+  const groups = sql.match(/CREATE TABLE IP_ROUTING_GROUPS \([\s\S]*?\)~';/)?.[0] ?? '';
+  assert.ok(groups.length > 0, 'IP_ROUTING_GROUPS create statement was not found');
+  assert.doesNotMatch(groups, /ITEM_CODE/);
+  assert.doesNotMatch(sql, /UK_IP_RG_ACTIVE_ITEM[^']*ON IP_ROUTING_GROUPS/);
+  assert.match(compact, /ALTER TABLE ID_ITEM ADD \(ROUTING_CODE VARCHAR2\(50\)\)/);
+  assert.match(compact, /ADD CONSTRAINT UK_ID_ITEM_ROUTING UNIQUE \(ITEM_CODE, ORGANIZATION_ID, ROUTING_CODE\)/);
+  assert.match(compact, /ADD CONSTRAINT FK_ID_ITEM_ROUTING FOREIGN KEY \(ORGANIZATION_ID, ROUTING_CODE\) REFERENCES IP_ROUTING_GROUPS \(ORGANIZATION_ID, ROUTING_CODE\)/);
+  assert.match(compact, /CREATE INDEX IX_ID_ITEM_ROUTING ON ID_ITEM \(ORGANIZATION_ID, ROUTING_CODE\)/);
+  // ROUTE_NO 를 바꾸면 ID_ITEM_UPD_MANUAL 트리거가 재고 행을 지운다.
+  assert.doesNotMatch(sql, /UPDATE\s+ID_ITEM|SET\s+ROUTE_NO/);
+});
+
+test('materials are keyed by routing, process, item and child and tied to the item routing', () => {
+  assert.match(compact, /PRIMARY KEY \(ORGANIZATION_ID, ROUTING_CODE, PROCESS_SEQ, ITEM_CODE, CHILD_ITEM_CODE\)/);
+  assert.match(compact, /FOREIGN KEY \(ITEM_CODE, ORGANIZATION_ID, ROUTING_CODE\) REFERENCES ID_ITEM \(ITEM_CODE, ORGANIZATION_ID, ROUTING_CODE\)/);
+  assert.match(compact, /UNIQUE \(ORGANIZATION_ID, ROUTING_CODE, ITEM_CODE, CHILD_ITEM_CODE\)/);
+});
+
+test('enforces positive sequence, quantities and times', () => {
   assert.match(compact, /CHECK \(PROCESS_SEQ > 0\)/);
   assert.match(compact, /CHECK \(ALLOC_QTY > 0\)/);
   assert.match(compact, /CHECK \(STANDARD_TIME IS NULL OR STANDARD_TIME >= 0\)/);
@@ -37,24 +53,24 @@ test('makes the material process foreign key deferrable but initially immediate'
   assert.match(compact, /FOREIGN KEY \(ORGANIZATION_ID, ROUTING_CODE, PROCESS_SEQ\) REFERENCES IP_ROUTING_PROCESSES \(ORGANIZATION_ID, ROUTING_CODE, PROCESS_SEQ\) DEFERRABLE INITIALLY IMMEDIATE/);
 });
 
-test('validates existing definitions and fails mismatches without altering objects', () => {
+test('validates existing definitions and only alters ID_ITEM', () => {
   assert.match(sql, /USER_TABLES/);
   assert.match(sql, /USER_TAB_COLUMNS/);
   assert.match(sql, /USER_CONSTRAINTS/);
   assert.match(sql, /USER_CONS_COLUMNS/);
   assert.match(sql, /USER_INDEXES/);
-  assert.match(sql, /DBMS_METADATA\.GET_DDL/);
   assert.match(sql, /RAISE_APPLICATION_ERROR/);
   assert.match(sql, /PROCEDURE ASSERT_DEFAULT/);
   assert.match(sql, /R_CONSTRAINT_NAME/);
-  assert.match(sql, /DBMS_LOB\.SUBSTR\(V_INDEX_DDL/);
   for (const column of [
     'CREATED_BY', 'CREATED_AT', 'UPDATED_BY', 'UPDATED_AT',
     'ORGANIZATION_ID', 'ROUTING_CODE', 'USE_YN',
   ]) {
     assert.match(sql, new RegExp(`ASSERT_COLUMN\\([^\\n]*'${column}'`));
   }
-  assert.doesNotMatch(sql, /EXECUTE IMMEDIATE\s+'ALTER\b/);
+  const alters = [...sql.matchAll(/EXECUTE IMMEDIATE\s+'ALTER TABLE (\w+)/g)].map((match) => match[1]);
+  assert.ok(alters.length > 0);
+  assert.ok(alters.every((table) => table === 'ID_ITEM'), `unexpected ALTER targets: ${alters}`);
 });
 
 test('normalizes all whitespace when validating multiline check constraints', () => {
@@ -68,23 +84,27 @@ test('treats a null metadata comparison as a validation failure', () => {
   assert.match(assertTrue, /IF P_OK IS NULL OR NOT P_OK THEN/);
 });
 
-test('requires exactly two ordered expressions in the active-route unique index', () => {
-  assert.match(compact, /FROM USER_IND_COLUMNS WHERE INDEX_NAME = 'UK_IP_RG_ACTIVE_ITEM' AND TABLE_NAME = 'IP_ROUTING_GROUPS'; ASSERT_TRUE\(V_COUNT = 2, 'UK_IP_RG_ACTIVE_ITEM COLUMN COUNT MISMATCH'\)/);
-  assert.match(compact, /CASEUSE_YNWHEN''Y''THENORGANIZATION_IDEND,CASEUSE_YNWHEN''Y''THENITEM_CODEEND/);
-});
-
 test('uses Oracle 12.2 compatible CLOB bridges for dictionary LONG values', () => {
   assert.doesNotMatch(sql, /DATA_DEFAULT_VC/);
   assert.match(sql, /DBMS_XMLGEN\.GETXMLTYPE/);
   assert.match(sql, /DBMS_ASSERT\.(SIMPLE_SQL_NAME|ENQUOTE_LITERAL)/);
-  assert.match(sql, /DBMS_METADATA\.GET_DDL\('INDEX', 'UK_IP_RG_ACTIVE_ITEM'\)/);
-  assert.doesNotMatch(sql, /REGEXP_REPLACE\([^;]*COLUMN_EXPRESSION/);
-  assert.doesNotMatch(sql, /UPPER\([^;]*COLUMN_EXPRESSION/);
 });
 
-test('creates and exactly validates Oracle normalized simple CASE index expressions', () => {
-  assert.match(compact, /CREATE UNIQUE INDEX UK_IP_RG_ACTIVE_ITEM ON IP_ROUTING_GROUPS \( CASE USE_YN WHEN 'Y' THEN ORGANIZATION_ID END, CASE USE_YN WHEN 'Y' THEN ITEM_CODE END \)/);
-  assert.match(sql, /V_INDEX_EXPRESSIONS\s*:=\s*REGEXP_SUBSTR/);
-  assert.match(compact, /ASSERT_TRUE\(V_INDEX_EXPRESSIONS = 'CASEUSE_YNWHEN''Y''THENORGANIZATION_IDEND,CASEUSE_YNWHEN''Y''THENITEM_CODEEND'/);
-  assert.doesNotMatch(sql, /INSTR\(V_INDEX_TEXT/);
+test('upgrade migrations: item routing code, group item removal, legacy table cleanup', () => {
+  const read = (name) => readFileSync(new URL(name, import.meta.url), 'utf8').toUpperCase().replace(/\s+/g, ' ');
+  const addColumn = read('./2026-11-05_item_routing_code.sql');
+  assert.match(addColumn, /ALTER TABLE ID_ITEM ADD \(ROUTING_CODE VARCHAR2\(50\)\)/);
+  assert.match(addColumn, /ADD CONSTRAINT UK_ID_ITEM_ROUTING UNIQUE \(ITEM_CODE, ORGANIZATION_ID, ROUTING_CODE\)/);
+  assert.match(addColumn, /ADD CONSTRAINT FK_ID_ITEM_ROUTING FOREIGN KEY \(ORGANIZATION_ID, ROUTING_CODE\) REFERENCES IP_ROUTING_GROUPS/);
+  assert.doesNotMatch(addColumn, /UPDATE ID_ITEM|SET ROUTE_NO/);
+
+  const dropItem = read('./2026-11-05_routing_groups_drop_item_code.sql');
+  assert.match(dropItem, /ALTER TABLE IP_ROUTING_GROUPS DROP COLUMN ITEM_CODE/);
+  assert.match(dropItem, /RAISE_APPLICATION_ERROR\(-20010/);
+  assert.match(dropItem, /RAISE_APPLICATION_ERROR\(-20011/);
+  // 투입자재·옛 라우팅 테이블은 0건일 때만 지운다.
+  assert.match(dropItem, /RAISE_APPLICATION_ERROR\(-20012/);
+  assert.match(dropItem, /RAISE_APPLICATION_ERROR\(-20013/);
+  assert.match(dropItem, /DROP TABLE IP_PRODUCT_ROUTING'/);
+  assert.match(dropItem, /DROP TABLE IP_PRODUCT_ROUTING_MASTER'/);
 });

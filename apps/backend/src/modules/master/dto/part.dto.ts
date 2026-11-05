@@ -12,7 +12,7 @@ import { PaginationQueryDto } from '../../../common/dto/base-query.dto';
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * 품목 등록·수정 — ID_ITEM 의 표시 전용(조직·등록/수정 이력·ROUTE_NO)을 뺀 모든 컬럼.
+ * 품목 등록·수정 — ID_ITEM 의 표시 전용(조직·등록/수정 이력·ROUTING_CODE)을 뺀 모든 컬럼.
  * 컬럼 목록은 packages/shared ITEM_MASTER_COLUMNS 와 같다 (part.dto.spec.ts 가 확인).
  * 필수는 NOT NULL 이면서 서버 기본값이 없는 것만이다 (품목코드·품명·구입유형·품목구분).
  */
@@ -46,6 +46,12 @@ export class CreatePartDto {
   @IsString()
   @MaxLength(10)
   itemType?: string;
+
+  @ApiPropertyOptional({ description: "ID_ITEM.ROUTE_NO — 라우팅번호(레거시)" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  routeNo?: string;
 
   @ApiPropertyOptional({ description: "ID_ITEM.VIRTUAL_RECEIPT_YN — 가입고" })
   @IsOptional()

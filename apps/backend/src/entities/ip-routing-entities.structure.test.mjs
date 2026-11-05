@@ -39,7 +39,6 @@ test('IP routing entities exactly map the live Oracle schema', () => {
   assertEntity(group, 'IP_ROUTING_GROUPS', {
     organizationId: { decorator: 'PrimaryColumn', options: ["name: 'ORGANIZATION_ID'", "type: 'number'", 'nullable: false'] },
     routingCode: { decorator: 'PrimaryColumn', options: ["name: 'ROUTING_CODE'", "type: 'varchar2'", 'length: 50', 'nullable: false'] },
-    itemCode: { decorator: 'Column', options: ["name: 'ITEM_CODE'", "type: 'varchar2'", 'length: 20', 'nullable: false'] },
     routingName: { decorator: 'Column', options: ["name: 'ROUTING_NAME'", "type: 'varchar2'", 'length: 200', 'nullable: false'] },
     description: { decorator: 'Column', options: ["name: 'DESCRIPTION'", "type: 'varchar2'", 'length: 500', 'nullable: true'] },
     useYn: { decorator: 'Column', options: ["name: 'USE_YN'", "type: 'varchar2'", 'length: 1', "default: 'Y'", 'nullable: false'] },
@@ -68,12 +67,13 @@ test('IP routing entities exactly map the live Oracle schema', () => {
     organizationId: { decorator: 'PrimaryColumn', options: ["name: 'ORGANIZATION_ID'", "type: 'number'", 'nullable: false'] },
     routingCode: { decorator: 'PrimaryColumn', options: ["name: 'ROUTING_CODE'", "type: 'varchar2'", 'length: 50', 'nullable: false'] },
     processSeq: { decorator: 'PrimaryColumn', options: ["name: 'PROCESS_SEQ'", "type: 'number'", 'precision: 10', 'nullable: false'] },
+    itemCode: { decorator: 'PrimaryColumn', options: ["name: 'ITEM_CODE'", "type: 'varchar2'", 'length: 20', 'nullable: false'] },
     childItemCode: { decorator: 'PrimaryColumn', options: ["name: 'CHILD_ITEM_CODE'", "type: 'varchar2'", 'length: 20', 'nullable: false'] },
     allocQty: { decorator: 'Column', options: ["name: 'ALLOC_QTY'", "type: 'number'", 'precision: 18', 'scale: 6', 'nullable: false'] },
     issueMethod: { decorator: 'Column', options: ["name: 'ISSUE_METHOD'", "type: 'varchar2'", 'length: 20', "default: 'BACKFLUSH'", 'nullable: false'] },
     ...audit,
   });
-  assert.deepEqual(indexes(material), ["'UK_IP_RM_CHILD', ['organizationId', 'routingCode', 'childItemCode'], { unique: true }"]);
+  assert.deepEqual(indexes(material), ["'UK_IP_RM_CHILD', ['organizationId', 'routingCode', 'itemCode', 'childItemCode'], { unique: true }"]);
 });
 
 test('retired routing fields stay out of the new entities', () => {

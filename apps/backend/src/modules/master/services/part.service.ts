@@ -151,7 +151,6 @@ export class PartService {
     const now = new Date();
     const part = this.partRepository.create({
       ...(values as Partial<ItemMaster>),
-      routeNo: '*',
       organizationId,
       createdBy: userId ?? null,
       createdAt: now,

@@ -3,12 +3,13 @@
  * @description 품목마스터(ID_ITEM) 컬럼 목록 — 백엔드 저장·검증과 화면 그리드·필터·등록창이 함께 쓴다.
  *
  * 초보자 가이드:
- * 1. **ID_ITEM 의 109개 컬럼이 빠짐없이 한 줄씩 있다.** 컬럼을 늘리거나 바꾸면 여기 한 곳만 고친다.
+ * 1. **ID_ITEM 의 110개 컬럼이 빠짐없이 한 줄씩 있다.** 컬럼을 늘리거나 바꾸면 여기 한 곳만 고친다.
  *    itemMasterColumns.test.ts 가 컬럼 수·키 중복을 확인한다.
  * 2. **key 는 API 필드 이름이다.** 예전부터 쓰던 36개는 다른 화면이 읽고 있어 이름을 그대로 둔다
  *    (예: ABC_GRADE → rev, BARCODE → markingText). 라벨은 DB 의미대로 적는다.
  * 3. **edit**: always = 등록·수정 / create = 등록 때만(키) / never = 표시 전용.
- *    ROUTE_NO 는 바꾸면 DB 트리거(ID_ITEM_UPD_MANUAL)가 재고 행을 지워서 never 다.
+ *    ROUTE_NO 는 레거시 라우팅번호로 등록·수정할 수 있다. 재고를 지우던 트리거(ID_ITEM_UPD_MANUAL)는 2026-11-05 삭제했다.
+ *    ROUTING_CODE(생산 라우팅)는 라우팅 관리 화면에서만 배정하므로 never 다.
  * 4. **LINE_TYPE·SUPPLIER_CODE·CUSTOMER_CODE 는 바꾸면 DB 트리거(TRG_ID_ITEM_UPD)가 연결 테이블을 고친다.**
  *    화면은 저장 전에 알리고, 서버는 값이 실제로 바뀐 컬럼만 UPDATE 한다
  *    (Oracle 의 UPDATE OF 트리거는 SET 에 들어가기만 해도 돈다).

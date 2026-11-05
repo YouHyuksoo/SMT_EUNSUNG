@@ -4,12 +4,13 @@
  * @description 품목마스터(ID_ITEM) 컬럼 목록 — 백엔드 저장·검증과 화면 그리드·필터·등록창이 함께 쓴다.
  *
  * 초보자 가이드:
- * 1. **ID_ITEM 의 109개 컬럼이 빠짐없이 한 줄씩 있다.** 컬럼을 늘리거나 바꾸면 여기 한 곳만 고친다.
+ * 1. **ID_ITEM 의 110개 컬럼이 빠짐없이 한 줄씩 있다.** 컬럼을 늘리거나 바꾸면 여기 한 곳만 고친다.
  *    itemMasterColumns.test.ts 가 컬럼 수·키 중복을 확인한다.
  * 2. **key 는 API 필드 이름이다.** 예전부터 쓰던 36개는 다른 화면이 읽고 있어 이름을 그대로 둔다
  *    (예: ABC_GRADE → rev, BARCODE → markingText). 라벨은 DB 의미대로 적는다.
  * 3. **edit**: always = 등록·수정 / create = 등록 때만(키) / never = 표시 전용.
- *    ROUTE_NO 는 바꾸면 DB 트리거(ID_ITEM_UPD_MANUAL)가 재고 행을 지워서 never 다.
+ *    ROUTE_NO 는 레거시 라우팅번호로 등록·수정할 수 있다. 재고를 지우던 트리거(ID_ITEM_UPD_MANUAL)는 2026-11-05 삭제했다.
+ *    ROUTING_CODE(생산 라우팅)는 라우팅 관리 화면에서만 배정하므로 never 다.
  * 4. **LINE_TYPE·SUPPLIER_CODE·CUSTOMER_CODE 는 바꾸면 DB 트리거(TRG_ID_ITEM_UPD)가 연결 테이블을 고친다.**
  *    화면은 저장 전에 알리고, 서버는 값이 실제로 바뀐 컬럼만 UPDATE 한다
  *    (Oracle 의 UPDATE OF 트리거는 SET 에 들어가기만 해도 돈다).
@@ -41,7 +42,7 @@ exports.ITEM_MASTER_COLUMNS = [
     { column: "VIRTUAL_RECEIPT_YN", key: "virtualReceiptYn", label: "가입고", type: "string", maxLength: 1, required: false, input: "code", codeGroup: "VIRTUAL RECEIPT YN", section: "stock", edit: "always", defaultValue: "N", help: "기준코드 VIRTUAL RECEIPT YN (N 정상 / Y 가입고)." },
     { column: "ITEM_NAME", key: "itemName", label: "품명", type: "string", maxLength: 300, required: true, input: "text", section: "basic", edit: "always", help: "품목 이름입니다." },
     { column: "LINE_TYPE", key: "lineType", label: "구입유형", type: "string", maxLength: 10, required: true, input: "code", codeGroup: "LINE TYPE", section: "class", edit: "always", help: "기준코드 LINE TYPE. 바꾸면 DB 트리거가 BOM·공급처 단가 정보를 함께 바꿉니다." },
-    { column: "ROUTE_NO", key: "routeNo", label: "라우팅번호", type: "string", maxLength: 20, required: false, input: "text", section: "class", edit: "never", defaultValue: "*", help: "바꾸면 DB 트리거가 재고 행을 지우고 입출고 구입유형을 고쳐 써서 이 화면에서는 고칠 수 없습니다." },
+    { column: "ROUTE_NO", key: "routeNo", label: "라우팅번호", type: "string", maxLength: 20, required: false, input: "text", section: "class", edit: "always", defaultValue: "*", help: "레거시 라우팅번호입니다. 없으면 '*' 를 넣습니다. 생산 라우팅은 라우팅 관리 화면에서 품목에 붙이며 이 값과 무관합니다." },
     { column: "BARCODE", key: "markingText", label: "바코드", type: "string", maxLength: 100, required: false, input: "text", section: "basic", edit: "always", help: "품목 바코드 값입니다." },
     { column: "ABC_GRADE", key: "rev", label: "ABC 등급", type: "string", maxLength: 1, required: true, input: "abc", section: "class", edit: "always", defaultValue: "C", help: "A / B / C 등급입니다." },
     { column: "ENTER_DATE", key: "createdAt", label: "등록일시", type: "date", required: false, input: "none", section: "audit", edit: "never", help: "등록할 때 자동 저장됩니다." },
@@ -141,6 +142,7 @@ exports.ITEM_MASTER_COLUMNS = [
     { column: "PARTNO_MARKER_START", key: "partnoMarkerStart", label: "품번 시작위치", type: "number", required: false, input: "number", section: "material", edit: "always", help: "바코드에서 품번이 시작하는 위치입니다." },
     { column: "PARTNO_MARKER_END", key: "partnoMarkerEnd", label: "품번 끝위치", type: "number", required: false, input: "number", section: "material", edit: "always", help: "바코드에서 품번이 끝나는 위치입니다." },
     { column: "BAKING_TEMPERATURE", key: "bakingTemperature", label: "베이킹 온도", type: "number", required: false, input: "number", section: "material", edit: "always", help: "베이킹 온도입니다." },
+    { column: "ROUTING_CODE", key: "routingCode", label: "라우팅코드", type: "string", maxLength: 50, required: false, input: "none", section: "class", edit: "never", help: "품목이 따르는 생산 라우팅입니다. 라우팅 관리 화면에서 품목을 배정하면 저장되며 이 화면에서는 고칠 수 없습니다." },
 ];
 /** 바꾸면 DB 트리거가 다른 테이블을 고치는 컬럼 — 수정 저장 전에 알린다 */
 exports.ITEM_MASTER_CASCADE_COLUMNS = ['LINE_TYPE', 'SUPPLIER_CODE', 'CUSTOMER_CODE'];

@@ -2,7 +2,7 @@
  * @file packages/shared/src/master/item-master-columns.test.ts
  * @description 품목마스터 컬럼 목록 테스트.
  *
- * ID_ITEM 은 109개 컬럼이다 (2026-10-12 USER_TAB_COLUMNS 확인). 하나라도 빠지면
+ * ID_ITEM 은 110개 컬럼이다 (2026-11-05 ROUTING_CODE 추가, USER_TAB_COLUMNS 확인). 하나라도 빠지면
  * 등록창·그리드에서 그 컬럼이 사라지고, 키가 겹치면 두 컬럼이 한 칸에 묶인다.
  */
 import { describe, expect, it } from 'vitest';
@@ -14,10 +14,10 @@ import {
 } from './item-master-columns';
 
 describe('ITEM_MASTER_COLUMNS', () => {
-  it('ID_ITEM 109개 컬럼이 한 번씩 있다', () => {
-    expect(ITEM_MASTER_COLUMNS).toHaveLength(109);
-    expect(new Set(ITEM_MASTER_COLUMNS.map((c) => c.column)).size).toBe(109);
-    expect(new Set(ITEM_MASTER_COLUMNS.map((c) => c.key)).size).toBe(109);
+  it('ID_ITEM 110개 컬럼이 한 번씩 있다', () => {
+    expect(ITEM_MASTER_COLUMNS).toHaveLength(110);
+    expect(new Set(ITEM_MASTER_COLUMNS.map((c) => c.column)).size).toBe(110);
+    expect(new Set(ITEM_MASTER_COLUMNS.map((c) => c.key)).size).toBe(110);
   });
 
   it('코드 입력은 기준코드 그룹이 있고 모든 구역이 정의돼 있다', () => {
@@ -28,8 +28,10 @@ describe('ITEM_MASTER_COLUMNS', () => {
     }
   });
 
-  it('재고를 지우는 ROUTE_NO 는 고칠 수 없고, 연쇄 컬럼은 목록에 있다', () => {
-    expect(ITEM_MASTER_COLUMNS.find((c) => c.column === 'ROUTE_NO')?.edit).toBe('never');
+  it('ROUTE_NO 는 고칠 수 있고, 연쇄 컬럼은 목록에 있다', () => {
+    expect(ITEM_MASTER_COLUMNS.find((c) => c.column === 'ROUTE_NO')?.edit).toBe('always');
+    // 품목의 라우팅은 라우팅 관리 화면에서만 배정한다.
+    expect(ITEM_MASTER_COLUMNS.find((c) => c.column === 'ROUTING_CODE')?.edit).toBe('never');
     for (const col of ITEM_MASTER_CASCADE_COLUMNS) {
       expect(ITEM_MASTER_COLUMNS.find((c) => c.column === col)?.edit).toBe('always');
     }

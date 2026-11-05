@@ -2,9 +2,9 @@
 menuCode: MST_ROUTING
 audience: operator
 title: 라우팅관리 — 운영 가이드
-summary: IP 라우팅 그룹·공정·BOM 자재 배정의 데이터 계약과 운영 규칙
+summary: 라우팅 그룹·공정·적용 품목·BOM 자재 배정의 데이터 계약과 운영 규칙
 tags: [기준정보, 라우팅, 공정순서, 운영]
-keywords: [IP_ROUTING_GROUPS, IP_ROUTING_PROCESSES, IP_ROUTING_MATERIALS, ID_ENG_BOM, INTERNAL, SUBCON, BACKFLUSH, PRE_ISSUE]
+keywords: [IP_ROUTING_GROUPS, IP_ROUTING_PROCESSES, IP_ROUTING_MATERIALS, ID_ITEM.ROUTING_CODE, ID_ENG_BOM, INTERNAL, SUBCON, BACKFLUSH, PRE_ISSUE]
 related: [MST_PART, MST_PROCESS, MST_BOM]
 ---
 
@@ -13,16 +13,18 @@ related: [MST_PART, MST_PROCESS, MST_BOM]
 ## 데이터 구조
 
 ```text
-IP_ROUTING_GROUPS (ORGANIZATION_ID, ROUTING_CODE)
-  ├─ IP_ROUTING_PROCESSES (ROUTING_CODE, PROCESS_SEQ)
-  └─ IP_ROUTING_MATERIALS (ROUTING_CODE, PROCESS_SEQ, CHILD_ITEM_CODE)
-       └─ 후보 기준: ID_ENG_BOM의 오늘 유효 행
+ID_ITEM.ROUTING_CODE ──▶ IP_ROUTING_GROUPS (ORGANIZATION_ID, ROUTING_CODE)
+  (품목이 코드를 문다)       ├─ IP_ROUTING_PROCESSES (ROUTING_CODE, PROCESS_SEQ)
+                            └─ IP_ROUTING_MATERIALS (ROUTING_CODE, PROCESS_SEQ, ITEM_CODE, CHILD_ITEM_CODE)
+                                 └─ 후보 기준: 적용 품목의 ID_ENG_BOM 오늘 유효 행
 ```
 
-- 그룹은 품목(`ITEM_CODE`)에 연결되며, 조직별 한 품목의 활성(`USE_YN='Y'`) 라우팅은 하나입니다.
+- 라우팅은 품목을 모릅니다. 품목이 `ID_ITEM.ROUTING_CODE`로 라우팅 코드를 물고, 공정 순서가 같은 품목은 같은 라우팅을 함께 씁니다. 공정을 고치면 그 라우팅을 따르는 모든 품목에 적용됩니다.
+- 화면 왼쪽은 라우팅 그룹 목록이며 따르는 품목 수가 함께 표시됩니다. 오른쪽에는 공정 순서와 적용 품목이 있습니다.
+- 적용 품목은 반제품(W)·완제품(F)만 붙일 수 있습니다. 이미 다른 라우팅을 따르는 품목을 붙이면 그 라우팅에서 옮겨 옵니다.
 - 공정은 공정 마스터의 `WORKSTAGE_CODE`를 참조합니다. 공정명은 별도 저장하지 않고 마스터에서 파생합니다.
 - `EXECUTION_TYPE`은 `INTERNAL` 또는 `SUBCON`입니다. `SUBCON`이면 유효한 `SUBCON_SUPPLIER_CODE`가 필수이고, `INTERNAL`이면 공급처를 `NULL`로 저장합니다.
-- 자재의 고유 제약은 `(ORGANIZATION_ID, ROUTING_CODE, CHILD_ITEM_CODE)`입니다. 따라서 하위 자재 하나는 같은 그룹의 공정 하나에만 배정됩니다.
+- BOM은 품목마다 다르므로 투입자재는 적용 품목별로 배정합니다. 고유 제약은 `(ORGANIZATION_ID, ROUTING_CODE, ITEM_CODE, CHILD_ITEM_CODE)`이며, 한 품목의 하위 자재 하나는 공정 하나에만 배정됩니다.
 
 ## 화면 동작과 API
 
@@ -30,10 +32,13 @@ IP_ROUTING_GROUPS (ORGANIZATION_ID, ROUTING_CODE)
 |---|---|---|
 | 그룹 조회·검색 | `GET /master/routing-groups` | `IP_ROUTING_GROUPS` 조회 |
 | 그룹 등록/수정 | `POST /master/routing-groups`, `PUT /master/routing-groups/:code` | `IP_ROUTING_GROUPS` INSERT/UPDATE |
-| 그룹 삭제 확인 | `DELETE /master/routing-groups/:code` | 하위 공정이 없을 때 그룹 DELETE |
+| 그룹 삭제 확인 | `DELETE /master/routing-groups/:code` | 공정과 적용 품목이 없을 때 그룹 DELETE |
+| 적용 품목 조회 | `GET /master/routing-groups/:code/items` | `ID_ITEM.ROUTING_CODE`가 이 코드인 품목 조회 |
+| 붙일 품목 검색 | `GET /master/routing-groups/candidate-items` | 반제품·완제품 조회, 현재 라우팅·BOM 유무 표시 |
+| 적용 품목 저장 | `PUT /master/routing-groups/:code/items` | `ID_ITEM.ROUTING_CODE` UPDATE (레거시 `ROUTE_NO`와 무관) |
 | 공정 조회·등록·수정 | `GET/POST /master/routing-groups/:code/processes`, `PUT .../processes/:seq` | `IP_ROUTING_PROCESSES` 조회/INSERT/UPDATE |
 | 공정 삭제 확인 | `DELETE /master/routing-groups/:code/processes/:seq` | 연결 자재가 없을 때 공정 DELETE |
-| 자재 조회·저장 | `GET/PUT /master/routing-groups/:code/processes/:seq/materials` | `IP_ROUTING_MATERIALS` 명시적 DELETE 및 UPSERT |
+| 자재 조회·저장 | `GET/PUT /master/routing-groups/:code/processes/:seq/materials` (`itemCode` 필수) | `IP_ROUTING_MATERIALS` 명시적 DELETE 및 UPSERT |
 
 화면에는 공정 순번 일괄 변경 버튼이 없지만 백엔드는 `PUT /master/routing-groups/:code/process-order` 계약을 제공합니다. 화면의 수정 폼에서는 기존 순번을 변경하지 않습니다.
 
@@ -41,8 +46,8 @@ IP_ROUTING_GROUPS (ORGANIZATION_ID, ROUTING_CODE)
 
 조회 결과는 다음 두 집합의 합집합입니다.
 
-1. 그룹 품목의 현재 BOM 후보: `DATESET <= TRUNC(SYSDATE)` 및 `DATEEND >= TRUNC(SYSDATE)`
-2. 해당 라우팅 그룹에 이미 저장된 모든 자재 배정
+1. 선택한 적용 품목의 현재 BOM 후보: `DATESET <= TRUNC(SYSDATE)` 및 `DATEEND >= TRUNC(SYSDATE)`
+2. 해당 라우팅에서 그 품목에 이미 저장된 모든 자재 배정
 
 현재 BOM에 없는 기존 배정은 `bomMatchYn='N'`, `mismatchReason='현재 유효 BOM에 없음'`으로 반환됩니다. 다른 공정 배정은 `selectableYn='N'`입니다. 현재 BOM 기간이 같은 자재에 대해 중복되면 저장 후보를 임의 선택하지 않고 요청을 거절합니다.
 
@@ -50,16 +55,18 @@ IP_ROUTING_GROUPS (ORGANIZATION_ID, ROUTING_CODE)
 
 - `upserts`: 현재 유효 BOM 자재만 허용하며 `allocQty > 0`이어야 합니다.
 - `deletes`: 사용자가 휴지통으로 삭제 요청한 기존 배정만 전달합니다. 체크 해제나 BOM 변경만으로 삭제하지 않습니다.
-- 동일 요청에서 같은 자재를 중복 변경하거나 다른 공정 소유 자재를 변경하면 충돌로 처리합니다.
+- 동일 요청에서 같은 자재를 중복 변경하거나 같은 품목의 다른 공정 소유 자재를 변경하면 충돌로 처리합니다.
+- 투입자재는 그 라우팅을 따르는 품목에만 저장할 수 있습니다(422).
 - 그룹 잠금 후 삭제·저장을 수행하고 커밋 이후 다시 조회합니다.
 - DB cascade나 체크 해제에 의존하지 않습니다. 삭제 대상은 `deletes`에 명시된 현재 공정 소유 자재만 삭제합니다.
 
 ## 삭제와 장애 대응
 
 - 공정에 `IP_ROUTING_MATERIALS`가 남아 있으면 공정 삭제를 거절합니다. 자재를 명시적으로 삭제한 뒤 재시도합니다.
-- 하위 공정이 남아 있으면 라우팅 그룹 삭제를 거절합니다.
+- 하위 공정이나 적용 품목이 남아 있으면 라우팅 그룹 삭제를 거절합니다.
+- 투입자재가 배정된 품목은 라우팅을 바꾸거나 뺄 수 없습니다(409). 자재 배정을 먼저 지웁니다.
 - 동시 변경 또는 FK/UK 충돌(`ORA-00001`, `ORA-02291`, `ORA-02292`)은 무결성 충돌로 반환하므로 새로 조회한 뒤 재시도합니다.
-- HTTP `409 Conflict`: 중복 활성 라우팅, 중복 키, 다른 공정이 소유한 자재, 동시 변경 또는 삭제 제약입니다.
+- HTTP `409 Conflict`: 중복 라우팅 코드, 중복 키, 다른 공정이 소유한 자재, 동시 변경 또는 삭제 제약입니다.
 - HTTP `422 Unprocessable Entity`: 외주 공급처 누락, 현재 BOM이 아닌 자재, BOM 적용기간 중복, 0 이하 투입수량 등 입력 의미가 유효하지 않은 경우입니다.
 - Oracle `IN` 목록은 1,000개 단위로 분할 조회합니다.
 
@@ -69,4 +76,4 @@ IP_ROUTING_GROUPS (ORGANIZATION_ID, ROUTING_CODE)
 
 ## 화면 범위
 
-현재 구현 범위는 라우팅 그룹, 공정 순서, 공정별 BOM 투입자재입니다. 양품조건(QC), 자주검사, SG/FG 라벨, 회로사양, BOM 트리는 이 화면의 계약이나 테이블 구조에 포함되지 않습니다.
+현재 구현 범위는 라우팅 그룹, 공정 순서, 적용 품목, 품목별 공정별 BOM 투입자재입니다. 양품조건(QC), 자주검사, SG/FG 라벨, 회로사양, BOM 트리는 이 화면의 계약이나 테이블 구조에 포함되지 않습니다.

@@ -4,10 +4,12 @@ import { plainToInstance } from 'class-transformer';
 import { getMetadataStorage, validate } from 'class-validator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import {
+  AssignRoutingItemsDto,
   BulkSaveRoutingMaterialDto,
   CreateRoutingGroupDto,
   CreateRoutingProcessDto,
   ReorderRoutingProcessesDto,
+  RoutingMaterialQueryDto,
   RoutingMaterialUpsertDto,
   UpdateRoutingGroupDto,
   UpdateRoutingProcessDto,
@@ -47,11 +49,14 @@ describe('RoutingGroupController contract', () => {
       'DELETE :code/processes/:seq',
       'GET /',
       'GET :code',
+      'GET :code/items',
       'GET :code/processes',
+      'GET candidate-items',
       'GET :code/processes/:seq/materials',
       'POST /',
       'POST :code/processes',
       'PUT :code',
+      'PUT :code/items',
       'PUT :code/process-order',
       'PUT :code/processes/:seq',
       'PUT :code/processes/:seq/materials',
@@ -60,6 +65,13 @@ describe('RoutingGroupController contract', () => {
     expect(controllerRoutes().some((route) => route.includes('by-item'))).toBe(false);
     expect(controllerRoutes().some((route) => route.includes('conditions'))).toBe(false);
     expect(controllerRoutes().some((route) => route.endsWith('/materials/bulk'))).toBe(false);
+  });
+
+  it('declares the static candidate-items route before the :code route', () => {
+    const order = Object.getOwnPropertyNames(RoutingGroupController.prototype)
+      .map((name) => Reflect.getMetadata(PATH_METADATA, RoutingGroupController.prototype[name as keyof RoutingGroupController]) as string | undefined);
+    expect(order.indexOf('candidate-items')).toBeGreaterThan(-1);
+    expect(order.indexOf('candidate-items')).toBeLessThan(order.indexOf(':code'));
   });
 });
 
@@ -80,26 +92,37 @@ describe('routing DTO validation', () => {
       await expect(throughPipe(CreateRoutingProcessDto, { seq: 1, workstageCode: 'SMT', standardTime: value })).rejects.toThrow();
       await expect(throughPipe(ReorderRoutingProcessesDto, { changes: [{ fromSeq: value, toSeq: 2 }] })).rejects.toThrow();
       await expect(throughPipe(BulkSaveRoutingMaterialDto, {
-        upserts: [{ childItemCode: 'C', allocQty: value }], deletes: [],
+        itemCode: 'ITEM1', upserts: [{ childItemCode: 'C', allocQty: value }], deletes: [],
       })).rejects.toThrow();
     }
   });
 
   it('rejects empty and whitespace-only required identifiers and names', async () => {
-    for (const field of ['routingCode', 'itemCode', 'routingName'] as const) {
+    for (const field of ['routingCode', 'routingName'] as const) {
       await expect(throughPipe(CreateRoutingGroupDto, {
-        routingCode: 'R', itemCode: 'I', routingName: 'Name', [field]: '   ',
+        routingCode: 'R', routingName: 'Name', [field]: '   ',
       })).rejects.toThrow();
     }
     await expect(throughPipe(CreateRoutingProcessDto, { seq: 1, workstageCode: '   ' })).rejects.toThrow();
     await expect(throughPipe(BulkSaveRoutingMaterialDto, {
-      upserts: [{ childItemCode: '   ', allocQty: 1 }], deletes: [],
+      itemCode: 'ITEM1', upserts: [{ childItemCode: '   ', allocQty: 1 }], deletes: [],
     })).rejects.toThrow();
   });
 
-  it('requires an ID_ITEM item code and exact Y/N values for a group', async () => {
+  it('takes only a code, a name and exact Y/N values for a group; the item holds the routing code', async () => {
     expect(await errors(CreateRoutingGroupDto, { routingCode: 'R1', routingName: 'R', useYn: 'YES' })).not.toHaveLength(0);
-    expect(await errors(CreateRoutingGroupDto, { routingCode: 'R1', routingName: 'R', itemCode: 'ITEM1', useYn: 'Y' })).toHaveLength(0);
+    expect(await errors(CreateRoutingGroupDto, { routingCode: 'R1', routingName: 'R', useYn: 'Y' })).toHaveLength(0);
+    expect(validatedProperties(CreateRoutingGroupDto)).not.toContain('itemCode');
+  });
+
+  it('validates the item assignment request and the material item query', async () => {
+    expect(await errors(AssignRoutingItemsDto, { assign: ['E2011000020'], unassign: [] })).toHaveLength(0);
+    expect(await errors(AssignRoutingItemsDto, { assign: [''], unassign: [] })).not.toHaveLength(0);
+    expect(await errors(AssignRoutingItemsDto, { assign: 'E2011000020', unassign: [] })).not.toHaveLength(0);
+    expect(await errors(AssignRoutingItemsDto, { assign: [] })).not.toHaveLength(0);
+    expect(await errors(RoutingMaterialQueryDto, { itemCode: 'E2011000020' })).toHaveLength(0);
+    expect(await errors(RoutingMaterialQueryDto, {})).not.toHaveLength(0);
+    expect(await errors(RoutingMaterialQueryDto, { itemCode: '   ' })).not.toHaveLength(0);
   });
 
   it('does not allow routingCode to be updated', () => {
@@ -140,11 +163,16 @@ describe('routing DTO validation', () => {
 
   it('validates material upserts/deletes, positive allocQty, and exact issue method', async () => {
     expect(await errors(BulkSaveRoutingMaterialDto, {
+      itemCode: 'ITEM1',
       upserts: [{ childItemCode: 'CHILD', allocQty: 0.1, issueMethod: 'BACKFLUSH' }],
       deletes: [{ childItemCode: 'OLD' }],
     })).toHaveLength(0);
     expect(await errors(BulkSaveRoutingMaterialDto, {
-      upserts: [{ childItemCode: 'CHILD', allocQty: 0, issueMethod: 'ISSUE' }], deletes: [],
+      itemCode: 'ITEM1', upserts: [{ childItemCode: 'CHILD', allocQty: 0, issueMethod: 'ISSUE' }], deletes: [],
+    })).not.toHaveLength(0);
+    // 투입자재는 어느 품목의 배정인지 알아야 한다.
+    expect(await errors(BulkSaveRoutingMaterialDto, {
+      upserts: [{ childItemCode: 'CHILD', allocQty: 1 }], deletes: [],
     })).not.toHaveLength(0);
     expect(validatedProperties(RoutingMaterialUpsertDto)).not.toContain('circuitId');
   });

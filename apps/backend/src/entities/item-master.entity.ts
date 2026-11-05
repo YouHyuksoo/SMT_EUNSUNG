@@ -131,9 +131,13 @@ export class ItemMaster {
   @Column({ type: 'varchar2', name: 'VIRTUAL_RECEIPT_YN', length: 1, nullable: true })
   virtualReceiptYn: string | null;
 
-  /** 라우팅번호 */
+  /** 라우팅번호 (레거시. 바꾸면 재고를 지우는 트리거가 돈다) */
   @Column({ type: 'varchar2', name: 'ROUTE_NO', length: 20, nullable: true })
   routeNo: string | null;
+
+  /** 라우팅 코드 — IP_ROUTING_GROUPS.ROUTING_CODE. 라우팅 관리 화면에서만 바꾼다. */
+  @Column({ type: 'varchar2', name: 'ROUTING_CODE', length: 50, nullable: true })
+  routingCode: string | null;
 
   /** 재료 */
   @Column({ type: 'varchar2', name: 'RAW_MATERIAL', length: 20, nullable: true })

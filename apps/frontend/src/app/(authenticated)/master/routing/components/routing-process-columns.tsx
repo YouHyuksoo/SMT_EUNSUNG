@@ -35,7 +35,7 @@ export function routingProcessColumns({ onEdit, onDelete }: RoutingProcessColumn
       ),
     },
     {
-      accessorKey: "seq",
+      accessorKey: "processSeq",
       header: "순번",
       size: 60,
       meta: { align: "center", filterType: "number" },

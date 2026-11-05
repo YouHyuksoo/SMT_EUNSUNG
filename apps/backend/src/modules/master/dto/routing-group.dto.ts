@@ -1,6 +1,7 @@
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import {
+  ArrayMaxSize,
   IsArray,
   IsIn,
   IsInt,
@@ -37,9 +38,6 @@ export class CreateRoutingGroupDto {
   @ApiProperty() @RequiredText() @MaxLength(50)
   routingCode: string;
 
-  @ApiProperty() @RequiredText() @MaxLength(20)
-  itemCode: string;
-
   @ApiProperty() @RequiredText() @MaxLength(200)
   routingName: string;
 
@@ -52,7 +50,7 @@ export class CreateRoutingGroupDto {
 }
 
 export class UpdateRoutingGroupDto extends PartialType(
-  OmitType(CreateRoutingGroupDto, ['routingCode', 'itemCode'] as const),
+  OmitType(CreateRoutingGroupDto, ['routingCode'] as const),
 ) {}
 
 export class RoutingGroupQueryDto extends PaginationQueryDto {
@@ -61,6 +59,26 @@ export class RoutingGroupQueryDto extends PaginationQueryDto {
 
   @ApiPropertyOptional({ enum: YN_VALUES }) @IsOptional() @IsIn(YN_VALUES)
   useYn?: 'Y' | 'N';
+}
+
+export class RoutingCandidateItemQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ description: '품목코드·품명·모델명 검색어' }) @IsOptional() @IsString()
+  search?: string;
+}
+
+export class AssignRoutingItemsDto {
+  @ApiProperty({ type: [String], description: '이 라우팅을 따르게 할 품목코드' })
+  @IsArray() @ArrayMaxSize(500) @IsString({ each: true }) @IsNotEmpty({ each: true }) @MaxLength(20, { each: true })
+  assign: string[];
+
+  @ApiProperty({ type: [String], description: '이 라우팅에서 뺄 품목코드' })
+  @IsArray() @ArrayMaxSize(500) @IsString({ each: true }) @IsNotEmpty({ each: true }) @MaxLength(20, { each: true })
+  unassign: string[];
+}
+
+export class RoutingMaterialQueryDto {
+  @ApiProperty({ description: '투입자재를 보는 품목(상위 품목)' }) @RequiredText() @MaxLength(20)
+  itemCode: string;
 }
 
 export class CreateRoutingProcessDto {
@@ -145,6 +163,10 @@ export class RoutingMaterialDeleteDto {
 }
 
 export class BulkSaveRoutingMaterialDto {
+  @ApiProperty({ description: '투입자재를 배정하는 품목(상위 품목). 이 라우팅을 따르는 품목이어야 한다.' })
+  @RequiredText() @MaxLength(20)
+  itemCode: string;
+
   @ApiProperty({ type: [RoutingMaterialUpsertDto] })
   @IsArray() @ValidateNested({ each: true }) @Type(() => RoutingMaterialUpsertDto)
   upserts: RoutingMaterialUpsertDto[];

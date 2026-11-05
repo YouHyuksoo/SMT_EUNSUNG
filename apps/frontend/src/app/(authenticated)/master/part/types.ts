@@ -29,6 +29,8 @@ export interface Part {
   lineType: string;
   /** ROUTE_NO — 라우팅번호 */
   routeNo?: string | null;
+  /** ROUTING_CODE — 라우팅코드 (라우팅 관리 화면에서 배정) */
+  routingCode?: string | null;
   /** BARCODE — 바코드 */
   markingText?: string | null;
   /** ABC_GRADE — ABC 등급 */
