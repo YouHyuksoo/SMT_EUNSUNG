@@ -176,7 +176,6 @@ export class MaterialReceiptReportService {
                                            r.RECEIPT_DATE, r.ORGANIZATION_ID)
                                                         AS "checkUnitPrice",
               r.RECEIPT_AMT                             AS "receiptAmt",
-              r.MATERIAL_COST_AMT                       AS "materialCostAmt",
               r.EXCHANGE_RATE                           AS "exchangeRate",
               r.FOREIGN_RECEIPT_AMT                     AS "foreignReceiptAmt",
               r.CURRENCY                                AS "currency",
@@ -260,7 +259,6 @@ export class MaterialReceiptReportService {
               r.RECEIPT_QTY                             AS "receiptQty",
               r.UNIT_PRICE                              AS "unitPrice",
               r.RECEIPT_AMT                             AS "receiptAmt",
-              r.MATERIAL_COST_AMT                       AS "materialCostAmt",
               r.EXCHANGE_RATE                           AS "exchangeRate",
               r.FOREIGN_RECEIPT_AMT                     AS "foreignReceiptAmt",
               r.CURRENCY                                AS "currency",
@@ -343,6 +341,9 @@ export class MaterialReceiptReportService {
   /**
    * 품목별 입고합계.
    *
+   * 협력사 + 품목으로만 묶는다. 입고유형·전표번호는 묶음 기준이 아니라(조건으로만 쓴다)
+   * 같은 품목이 유형·전표별로 여러 줄 나오지 않게 한다.
+   *
    * `supplierAddress` 를 켜면 PB 의 '협력사용' DataWindow 와 같아진다 (협력사 주소·
    * 전화·팩스를 함께 묶는다). PB 는 DataWindow 를 둘로 나눴지만 집계는 같다.
    */
@@ -363,16 +364,26 @@ export class MaterialReceiptReportService {
               i.ITEM_NAME                               AS "itemName",
               i.ITEM_SPEC                               AS "itemSpec",
               i.ITEM_UOM                                AS "itemUom",
-              i.VIRTUAL_RECEIPT_YN                      AS "virtualReceiptYn",
               r.SUPPLIER_CODE                           AS "supplierCode",
               s.SUPPLIER_NAME                           AS "supplierName",
               ${contactColumns}
-              r.RECEIPT_TYPE                            AS "receiptType",
-              r.INVOICE_NO                              AS "invoiceNo",
+              COUNT(*)                                  AS "receiptCount",
+              COUNT(DISTINCT r.INVOICE_NO)              AS "invoiceCount",
+              TO_CHAR(MIN(r.RECEIPT_DATE), 'YYYY-MM-DD HH24:MI:SS') AS "firstReceiptDate",
+              TO_CHAR(MAX(r.RECEIPT_DATE), 'YYYY-MM-DD HH24:MI:SS') AS "lastReceiptDate",
               SUM(NVL(r.RECEIPT_QTY, 0))                AS "receiptQty",
+              MIN(NVL(r.RECEIPT_QTY, 0))                AS "minReceiptQty",
+              MAX(NVL(r.RECEIPT_QTY, 0))                AS "maxReceiptQty",
               -- PB 는 단가를 평균냈다 (AVG). 수량 가중이 아니라 단순 평균이다.
               AVG(r.UNIT_PRICE)                         AS "receiptPrice",
+              -- 최종단가: 기간 안에서 가장 늦게 입고된 건의 단가 (같은 시각이면 순번이 큰 건)
+              MAX(r.UNIT_PRICE) KEEP (DENSE_RANK LAST
+                  ORDER BY r.RECEIPT_DATE, r.RECEIPT_SEQUENCE) AS "lastReceiptPrice",
+              MIN(r.UNIT_PRICE)                         AS "minReceiptPrice",
+              MAX(r.UNIT_PRICE)                         AS "maxReceiptPrice",
               SUM(NVL(r.RECEIPT_AMT, 0))                AS "receiptAmt",
+              MIN(NVL(r.RECEIPT_AMT, 0))                AS "minReceiptAmt",
+              MAX(NVL(r.RECEIPT_AMT, 0))                AS "maxReceiptAmt",
               SUM(NVL(r.FOREIGN_RECEIPT_AMT, 0))        AS "foreignReceiptAmt"
          FROM IM_ITEM_RECEIPT r
          LEFT JOIN ID_ITEM i
@@ -388,8 +399,7 @@ export class MaterialReceiptReportService {
           AND r.ORGANIZATION_ID = :organizationId
           AND r.RECEIPT_STATUS <> '${RECEIPT_CANCELED}'
         GROUP BY r.ITEM_CODE, i.ITEM_NAME, i.ITEM_SPEC, i.ITEM_UOM,
-                 i.VIRTUAL_RECEIPT_YN, r.SUPPLIER_CODE, s.SUPPLIER_NAME,
-                 r.RECEIPT_TYPE, r.INVOICE_NO${contactGroup}
+                 r.SUPPLIER_CODE, s.SUPPLIER_NAME${contactGroup}
         ORDER BY r.SUPPLIER_CODE, r.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       namedBinds(this.sumBinds(query, organizationId)),

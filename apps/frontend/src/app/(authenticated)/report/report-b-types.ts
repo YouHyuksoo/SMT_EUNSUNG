@@ -66,7 +66,6 @@ export interface MaterialReceiptRow {
   /** 기준단가. 입고단가와 다르면 단가확인이 안 된 입고다 (DB 함수가 계산). */
   checkUnitPrice: number | null;
   receiptAmt: number | null;
-  materialCostAmt: number | null;
   exchangeRate: number | null;
   foreignReceiptAmt: number | null;
   currency: string | null;
@@ -108,7 +107,6 @@ export interface MaterialReceiptSupplierRow {
   receiptQty: number | null;
   unitPrice: number | null;
   receiptAmt: number | null;
-  materialCostAmt: number | null;
   exchangeRate: number | null;
   foreignReceiptAmt: number | null;
   currency: string | null;
@@ -146,18 +144,27 @@ export interface MaterialReceiptSumItemRow {
   itemName: string | null;
   itemSpec: string | null;
   itemUom: string | null;
-  virtualReceiptYn: string | null;
   supplierCode: string | null;
   supplierName: string | null;
   supplierAddress: string | null;
   supplierTelNo: string | null;
   supplierFaxNo: string | null;
-  receiptType: string | null;
-  invoiceNo: string | null;
+  receiptCount: number | null;
+  invoiceCount: number | null;
+  firstReceiptDate: string | null;
+  lastReceiptDate: string | null;
   receiptQty: number | null;
+  minReceiptQty: number | null;
+  maxReceiptQty: number | null;
   /** PB 와 같이 단순 평균이다 (수량 가중이 아니다). */
   receiptPrice: number | null;
+  /** 기간 안에서 가장 늦게 입고된 건의 단가 */
+  lastReceiptPrice: number | null;
+  minReceiptPrice: number | null;
+  maxReceiptPrice: number | null;
   receiptAmt: number | null;
+  minReceiptAmt: number | null;
+  maxReceiptAmt: number | null;
   foreignReceiptAmt: number | null;
 }
 
@@ -301,12 +308,9 @@ export interface SmtCheckHistoryRow {
 /** 366 품목별 출고합계 한 줄 */
 export interface MaterialIssueSumItemRow {
   itemCode: string | null;
-  lineType: string | null;
   itemName: string | null;
   itemSpec: string | null;
   itemUom: string | null;
-  supplierCode: string | null;
-  supplierName: string | null;
   issueQty: number | null;
   issueAmt: number | null;
 }

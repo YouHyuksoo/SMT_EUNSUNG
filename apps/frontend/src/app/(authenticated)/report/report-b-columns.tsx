@@ -9,7 +9,7 @@
  * - 시각 문자열은 서버가 만들어 보낸 것을 그대로 쓴다 (new Date() 로 다시 파싱하면
  *   UTC 로 해석돼 9시간 틀어진다).
  */
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, HeaderContext } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
 import type {
   FourMHistoryRow,
@@ -51,6 +51,16 @@ const money = (value: unknown) =>
 /** 단가는 소수를 유지한다 (최대 4자리). 자재 단가는 1 미만이 흔하다. */
 const unitPrice = (value: unknown) =>
   value == null ? '' : Number(value).toLocaleString(undefined, { maximumFractionDigits: 4 });
+
+
+/**
+ * 합계 행 — 컬럼 id 의 값을 걸러진 전체 행에서 더한다.
+ * 현재 페이지가 아니라 아직 화면에 나오지 않은 다른 페이지 행까지 포함한다.
+ * 단가·최소·최대처럼 더하면 뜻이 없는 열에는 쓰지 않는다.
+ */
+const sumOf = <T,>(id: string, format: (v: number) => string = (v) => Math.round(v).toLocaleString()) =>
+  ({ table }: HeaderContext<T, unknown>) =>
+    format(table.getFilteredRowModel().rows.reduce((sum, row) => sum + Number(row.getValue(id) ?? 0), 0));
 
 const yesNo = (value: unknown) => {
   const v = String(value ?? '');
@@ -151,7 +161,6 @@ export const materialReceiptColumns: ColumnDef<MaterialReceiptRow>[] = [
     },
   },
   { accessorKey: 'receiptAmt', header: '입고금액', size: 130, meta: right, cell: (c) => money(c.getValue()) },
-  { accessorKey: 'materialCostAmt', header: '재료비', size: 120, meta: right, cell: (c) => money(c.getValue()) },
   { accessorKey: 'currency', header: '통화', size: 80, meta: center },
   { accessorKey: 'exchangeRate', header: '환율', size: 90, meta: right, cell: (c) => unitPrice(c.getValue()) },
   { accessorKey: 'foreignReceiptAmt', header: '외화금액', size: 120, meta: right, cell: (c) => money(c.getValue()) },
@@ -209,41 +218,63 @@ export const materialReceiptSupplierColumns: ColumnDef<MaterialReceiptSupplierRo
  * 품목별 입고합계 컬럼. 품목별·협력사용 탭이 같이 쓴다.
  */
 export function materialReceiptSumItemColumns(): ColumnDef<MaterialReceiptSumItemRow>[] {
-  const cols: ColumnDef<MaterialReceiptSumItemRow>[] = [
+  type R = MaterialReceiptSumItemRow;
+  const qtyOf = (r: R) => Number(r.receiptQty ?? 0);
+  return [
     {
       id: 'supplierName',
       header: '협력사',
       size: 170,
       accessorFn: (r) => codeWithName(r.supplierCode, r.supplierName),
+      footer: '합계',
     },
-  ];
-  cols.push(
     { accessorKey: 'itemCode', header: '품목코드', size: 150 },
     { accessorKey: 'itemName', header: '품목명', size: 180 },
     { accessorKey: 'itemSpec', header: '규격', size: 160 },
     { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
-    {
-      accessorKey: 'virtualReceiptYn',
-      header: '가상입고',
-      size: 90,
-      meta: center,
-      cell: (c) => yesNo(c.getValue()),
-    },
-    { accessorKey: 'receiptType', header: '입고유형', size: 100, meta: center, cell: comCodeCell('RECEIPT TYPE') },
-    { accessorKey: 'invoiceNo', header: '전표번호', size: 130 },
+    { accessorKey: 'receiptCount', header: '입고건수', size: 90, meta: right, cell: (c) => num(c.getValue()), footer: sumOf<R>('receiptCount') },
+    { accessorKey: 'invoiceCount', header: '전표수', size: 80, meta: right, cell: (c) => num(c.getValue()), footer: sumOf<R>('invoiceCount') },
+    { accessorKey: 'firstReceiptDate', header: '최초입고', size: 160, cell: (c) => ts(c.getValue()) },
+    { accessorKey: 'lastReceiptDate', header: '최종입고', size: 160, cell: (c) => ts(c.getValue()) },
     {
       accessorKey: 'receiptQty',
-      header: '입고수량',
-      size: 120,
+      header: '입고수량(합계)',
+      size: 130,
       meta: right,
       cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
+      footer: sumOf<R>('receiptQty'),
     },
-    // PB 와 같이 단순 평균이다. 수량 가중 평균이 아니라는 것을 머리글에 적는다.
-    { accessorKey: 'receiptPrice', header: '단가(평균)', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
-    { accessorKey: 'receiptAmt', header: '입고금액', size: 140, meta: right, cell: (c) => money(c.getValue()) },
-    { accessorKey: 'foreignReceiptAmt', header: '외화금액', size: 130, meta: right, cell: (c) => money(c.getValue()) },
-  );
-  return cols;
+    { accessorKey: 'minReceiptQty', header: '수량(최소)', size: 100, meta: right, cell: (c) => num(c.getValue()) },
+    { accessorKey: 'maxReceiptQty', header: '수량(최대)', size: 100, meta: right, cell: (c) => num(c.getValue()) },
+    // 평균단가는 PB 와 같이 단순 평균이다 (수량 가중이 아니다).
+    { accessorKey: 'receiptPrice', header: '평균단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
+    {
+      id: 'avgPriceAmt',
+      header: '평균단가금액',
+      size: 130,
+      meta: right,
+      accessorFn: (r) => (r.receiptPrice == null ? null : r.receiptPrice * qtyOf(r)),
+      cell: (c) => money(c.getValue()),
+      footer: sumOf<R>('avgPriceAmt'),
+    },
+    // 최종단가는 기간 안에서 가장 늦게 입고된 건의 단가다.
+    { accessorKey: 'lastReceiptPrice', header: '최종단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
+    {
+      id: 'lastPriceAmt',
+      header: '최종단가금액',
+      size: 130,
+      meta: right,
+      accessorFn: (r) => (r.lastReceiptPrice == null ? null : r.lastReceiptPrice * qtyOf(r)),
+      cell: (c) => money(c.getValue()),
+      footer: sumOf<R>('lastPriceAmt'),
+    },
+    { accessorKey: 'minReceiptPrice', header: '단가(최소)', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
+    { accessorKey: 'maxReceiptPrice', header: '단가(최대)', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
+    { accessorKey: 'receiptAmt', header: '입고금액(합계)', size: 140, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<R>('receiptAmt') },
+    { accessorKey: 'minReceiptAmt', header: '금액(최소)', size: 120, meta: right, cell: (c) => money(c.getValue()) },
+    { accessorKey: 'maxReceiptAmt', header: '금액(최대)', size: 120, meta: right, cell: (c) => money(c.getValue()) },
+    { accessorKey: 'foreignReceiptAmt', header: '외화금액', size: 130, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<R>('foreignReceiptAmt') },
+  ];
 }
 
 export const materialReceiptSumSupplierColumns: ColumnDef<MaterialReceiptSumSupplierRow>[] = [
@@ -252,6 +283,7 @@ export const materialReceiptSumSupplierColumns: ColumnDef<MaterialReceiptSumSupp
     header: '협력사',
     size: 190,
     accessorFn: (r) => codeWithName(r.supplierCode, r.supplierName),
+    footer: '합계',
   },
   { accessorKey: 'receiptType', header: '입고유형', size: 110, meta: center, cell: comCodeCell('RECEIPT TYPE') },
   { accessorKey: 'invoiceNo', header: '전표번호', size: 140 },
@@ -261,9 +293,10 @@ export const materialReceiptSumSupplierColumns: ColumnDef<MaterialReceiptSumSupp
     size: 130,
     meta: right,
     cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
+    footer: sumOf<MaterialReceiptSumSupplierRow>('receiptQty'),
   },
-  { accessorKey: 'receiptAmt', header: '입고금액', size: 150, meta: right, cell: (c) => money(c.getValue()) },
-  { accessorKey: 'foreignReceiptAmt', header: '외화금액', size: 140, meta: right, cell: (c) => money(c.getValue()) },
+  { accessorKey: 'receiptAmt', header: '입고금액', size: 150, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<MaterialReceiptSumSupplierRow>('receiptAmt') },
+  { accessorKey: 'foreignReceiptAmt', header: '외화금액', size: 140, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<MaterialReceiptSumSupplierRow>('foreignReceiptAmt') },
 ];
 
 export const materialReceiptSumWarehouseColumns: ColumnDef<MaterialReceiptSumWarehouseRow>[] = [
@@ -272,6 +305,7 @@ export const materialReceiptSumWarehouseColumns: ColumnDef<MaterialReceiptSumWar
     header: '창고',
     size: 200,
     accessorFn: (r) => codeWithName(r.locationCode, r.locationName),
+    footer: '합계',
   },
   { accessorKey: 'receiptType', header: '입고유형', size: 110, meta: center, cell: comCodeCell('RECEIPT TYPE') },
   {
@@ -280,9 +314,10 @@ export const materialReceiptSumWarehouseColumns: ColumnDef<MaterialReceiptSumWar
     size: 130,
     meta: right,
     cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
+    footer: sumOf<MaterialReceiptSumWarehouseRow>('receiptQty'),
   },
-  { accessorKey: 'receiptAmt', header: '입고금액', size: 150, meta: right, cell: (c) => money(c.getValue()) },
-  { accessorKey: 'foreignReceiptAmt', header: '외화금액', size: 140, meta: right, cell: (c) => money(c.getValue()) },
+  { accessorKey: 'receiptAmt', header: '입고금액', size: 150, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<MaterialReceiptSumWarehouseRow>('receiptAmt') },
+  { accessorKey: 'foreignReceiptAmt', header: '외화금액', size: 140, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<MaterialReceiptSumWarehouseRow>('foreignReceiptAmt') },
 ];
 
 // ───────────────────────────────── 365 자재출고
@@ -363,29 +398,23 @@ export const smtCheckHistoryColumns: ColumnDef<SmtCheckHistoryRow>[] = [
 // ───────────────────────────────── 366 자재출고합계
 
 export const materialIssueSumItemColumns: ColumnDef<MaterialIssueSumItemRow>[] = [
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemCode', header: '품목코드', size: 150, footer: '합계' },
   { accessorKey: 'itemName', header: '품목명', size: 190 },
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
-  {
-    id: 'supplierName',
-    header: '협력사',
-    size: 170,
-    accessorFn: (r) => codeWithName(r.supplierCode, r.supplierName),
-  },
   {
     accessorKey: 'issueQty',
     header: '출고수량',
     size: 130,
     meta: right,
     cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
+    footer: sumOf<MaterialIssueSumItemRow>('issueQty'),
   },
-  { accessorKey: 'issueAmt', header: '출고금액', size: 150, meta: right, cell: (c) => money(c.getValue()) },
+  { accessorKey: 'issueAmt', header: '출고금액', size: 150, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<MaterialIssueSumItemRow>('issueAmt') },
 ];
 
 export const materialIssueSumAccountColumns: ColumnDef<MaterialIssueSumAccountRow>[] = [
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemCode', header: '품목코드', size: 150, footer: '합계' },
   { accessorKey: 'itemName', header: '품목명', size: 190 },
   { accessorKey: 'issueAccount', header: '출고계정', size: 140, cell: comCodeCell('ISSUE ACCOUNT') },
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
@@ -397,8 +426,9 @@ export const materialIssueSumAccountColumns: ColumnDef<MaterialIssueSumAccountRo
     size: 130,
     meta: right,
     cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
+    footer: sumOf<MaterialIssueSumAccountRow>('issueQty'),
   },
-  { accessorKey: 'issueAmt', header: '출고금액', size: 150, meta: right, cell: (c) => money(c.getValue()) },
+  { accessorKey: 'issueAmt', header: '출고금액', size: 150, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<MaterialIssueSumAccountRow>('issueAmt') },
 ];
 
 // ───────────────────────────────── 367 자재랙이동
