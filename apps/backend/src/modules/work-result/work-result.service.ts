@@ -13,6 +13,9 @@
 //                          1회 반영하고 결과를 남긴다. WIP는 반영하지 않으므로 'N'이지만 실패가 아니다.
 //                          Y 반영 / N 미반영 / X 대상 아님(조립라인 아님·전환 전) / C 취소 되돌림 완료
 //   SHIFT_CODE · TIME_ZONE · ACTUAL_DATE = 근무조(작업지시의 교대) · 타임구간 A~J(작업시간 관리) · 작업일(08:30 기준). 마이그레이션 2026-11-05_product_result_time_zone.sql
+//   공정 재공 이동(2026-11-05, 재공수불): 포장이 아닌 공정 실적(DONE)은 반제품 재공을 라우팅 공정 순서대로 옮긴다
+//                          (P_ROUTING_RESULT_WIP — 이전 공정에서 빼고 이 공정에 넣는 한 쌍, ENTER_BY='WS_MOVE', 합계 불변, 자재 차감 없음).
+//                          검사 공정(ICT 등)도 같다. 취소하면 옮긴 만큼 되돌린다. 라우팅이 없거나 공정이 라우팅에 없으면 아무것도 안 하고 X 로 남는다.
 //   WORK_DIVISION        = 조립라인 포장 공정 → P(생산), REPAIR → R(수리), 그 밖(조립라인 가공 공정 포함) → W(가공).
 //                          공정재고는 P 만 움직인다. 지금 조립라인 지시는 포장 공정뿐이고(공정 없이 발행되면
 //                          TRG_IP_RUN_CARD_WS_DEFAULT 가 W220), 앞으로 내릴 가공 공정 지시 실적은 실적만 남는다.
@@ -335,10 +338,16 @@ export class WorkResultService {
 
     if (!isDone) return { seqNo, sensorApplyYn: 'N' };
 
-    // 공정재고는 완제품 실적(조립라인 포장 공정)만 움직인다. 그 밖의 실적은 실적만 남긴다. 'X' = 반영 대상 아님.
+    // 자재 차감은 완제품 실적(조립라인 포장 공정)만 한다. 그 밖의 실적은 BOM 차감이 없고 'X' = BOM 반영 대상 아님.
+    // 대신 반제품 재공을 라우팅 공정 순서대로 옮긴다(재공수불). 실적은 위 트랜잭션에서 이미 커밋됐다.
     if (workDiv !== 'P') {
       await this.setApply(dto.runNo, seqNo, organization, 'X', null);
-      return { seqNo, sensorApplyYn: 'X' };
+      const moved = await this.applyRouting(dto.runNo, seqNo, organization, 1);
+      return {
+        seqNo,
+        sensorApplyYn: moved.ok ? moved.flag ?? 'X' : 'X',
+        ...(moved.ok ? {} : { sensorWarning: moved.message }),
+      };
     }
 
     // 실적은 위 트랜잭션에서 이미 커밋됐다. 공정재고 반영이 실패해도 실적은 남는다.
@@ -356,6 +365,57 @@ export class WorkResultService {
         WHERE RUN_NO=:3 AND SEQ_NO=:4 AND ORGANIZATION_ID=:5`,
       [flag, message, runNo, seqNo, organization],
     );
+  }
+
+  /**
+   * 공정 재공 이동(sign 1) · 되돌림(sign -1) — P_ROUTING_RESULT_WIP 와 반영 상태 기록을 한 블록으로 한다.
+   * 프로시저가 'SKIP:...' 을 돌려주면(라우팅 없음, 공정이 라우팅에 없음, 전환 전, 이미 이동 등) 아무것도 넣지 않은 것이고 상태는 그대로 둔다.
+   * 같은 실적을 두 번 옮기지 않고, 되돌림은 그 실적으로 옮긴 만큼만 한다(프로시저가 보장).
+   * 실패해도 이미 남긴 반영 표시는 덮지 않고 사유만 남긴다.
+   */
+  private async applyRouting(
+    runNo: string,
+    seqNo: string,
+    organization: number,
+    sign: 1 | -1,
+  ): Promise<{ ok: boolean; flag: string | null; message: string }> {
+    try {
+      await this.q(
+        `DECLARE
+           v_date DATE;
+           v_seq  NUMBER;
+           v_res  VARCHAR2(200);
+           v_run  VARCHAR2(30) := :1;  -- PL/SQL 위치 바인드는 처음 나오는 순서대로라 여기서 한 번씩만 받는다
+           v_no   VARCHAR2(2)  := :2;
+           v_org  NUMBER := :3;
+           v_sign NUMBER := :4;
+         BEGIN
+           SELECT PRODUCT_DATE, PRODUCT_SEQUENCE INTO v_date, v_seq FROM IP_PRODUCT_RESULT
+            WHERE RUN_NO = v_run AND SEQ_NO = v_no AND ORGANIZATION_ID = v_org;
+           P_ROUTING_RESULT_WIP(v_date, v_seq, v_org, v_sign, v_res);
+           IF v_res NOT LIKE 'SKIP%' THEN
+             UPDATE IP_PRODUCT_RESULT
+                SET WORKSTAGE_ISSUE_YN = CASE WHEN v_sign < 0 THEN 'C' ELSE 'Y' END, WIP_APPLY_MSG = NULL
+              WHERE PRODUCT_DATE = v_date AND PRODUCT_SEQUENCE = v_seq AND ORGANIZATION_ID = v_org;
+           END IF;
+         END;`,
+        [runNo, seqNo, organization, sign],
+      );
+      const rows = (await this.q(
+        `SELECT WORKSTAGE_ISSUE_YN AS "flag" FROM IP_PRODUCT_RESULT WHERE RUN_NO=:1 AND SEQ_NO=:2 AND ORGANIZATION_ID=:3`,
+        [runNo, seqNo, organization],
+      )) as Array<{ flag: string | null }>;
+      return { ok: true, flag: rows[0]?.flag ?? null, message: 'OK' };
+    } catch (error: unknown) {
+      // Oracle·프로시저 원문을 보존한다 — 요약으로 덮지 않는다.
+      const message = error instanceof Error ? error.message : String(error);
+      const note = `공정 재공 ${sign < 0 ? '되돌림' : '이동'} 실패: ${message}`.slice(0, 1000);
+      await this.q(
+        `UPDATE IP_PRODUCT_RESULT SET WIP_APPLY_MSG=:1 WHERE RUN_NO=:2 AND SEQ_NO=:3 AND ORGANIZATION_ID=:4`,
+        [note, runNo, seqNo, organization],
+      ).catch(() => undefined);
+      return { ok: false, flag: null, message };
+    }
   }
 
   /**
@@ -423,14 +483,14 @@ export class WorkResultService {
 
     const row = await this.dataSource.manager.transaction(async (mgr) => {
       const rows = (await mgr.query(
-        `SELECT NVL(wr.RESULT_STATUS,'WIP') AS "st", NVL(wr.WORKSTAGE_ISSUE_YN,'N') AS "applied",
+        `SELECT NVL(wr.RESULT_STATUS,'WIP') AS "st", NVL(wr.WORKSTAGE_ISSUE_YN,'N') AS "applied", wr.WORK_DIVISION AS "workDiv",
                 CASE WHEN F_GET_WORK_ACTUAL_DATE(wr.ENTER_DATE,'A') = F_GET_WORK_ACTUAL_DATE(SYSDATE,'A')
                      THEN 'Y' ELSE 'N' END AS "today"
            FROM IP_PRODUCT_RESULT wr
           WHERE wr.RUN_NO=:1 AND wr.SEQ_NO=:2 AND wr.ORGANIZATION_ID=:3
           FOR UPDATE`,
         [dto.runNo, dto.seqNo, organization],
-      )) as Array<{ st: string; applied: string; today: string }>;
+      )) as Array<{ st: string; applied: string; workDiv: string | null; today: string }>;
       const cur = rows[0];
       if (!cur) throw new NotFoundException('실적을 찾을 수 없습니다');
       if (cur.st === 'CANCEL') throw new BadRequestException('이미 취소된 실적입니다');
@@ -446,7 +506,10 @@ export class WorkResultService {
     // 공정재고에 반영되지 않은 실적은 되돌릴 것이 없다
     if (row.applied !== 'Y') return { cancelled: true };
 
-    const reverted = await this.applyWip(dto.runNo, dto.seqNo, organization, -1);
+    // 포장 완제품 실적은 BOM 차감을, 그 밖의 공정 실적은 반제품 재공 이동을 반영한 만큼 되돌린다.
+    const reverted = row.workDiv === 'P'
+      ? await this.applyWip(dto.runNo, dto.seqNo, organization, -1)
+      : await this.applyRouting(dto.runNo, dto.seqNo, organization, -1);
     return reverted.ok ? { cancelled: true } : { cancelled: true, sensorWarning: reverted.message };
   }
 
@@ -470,8 +533,14 @@ export class WorkResultService {
     // 이미 반영된 건을 다시 넣으면 수량이 가산된다 — 반드시 막는다.
     if (row.sensorApplyYn === 'Y')
       throw new BadRequestException('이미 공정재고에 반영된 실적입니다');
-    if (row.sensorApplyYn === 'X' || row.workDiv !== 'P')
-      throw new BadRequestException('완제품 실적(조립라인 포장 공정)이 아니라 공정재고 반영 대상이 아닙니다');
+    if (row.workDiv !== 'P') {
+      // 포장이 아닌 실적은 BOM 차감이 없다. 반제품 재공 이동만 다시 시도한다(이미 옮긴 실적은 프로시저가 건너뛴다).
+      const moved = await this.applyRouting(dto.runNo, dto.seqNo, organization, 1);
+      return {
+        sensorApplyYn: moved.flag ?? row.sensorApplyYn,
+        ...(moved.ok ? {} : { sensorWarning: moved.message }),
+      };
+    }
 
     const applied = await this.applyWip(dto.runNo, dto.seqNo, organization, 1);
     return {

@@ -300,6 +300,104 @@ describe('WorkResultService tenancy', () => {
     expect(manager.query.mock.calls.some(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'))).toBe(false);
   });
 
+  describe('process WIP movement (routing, no material deduction)', () => {
+    const routingCall = () => query.mock.calls.find(([s]) => String(s).includes('P_ROUTING_RESULT_WIP'));
+    const flagRows = (flag: string) => (sql: string) =>
+      Promise.resolve(String(sql).includes('SELECT WORKSTAGE_ISSUE_YN AS "flag"') ? [{ flag }] : []);
+
+    it('moves the WIP when a non-packing process result is completed, without any BOM deduction', async () => {
+      const manager = useManager(upsertManager({ div: 'W' }));
+      query.mockImplementation(flagRows('Y'));
+
+      const res = await service.upsertResult(
+        { runNo: 'RUN-1', workstageCode: 'W090', resultQty: 10, resultStatus: 'DONE' } as never, 7, 'user-7',
+      );
+
+      expect(routingCall()?.[1]).toEqual(['RUN-1', '01', 7, 1]);
+      expect(manager.query.mock.calls.some(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'))).toBe(false);
+      expect(res.sensorApplyYn).toBe('Y');
+      expect(res.sensorWarning).toBeUndefined();
+    });
+
+    it('stays X when the item has no routing or the process is not in it (nothing moved)', async () => {
+      useManager(upsertManager({ div: 'W' }));
+      query.mockImplementation(flagRows('X'));
+      const res = await service.upsertResult(
+        { runNo: 'RUN-1', workstageCode: 'W090', resultQty: 10, resultStatus: 'DONE' } as never, 7, 'user-7',
+      );
+      expect(routingCall()).toBeDefined();
+      expect(res.sensorApplyYn).toBe('X');
+    });
+
+    it('does not move anything for an in-progress result', async () => {
+      useManager(upsertManager({ div: 'W' }));
+      await service.upsertResult({ runNo: 'RUN-1', workstageCode: 'W090', resultQty: 10, resultStatus: 'WIP' } as never, 7, 'user-7');
+      expect(routingCall()).toBeUndefined();
+    });
+
+    it('a completed packing result only does the packing BOM deduction (no WIP movement call)', async () => {
+      const manager = useManager(upsertManager());
+      query.mockImplementation(flagRows('Y'));
+      await service.upsertResult({ runNo: 'RUN-1', machineCode: 'MC-1', resultQty: 10, resultStatus: 'DONE' } as never, 7, 'user-7');
+      expect(manager.query.mock.calls.some(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'))).toBe(true);
+      expect(routingCall()).toBeUndefined();
+    });
+
+    it('keeps the result, stays X and warns when the movement step fails', async () => {
+      useManager(upsertManager({ div: 'W' }));
+      query.mockImplementation((sql: string) => (String(sql).includes('P_ROUTING_RESULT_WIP')
+        ? Promise.reject(new Error('ORA-01400: cannot insert NULL'))
+        : Promise.resolve([])));
+
+      const res = await service.upsertResult(
+        { runNo: 'RUN-1', workstageCode: 'W090', resultQty: 10, resultStatus: 'DONE' } as never, 7, 'user-7',
+      );
+
+      expect(res.seqNo).toBe('01');
+      expect(res.sensorApplyYn).toBe('X');
+      expect(res.sensorWarning).toContain('ORA-01400');
+      const note = query.mock.calls.find(([s]) => String(s).includes('SET WIP_APPLY_MSG=:1'));
+      expect(String(note?.[1]?.[0])).toContain('공정 재공 이동 실패');
+    });
+
+    it('reverts only the WIP movement when a reflected non-packing result is cancelled', async () => {
+      const manager = {
+        query: jest.fn().mockImplementation((sql: string) => (sql.includes('FOR UPDATE')
+          ? Promise.resolve([{ st: 'DONE', applied: 'Y', workDiv: 'W', today: 'Y' }])
+          : Promise.resolve([]))),
+      };
+      transaction.mockImplementation((callback: (value: typeof manager) => unknown) => callback(manager));
+      query.mockImplementation(flagRows('C'));
+
+      const res = await service.cancelResult({ runNo: 'RUN-1', seqNo: '01' } as never, 7, 'user-7');
+
+      expect(res).toEqual({ cancelled: true });
+      expect(manager.query.mock.calls.some(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'))).toBe(false);
+      expect(routingCall()?.[1]).toEqual(['RUN-1', '01', 7, -1]);
+    });
+
+    it('does not revert anything for a result that was never reflected', async () => {
+      const manager = {
+        query: jest.fn().mockImplementation((sql: string) => (sql.includes('FOR UPDATE')
+          ? Promise.resolve([{ st: 'DONE', applied: 'X', workDiv: 'W', today: 'Y' }])
+          : Promise.resolve([]))),
+      };
+      transaction.mockImplementation((callback: (value: typeof manager) => unknown) => callback(manager));
+      await service.cancelResult({ runNo: 'RUN-1', seqNo: '01' } as never, 7, 'user-7');
+      expect(routingCall()).toBeUndefined();
+    });
+
+    it('retries only the WIP movement for a completed non-packing result', async () => {
+      query.mockImplementation((sql: string) => Promise.resolve(String(sql).includes('FROM IP_PRODUCT_RESULT wr')
+        ? [{ resultStatus: 'DONE', sensorApplyYn: 'X', workDiv: 'W' }]
+        : String(sql).includes('SELECT WORKSTAGE_ISSUE_YN AS "flag"') ? [{ flag: 'Y' }] : []));
+      const res = await service.applySensor({ runNo: 'RUN-1', seqNo: '01' }, 7);
+      expect(routingCall()?.[1]).toEqual(['RUN-1', '01', 7, 1]);
+      expect(res.sensorApplyYn).toBe('Y');
+      expect(transaction).not.toHaveBeenCalled();
+    });
+  });
+
   it('refuses a different process than the packing process on an assembly work order without a process', async () => {
     useManager(upsertManager());
     await expect(service.upsertResult(
@@ -310,7 +408,7 @@ describe('WorkResultService tenancy', () => {
   it('reverts the inventory with sign -1 when a reflected result is cancelled', async () => {
     const manager = {
       query: jest.fn().mockImplementation((sql: string) => {
-        if (sql.includes('FOR UPDATE')) return Promise.resolve([{ st: 'DONE', applied: 'Y', today: 'Y' }]);
+        if (sql.includes('FOR UPDATE')) return Promise.resolve([{ st: 'DONE', applied: 'Y', workDiv: 'P', today: 'Y' }]);
         if (sql.includes('SELECT WORKSTAGE_ISSUE_YN')) return Promise.resolve([{ flag: 'C', msg: null }]);
         return Promise.resolve([]);
       }),
