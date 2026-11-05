@@ -244,8 +244,6 @@ export function materialReceiptSumItemColumns(): ColumnDef<MaterialReceiptSumIte
       cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
       footer: sumOf<R>('receiptQty'),
     },
-    { accessorKey: 'minReceiptQty', header: '수량(최소)', size: 100, meta: right, cell: (c) => num(c.getValue()) },
-    { accessorKey: 'maxReceiptQty', header: '수량(최대)', size: 100, meta: right, cell: (c) => num(c.getValue()) },
     // 평균단가는 PB 와 같이 단순 평균이다 (수량 가중이 아니다).
     { accessorKey: 'receiptPrice', header: '평균단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
     {
@@ -268,8 +266,6 @@ export function materialReceiptSumItemColumns(): ColumnDef<MaterialReceiptSumIte
       cell: (c) => money(c.getValue()),
       footer: sumOf<R>('lastPriceAmt'),
     },
-    { accessorKey: 'minReceiptPrice', header: '단가(최소)', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
-    { accessorKey: 'maxReceiptPrice', header: '단가(최대)', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
     { accessorKey: 'receiptAmt', header: '입고금액(합계)', size: 140, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<R>('receiptAmt') },
     { accessorKey: 'minReceiptAmt', header: '금액(최소)', size: 120, meta: right, cell: (c) => money(c.getValue()) },
     { accessorKey: 'maxReceiptAmt', header: '금액(최대)', size: 120, meta: right, cell: (c) => money(c.getValue()) },

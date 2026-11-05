@@ -372,15 +372,11 @@ export class MaterialReceiptReportService {
               TO_CHAR(MIN(r.RECEIPT_DATE), 'YYYY-MM-DD HH24:MI:SS') AS "firstReceiptDate",
               TO_CHAR(MAX(r.RECEIPT_DATE), 'YYYY-MM-DD HH24:MI:SS') AS "lastReceiptDate",
               SUM(NVL(r.RECEIPT_QTY, 0))                AS "receiptQty",
-              MIN(NVL(r.RECEIPT_QTY, 0))                AS "minReceiptQty",
-              MAX(NVL(r.RECEIPT_QTY, 0))                AS "maxReceiptQty",
               -- PB 는 단가를 평균냈다 (AVG). 수량 가중이 아니라 단순 평균이다.
               AVG(r.UNIT_PRICE)                         AS "receiptPrice",
               -- 최종단가: 기간 안에서 가장 늦게 입고된 건의 단가 (같은 시각이면 순번이 큰 건)
               MAX(r.UNIT_PRICE) KEEP (DENSE_RANK LAST
                   ORDER BY r.RECEIPT_DATE, r.RECEIPT_SEQUENCE) AS "lastReceiptPrice",
-              MIN(r.UNIT_PRICE)                         AS "minReceiptPrice",
-              MAX(r.UNIT_PRICE)                         AS "maxReceiptPrice",
               SUM(NVL(r.RECEIPT_AMT, 0))                AS "receiptAmt",
               MIN(NVL(r.RECEIPT_AMT, 0))                AS "minReceiptAmt",
               MAX(NVL(r.RECEIPT_AMT, 0))                AS "maxReceiptAmt",

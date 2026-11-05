@@ -154,14 +154,10 @@ export interface MaterialReceiptSumItemRow {
   firstReceiptDate: string | null;
   lastReceiptDate: string | null;
   receiptQty: number | null;
-  minReceiptQty: number | null;
-  maxReceiptQty: number | null;
   /** PB 와 같이 단순 평균이다 (수량 가중이 아니다). */
   receiptPrice: number | null;
   /** 기간 안에서 가장 늦게 입고된 건의 단가 */
   lastReceiptPrice: number | null;
-  minReceiptPrice: number | null;
-  maxReceiptPrice: number | null;
   receiptAmt: number | null;
   minReceiptAmt: number | null;
   maxReceiptAmt: number | null;
