@@ -64,7 +64,7 @@ export default function EntryPad({ disabledReason, subtitle, onSave, onBlocked, 
   }
 
   return (
-    <section className="w-[300px] flex-shrink-0 flex flex-col gap-2.5 rounded-xl border border-border bg-surface p-3.5" aria-label="실적 입력">
+    <section className="w-[300px] flex-shrink-0 flex flex-col gap-2.5 rounded-xl border-2 border-slate-400 dark:border-slate-500 bg-surface shadow-md p-3.5" aria-label="실적 입력">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="text-base font-bold text-text">실적 입력</h2>
         <span className="text-[11px] text-text-muted truncate" title={subtitle}>{subtitle}</span>

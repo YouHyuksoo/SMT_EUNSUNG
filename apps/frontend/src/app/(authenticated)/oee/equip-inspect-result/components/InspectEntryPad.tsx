@@ -64,7 +64,7 @@ export default function InspectEntryPad({ disabledReason, subtitle, badReasons, 
     ?? (missingReason ? '불합격은 불량원인을 골라야 저장됩니다.' : '저장하면 바로 확정됩니다. 잘못 넣은 검사실적은 이력에서 [취소]하세요.');
 
   return (
-    <section className="w-[300px] flex-shrink-0 flex flex-col gap-2.5 rounded-xl border border-border bg-surface p-3.5" aria-label="검사실적 입력">
+    <section className="w-[300px] flex-shrink-0 flex flex-col gap-2.5 rounded-xl border-2 border-slate-400 dark:border-slate-500 bg-surface shadow-md p-3.5" aria-label="검사실적 입력">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="text-base font-bold text-text">검사실적 입력</h2>
         <span className="text-[11px] text-text-muted truncate" title={subtitle}>{subtitle}</span>

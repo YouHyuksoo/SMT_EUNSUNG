@@ -30,11 +30,11 @@ export default function DefectModal({ run, onClose, onSaved }: Props) {
   const [remark, setRemark] = useState('');
 
   useEffect(() => {
-    api.get('/oee/work-result/bad-reasons').then((r) => setBadReasons(r.data?.data?.list ?? [])).catch(() => {});
-  }, []);
-
-  useEffect(() => {
     if (!run) return;
+    // 열 때마다 다시 읽는다 — 화면 로드 직후 한 번만 읽으면 실패 시 빈 목록이 계속 남는다
+    api.get('/oee/work-result/bad-reasons')
+      .then((r) => setBadReasons(r.data?.data?.list ?? []))
+      .catch(() => { setBadReasons([]); toast.error('불량유형 조회에 실패했습니다'); });
     setBadCode(''); setBadQty(0); setRemark('');
     api.get('/oee/work-result/defect', { params: { runNo: run.runNo } })
       .then((res) => {

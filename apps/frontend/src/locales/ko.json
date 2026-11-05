@@ -502,6 +502,7 @@
     "oee.equipWorkResult": "생산실적(설비별)",
     "oee.equipWorkResultFree": "생산실적(계획 없음)",
     "oee.equipInspectResult": "검사실적(설비별)",
+    "oee.equipInspectResultFree": "검사실적(계획 없음)",
     "oee.equipOpsStatus": "설비 운영 현황",
     "oee.fieldOps": "설비 운영 및 실적관리(현장)",
     "oee.equipOpsAnalysis": "설비별 운영 현황 및 분석",

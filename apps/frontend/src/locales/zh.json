@@ -498,6 +498,7 @@
     "oee.equipWorkResult": "生产实绩(按设备)",
     "oee.equipWorkResultFree": "生产实绩(无计划)",
     "oee.equipInspectResult": "检查实绩(按设备)",
+    "oee.equipInspectResultFree": "检查实绩(无计划)",
     "oee.equipOpsStatus": "设备运行现况",
     "oee.fieldOps": "设备运行及实绩管理(现场)",
     "oee.equipOpsAnalysis": "设备运行现况及分析",

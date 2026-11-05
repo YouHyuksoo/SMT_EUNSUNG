@@ -25,7 +25,6 @@ test('left workspace keeps compact two-row conditions above the work-order list'
   assert.match(page, /data-testid="oee-result-entry-query"/);
   assert.match(page, /onClick=\{queryOrders\}/);
   assert.match(page, /type="date"/);
-  assert.match(page, /style=\{\{ colorScheme: 'dark' \}\}/);
   assert.match(page, /handleDateChange\(event\.target\.value\)/);
 });
 

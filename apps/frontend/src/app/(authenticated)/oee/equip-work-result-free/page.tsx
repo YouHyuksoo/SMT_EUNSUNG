@@ -75,7 +75,7 @@ function RailButton({ icon, label, onClick, disabled, tone, sub }: {
 }) {
   const cls = tone === 'danger-on'
     ? 'bg-red-600 border-red-600 text-white'
-    : tone === 'danger' ? 'bg-surface border-border text-red-600 hover:border-red-500' : 'bg-surface border-border text-text hover:border-primary';
+    : tone === 'danger' ? 'bg-surface border-slate-400 dark:border-slate-500 shadow-sm text-red-600 hover:border-red-500' : 'bg-surface border-slate-400 dark:border-slate-500 shadow-sm text-text hover:border-primary';
   return (
     <button type="button" onClick={onClick} disabled={disabled}
       className={`flex-1 min-h-[76px] rounded-xl border flex flex-col items-center justify-center gap-1.5 text-[15px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${cls}`}>
@@ -275,7 +275,7 @@ export default function EquipWorkResultFreePage() {
   return (
     <div className="h-full flex flex-col overflow-hidden p-4 gap-3 animate-fade-in">
       {/* 상단 띠 */}
-      <div className="flex-shrink-0 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-border bg-surface px-4 py-2.5">
+      <div className="flex-shrink-0 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border-2 border-slate-400 dark:border-slate-500 bg-surface shadow-md px-4 py-2.5">
         <ScopeItem label="라인" value={scope ? lineLabel(line, scope.lineCode) : '-'} />
         <Divider />
         <ScopeItem label="공정" value={machine?.workstageName ?? machine?.workstageCode ?? '-'} />
@@ -313,7 +313,7 @@ export default function EquipWorkResultFreePage() {
         {run ? (
           <ProductionStatus run={run} history={history} now={now} onCancel={cancelResult} />
         ) : (
-          <section className="flex-1 min-h-0 rounded-xl border border-dashed border-border bg-surface flex flex-col items-center justify-center gap-3 text-text-muted">
+          <section className="flex-1 min-h-0 rounded-xl border border-dashed border-slate-400 dark:border-slate-500 bg-surface flex flex-col items-center justify-center gap-3 text-text-muted">
             <ClipboardList className="w-10 h-10" />
             <p className="text-sm">
               {!scope ? '라인·공정·설비를 먼저 선택하세요.'

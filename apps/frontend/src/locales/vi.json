@@ -498,6 +498,7 @@
     "oee.equipWorkResult": "Kết quả sản xuất (theo thiết bị)",
     "oee.equipWorkResultFree": "Kết quả sản xuất (không kế hoạch)",
     "oee.equipInspectResult": "Kết quả kiểm tra (theo thiết bị)",
+    "oee.equipInspectResultFree": "Kết quả kiểm tra (không kế hoạch)",
     "oee.equipOpsStatus": "Tình trạng vận hành thiết bị",
     "oee.fieldOps": "Vận hành thiết bị & kết quả (hiện trường)",
     "oee.equipOpsAnalysis": "Tình trạng & phân tích vận hành thiết bị",

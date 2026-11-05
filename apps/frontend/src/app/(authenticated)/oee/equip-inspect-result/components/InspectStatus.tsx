@@ -114,7 +114,7 @@ export default function InspectStatus({ run, history, onCancel }: Props) {
   ], [asking, busy, onCancel]);
 
   return (
-    <section className="flex-1 min-h-0 flex flex-col rounded-xl border border-border bg-surface overflow-hidden" aria-label="검사 현황">
+    <section className="flex-1 min-h-0 flex flex-col rounded-xl border-2 border-slate-400 dark:border-slate-500 bg-surface shadow-md overflow-hidden" aria-label="검사 현황">
       {/* 작업지시 정보 */}
       <div className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-6 px-6 py-4 border-b border-border">
         <div className="min-w-0">
