@@ -374,9 +374,14 @@ export class MaterialReceiptReportService {
               SUM(NVL(r.RECEIPT_QTY, 0))                AS "receiptQty",
               -- PB 는 단가를 평균냈다 (AVG). 수량 가중이 아니라 단순 평균이다.
               AVG(r.UNIT_PRICE)                         AS "receiptPrice",
-              -- 최종단가: 기간 안에서 가장 늦게 입고된 건의 단가 (같은 시각이면 순번이 큰 건)
-              MAX(r.UNIT_PRICE) KEEP (DENSE_RANK LAST
-                  ORDER BY r.RECEIPT_DATE, r.RECEIPT_SEQUENCE) AS "lastReceiptPrice",
+              -- 최종단가: 조회 시점에 유효한 현재 구매단가 (구매단가 마스터, 품목 + 협력사)
+              (SELECT MAX(up.UNIT_PRICE) KEEP (DENSE_RANK LAST ORDER BY up.DATESET)
+                 FROM IM_ITEM_UNIT_PRICE up
+                WHERE up.ITEM_CODE = r.ITEM_CODE
+                  AND up.SUPPLIER_CODE = r.SUPPLIER_CODE
+                  AND up.ORGANIZATION_ID = :organizationId
+                  AND TRUNC(SYSDATE) BETWEEN up.DATESET AND NVL(up.DATEEND, DATE '9999-12-31')
+              )                                         AS "lastReceiptPrice",
               SUM(NVL(r.RECEIPT_AMT, 0))                AS "receiptAmt",
               MIN(NVL(r.RECEIPT_AMT, 0))                AS "minReceiptAmt",
               MAX(NVL(r.RECEIPT_AMT, 0))                AS "maxReceiptAmt",

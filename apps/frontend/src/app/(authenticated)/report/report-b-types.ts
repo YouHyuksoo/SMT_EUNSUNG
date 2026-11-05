@@ -156,7 +156,7 @@ export interface MaterialReceiptSumItemRow {
   receiptQty: number | null;
   /** PB 와 같이 단순 평균이다 (수량 가중이 아니다). */
   receiptPrice: number | null;
-  /** 기간 안에서 가장 늦게 입고된 건의 단가 */
+  /** 구매단가 마스터의 현재 유효 단가 (품목 + 협력사) */
   lastReceiptPrice: number | null;
   receiptAmt: number | null;
   minReceiptAmt: number | null;

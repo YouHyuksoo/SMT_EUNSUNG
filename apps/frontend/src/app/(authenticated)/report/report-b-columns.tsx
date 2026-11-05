@@ -255,7 +255,7 @@ export function materialReceiptSumItemColumns(): ColumnDef<MaterialReceiptSumIte
       cell: (c) => money(c.getValue()),
       footer: sumOf<R>('avgPriceAmt'),
     },
-    // 최종단가는 기간 안에서 가장 늦게 입고된 건의 단가다.
+    // 최종단가는 구매단가 마스터의 현재 유효 단가다 (입고 건의 단가가 아니다).
     { accessorKey: 'lastReceiptPrice', header: '최종단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
     {
       id: 'lastPriceAmt',

@@ -1137,14 +1137,43 @@ function Get-EunsungInstallEnvironment {
   }
 }
 
+# 직전에 서비스한 릴리스의 Next.js 빌드 캐시(.next/cache: webpack · swc · .tsbuildinfo)를 새 릴리스로 복사한다.
+# 프론트 빌드가 처음부터 다시 컴파일·타입검사하지 않게 해서 시간을 줄인다 (서버 실측: 약 3분 50초).
+# 캐시는 속도용일 뿐이라 어떤 이유로든 복사하지 못해도 배포를 막지 않는다 (캐시 없이 빌드한다).
+# 정션/심볼릭 링크는 따라가지 않고(/XJ) 복사 대상은 방금 풀어 놓은 새 릴리스 안으로 고정한다.
+function Copy-EunsungBuildCache {
+  param([string]$DeployRoot, [string]$ReleaseDir, [scriptblock]$AttributeProvider)
+  try {
+    $currentPath = Join-Path $DeployRoot 'current.json'
+    if (-not (Test-Path -LiteralPath $currentPath -PathType Leaf)) { return }
+    $current = Get-Content -Raw -LiteralPath $currentPath | ConvertFrom-Json
+    if ([string]$current.commitSha -cnotmatch '^[0-9a-f]{40}$') { return }
+    $releaseRoot = Join-Path $DeployRoot 'releases'
+    $previousDir = Resolve-EunsungContainedPath -Root $releaseRoot -Candidate (Join-Path $releaseRoot ([string]$current.commitSha)) -AllowMissing
+    if ($previousDir -ceq $ReleaseDir) { return }
+    $source = Join-Path $previousDir 'apps/frontend/.next/cache'
+    if (-not (Test-Path -LiteralPath $source -PathType Container)) { return }
+    Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $source -AttributeProvider $AttributeProvider
+    $destination = Resolve-EunsungContainedPath -Root $ReleaseDir -Candidate (Join-Path $ReleaseDir 'apps/frontend/.next/cache') -AllowMissing
+    New-Item -ItemType Directory -Force -Path $destination | Out-Null
+    $robocopy = Join-Path $env:SystemRoot 'System32/robocopy.exe'
+    & $robocopy $source $destination /E /XJ /R:0 /W:0 /NFL /NDL /NJH /NJS /NP | Out-Null
+    # robocopy 는 0~7 이 성공이다. 실패하면 불완전한 캐시가 남지 않게 지운다.
+    if ($LASTEXITCODE -ge 8) { Remove-Item -LiteralPath $destination -Recurse -Force -ErrorAction SilentlyContinue }
+  } catch {
+    # 캐시 복사 실패는 무시한다.
+  }
+}
+
 function Invoke-EunsungBuild {
-  param([string]$ReleaseDir, [string]$CommitSha, [hashtable]$InstallEnvironment, [scriptblock]$NativeInvoker)
+  param([string]$ReleaseDir, [string]$CommitSha, [hashtable]$InstallEnvironment, [scriptblock]$NativeInvoker, [string]$DeployRoot, [scriptblock]$AttributeProvider)
   $pnpmPath = Get-EunsungBootstrappedToolPath -Name 'pnpm'
   $versionOutput = Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--version') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker
   if ($versionOutput.Trim() -cne '10.28.1') { throw 'Explicit pnpm version 10.28.1 was not selected' }
   Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('install', '--frozen-lockfile') -WorkingDirectory $ReleaseDir -Environment $InstallEnvironment -NativeInvoker $NativeInvoker | Out-Null
   Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--filter', '@smt/shared', 'build') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
   Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--filter', '@eunsung/backend', 'build') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
+  if ($DeployRoot) { Copy-EunsungBuildCache -DeployRoot $DeployRoot -ReleaseDir $ReleaseDir -AttributeProvider $AttributeProvider }
   Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--filter', '@eunsung/frontend', 'build') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
   Write-EunsungBuildMarker -ReleaseDir $ReleaseDir -CommitSha $CommitSha
 }
@@ -1234,7 +1263,7 @@ function Invoke-EunsungDeployment {
       Expand-Archive -LiteralPath $archive -DestinationPath $releaseDir
       Copy-EunsungProtectedConfigs -DeployRoot $DeployRoot -ReleaseDir $releaseDir -AccessValidator $accessValidator -AttributeProvider $attributeProvider
       Set-Content -LiteralPath (Join-Path $releaseDir '.commit-sha') -Value $CommitSha -NoNewline -Encoding ASCII
-      Invoke-EunsungBuild -ReleaseDir $releaseDir -CommitSha $CommitSha -InstallEnvironment (Get-EunsungInstallEnvironment -DeployRoot $DeployRoot) -NativeInvoker $native
+      Invoke-EunsungBuild -ReleaseDir $releaseDir -CommitSha $CommitSha -InstallEnvironment (Get-EunsungInstallEnvironment -DeployRoot $DeployRoot) -NativeInvoker $native -DeployRoot $DeployRoot -AttributeProvider $attributeProvider
     } catch {
       Remove-EunsungFailedRelease -DeployRoot $DeployRoot -ReleaseDir $releaseDir -AttributeProvider $attributeProvider
       throw
