@@ -549,6 +549,7 @@
     "report.materialReceiptSum": "物料入库合计报表",
     "report.materialIssue": "物料出库报表",
     "report.materialIssueSum": "物料出库合计报表",
+    "report.purchaseDaily": "采购部日报",
     "report.materialRackMove": "物料货架移动报表",
     "report.materialLongTerm": "物料长期库存报表",
     "report.materialInventory": "库存报表",

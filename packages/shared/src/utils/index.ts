@@ -7,3 +7,4 @@ export * from './date';
 export * from './numbering';
 export * from './work-instruction-rules';
 export * from './vendor-barcode-rules';
+export * from './oracle-connect-string';

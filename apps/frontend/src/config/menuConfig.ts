@@ -379,6 +379,7 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "RPT_MATERIAL_RECEIPT_SUM", labelKey: "menu.report.materialReceiptSum", path: "/report/material-receipt-sum", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_receipt_sum_report" },
       { code: "RPT_MATERIAL_ISSUE", labelKey: "menu.report.materialIssue", path: "/report/material-issue", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_issue_report" },
       { code: "RPT_MATERIAL_ISSUE_SUM", labelKey: "menu.report.materialIssueSum", path: "/report/material-issue-sum", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_issue_sum_report" },
+      { code: "RPT_PURCHASE_DAILY", labelKey: "menu.report.purchaseDaily", path: "/report/purchase-daily", pbLinkStatus: "web-native" },
       { code: "RPT_MATERIAL_RACK_MOVE", labelKey: "menu.report.materialRackMove", path: "/report/material-rack-move", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_location_address_move_report" },
       { code: "RPT_MATERIAL_LONG_TERM", labelKey: "menu.report.materialLongTerm", path: "/report/material-long-term", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_long_term_inventory_report" },
       { code: "RPT_MATERIAL_INVENTORY", labelKey: "menu.report.materialInventory", path: "/report/material-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_current_inventory_report" },

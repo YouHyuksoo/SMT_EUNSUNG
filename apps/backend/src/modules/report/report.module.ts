@@ -46,6 +46,8 @@ import { MaterialIssueReportService } from './material-issue-report.service';
 import { MaterialReceiptReportService } from './material-receipt-report.service';
 import { MoldJigReportService } from './mold-jig-report.service';
 import { ProductionReportService } from './production-report.service';
+import { PurchaseDailyController } from './purchase-daily.controller';
+import { PurchaseDailyService } from './purchase-daily.service';
 import {
   CarrierBarcodeController,
   ItemMasterReportController,
@@ -97,6 +99,7 @@ import {
     JigReportController,
     MoldReportController,
     FourMHistoryController,
+    PurchaseDailyController,
   ],
   providers: [
     MasterReportService,
@@ -106,6 +109,7 @@ import {
     MaterialIssueReportService,
     MaterialInventoryReportService,
     MoldJigReportService,
+    PurchaseDailyService,
   ],
 })
 export class ReportModule {}

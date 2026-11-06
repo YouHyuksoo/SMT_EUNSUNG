@@ -14,6 +14,7 @@
  *   );
  */
 
+import { buildOracleConnectString } from '@smt/shared';
 import {
   Injectable,
   Logger,
@@ -90,16 +91,8 @@ export class OracleService implements OnModuleInit, OnModuleDestroy {
     const sid = this.configService.get<string>('ORACLE_SID');
     const serviceName = this.configService.get<string>('ORACLE_SERVICE_NAME');
 
-    let connectString: string;
-    if (sid) {
-      // SID 접속: TNS Descriptor 형식 사용
-      connectString =
-        `(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=${host})(PORT=${port}))` +
-        `(CONNECT_DATA=(SID=${sid})))`;
-    } else {
-      // SERVICE_NAME 접속: EZConnect 형식
-      connectString = `${host}:${port}/${serviceName || 'JSHNSMES'}`;
-    }
+    // ORACLE_HOST 에 쉼표로 주소를 여러 개 적으면 앞에서부터 차례로 접속한다.
+    const connectString = buildOracleConnectString({ host, port, sid, serviceName });
 
     this.pool = await oracledb.createPool({
       user: this.configService.get<string>('ORACLE_USER'),

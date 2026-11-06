@@ -549,6 +549,7 @@
     "report.materialReceiptSum": "Material Receipt Summary",
     "report.materialIssue": "Material Issue Report",
     "report.materialIssueSum": "Material Issue Summary",
+    "report.purchaseDaily": "Purchasing Daily Report",
     "report.materialRackMove": "Material Rack Move Report",
     "report.materialLongTerm": "Long Term Inventory Report",
     "report.materialInventory": "Inventory Report",

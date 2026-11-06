@@ -549,6 +549,7 @@
     "report.materialReceiptSum": "자재입고합계리포트",
     "report.materialIssue": "자재출고리포트",
     "report.materialIssueSum": "자재출고합계리포트",
+    "report.purchaseDaily": "구매팀 일보",
     "report.materialRackMove": "자재랙이동리포트",
     "report.materialLongTerm": "자재장기재고리포트",
     "report.materialInventory": "재고리포트",

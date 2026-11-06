@@ -549,6 +549,7 @@
     "report.materialReceiptSum": "Báo cáo tổng nhập vật tư",
     "report.materialIssue": "Báo cáo xuất vật tư",
     "report.materialIssueSum": "Báo cáo tổng xuất vật tư",
+    "report.purchaseDaily": "Báo cáo ngày bộ phận mua hàng",
     "report.materialRackMove": "Báo cáo chuyển kệ vật tư",
     "report.materialLongTerm": "Báo cáo tồn kho lâu ngày",
     "report.materialInventory": "Báo cáo tồn kho",
