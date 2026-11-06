@@ -14,6 +14,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { PackageCheck, ScanLine, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import ModelSearchField from '@/components/shared/ModelSearchField';
@@ -22,13 +23,9 @@ import api from '@/services/api';
 import { oqcHistoryColumns, type OqcHistoryRow } from '../notify-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
-const weekAgo = () => {
-  const date = new Date();
-  date.setDate(date.getDate() - 7);
-  return isoDate(date);
-};
 
 export default function OqcPage() {
   const scanRef = useRef<HTMLInputElement>(null);
@@ -37,7 +34,7 @@ export default function OqcPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const [dateFrom, setDateFrom] = useState(weekAgo);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [productId, setProductId] = useState('');
   const [modelName, setModelName] = useState('');
@@ -54,13 +51,13 @@ export default function OqcPage() {
   const [selected, setSelected] = useState<OqcHistoryRow | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const search = useCallback(async () => {
+  const search = useCallback(async (scannedPid?: string) => {
     setLoading(true);
     try {
       const response = await api.get('/quality/oqc', {
         params: {
           dateFrom, dateTo,
-          productId: productId || undefined,
+          productId: (scannedPid ?? productId) || undefined,
           modelName: modelName || undefined,
           itemCode: itemCode || undefined,
           inspectResult: inspectResult || undefined,
@@ -77,8 +74,8 @@ export default function OqcPage() {
     }
   }, [dateFrom, dateTo, productId, modelName, itemCode, inspectResult]);
 
-  const scan = useCallback(async () => {
-    const pid = barcode.trim();
+  const scan = useCallback(async (scanned: string) => {
+    const pid = scanned.trim();
     if (!pid || busy) return;
     if (scanResult === 'R' && !badReasonCode) {
       toast.error('불합격이면 불량원인을 고르세요.');
@@ -103,7 +100,7 @@ export default function OqcPage() {
       setBarcode('');
       scanRef.current?.focus();
     }
-  }, [barcode, busy, scanResult, badReasonCode, inspectQty, comments, search]);
+  }, [busy, scanResult, badReasonCode, inspectQty, comments, search]);
 
   const remove = useCallback(async () => {
     if (!selected) return;
@@ -137,7 +134,7 @@ export default function OqcPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" onClick={search} disabled={loading}>
+          <Button size="sm" onClick={() => search()} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>
           <Button size="sm" variant="secondary" disabled={!selected}
@@ -175,15 +172,15 @@ export default function OqcPage() {
           </label>
           <label className="text-xs text-text-muted">
             PID 스캔
-            <Input
+            <BarcodeScanInput
               ref={scanRef}
               autoFocus
               placeholder="PID 를 스캔하세요"
               value={barcode}
               disabled={busy}
               className="w-56"
-              onChange={(e) => setBarcode(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') void scan(); }}
+              onChange={setBarcode}
+              onScan={scan}
             />
           </label>
         </CardContent>
@@ -193,8 +190,9 @@ export default function OqcPage() {
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <DateRangeFilter label="검사일" from={dateFrom} to={dateTo}
             onFromChange={setDateFrom} onToChange={setDateTo} />
-          <Input aria-label="PID" placeholder="PID" value={productId}
-            className="w-52" onChange={(e) => setProductId(e.target.value)} />
+          <BarcodeScanInput aria-label="PID" placeholder="PID" value={productId}
+            className="w-52" onChange={setProductId} onScan={search}
+            maintainFocus={false} blinkIndicator={false} />
           <ModelSearchField value={modelName} onChange={(v) => setModelName(v)}
             className="w-44" aria-label="모델명" placeholder="모델명" />
           <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}

@@ -13,28 +13,31 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Settings, Package, Factory, ClipboardCheck, Cog,
-  Save, Plus, Trash2, RefreshCw, Sparkles, Database,
+  Settings,
+  Save, Plus, Trash2, RefreshCw,
 } from 'lucide-react';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Card, CardContent, Button, Input, Select, Modal, ConfirmModal } from '@/components/ui';
 import { useApiQuery, useInvalidateQueries } from '@/hooks/useApi';
 import { api } from '@/services/api';
 import { useSysConfigStore } from '@/stores/sysConfigStore';
 import type { SysConfigItem } from '@/stores/sysConfigStore';
 import ConfigItemRow from '@/components/system/ConfigItemRow';
+import { useAuthStore } from '@/stores/authStore';
+import { isAdminOnlyConfigKey } from '@smt/shared';
 import AddConfigModal from '@/components/system/AddConfigModal';
 import AiConfigPanel from '@/components/system/AiConfigPanel';
 import AiEmbeddingPanel from '@/components/system/AiEmbeddingPanel';
 
 /** 그룹 탭 정의 */
 const CONFIG_GROUPS = [
-  { key: '', label: 'system.config.group.all', icon: Settings },
-  { key: 'MATERIAL', label: 'system.config.group.MATERIAL', icon: Package },
-  { key: 'PRODUCTION', label: 'system.config.group.PRODUCTION', icon: Factory },
-  { key: 'QUALITY', label: 'system.config.group.QUALITY', icon: ClipboardCheck },
-  { key: 'SYSTEM', label: 'system.config.group.SYSTEM', icon: Cog },
-  { key: 'AI', label: 'system.config.group.AI', icon: Sparkles },
-  { key: 'AI_EMBEDDING', label: 'Embedding', icon: Database },
+  { key: '', label: 'system.config.group.all' },
+  { key: 'MATERIAL', label: 'system.config.group.MATERIAL' },
+  { key: 'PRODUCTION', label: 'system.config.group.PRODUCTION' },
+  { key: 'QUALITY', label: 'system.config.group.QUALITY' },
+  { key: 'SYSTEM', label: 'system.config.group.SYSTEM' },
+  { key: 'AI', label: 'system.config.group.AI' },
+  { key: 'AI_EMBEDDING', label: 'Embedding' },
 ];
 
 const getConfigId = (config: SysConfigItem) => config.id ?? config.configKey;
@@ -54,6 +57,8 @@ function ConfigPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const invalidate = useInvalidateQueries();
   const { fetchConfigs } = useSysConfigStore();
+  // 관리자 전용 키(제품 선입선출 등)는 ADMIN 이 아니면 잠근다 — 서버도 같은 목록으로 막는다
+  const isAdmin = useAuthStore((s) => s.user?.role === 'ADMIN');
 
   const queryParams = activeGroup ? `?configGroup=${activeGroup}` : '';
   const { data, isLoading, refetch } = useApiQuery<ConfigListResponse>(
@@ -132,26 +137,11 @@ function ConfigPage() {
       </div>
 
       {/* 그룹 탭 */}
-      <div className="flex border-b border-border">
-        {CONFIG_GROUPS.map((g) => {
-          const Icon = g.icon;
-          const isActive = activeGroup === g.key;
-          return (
-            <button
-              key={g.key}
-              type="button"
-              onClick={() => setActiveGroup(g.key)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                isActive
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-text-muted hover:text-text hover:border-border'
-              }`}
-            >
-              <Icon className="w-4 h-4" />{t(g.label)}
-            </button>
-          );
-        })}
-      </div>
+      <ScreenTabs
+        tabs={CONFIG_GROUPS.map((g) => ({ key: g.key, label: t(g.label) }))}
+        active={activeGroup}
+        onChange={setActiveGroup}
+      />
 
       {/* 설정 목록 (AI/Embedding 탭은 전용 패널) */}
       <div className="flex-1 min-h-0 overflow-hidden">
@@ -176,6 +166,7 @@ function ConfigPage() {
                       isChanged={getConfigId(cfg) in changes}
                       onValueChange={(val) => handleValueChange(getConfigId(cfg), val)}
                       onDelete={() => setDeleteTarget(getConfigId(cfg))}
+                      locked={!isAdmin && isAdminOnlyConfigKey(cfg.configKey)}
                     />
                   ))}
                 </div>

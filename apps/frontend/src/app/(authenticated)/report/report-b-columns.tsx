@@ -9,7 +9,7 @@
  * - 시각 문자열은 서버가 만들어 보낸 것을 그대로 쓴다 (new Date() 로 다시 파싱하면
  *   UTC 로 해석돼 9시간 틀어진다).
  */
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, HeaderContext } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
 import type {
   FourMHistoryRow,
@@ -39,6 +39,7 @@ import type {
   SmtCheckHistoryRow,
 } from './report-b-types';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell, processNameCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -50,6 +51,16 @@ const money = (value: unknown) =>
 /** 단가는 소수를 유지한다 (최대 4자리). 자재 단가는 1 미만이 흔하다. */
 const unitPrice = (value: unknown) =>
   value == null ? '' : Number(value).toLocaleString(undefined, { maximumFractionDigits: 4 });
+
+
+/**
+ * 합계 행 — 컬럼 id 의 값을 걸러진 전체 행에서 더한다.
+ * 현재 페이지가 아니라 아직 화면에 나오지 않은 다른 페이지 행까지 포함한다.
+ * 단가·최소·최대처럼 더하면 뜻이 없는 열에는 쓰지 않는다.
+ */
+const sumOf = <T,>(id: string, format: (v: number) => string = (v) => Math.round(v).toLocaleString()) =>
+  ({ table }: HeaderContext<T, unknown>) =>
+    format(table.getFilteredRowModel().rows.reduce((sum, row) => sum + Number(row.getValue(id) ?? 0), 0));
 
 const yesNo = (value: unknown) => {
   const v = String(value ?? '');
@@ -76,7 +87,7 @@ export const materialBarcodeSlipColumns: ColumnDef<MaterialBarcodeSlipRow>[] = [
   { accessorKey: 'supplierItemCode', header: '협력사 품목', size: 140 },
   { accessorKey: 'supplierLotNo', header: '협력사 롯트', size: 140 },
   { accessorKey: 'receiptSlipNo', header: '입고전표', size: 130 },
-  { accessorKey: 'receiptType', header: '입고유형', size: 100, meta: center },
+  { accessorKey: 'receiptType', header: '입고유형', size: 100, meta: center, cell: comCodeCell('RECEIPT TYPE') },
   {
     accessorKey: 'receiptCompareYn',
     header: '입고대조',
@@ -86,7 +97,7 @@ export const materialBarcodeSlipColumns: ColumnDef<MaterialBarcodeSlipRow>[] = [
   },
   { accessorKey: 'receiptCompareDate', header: '입고대조시각', size: 160, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'receiptCompareBy', header: '입고대조자', size: 100 },
-  { accessorKey: 'issueType', header: '출고유형', size: 100, meta: center },
+  { accessorKey: 'issueType', header: '출고유형', size: 100, meta: center, cell: comCodeCell('ISSUE TYPE') },
   {
     accessorKey: 'issueCompareYn',
     header: '출고대조',
@@ -95,8 +106,8 @@ export const materialBarcodeSlipColumns: ColumnDef<MaterialBarcodeSlipRow>[] = [
     cell: (c) => yesNo(c.getValue()),
   },
   { accessorKey: 'issueCompareDate', header: '출고대조시각', size: 160, cell: (c) => ts(c.getValue()) },
-  { accessorKey: 'barcodeStatus', header: '바코드상태', size: 110, meta: center },
-  { accessorKey: 'labelType', header: '라벨유형', size: 90, meta: center },
+  { accessorKey: 'barcodeStatus', header: '바코드상태', size: 110, meta: center, cell: comCodeCell('BARCODE STATUS') },
+  { accessorKey: 'labelType', header: '라벨유형', size: 90, meta: center, cell: comCodeCell('LABEL TYPE') },
   {
     accessorKey: 'lotDivideYn',
     header: '롯트분할',
@@ -127,10 +138,10 @@ export const materialReceiptColumns: ColumnDef<MaterialReceiptRow>[] = [
   },
   { accessorKey: 'locationCode', header: '창고', size: 100 },
   { accessorKey: 'locationAddress', header: '랙 주소', size: 110 },
-  { accessorKey: 'receiptDeficit', header: '입출고', size: 80, meta: center },
-  { accessorKey: 'receiptType', header: '입고유형', size: 100, meta: center },
-  { accessorKey: 'orderType', header: '발주유형', size: 100, meta: center },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'receiptDeficit', header: '입출고', size: 80, meta: center, cell: comCodeCell('RECEIPT DEFICIT') },
+  { accessorKey: 'receiptType', header: '입고유형', size: 100, meta: center, cell: comCodeCell('RECEIPT TYPE') },
+  { accessorKey: 'orderType', header: '발주유형', size: 100, meta: center, cell: comCodeCell('ORDER TYPE') },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'receiptQty', header: '입고수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'unitPrice', header: '입고단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
   {
@@ -150,7 +161,6 @@ export const materialReceiptColumns: ColumnDef<MaterialReceiptRow>[] = [
     },
   },
   { accessorKey: 'receiptAmt', header: '입고금액', size: 130, meta: right, cell: (c) => money(c.getValue()) },
-  { accessorKey: 'materialCostAmt', header: '재료비', size: 120, meta: right, cell: (c) => money(c.getValue()) },
   { accessorKey: 'currency', header: '통화', size: 80, meta: center },
   { accessorKey: 'exchangeRate', header: '환율', size: 90, meta: right, cell: (c) => unitPrice(c.getValue()) },
   { accessorKey: 'foreignReceiptAmt', header: '외화금액', size: 120, meta: right, cell: (c) => money(c.getValue()) },
@@ -160,7 +170,7 @@ export const materialReceiptColumns: ColumnDef<MaterialReceiptRow>[] = [
   { accessorKey: 'mfs', header: 'MFS', size: 120 },
   { accessorKey: 'receiptLotNo', header: '입고 롯트', size: 130 },
   { accessorKey: 'barcode', header: '바코드', size: 160 },
-  { accessorKey: 'receiptStatus', header: '상태', size: 80, meta: center },
+  { accessorKey: 'receiptStatus', header: '상태', size: 80, meta: center, cell: comCodeCell('RECEIPT STATUS') },
   { accessorKey: 'confirmYn', header: '확정', size: 70, meta: center, cell: (c) => yesNo(c.getValue()) },
   { accessorKey: 'receiptCompareYn', header: '바코드대조', size: 100, meta: center, cell: (c) => yesNo(c.getValue()) },
   { accessorKey: 'receiptSlipNo', header: '바코드전표', size: 130 },
@@ -185,10 +195,10 @@ export const materialReceiptSupplierColumns: ColumnDef<MaterialReceiptSupplierRo
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'locationCode', header: '창고', size: 100 },
-  { accessorKey: 'receiptDeficit', header: '입출고', size: 80, meta: center },
-  { accessorKey: 'receiptType', header: '입고유형', size: 100, meta: center },
-  { accessorKey: 'orderType', header: '발주유형', size: 100, meta: center },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'receiptDeficit', header: '입출고', size: 80, meta: center, cell: comCodeCell('RECEIPT DEFICIT') },
+  { accessorKey: 'receiptType', header: '입고유형', size: 100, meta: center, cell: comCodeCell('RECEIPT TYPE') },
+  { accessorKey: 'orderType', header: '발주유형', size: 100, meta: center, cell: comCodeCell('ORDER TYPE') },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'receiptQty', header: '입고수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'unitPrice', header: '단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
   { accessorKey: 'receiptAmt', header: '금액', size: 130, meta: right, cell: (c) => money(c.getValue()) },
@@ -196,7 +206,7 @@ export const materialReceiptSupplierColumns: ColumnDef<MaterialReceiptSupplierRo
   { accessorKey: 'foreignReceiptAmt', header: '외화금액', size: 120, meta: right, cell: (c) => money(c.getValue()) },
   { accessorKey: 'invoiceNo', header: '전표번호', size: 130 },
   { accessorKey: 'materialMfs', header: '자재 롯트', size: 140 },
-  { accessorKey: 'receiptStatus', header: '상태', size: 80, meta: center },
+  { accessorKey: 'receiptStatus', header: '상태', size: 80, meta: center, cell: comCodeCell('RECEIPT STATUS') },
   { accessorKey: 'confirmYn', header: '확정', size: 70, meta: center, cell: (c) => yesNo(c.getValue()) },
   { accessorKey: 'comments', header: '비고', size: 180 },
   { accessorKey: 'enterBy', header: '등록자', size: 90 },
@@ -205,54 +215,62 @@ export const materialReceiptSupplierColumns: ColumnDef<MaterialReceiptSupplierRo
 // ───────────────────────────────── 364 자재입고합계
 
 /**
- * 품목별 입고합계 컬럼.
- * @param withContact 협력사 연락처 3칸을 넣을지 (PB '협력사용' DataWindow)
+ * 품목별 입고합계 컬럼. 품목별·협력사용 탭이 같이 쓴다.
  */
-export function materialReceiptSumItemColumns(
-  withContact: boolean,
-): ColumnDef<MaterialReceiptSumItemRow>[] {
-  const cols: ColumnDef<MaterialReceiptSumItemRow>[] = [
+export function materialReceiptSumItemColumns(): ColumnDef<MaterialReceiptSumItemRow>[] {
+  type R = MaterialReceiptSumItemRow;
+  const qtyOf = (r: R) => Number(r.receiptQty ?? 0);
+  return [
     {
       id: 'supplierName',
       header: '협력사',
       size: 170,
       accessorFn: (r) => codeWithName(r.supplierCode, r.supplierName),
+      footer: '합계',
     },
-  ];
-  if (withContact) {
-    cols.push(
-      { accessorKey: 'supplierAddress', header: '주소', size: 220 },
-      { accessorKey: 'supplierTelNo', header: '전화', size: 130 },
-      { accessorKey: 'supplierFaxNo', header: '팩스', size: 130 },
-    );
-  }
-  cols.push(
     { accessorKey: 'itemCode', header: '품목코드', size: 150 },
     { accessorKey: 'itemName', header: '품목명', size: 180 },
     { accessorKey: 'itemSpec', header: '규격', size: 160 },
     { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
-    {
-      accessorKey: 'virtualReceiptYn',
-      header: '가상입고',
-      size: 90,
-      meta: center,
-      cell: (c) => yesNo(c.getValue()),
-    },
-    { accessorKey: 'receiptType', header: '입고유형', size: 100, meta: center },
-    { accessorKey: 'invoiceNo', header: '전표번호', size: 130 },
+    { accessorKey: 'receiptCount', header: '입고건수', size: 90, meta: right, cell: (c) => num(c.getValue()), footer: sumOf<R>('receiptCount') },
+    { accessorKey: 'invoiceCount', header: '전표수', size: 80, meta: right, cell: (c) => num(c.getValue()), footer: sumOf<R>('invoiceCount') },
+    { accessorKey: 'firstReceiptDate', header: '최초입고', size: 160, cell: (c) => ts(c.getValue()) },
+    { accessorKey: 'lastReceiptDate', header: '최종입고', size: 160, cell: (c) => ts(c.getValue()) },
     {
       accessorKey: 'receiptQty',
-      header: '입고수량',
-      size: 120,
+      header: '입고수량(합계)',
+      size: 130,
       meta: right,
       cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
+      footer: sumOf<R>('receiptQty'),
     },
-    // PB 와 같이 단순 평균이다. 수량 가중 평균이 아니라는 것을 머리글에 적는다.
-    { accessorKey: 'receiptPrice', header: '단가(평균)', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
-    { accessorKey: 'receiptAmt', header: '입고금액', size: 140, meta: right, cell: (c) => money(c.getValue()) },
-    { accessorKey: 'foreignReceiptAmt', header: '외화금액', size: 130, meta: right, cell: (c) => money(c.getValue()) },
-  );
-  return cols;
+    // 평균단가는 PB 와 같이 단순 평균이다 (수량 가중이 아니다).
+    { accessorKey: 'receiptPrice', header: '평균단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
+    {
+      id: 'avgPriceAmt',
+      header: '평균단가금액',
+      size: 130,
+      meta: right,
+      accessorFn: (r) => (r.receiptPrice == null ? null : r.receiptPrice * qtyOf(r)),
+      cell: (c) => money(c.getValue()),
+      footer: sumOf<R>('avgPriceAmt'),
+    },
+    // 최종단가는 구매단가 마스터의 현재 유효 단가다 (입고 건의 단가가 아니다).
+    { accessorKey: 'lastReceiptPrice', header: '최종단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
+    {
+      id: 'lastPriceAmt',
+      header: '최종단가금액',
+      size: 130,
+      meta: right,
+      accessorFn: (r) => (r.lastReceiptPrice == null ? null : r.lastReceiptPrice * qtyOf(r)),
+      cell: (c) => money(c.getValue()),
+      footer: sumOf<R>('lastPriceAmt'),
+    },
+    { accessorKey: 'receiptAmt', header: '입고금액(합계)', size: 140, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<R>('receiptAmt') },
+    { accessorKey: 'minReceiptAmt', header: '금액(최소)', size: 120, meta: right, cell: (c) => money(c.getValue()) },
+    { accessorKey: 'maxReceiptAmt', header: '금액(최대)', size: 120, meta: right, cell: (c) => money(c.getValue()) },
+    { accessorKey: 'foreignReceiptAmt', header: '외화금액', size: 130, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<R>('foreignReceiptAmt') },
+  ];
 }
 
 export const materialReceiptSumSupplierColumns: ColumnDef<MaterialReceiptSumSupplierRow>[] = [
@@ -261,8 +279,9 @@ export const materialReceiptSumSupplierColumns: ColumnDef<MaterialReceiptSumSupp
     header: '협력사',
     size: 190,
     accessorFn: (r) => codeWithName(r.supplierCode, r.supplierName),
+    footer: '합계',
   },
-  { accessorKey: 'receiptType', header: '입고유형', size: 110, meta: center },
+  { accessorKey: 'receiptType', header: '입고유형', size: 110, meta: center, cell: comCodeCell('RECEIPT TYPE') },
   { accessorKey: 'invoiceNo', header: '전표번호', size: 140 },
   {
     accessorKey: 'receiptQty',
@@ -270,9 +289,10 @@ export const materialReceiptSumSupplierColumns: ColumnDef<MaterialReceiptSumSupp
     size: 130,
     meta: right,
     cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
+    footer: sumOf<MaterialReceiptSumSupplierRow>('receiptQty'),
   },
-  { accessorKey: 'receiptAmt', header: '입고금액', size: 150, meta: right, cell: (c) => money(c.getValue()) },
-  { accessorKey: 'foreignReceiptAmt', header: '외화금액', size: 140, meta: right, cell: (c) => money(c.getValue()) },
+  { accessorKey: 'receiptAmt', header: '입고금액', size: 150, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<MaterialReceiptSumSupplierRow>('receiptAmt') },
+  { accessorKey: 'foreignReceiptAmt', header: '외화금액', size: 140, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<MaterialReceiptSumSupplierRow>('foreignReceiptAmt') },
 ];
 
 export const materialReceiptSumWarehouseColumns: ColumnDef<MaterialReceiptSumWarehouseRow>[] = [
@@ -281,17 +301,19 @@ export const materialReceiptSumWarehouseColumns: ColumnDef<MaterialReceiptSumWar
     header: '창고',
     size: 200,
     accessorFn: (r) => codeWithName(r.locationCode, r.locationName),
+    footer: '합계',
   },
-  { accessorKey: 'receiptType', header: '입고유형', size: 110, meta: center },
+  { accessorKey: 'receiptType', header: '입고유형', size: 110, meta: center, cell: comCodeCell('RECEIPT TYPE') },
   {
     accessorKey: 'receiptQty',
     header: '입고수량',
     size: 130,
     meta: right,
     cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
+    footer: sumOf<MaterialReceiptSumWarehouseRow>('receiptQty'),
   },
-  { accessorKey: 'receiptAmt', header: '입고금액', size: 150, meta: right, cell: (c) => money(c.getValue()) },
-  { accessorKey: 'foreignReceiptAmt', header: '외화금액', size: 140, meta: right, cell: (c) => money(c.getValue()) },
+  { accessorKey: 'receiptAmt', header: '입고금액', size: 150, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<MaterialReceiptSumWarehouseRow>('receiptAmt') },
+  { accessorKey: 'foreignReceiptAmt', header: '외화금액', size: 140, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<MaterialReceiptSumWarehouseRow>('foreignReceiptAmt') },
 ];
 
 // ───────────────────────────────── 365 자재출고
@@ -306,13 +328,13 @@ export const materialIssueColumns: ColumnDef<MaterialIssueRow>[] = [
   { accessorKey: 'abcGrade', header: 'ABC', size: 70, meta: center },
   { accessorKey: 'materialMfs', header: '자재 롯트', size: 140 },
   { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'locationCode', header: '창고', size: 100 },
   { accessorKey: 'locationAddress', header: '랙 주소', size: 110 },
   { accessorKey: 'issueDeficit', header: '입출고', size: 80, meta: center },
-  { accessorKey: 'issueType', header: '출고유형', size: 100, meta: center },
-  { accessorKey: 'issueAccount', header: '출고계정', size: 110 },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'issueType', header: '출고유형', size: 100, meta: center, cell: comCodeCell('ISSUE TYPE') },
+  { accessorKey: 'issueAccount', header: '출고계정', size: 110, cell: comCodeCell('ISSUE ACCOUNT') },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'issueQty', header: '출고수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'unitPrice', header: '단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
   { accessorKey: 'issueAmt', header: '출고금액', size: 130, meta: right, cell: (c) => money(c.getValue()) },
@@ -323,7 +345,7 @@ export const materialIssueColumns: ColumnDef<MaterialIssueRow>[] = [
   { accessorKey: 'feederShaft', header: '피더축', size: 90 },
   { accessorKey: 'barcode', header: '바코드', size: 160 },
   { accessorKey: 'invoiceNo', header: '전표번호', size: 130 },
-  { accessorKey: 'issueStatus', header: '상태', size: 80, meta: center },
+  { accessorKey: 'issueStatus', header: '상태', size: 80, meta: center, cell: comCodeCell('ISSUE STATUS') },
   { accessorKey: 'comments', header: '비고', size: 180 },
   { accessorKey: 'enterBy', header: '등록자', size: 90 },
   { accessorKey: 'enterDate', header: '등록일시', size: 160, cell: (c) => ts(c.getValue()) },
@@ -337,7 +359,7 @@ export const materialNotIssuedColumns: ColumnDef<MaterialNotIssuedRow>[] = [
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'parentItemCode', header: '상위품목', size: 140 },
   { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'mfs', header: 'MFS', size: 120 },
   { accessorKey: 'planYyyymm', header: '계획월', size: 100, meta: center },
   { accessorKey: 'issuePlanQty', header: '지시수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
@@ -349,8 +371,8 @@ export const materialNotIssuedColumns: ColumnDef<MaterialNotIssuedRow>[] = [
     meta: right,
     cell: (c) => <span className="font-semibold text-amber-500">{num(c.getValue())}</span>,
   },
-  { accessorKey: 'issueStatus', header: '상태', size: 80, meta: center },
-  { accessorKey: 'issueAccount', header: '출고계정', size: 110 },
+  { accessorKey: 'issueStatus', header: '상태', size: 80, meta: center, cell: comCodeCell('ISSUE STATUS') },
+  { accessorKey: 'issueAccount', header: '출고계정', size: 110, cell: comCodeCell('ISSUE ACCOUNT') },
   { accessorKey: 'enterBy', header: '등록자', size: 90 },
 ];
 
@@ -363,51 +385,46 @@ export const smtCheckHistoryColumns: ColumnDef<SmtCheckHistoryRow>[] = [
   { accessorKey: 'locationCode', header: '위치', size: 110 },
   { accessorKey: 'pcbItem', header: 'PCB면', size: 80, meta: center },
   { accessorKey: 'oldBarcode', header: '이전 바코드', size: 200 },
-  { accessorKey: 'checkType', header: '체크유형', size: 100, meta: center },
+  { accessorKey: 'checkType', header: '체크유형', size: 100, meta: center, cell: comCodeCell('CHECK TYPE') },
   { accessorKey: 'checkSequence', header: '순번', size: 80, meta: right },
-  { accessorKey: 'checkStatus', header: '상태', size: 90, meta: center },
+  { accessorKey: 'checkStatus', header: '상태', size: 90, meta: center, cell: comCodeCell('CHECK STATUS') },
   { accessorKey: 'recycleDate', header: '재활용시각', size: 170, cell: (c) => ts(c.getValue()) },
 ];
 
 // ───────────────────────────────── 366 자재출고합계
 
 export const materialIssueSumItemColumns: ColumnDef<MaterialIssueSumItemRow>[] = [
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemCode', header: '품목코드', size: 150, footer: '합계' },
   { accessorKey: 'itemName', header: '품목명', size: 190 },
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
-  {
-    id: 'supplierName',
-    header: '협력사',
-    size: 170,
-    accessorFn: (r) => codeWithName(r.supplierCode, r.supplierName),
-  },
   {
     accessorKey: 'issueQty',
     header: '출고수량',
     size: 130,
     meta: right,
     cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
+    footer: sumOf<MaterialIssueSumItemRow>('issueQty'),
   },
-  { accessorKey: 'issueAmt', header: '출고금액', size: 150, meta: right, cell: (c) => money(c.getValue()) },
+  { accessorKey: 'issueAmt', header: '출고금액', size: 150, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<MaterialIssueSumItemRow>('issueAmt') },
 ];
 
 export const materialIssueSumAccountColumns: ColumnDef<MaterialIssueSumAccountRow>[] = [
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemCode', header: '품목코드', size: 150, footer: '합계' },
   { accessorKey: 'itemName', header: '품목명', size: 190 },
-  { accessorKey: 'issueAccount', header: '출고계정', size: 140 },
+  { accessorKey: 'issueAccount', header: '출고계정', size: 140, cell: comCodeCell('ISSUE ACCOUNT') },
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   {
     accessorKey: 'issueQty',
     header: '출고수량',
     size: 130,
     meta: right,
     cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
+    footer: sumOf<MaterialIssueSumAccountRow>('issueQty'),
   },
-  { accessorKey: 'issueAmt', header: '출고금액', size: 150, meta: right, cell: (c) => money(c.getValue()) },
+  { accessorKey: 'issueAmt', header: '출고금액', size: 150, meta: right, cell: (c) => money(c.getValue()), footer: sumOf<MaterialIssueSumAccountRow>('issueAmt') },
 ];
 
 // ───────────────────────────────── 367 자재랙이동
@@ -437,8 +454,20 @@ export const materialLongTermColumns: ColumnDef<MaterialLongTermRow>[] = [
     accessorFn: (r) => codeWithName(r.supplierCode, r.supplierName),
   },
   { accessorKey: 'inventoryQty', header: '재고수량', size: 120, meta: right, cell: (c) => num(c.getValue()) },
+  { accessorKey: 'unitPrice', header: '구매단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
+  { accessorKey: 'inventoryAmt', header: '재고금액', size: 130, meta: right, cell: (c) => money(c.getValue()) },
   { accessorKey: 'locationAddressRack', header: '랙 주소', size: 130 },
   { accessorKey: 'lastReceiptDate', header: '마지막 입고', size: 120 },
+  { accessorKey: 'lastIssueDate', header: '마지막 출고(품목)', size: 140 },
+  { accessorKey: 'termIssueQty', header: '기간 출고(품목)', size: 130, meta: right, cell: (c) => num(c.getValue()) },
+  { accessorKey: 'itemInventoryQty', header: '품목 재고', size: 120, meta: right, cell: (c) => num(c.getValue()) },
+  {
+    accessorKey: 'issueRate',
+    header: '출고율(%)',
+    size: 110,
+    meta: right,
+    cell: (c) => (c.getValue() == null ? '' : Number(c.getValue()).toLocaleString(undefined, { maximumFractionDigits: 2 })),
+  },
   {
     accessorKey: 'idleDays',
     header: '경과일수',
@@ -462,7 +491,7 @@ export const materialInventoryColumns: ColumnDef<MaterialInventoryRow>[] = [
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'materialMfs', header: '자재 롯트', size: 150 },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'locationCode', header: '창고', size: 100 },
   {
     accessorKey: 'inventoryQty',
@@ -485,7 +514,7 @@ export const materialInventoryColumns: ColumnDef<MaterialInventoryRow>[] = [
   { accessorKey: 'inventoryPrice', header: '재고단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
   { accessorKey: 'inventoryAmt', header: '재고금액', size: 140, meta: right, cell: (c) => money(c.getValue()) },
   { accessorKey: 'inventoryHold', header: '보류', size: 80, meta: center },
-  { accessorKey: 'inventoryStatus', header: '재고상태', size: 100, meta: center },
+  { accessorKey: 'inventoryStatus', header: '재고상태', size: 100, meta: center, cell: comCodeCell('INVENTORY STATUS') },
   { accessorKey: 'comments', header: '비고', size: 180 },
   { accessorKey: 'lastModifyBy', header: '수정자', size: 90 },
   { accessorKey: 'lastModifyDate', header: '수정일시', size: 160, cell: (c) => ts(c.getValue()) },
@@ -497,8 +526,8 @@ export const materialInventorySummaryColumns: ColumnDef<MaterialInventorySummary
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'itemClass', header: '품목분류', size: 110 },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
-  { accessorKey: 'inventoryStatus', header: '재고상태', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
+  { accessorKey: 'inventoryStatus', header: '재고상태', size: 100, meta: center, cell: comCodeCell('INVENTORY STATUS') },
   {
     accessorKey: 'inventoryQty',
     header: '재고수량',
@@ -515,9 +544,9 @@ export const materialInventoryDailyColumns: ColumnDef<MaterialInventoryDailyRow>
   { accessorKey: 'itemName', header: '품목명', size: 190 },
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'locationCode', header: '창고', size: 100 },
-  { accessorKey: 'inventoryStatus', header: '재고상태', size: 100, meta: center },
+  { accessorKey: 'inventoryStatus', header: '재고상태', size: 100, meta: center, cell: comCodeCell('INVENTORY STATUS') },
   { accessorKey: 'inventoryQty', header: '재고수량', size: 120, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'receiptQty', header: '당일 입고', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'issueQty', header: '당일 출고', size: 110, meta: right, cell: (c) => num(c.getValue()) },
@@ -537,7 +566,7 @@ export const materialDisusedColumns: ColumnDef<MaterialDisusedRow>[] = [
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'materialMfs', header: '자재 롯트', size: 150 },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'locationCode', header: '창고', size: 100 },
   { accessorKey: 'inventoryQty', header: '재고수량', size: 120, meta: right, cell: (c) => num(c.getValue()) },
   {
@@ -558,7 +587,7 @@ export const materialDisusedColumns: ColumnDef<MaterialDisusedRow>[] = [
   { accessorKey: 'inventoryAmt', header: '재고금액', size: 140, meta: right, cell: (c) => money(c.getValue()) },
   { accessorKey: 'safetyInventory', header: '안전재고', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'inventoryHold', header: '보류', size: 80, meta: center },
-  { accessorKey: 'inventoryStatus', header: '재고상태', size: 100, meta: center },
+  { accessorKey: 'inventoryStatus', header: '재고상태', size: 100, meta: center, cell: comCodeCell('INVENTORY STATUS') },
   { accessorKey: 'comments', header: '비고', size: 180 },
 ];
 
@@ -580,16 +609,16 @@ export const moldReceiptColumns: ColumnDef<MoldReceiptRow>[] = [
   },
   { accessorKey: 'invoiceNo', header: '전표번호', size: 130 },
   { accessorKey: 'orderNo', header: '발주번호', size: 130 },
-  { accessorKey: 'receiptDeficit', header: '입출고', size: 80, meta: center },
+  { accessorKey: 'receiptDeficit', header: '입출고', size: 80, meta: center, cell: comCodeCell('RECEIPT DEFICIT') },
   { accessorKey: 'receiptQty', header: '입고수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'unitPrice', header: '단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
   { accessorKey: 'receiptAmt', header: '금액', size: 130, meta: right, cell: (c) => money(c.getValue()) },
   { accessorKey: 'currency', header: '통화', size: 80, meta: center },
   { accessorKey: 'locationCode', header: '창고', size: 100 },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'moldVersion', header: '버전', size: 90, meta: center },
   { accessorKey: 'moldSetSerial', header: '세트일련', size: 110 },
-  { accessorKey: 'receiptStatus', header: '상태', size: 80, meta: center },
+  { accessorKey: 'receiptStatus', header: '상태', size: 80, meta: center, cell: comCodeCell('RECEIPT STATUS') },
   { accessorKey: 'enterBy', header: '등록자', size: 90 },
   { accessorKey: 'enterDate', header: '등록일시', size: 160, cell: (c) => ts(c.getValue()) },
 ];
@@ -602,17 +631,17 @@ export const moldIssueColumns: ColumnDef<MoldIssueRow>[] = [
   { accessorKey: 'moldSpec', header: '규격', size: 160 },
   { accessorKey: 'moldGroup', header: '그룹', size: 110 },
   { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'machineCode', header: '설비', size: 110 },
   { accessorKey: 'issueDeficit', header: '입출고', size: 80, meta: center },
-  { accessorKey: 'moldIssueAccount', header: '출고계정', size: 120 },
+  { accessorKey: 'moldIssueAccount', header: '출고계정', size: 120, cell: comCodeCell('MOLD ISSUE ACCOUNT') },
   { accessorKey: 'issueQty', header: '출고수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'issuePrice', header: '단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
   { accessorKey: 'issueAmt', header: '금액', size: 130, meta: right, cell: (c) => money(c.getValue()) },
   { accessorKey: 'currency', header: '통화', size: 80, meta: center },
   { accessorKey: 'moldVersion', header: '버전', size: 90, meta: center },
   { accessorKey: 'moldSetSerial', header: '세트일련', size: 110 },
-  { accessorKey: 'issueStatus', header: '상태', size: 80, meta: center },
+  { accessorKey: 'issueStatus', header: '상태', size: 80, meta: center, cell: comCodeCell('ISSUE STATUS') },
   { accessorKey: 'enterBy', header: '등록자', size: 90 },
   { accessorKey: 'enterDate', header: '등록일시', size: 160, cell: (c) => ts(c.getValue()) },
 ];
@@ -625,11 +654,11 @@ export const jigReportColumns: ColumnDef<JigReportRow>[] = [
   { accessorKey: 'barcodeText', header: '바코드', size: 160 },
   { accessorKey: 'jigName', header: '지그명', size: 180 },
   { accessorKey: 'jigSpec', header: '규격', size: 160 },
-  { accessorKey: 'jigType', header: '지그유형', size: 110 },
-  { accessorKey: 'jigStatus', header: '지그상태', size: 100, meta: center },
+  { accessorKey: 'jigType', header: '지그유형', size: 110, cell: comCodeCell('JIG TYPE') },
+  { accessorKey: 'jigStatus', header: '지그상태', size: 100, meta: center, cell: comCodeCell('JIG STATUS') },
   { accessorKey: 'jigModelName', header: '지그모델', size: 150 },
-  { accessorKey: 'useStatus', header: '사용상태', size: 100, meta: center },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'useStatus', header: '사용상태', size: 100, meta: center, cell: comCodeCell('USE STATUS') },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   {
     id: 'supplierName',
     header: '협력사',
@@ -637,7 +666,7 @@ export const jigReportColumns: ColumnDef<JigReportRow>[] = [
     accessorFn: (r) => codeWithName(r.supplierCode, r.supplierName),
   },
   { accessorKey: 'nationCode', header: '국가', size: 80, meta: center },
-  { accessorKey: 'acquisitionType', header: '취득구분', size: 100 },
+  { accessorKey: 'acquisitionType', header: '취득구분', size: 100, cell: comCodeCell('ACQUISITION TYPE') },
   { accessorKey: 'acquisitionDate', header: '취득일', size: 110 },
   { accessorKey: 'breakValue', header: '한계값', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   {
@@ -661,11 +690,11 @@ export const jigCardColumns: ColumnDef<JigCardRow>[] = [
   { accessorKey: 'jigCode', header: '지그코드', size: 130 },
   { accessorKey: 'jigLotNo', header: '지그 롯트', size: 140 },
   { accessorKey: 'jigName', header: '지그명', size: 180 },
-  { accessorKey: 'jigType', header: '지그유형', size: 110 },
-  { accessorKey: 'jigStatus', header: '지그상태', size: 100, meta: center },
+  { accessorKey: 'jigType', header: '지그유형', size: 110, cell: comCodeCell('JIG TYPE') },
+  { accessorKey: 'jigStatus', header: '지그상태', size: 100, meta: center, cell: comCodeCell('JIG STATUS') },
   { accessorKey: 'jigModelName', header: '지그모델', size: 150 },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
-  { accessorKey: 'acquisitionType', header: '취득구분', size: 100 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
+  { accessorKey: 'acquisitionType', header: '취득구분', size: 100, cell: comCodeCell('ACQUISITION TYPE') },
   { accessorKey: 'acquisitionDate', header: '취득일', size: 110 },
   {
     accessorKey: 'repairSequence',
@@ -677,7 +706,7 @@ export const jigCardColumns: ColumnDef<JigCardRow>[] = [
       ? <span className="text-text-muted">수리 없음</span>
       : num(c.getValue())),
   },
-  { accessorKey: 'repairStatus', header: '수리상태', size: 100, meta: center },
+  { accessorKey: 'repairStatus', header: '수리상태', size: 100, meta: center, cell: comCodeCell('REPAIR STATUS') },
   { accessorKey: 'repairReasonCode', header: '수리사유', size: 120 },
   { accessorKey: 'repairDate', header: '수리시각', size: 160, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'repairTime', header: '수리시간', size: 100, meta: right, cell: (c) => num(c.getValue()) },
@@ -690,14 +719,14 @@ export const jigIssueReportColumns: ColumnDef<JigIssueReportRow>[] = [
   { accessorKey: 'issueSequence', header: '순번', size: 80, meta: right },
   { accessorKey: 'jigCode', header: '지그코드', size: 130 },
   { accessorKey: 'jigLotNo', header: '지그 롯트', size: 140 },
-  { accessorKey: 'jigType', header: '지그유형', size: 110 },
-  { accessorKey: 'jigStatus', header: '지그상태', size: 100, meta: center },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'jigType', header: '지그유형', size: 110, cell: comCodeCell('JIG TYPE') },
+  { accessorKey: 'jigStatus', header: '지그상태', size: 100, meta: center, cell: comCodeCell('JIG STATUS') },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'machineCode', header: '설비', size: 110 },
   { accessorKey: 'issueDeficit', header: '입출고', size: 80, meta: center },
-  { accessorKey: 'issueAccount', header: '출고계정', size: 120 },
+  { accessorKey: 'issueAccount', header: '출고계정', size: 120, cell: comCodeCell('ISSUE ACCOUNT') },
   { accessorKey: 'issueQty', header: '출고수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'issueStatus', header: '상태', size: 80, meta: center },
+  { accessorKey: 'issueStatus', header: '상태', size: 80, meta: center, cell: comCodeCell('ISSUE STATUS') },
   { accessorKey: 'enterBy', header: '등록자', size: 90 },
   { accessorKey: 'enterDate', header: '등록일시', size: 160, cell: (c) => ts(c.getValue()) },
 ];
@@ -710,12 +739,12 @@ export const moldReportColumns: ColumnDef<MoldReportRow>[] = [
   { accessorKey: 'moldName', header: 'S-PARTS 명', size: 180 },
   { accessorKey: 'moldSpec', header: '규격', size: 160 },
   { accessorKey: 'moldGroup', header: '그룹', size: 110 },
-  { accessorKey: 'moldType', header: '유형', size: 100 },
+  { accessorKey: 'moldType', header: '유형', size: 100, cell: comCodeCell('MOLD TYPE') },
   { accessorKey: 'barcodeText', header: '바코드', size: 150 },
   { accessorKey: 'drawingNo', header: '도면번호', size: 130 },
   { accessorKey: 'rawMaterial', header: '재질', size: 120 },
   { accessorKey: 'punchNo', header: '펀치번호', size: 110 },
-  { accessorKey: 'moldLineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'moldLineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('MOLD LINE TYPE') },
   { accessorKey: 'itemUnitQty', header: '단위수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'gasYn', header: '가스', size: 70, meta: center, cell: (c) => yesNo(c.getValue()) },
   { accessorKey: 'itemGasQty', header: '가스수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
@@ -742,7 +771,7 @@ export const moldReportColumns: ColumnDef<MoldReportRow>[] = [
   { accessorKey: 'inventoryQty', header: '재고수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'moldRowQty', header: '열수', size: 90, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'moldUsefullRowQty', header: '사용가능 열', size: 110, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'moldUseStatus', header: '사용상태', size: 100, meta: center },
+  { accessorKey: 'moldUseStatus', header: '사용상태', size: 100, meta: center, cell: comCodeCell('MOLD USE STATUS') },
   { accessorKey: 'locationCode', header: '위치', size: 100 },
   { accessorKey: 'moldWarehouseCode', header: '창고', size: 100 },
   { accessorKey: 'applyModelName', header: '적용모델', size: 150 },
@@ -761,7 +790,7 @@ export const moldReportColumns: ColumnDef<MoldReportRow>[] = [
         : num(actual);
     },
   },
-  { accessorKey: 'rentStatus', header: '대여상태', size: 100, meta: center },
+  { accessorKey: 'rentStatus', header: '대여상태', size: 100, meta: center, cell: comCodeCell('RENT STATUS') },
   { accessorKey: 'lastReceiptDate', header: '마지막 입고', size: 120 },
   { accessorKey: 'lastIssueDate', header: '마지막 출고', size: 120 },
   { accessorKey: 'comments', header: '비고', size: 180 },
@@ -773,12 +802,12 @@ export const moldCardColumns: ColumnDef<MoldCardRow>[] = [
   { accessorKey: 'moldName', header: 'S-PARTS 명', size: 180 },
   { accessorKey: 'moldSpec', header: '규격', size: 160 },
   { accessorKey: 'moldGroup', header: '그룹', size: 110 },
-  { accessorKey: 'moldType', header: '유형', size: 100 },
+  { accessorKey: 'moldType', header: '유형', size: 100, cell: comCodeCell('MOLD TYPE') },
   { accessorKey: 'moldVersion', header: '버전', size: 90, meta: center },
   { accessorKey: 'moldSetSerial', header: '세트일련', size: 110 },
   { accessorKey: 'moldRowQty', header: '열수', size: 90, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'moldUsefullRowQty', header: '사용가능 열', size: 110, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'moldUseStatus', header: '사용상태', size: 100, meta: center },
+  { accessorKey: 'moldUseStatus', header: '사용상태', size: 100, meta: center, cell: comCodeCell('MOLD USE STATUS') },
   { accessorKey: 'moldWarehouseCode', header: '창고', size: 100 },
   { accessorKey: 'breakValue', header: '한계값', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'actualValue', header: '실적값', size: 100, meta: right, cell: (c) => num(c.getValue()) },
@@ -794,7 +823,7 @@ export const moldCardColumns: ColumnDef<MoldCardRow>[] = [
       ? <span className="text-text-muted">수리 없음</span>
       : num(c.getValue())),
   },
-  { accessorKey: 'repairStatus', header: '수리상태', size: 100, meta: center },
+  { accessorKey: 'repairStatus', header: '수리상태', size: 100, meta: center, cell: comCodeCell('REPAIR STATUS') },
   { accessorKey: 'repairReasonCode', header: '수리사유', size: 120 },
   { accessorKey: 'repairDate', header: '수리시각', size: 160, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'repairTime', header: '수리시간', size: 100, meta: right, cell: (c) => num(c.getValue()) },

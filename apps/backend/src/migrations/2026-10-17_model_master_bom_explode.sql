@@ -1,0 +1,42 @@
+-- =====================================================================
+-- 2026-10-17 제품 모델 마스터에 BOM 전개 방식 기준을 둔다
+--
+-- 설계: docs/specs/2026-10-17-wip-semi-product-from-aoi-design.md (5장 1)
+--   AOI 실적이 어느 반제품을 만들었는지, 제품 입고 때 무엇을 소비하는지를 제품(모델)별로 정한다.
+--   면별 생산 품목은 기존 칼럼을 쓴다 (둘 다 2026-10-17 기준 327행 전부 비어 있고 코드에서 안 썼다):
+--     TOP_ITEM_CODE    — AOI T면 실적이 만드는 품목 (반제품, 원자재만인 제품은 제품 자신)
+--     BOTTOM_ITEM_CODE — AOI B면 실적이 만드는 품목
+--     INSERT_ITEM_CODE — SUB 공정 품목 (SUB-Assy). SUB-Assy 아래 TOP·BOT 구조에서 채운다 (사용자 2026-10-17)
+--   단면(④)·원자재만(⑤)은 한쪽만 채운다. 채운 면의 AOI 만 실적으로 센다.
+-- 새 칼럼
+--   BOM_EXPLODE_TYPE   공통코드 'BOM EXPLODE TYPE' (TB·SUB·NEST·SINGLE·RAW·NONE)
+--   BOM_EXPLODE_SOURCE A = 자동 분류, M = 사람이 정함 (자동 분류는 M 을 덮어쓰지 않는다)
+--   BOM_EXPLODE_NOTE   자동 분류 메모 (미분류 사유, 런카드 면 불일치)
+-- 되돌리기: 맨 아래.
+-- =====================================================================
+BEGIN
+  EXECUTE IMMEDIATE 'ALTER TABLE IP_PRODUCT_MODEL_MASTER ADD (BOM_EXPLODE_TYPE VARCHAR2(10), BOM_EXPLODE_SOURCE VARCHAR2(1), BOM_EXPLODE_NOTE VARCHAR2(200))';
+  EXECUTE IMMEDIATE q'[COMMENT ON COLUMN IP_PRODUCT_MODEL_MASTER.BOM_EXPLODE_TYPE IS 'BOM 전개 방식: TB=제품 직하 TOP·BOT, SUB=SUB-Assy 아래 TOP·BOT, NEST=TOP 안에 BOT, SINGLE=단면 반제품, RAW=원자재만, NONE=미분류']';
+  EXECUTE IMMEDIATE q'[COMMENT ON COLUMN IP_PRODUCT_MODEL_MASTER.BOM_EXPLODE_SOURCE IS 'BOM 전개 방식 출처: A=자동 분류, M=사람이 정함']';
+  EXECUTE IMMEDIATE q'[COMMENT ON COLUMN IP_PRODUCT_MODEL_MASTER.BOM_EXPLODE_NOTE IS 'BOM 전개 방식 자동 분류 메모']';
+  EXECUTE IMMEDIATE q'[COMMENT ON COLUMN IP_PRODUCT_MODEL_MASTER.TOP_ITEM_CODE IS 'AOI T면 실적이 만드는 품목 (BOM 전개 방식)']';
+  EXECUTE IMMEDIATE q'[COMMENT ON COLUMN IP_PRODUCT_MODEL_MASTER.BOTTOM_ITEM_CODE IS 'AOI B면 실적이 만드는 품목 (BOM 전개 방식)']';
+  EXECUTE IMMEDIATE q'[COMMENT ON COLUMN IP_PRODUCT_MODEL_MASTER.INSERT_ITEM_CODE IS 'SUB 공정 품목 (SUB-Assy, BOM 전개 방식)']';
+END;
+/
+INSERT INTO ISYS_BASECODE (CODE_TYPE, CODE_NAME, ORGANIZATION_ID, CODE_MEAN_KOR, CODE_MEAN_ENG, CODE_MEAN_LOCAL, CODE_GROUP, CODE_VALUE, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY)
+SELECT 'BOM EXPLODE TYPE', c, 1, k, e, e, 'SYSTEM', v, SYSDATE, 'ADMIN', SYSDATE, 'ADMIN' FROM (
+  SELECT 'TB' c, '제품 직하 TOP·BOT' k, 'TOP/BOT under product' e, '1' v FROM DUAL UNION ALL
+  SELECT 'SUB', 'SUB-Assy 아래 TOP·BOT', 'TOP/BOT under sub-assy', '2' FROM DUAL UNION ALL
+  SELECT 'NEST', 'TOP 안에 BOT', 'BOT inside TOP', '3' FROM DUAL UNION ALL
+  SELECT 'SINGLE', '단면 반제품', 'Single-side semi', '4' FROM DUAL UNION ALL
+  SELECT 'RAW', '원자재만', 'Raw materials only', '5' FROM DUAL UNION ALL
+  SELECT 'NONE', '미분류', 'Unclassified', '9' FROM DUAL) s
+WHERE NOT EXISTS (SELECT 1 FROM ISYS_BASECODE b WHERE b.CODE_TYPE = 'BOM EXPLODE TYPE' AND b.CODE_NAME = s.c AND b.ORGANIZATION_ID = 1);
+/
+COMMIT;
+/
+-- 되돌리기
+-- DELETE FROM ISYS_BASECODE WHERE CODE_TYPE = 'BOM EXPLODE TYPE' AND ORGANIZATION_ID = 1;
+-- ALTER TABLE IP_PRODUCT_MODEL_MASTER DROP (BOM_EXPLODE_TYPE, BOM_EXPLODE_SOURCE, BOM_EXPLODE_NOTE);
+-- UPDATE IP_PRODUCT_MODEL_MASTER SET TOP_ITEM_CODE = NULL, BOTTOM_ITEM_CODE = NULL, INSERT_ITEM_CODE = NULL WHERE ORGANIZATION_ID = 1;

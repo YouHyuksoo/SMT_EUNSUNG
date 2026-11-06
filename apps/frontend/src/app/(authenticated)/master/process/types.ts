@@ -27,7 +27,6 @@ export interface Process {
   stValue?: number | null;
   otValue?: number | null;
   standardQty?: number | null;
-  uphValue?: number | null;
   capacity?: number | null;
   capacityUom?: string | null;
   useRate?: number | null;

@@ -14,9 +14,12 @@ import { useActiveInterval } from '@/hooks/useTabActive';
 import { Barcode, Factory, PauseCircle, PlayCircle, Wrench } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, CardContent, Input, Select } from '@/components/ui';
+import DataGrid from '@/components/data-grid/DataGrid';
+import DowntimeReasonGrid from '@/components/shared/DowntimeReasonGrid';
 import api from '@/services/api';
 import DailyMetrics from './DailyMetrics';
-import type { OpsLine, OpsMachine, RecentRow, RefreshInterval } from '../types';
+import { recentColumns, targetMachineColumns } from './downtime-columns';
+import { EMPTY_SUMMARY, type DailySummary, type OpsLine, type OpsMachine, type RecentRow, type RefreshInterval } from '../types';
 
 interface Code { code: string; name: string; }
 type ScopeMode = 'LINE' | 'MACHINE';
@@ -37,12 +40,9 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
 
   const [reasons, setReasons] = useState<Code[]>([]);
   const [reasonPick, setReasonPick] = useState<string | null>(null);
-  const [summary, setSummary] = useState({ downMinutes: 0, stopCount: 0 });
+  const [summary, setSummary] = useState<DailySummary>(EMPTY_SUMMARY);
   const [recent, setRecent] = useState<{ list: RecentRow[]; totalCount: number; totalMinutes: number }>({ list: [], totalCount: 0, totalMinutes: 0 });
   const [busy, setBusy] = useState(false);
-
-  // 라인 정지의 원인설비(복수 가능). 대상이 바뀌면 비운다 — 다른 라인의 설비가 남으면 안 된다.
-  const [causeCodes, setCauseCodes] = useState<Set<string>>(new Set());
 
   const selectedLine = lines.find((l) => l.lineCode === lineCode) ?? null;
   const selectedMachine = machines.find((m) => m.machineCode === machineCode) ?? null;
@@ -63,19 +63,12 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
   const openReasonCode = willEnd ? (actionTargets[0]?.openReasonCode ?? '') : '';
   const reasonCode = reasonPick ?? openReasonCode;
 
-  // 대상 선택을 바꾸는 모든 경로에서 원인설비를 비운다 — 다른 라인의 설비가 남으면 안 된다
+  // 대상 선택을 바꾸면 고른 사유를 비운다
   const selectMode = (m: ScopeMode) => {
-    setMode(m); setLineCode(''); setMachineCode(''); setCauseCodes(new Set()); setReasonPick(null);
+    setMode(m); setLineCode(''); setMachineCode(''); setReasonPick(null);
   };
-  const selectLine = (code: string) => { setLineCode(code); setCauseCodes(new Set()); setReasonPick(null); };
-  const selectMachine = (code: string) => { setMachineCode(code); setCauseCodes(new Set()); setReasonPick(null); };
-
-  const toggleCause = (code: string) =>
-    setCauseCodes((prev) => {
-      const next = new Set(prev);
-      if (next.has(code)) next.delete(code); else next.add(code);
-      return next;
-    });
+  const selectLine = (code: string) => { setLineCode(code); setReasonPick(null); };
+  const selectMachine = (code: string) => { setMachineCode(code); setReasonPick(null); };
 
   const scopeLabel = mode === 'LINE'
     ? (selectedLine ? `${selectedLine.lineCode} · ${selectedLine.lineName ?? ''}` : null)
@@ -89,7 +82,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
   /** 지표·이전 30일 이력·사유·진행중 시작시각을 한 번에 읽는다 */
   const loadScope = useCallback(async () => {
     if (!scopeParams) {
-      setSummary({ downMinutes: 0, stopCount: 0 });
+      setSummary(EMPTY_SUMMARY);
       setRecent({ list: [], totalCount: 0, totalMinutes: 0 });
       return;
     }
@@ -98,7 +91,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
         api.get('/oee/equip-ops/summary', { params: scopeParams }),
         api.get('/oee/equip-ops/recent', { params: scopeParams }),
       ]);
-      setSummary(s.data?.data ?? { downMinutes: 0, stopCount: 0 });
+      setSummary(s.data?.data ?? EMPTY_SUMMARY);
       setRecent(m.data?.data ?? { list: [], totalCount: 0, totalMinutes: 0 });
     } catch { /* 조회 실패는 빈 화면으로 둔다 */ }
   }, [scopeParams]);
@@ -144,17 +137,12 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
       const res = await api.post('/oee/work-result/downtimes/bulk', {
         action: willEnd ? 'END' : 'START',
         machineCodes: actionTargets.map((m) => m.machineCode),
-        // 원인설비는 비가동 시작에서만 의미가 있다. 실제로 처리되는 대상만 추린다.
-        causeMachineCodes: willEnd
-          ? undefined
-          : actionTargets.filter((m) => causeCodes.has(m.machineCode)).map((m) => m.machineCode),
         reasonCode: reasonCode || undefined,
       });
       const d = res.data?.data ?? {};
       const verb = willEnd ? '가동 전환' : '비가동 시작';
       toast.success(d.skipped ? `${d.affected}대 ${verb} (${d.skipped}대는 이미 해당 상태)` : `${d.affected}대 ${verb}`);
       setReasonPick(null);
-      setCauseCodes(new Set());
       await onChanged();
       await loadScope();
     } catch (e: unknown) {
@@ -208,7 +196,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
       {/* 본문 3분할 */}
       <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.5fr)_minmax(0,1.2fr)] gap-3 overflow-hidden">
         {/* 좌 — 당일 지표 */}
-        <DailyMetrics downMinutes={summary.downMinutes} stopCount={summary.stopCount} scopeLabel={scopeLabel} />
+        <DailyMetrics summary={summary} scopeLabel={scopeLabel} />
 
         {/* 중앙 — 비가동 대상 설비 + 처리 */}
         <Card className="h-full overflow-hidden" padding="none">
@@ -217,54 +205,25 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
               <span className="text-sm font-semibold text-text">비가동 대상 설비</span>
               <span className="text-[11px] text-text-muted">
                 대상 {targets.length}대 · 비가동 <span className={downTargets.length ? 'text-red-500 font-semibold' : ''}>{downTargets.length}</span>대
-                {!willEnd && causeCodes.size > 0 && <> · 원인설비 <span className="text-amber-600 font-semibold">{causeCodes.size}</span>대</>}
               </span>
             </div>
 
             {/* 대상 설비 목록 */}
-            <div className="border border-border rounded overflow-hidden flex-shrink-0">
-              <table className="w-full table-fixed text-xs">
-                <thead className="bg-surface text-text-muted">
-                  <tr><th className="py-1.5 px-0.5 text-center font-medium w-8">원인</th><th className="py-1.5 px-0.5 text-center font-medium w-[76px]">설비코드</th><th className="py-1.5 px-1 text-center font-medium">설비명</th><th className="py-1.5 px-0 text-center font-medium w-12">유형</th><th className="py-1.5 pl-0 pr-0.5 text-center font-medium w-16">상태</th></tr>
-                </thead>
-                <tbody>
-                  {targets.map((m) => {
-                    const down = m.openDtSeq != null;
-                    return (
-                      <tr key={m.machineCode} className="border-t border-border">
-                        <td className="py-1.5 px-0.5 text-center">
-                          <input
-                            type="checkbox"
-                            checked={causeCodes.has(m.machineCode)}
-                            onChange={() => toggleCause(m.machineCode)}
-                            disabled={willEnd || down}
-                            title={willEnd ? '종료 처리에는 원인설비를 지정하지 않습니다' : down ? '이미 비가동 중인 설비입니다' : '이 설비를 라인 정지의 원인으로 표시'}
-                            aria-label={`${m.machineCode} 원인설비`}
-                            className="w-3.5 h-3.5 cursor-pointer rounded border-border disabled:cursor-not-allowed disabled:opacity-40"
-                          />
-                        </td>
-                        <td className="py-1.5 px-0.5 text-center font-mono truncate">{m.machineCode}</td>
-                        <td className="py-1.5 px-1 text-center truncate">{m.machineName ?? '-'}</td>
-                        <td className="py-1.5 px-0 text-center truncate">{m.machineTypeName ?? m.machineType ?? '-'}</td>
-                        <td className="py-1.5 pl-0 pr-0.5 text-center">
-                          {down ? (
-                            <span className="px-1.5 py-0.5 rounded bg-red-500 text-white">비가동</span>
-                          ) : (
-                            <span className="px-1.5 py-0.5 rounded bg-emerald-500 text-white">가동</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {!targets.length && (
-                    <tr><td colSpan={5} className="p-6 text-center text-text-muted">
-                      {scopeParams
-                        ? (mode === 'LINE' ? '이 라인에 배정된 설비가 없습니다' : '설비를 찾을 수 없습니다')
-                        : (mode === 'LINE' ? '라인을 선택하세요' : '설비를 선택하세요')}
-                    </td></tr>
-                  )}
-                </tbody>
-              </table>
+            <div className="flex-shrink-0">
+              <DataGrid
+                data={targets}
+                columns={targetMachineColumns}
+                pageSize={1000}
+                showFooter={false}
+                enableColumnFilter={false}
+                enableFullscreen={false}
+                enableColumnReordering={false}
+                enableColumnPinning={false}
+                getRowId={(m) => m.machineCode}
+                emptyMessage={scopeParams
+                  ? (mode === 'LINE' ? '이 라인에 배정된 설비가 없습니다' : '설비를 찾을 수 없습니다')
+                  : (mode === 'LINE' ? '라인을 선택하세요' : '설비를 선택하세요')}
+              />
             </div>
 
             {/* 비가동 사유 */}
@@ -273,19 +232,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
                 비가동 사유 {willEnd && <span className="text-red-500">*</span>}
                 <span className="text-[11px]"> {willEnd ? '(종료 시 필수 — 대상 전체에 기록)' : '(선택)'}</span>
               </span>
-              <div className="grid grid-cols-2 gap-2">
-                {reasons.map((r) => {
-                  const active = reasonCode === r.code;
-                  return (
-                    <button key={r.code} type="button" onClick={() => setReasonPick(active ? '' : r.code)}
-                      className={`px-2 py-2 rounded border text-xs text-center transition-colors ${active ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'}`}>
-                      <span className="block font-medium leading-tight">{r.name}</span>
-                      <span className={`block text-[10px] font-mono ${active ? 'text-white/80' : 'text-text-muted'}`}>{r.code}</span>
-                    </button>
-                  );
-                })}
-                {!reasons.length && <span className="col-span-2 text-xs text-text-muted py-2">연계된 비가동 사유가 없습니다</span>}
-              </div>
+              <DowntimeReasonGrid reasons={reasons} value={reasonCode} onChange={setReasonPick} />
             </div>
 
             {/* 처리 토글 */}
@@ -314,32 +261,20 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
                 <span className="font-semibold text-text"> {recent.totalMinutes.toLocaleString()}</span>분
               </span>
             </div>
-            <div className="flex-1 min-h-0 overflow-auto border border-border rounded">
-              <table className="w-full text-xs">
-                <thead className="sticky top-0 bg-surface text-text-muted">
-                  <tr><th className="p-1.5 text-center font-medium">설비</th><th className="p-1.5 text-center font-medium">시작</th><th className="p-1.5 text-center font-medium">종료</th><th className="p-1.5 text-center font-medium">소요</th></tr>
-                </thead>
-                <tbody>
-                  {recent.list.map((d) => (
-                    <tr key={d.dtSeq} className="border-t border-border">
-                      <td className="p-1.5 text-center font-mono">
-                        {d.machineCode}
-                        {d.causeYn === 'Y' && (
-                          <span className="ml-1 px-1 py-0.5 rounded bg-amber-500/15 text-amber-600 text-[10px] font-sans" title="라인 정지의 원인설비">원인</span>
-                        )}
-                      </td>
-                      <td className="p-1.5 text-center font-mono">{d.startTime ?? '-'}</td>
-                      <td className="p-1.5 text-center font-mono">{d.endTime ?? <span className="text-red-500">진행중</span>}</td>
-                      <td className="p-1.5 text-center font-mono tabular-nums">{d.durationMin.toLocaleString()}분</td>
-                    </tr>
-                  ))}
-                  {!recent.list.length && (
-                    <tr><td colSpan={5} className="p-6 text-center text-text-muted">
-                      {scopeParams ? '이전 30일 비가동 이력이 없습니다' : '대상을 선택하세요'}
-                    </td></tr>
-                  )}
-                </tbody>
-              </table>
+            <div className="flex-1 min-h-0">
+              <DataGrid
+                data={recent.list}
+                columns={recentColumns}
+                pageSize={100}
+                enableColumnFilter={false}
+                enableFullscreen={false}
+                enableColumnReordering={false}
+                enableColumnPinning={false}
+                enableExport
+                exportFileName="비가동이력_30일"
+                getRowId={(d) => String(d.dtSeq)}
+                emptyMessage={scopeParams ? '이전 30일 비가동 이력이 없습니다' : '대상을 선택하세요'}
+              />
             </div>
           </CardContent>
         </Card>

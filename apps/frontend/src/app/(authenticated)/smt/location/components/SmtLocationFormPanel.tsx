@@ -10,6 +10,7 @@
 import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Save, X } from 'lucide-react';
+import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import { SmtMachineSelect } from '../../components/SmtSelects';
@@ -107,8 +108,8 @@ export default function SmtLocationFormPanel({ mode, initialForm, onClose, onSav
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">라인코드 *</span>
-            <Input value={form.lineCode} disabled={edit}
-              onChange={(e) => set('lineCode', e.target.value)} />
+            <ProdLineSelect value={form.lineCode} disabled={edit} fullWidth
+              onChange={(v) => set('lineCode', v)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">위치코드 *</span>

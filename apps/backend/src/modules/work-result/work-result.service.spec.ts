@@ -1,24 +1,62 @@
 import { BadRequestException } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { ProductWorkResult } from '../../entities/product-work-result.entity';
-import { OracleService } from '../../common/services/oracle.service';
+import { DataSource } from 'typeorm';
 import { WorkResultService } from './work-result.service';
+
+/** 작업지시 · 라인구분 · 채번 · 상태 조회에 답하는 트랜잭션 매니저 */
+function upsertManager(opts: { div?: string; fixed?: string | null; status?: string } = {}) {
+  return {
+    query: jest.fn().mockImplementation((sql: string) => {
+      if (sql.includes('FROM IP_PRODUCT_RUN_CARD') && sql.includes('FOR UPDATE'))
+        return Promise.resolve([{ lineCode: '50', workstageCode: opts.fixed ?? null, itemCode: 'E1', lotNo: 'MI1', runDate: '2026-10-19' }]);
+      if (sql.includes('LINE_DIVISION')) return Promise.resolve([{ div: opts.div ?? 'L' }]);
+      if (sql.includes('MAX(TO_NUMBER(SEQ_NO))')) return Promise.resolve([{ seq: '01' }]);
+      if (sql.includes("SELECT NVL(RESULT_STATUS,'WIP')")) return Promise.resolve([{ st: opts.status ?? 'WIP' }]);
+      if (sql.includes('SELECT WORKSTAGE_ISSUE_YN')) return Promise.resolve([{ flag: 'Y', msg: null }]);
+      return Promise.resolve([]);
+    }),
+  };
+}
 
 describe('WorkResultService tenancy', () => {
   const query = jest.fn();
   const transaction = jest.fn();
-  const callProcScalar = jest.fn();
-  const repository = {
-    manager: { query, transaction },
-  } as unknown as Repository<ProductWorkResult>;
-  const service = new WorkResultService(repository, {
-    callProcScalar,
-  } as unknown as OracleService);
+  const dataSource = { manager: { query, transaction } } as unknown as DataSource;
+  const service = new WorkResultService(dataSource);
 
   beforeEach(() => {
     jest.clearAllMocks();
     query.mockResolvedValue([]);
-    callProcScalar.mockResolvedValue({ P_OUT: 'OK' });
+  });
+
+  function useManager(manager: ReturnType<typeof upsertManager>) {
+    transaction.mockImplementation((callback: (value: typeof manager) => unknown) => callback(manager));
+    return manager;
+  }
+
+  it('refuses SMT line results — SMT actuals come from AOI', async () => {
+    const manager = useManager(upsertManager({ div: 'D' }));
+    await expect(service.upsertResult(
+      { runNo: 'RUN-1', resultQty: 10, resultStatus: 'DONE' } as never, 7, 'user-7',
+    )).rejects.toThrow('SMT');
+    expect(manager.query.mock.calls.some(([s]) => String(s).includes('INSERT INTO IP_PRODUCT_RESULT'))).toBe(false);
+  });
+
+  it('keeps a non-assembly line result without inventory and marks it X', async () => {
+    const manager = useManager(upsertManager({ div: 'W' }));
+
+    const res = await service.upsertResult(
+      { runNo: 'RUN-1', machineCode: 'MC-1', workstageCode: 'WS-1', resultQty: 10, resultStatus: 'DONE' } as never,
+      7,
+      'user-7',
+    );
+
+    expect(res).toEqual({ seqNo: '01', sensorApplyYn: 'X' });
+    expect(manager.query.mock.calls.some(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'))).toBe(false);
+    const marked = query.mock.calls.find(([sql]) => String(sql).includes('SET WORKSTAGE_ISSUE_YN=:1'));
+    expect(marked?.[1]).toEqual(['X', null, 'RUN-1', '01', 7]);
+    // 가공 라인 → 작업구분 W
+    const insert = manager.query.mock.calls.find(([s]) => String(s).includes('INSERT INTO IP_PRODUCT_RESULT'));
+    expect(insert?.[1]?.[2]).toBe('W');
   });
 
   it('requires an authenticated organization', () => {
@@ -33,6 +71,7 @@ describe('WorkResultService tenancy', () => {
     expect(sql).toContain('r.ORGANIZATION_ID = :1');
     expect(sql).not.toContain('ORGANIZATION_ID = 1');
     expect(sql).toContain('WHERE ROWNUM <= 500');
+    expect(sql).toContain('FROM IP_PRODUCT_RESULT wr');
     expect(params).toEqual([7, '2026-08-01', '2026-08-25']);
   });
 
@@ -113,23 +152,12 @@ describe('WorkResultService tenancy', () => {
     expect(params).toEqual([7, '2026-08-01', '2026-08-25', 'D', 'SMT']);
   });
 
-  it('uses the authenticated user and organization for writes', async () => {
-    const manager = {
-      query: jest.fn().mockImplementation((sql: string) => {
-        if (sql.includes('MAX(TO_NUMBER(SEQ_NO))'))
-          return Promise.resolve([{ seq: '01' }]);
-        return Promise.resolve([]);
-      }),
-    };
-    transaction.mockImplementation(
-      (callback: (value: typeof manager) => unknown) => callback(manager),
-    );
+  it('writes the run card product into IP_PRODUCT_RESULT with the authenticated user and organization', async () => {
+    const manager = useManager(upsertManager());
 
     await service.upsertResult(
       {
         runNo: 'RUN-1',
-        machineCode: 'MC-1',
-        workstageCode: 'WS-1',
         resultQty: 10,
         resultStatus: 'WIP',
         userId: 'forged-user',
@@ -138,70 +166,42 @@ describe('WorkResultService tenancy', () => {
       'authenticated-user',
     );
 
-    // 2026-09-30: 실적 이력 원장이 IP_PRODUCT_WORK_RESULT로 되돌아갔다.
     const insertCall = manager.query.mock.calls.find(([sql]) =>
-      String(sql).includes('INSERT INTO IP_PRODUCT_WORK_RESULT'),
+      String(sql).includes('INSERT INTO IP_PRODUCT_RESULT'),
     );
-    expect(insertCall?.[1]).toContain(7);
-    expect(insertCall?.[1]).toContain('authenticated-user');
-    expect(insertCall?.[1]).not.toContain('forged-user');
-  });
-
-  it('binds null equipment and preserves the process when creating a result', async () => {
-    const manager = {
-      query: jest.fn().mockImplementation((sql: string) => {
-        if (sql.includes('MAX(TO_NUMBER(SEQ_NO))'))
-          return Promise.resolve([{ seq: '01' }]);
-        return Promise.resolve([]);
-      }),
-    };
-    transaction.mockImplementation(
-      (callback: (value: typeof manager) => unknown) => callback(manager),
-    );
-
-    await service.upsertResult(
-      {
-        runNo: 'RUN-1',
-        workstageCode: 'WS-1',
-        resultQty: 10,
-        resultStatus: 'WIP',
-      } as never,
-      7,
-      'user-7',
-    );
-
-    const insertCall = manager.query.mock.calls.find(([sql]) =>
-      String(sql).includes('INSERT INTO IP_PRODUCT_WORK_RESULT'),
-    );
-    const runCardCall = manager.query.mock.calls.find(([sql]) =>
-      String(sql).includes('UPDATE IP_PRODUCT_RUN_CARD'),
-    );
-    // [0]=runNo, [1]=seqNo, [2]=organization, [3]=machineCode(미지정 → null), [4]=workstageCode
-    expect(insertCall?.[1]?.[1]).toBe('01');
-    expect(insertCall?.[1]?.[3]).toBeNull();
-    expect(insertCall?.[1]?.[4]).toBe('WS-1');
+    const binds = insertCall?.[1] as unknown[];
+    // [0]=org [1]=runDate [2]=workDivision [3]=item [4]=mfs(lot) [5]=line [6]=workstage [7]=machine [8]=qty
+    // [9]=runNo [10]=seqNo ... [15]=user
+    expect(binds[0]).toBe(7);
+    expect(binds[2]).toBe('P');
+    expect(binds[3]).toBe('E1');
+    expect(binds[4]).toBe('MI1');
+    // 공정이 빈 조립라인 지시 = 포장 공정
+    expect(binds[6]).toBe('W220');
+    expect(binds[7]).toBeNull();
+    expect(binds[9]).toBe('RUN-1');
+    expect(binds[10]).toBe('01');
+    // [15]=근무조(작업지시 교대) [16]=타임구간(안 보내면 null) [17]=사용자. 작업일은 SQL 식으로 채운다
+    expect(binds[16]).toBeNull();
+    expect(binds[17]).toBe('authenticated-user');
+    expect(String(insertCall?.[0])).toMatch(/SHIFT_CODE, TIME_ZONE, ACTUAL_DATE/);
+    expect(binds).toContain('authenticated-user');
+    expect(binds).not.toContain('forged-user');
+    const runCardCall = manager.query.mock.calls.find(([sql]) => String(sql).includes('UPDATE IP_PRODUCT_RUN_CARD'));
     expect(runCardCall?.[1]?.[0]).toBeNull();
-    expect(runCardCall?.[1]?.[1]).toBe('WS-1');
+    // 공정은 발행 때 정해지고 실적이 런카드에 다시 쓰지 않는다
+    expect(String(runCardCall?.[0])).not.toContain('WORKSTAGE_CODE');
   });
 
   it('normalizes whitespace equipment on an existing result update', async () => {
-    const manager = {
-      query: jest.fn().mockImplementation((sql: string) => {
-        if (sql.includes("SELECT NVL(RESULT_STATUS,'WIP')"))
-          return Promise.resolve([{ st: 'WIP' }]);
-        return Promise.resolve([]);
-      }),
-    };
-    transaction.mockImplementation(
-      (callback: (value: typeof manager) => unknown) => callback(manager),
-    );
+    const manager = useManager(upsertManager());
 
     await service.upsertResult(
       {
         runNo: 'RUN-1',
         seqNo: '01',
         machineCode: '   ',
-        workstageCode: 'WS-1',
+        workstageCode: 'W220',
         resultQty: 10,
         resultStatus: 'WIP',
       },
@@ -210,154 +210,348 @@ describe('WorkResultService tenancy', () => {
     );
 
     const updateCall = manager.query.mock.calls.find(([sql]) =>
-      String(sql).includes('UPDATE IP_PRODUCT_WORK_RESULT SET'),
-    );
-    const runCardCall = manager.query.mock.calls.find(([sql]) =>
-      String(sql).includes('UPDATE IP_PRODUCT_RUN_CARD'),
+      String(sql).includes('UPDATE IP_PRODUCT_RESULT SET'),
     );
     // [0]=machineCode(공백 정규화 → null), [1]=workstageCode
     expect(updateCall?.[1]?.[0]).toBeNull();
-    expect(updateCall?.[1]?.[1]).toBe('WS-1');
-    expect(runCardCall?.[1]?.[0]).toBeNull();
-    expect(runCardCall?.[1]?.[1]).toBe('WS-1');
+    expect(updateCall?.[1]?.[1]).toBe('W220');
   });
 
-  it('does not call the sensor procedure while the result is in progress', async () => {
-    const manager = {
-      query: jest.fn().mockImplementation((sql: string) => {
-        if (sql.includes('MAX(TO_NUMBER(SEQ_NO))'))
-          return Promise.resolve([{ seq: '01' }]);
-        return Promise.resolve([]);
-      }),
-    };
-    transaction.mockImplementation(
-      (callback: (value: typeof manager) => unknown) => callback(manager),
-    );
+  it('does not move inventory for an in-progress result', async () => {
+    useManager(upsertManager());
 
     const res = await service.upsertResult(
-      { runNo: 'RUN-1', workstageCode: 'WS-1', resultQty: 10, resultStatus: 'WIP' } as never,
+      { runNo: 'RUN-1', resultQty: 10, resultStatus: 'WIP' } as never,
       7,
       'user-7',
     );
 
-    expect(callProcScalar).not.toHaveBeenCalled();
     expect(res.sensorApplyYn).toBe('N');
+    expect(transaction).toHaveBeenCalledTimes(1);
   });
 
-  it('calls the sensor procedure once when the result is completed', async () => {
-    const manager = {
-      query: jest.fn().mockImplementation((sql: string) => {
-        if (sql.includes('MAX(TO_NUMBER(SEQ_NO))'))
-          return Promise.resolve([{ seq: '01' }]);
-        if (sql.includes('SELECT LINE_CODE'))
-          return Promise.resolve([{ lineCode: 'L1' }]);
-        return Promise.resolve([]);
-      }),
-    };
-    transaction.mockImplementation(
-      (callback: (value: typeof manager) => unknown) => callback(manager),
-    );
+  it('moves inventory once for a completed assembly line result', async () => {
+    const manager = useManager(upsertManager());
 
     const res = await service.upsertResult(
-      {
-        runNo: 'RUN-1',
-        machineCode: 'MC-1',
-        workstageCode: 'WS-1',
-        resultQty: 10,
-        resultStatus: 'DONE',
-      } as never,
+      { runNo: 'RUN-1', machineCode: 'MC-1', resultQty: 10, resultStatus: 'DONE' } as never,
       7,
       'user-7',
     );
 
-    expect(callProcScalar).toHaveBeenCalledTimes(1);
-    const [procName, outDefs, inParams, options] = callProcScalar.mock.calls[0] as [
-      string,
-      unknown,
-      Record<string, unknown>,
-      Record<string, unknown>,
-    ];
-    expect(procName).toBe('P_INTERLOCK_SENSOR_ACTUAL_NEO');
-    expect(outDefs).toEqual([{ name: 'P_OUT', type: 'STRING', maxSize: 1000 }]);
-    // P_ACC_COUNT가 실적수량이고 P_COUNT는 1 고정이다 — 이름과 의미가 반대다.
-    expect(inParams.P_ACC_COUNT).toBe(10);
-    expect(inParams.P_COUNT).toBe(1);
-    expect(inParams.P_LINE_CODE).toBe('L1');
-    expect(inParams.P_MACHINE_CODE).toBe('MC-1');
-    // autoCommit 없이는 프로시저의 DML이 롤백된다.
-    expect(options).toEqual({ autoCommit: true });
+    const call = manager.query.mock.calls.find(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'));
+    expect(call?.[1]).toEqual(['RUN-1', '01', 7, 1]);
     expect(res.sensorApplyYn).toBe('Y');
     expect(res.sensorWarning).toBeUndefined();
   });
 
-  it('keeps the result and warns when the sensor procedure fails', async () => {
-    callProcScalar.mockResolvedValue({ P_OUT: 'NG ACTIVE PLAN NOT FOUND. Line Code=[L1]' });
-    const manager = {
-      query: jest.fn().mockImplementation((sql: string) => {
-        if (sql.includes('MAX(TO_NUMBER(SEQ_NO))'))
-          return Promise.resolve([{ seq: '01' }]);
-        return Promise.resolve([]);
-      }),
-    };
-    transaction.mockImplementation(
-      (callback: (value: typeof manager) => unknown) => callback(manager),
-    );
+  it('keeps the result and warns when the inventory step fails', async () => {
+    const manager = upsertManager();
+    let calls = 0;
+    transaction.mockImplementation((callback: (value: typeof manager) => unknown) => {
+      calls += 1;
+      if (calls === 1) return callback(manager);
+      return Promise.reject(new Error('ORA-01400: cannot insert NULL'));
+    });
 
     const res = await service.upsertResult(
-      { runNo: 'RUN-1', workstageCode: 'WS-1', resultQty: 10, resultStatus: 'DONE' } as never,
+      { runNo: 'RUN-1', resultQty: 10, resultStatus: 'DONE' } as never,
       7,
       'user-7',
     );
 
     expect(res.sensorApplyYn).toBe('N');
-    expect(res.sensorWarning).toContain('NG ACTIVE PLAN NOT FOUND');
+    expect(res.sensorWarning).toContain('ORA-01400');
     // 반영 실패를 실적 행에 기록해 화면이 빨간색으로 표기할 수 있게 한다.
-    const flagCall = query.mock.calls.find(([sql]) =>
-      String(sql).includes('SET SENSOR_APPLY_YN'),
-    );
+    const flagCall = query.mock.calls.find(([sql]) => String(sql).includes('SET WORKSTAGE_ISSUE_YN=:1'));
     expect(flagCall?.[1]?.[0]).toBe('N');
-    expect(String(flagCall?.[1]?.[1])).toContain('NG ACTIVE PLAN NOT FOUND');
+    expect(String(flagCall?.[1]?.[1])).toContain('ORA-01400');
   });
 
-  it('refuses to re-apply a result already reflected in the sensor tables', async () => {
-    query.mockResolvedValue([
-      {
-        workstageCode: 'WS-1',
-        machineCode: 'MC-1',
-        resultQty: 10,
-        resultStatus: 'DONE',
-        sensorApplyYn: 'Y',
-        lineCode: 'L1',
-      },
-    ]);
+  it('refuses to re-apply a result already reflected in the inventory', async () => {
+    query.mockResolvedValue([{ resultStatus: 'DONE', sensorApplyYn: 'Y', workDiv: 'P' }]);
 
     await expect(
       service.applySensor({ runNo: 'RUN-1', seqNo: '01' }, 7),
     ).rejects.toThrow(BadRequestException);
-    expect(callProcScalar).not.toHaveBeenCalled();
+    expect(transaction).not.toHaveBeenCalled();
   });
 
-  it('re-applies a completed result that has not been reflected yet', async () => {
-    query.mockResolvedValue([
-      {
-        workstageCode: 'WS-1',
-        machineCode: 'MC-1',
-        resultQty: 25,
-        resultStatus: 'DONE',
-        sensorApplyYn: 'N',
-        lineCode: 'L1',
-      },
-    ]);
+  it('re-applies a completed assembly line result that has not been reflected yet', async () => {
+    query.mockResolvedValue([{ resultStatus: 'DONE', sensorApplyYn: 'N', workDiv: 'P' }]);
+    const manager = useManager(upsertManager());
 
     const res = await service.applySensor({ runNo: 'RUN-1', seqNo: '01' }, 7);
 
-    expect(callProcScalar).toHaveBeenCalledTimes(1);
-    const [, , inParams] = callProcScalar.mock.calls[0] as [
-      string,
-      unknown,
-      Record<string, unknown>,
-    ];
-    expect(inParams.P_ACC_COUNT).toBe(25);
+    expect(manager.query.mock.calls.some(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'))).toBe(true);
     expect(res.sensorApplyYn).toBe('Y');
+  });
+
+  it('keeps a processing-workstage result on an assembly line without inventory (W, X)', async () => {
+    const manager = useManager(upsertManager({ fixed: 'W091' }));
+
+    const res = await service.upsertResult(
+      { runNo: 'RUN-1', workstageCode: 'W091', resultQty: 10, resultStatus: 'DONE' } as never, 7, 'user-7',
+    );
+
+    expect(res.sensorApplyYn).toBe('X');
+    const insert = manager.query.mock.calls.find(([s]) => String(s).includes('INSERT INTO IP_PRODUCT_RESULT'));
+    expect(insert?.[1]?.[2]).toBe('W');
+    expect(manager.query.mock.calls.some(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'))).toBe(false);
+  });
+
+  describe('process WIP movement (routing, no material deduction)', () => {
+    const routingCall = () => query.mock.calls.find(([s]) => String(s).includes('P_ROUTING_RESULT_WIP'));
+    const flagRows = (flag: string) => (sql: string) =>
+      Promise.resolve(String(sql).includes('SELECT WORKSTAGE_ISSUE_YN AS "flag"') ? [{ flag }] : []);
+
+    it('moves the WIP when a non-packing process result is completed, without any BOM deduction', async () => {
+      const manager = useManager(upsertManager({ div: 'W' }));
+      query.mockImplementation(flagRows('Y'));
+
+      const res = await service.upsertResult(
+        { runNo: 'RUN-1', workstageCode: 'W090', resultQty: 10, resultStatus: 'DONE' } as never, 7, 'user-7',
+      );
+
+      expect(routingCall()?.[1]).toEqual(['RUN-1', '01', 7, 1]);
+      expect(manager.query.mock.calls.some(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'))).toBe(false);
+      expect(res.sensorApplyYn).toBe('Y');
+      expect(res.sensorWarning).toBeUndefined();
+    });
+
+    it('stays X when the item has no routing or the process is not in it (nothing moved)', async () => {
+      useManager(upsertManager({ div: 'W' }));
+      query.mockImplementation(flagRows('X'));
+      const res = await service.upsertResult(
+        { runNo: 'RUN-1', workstageCode: 'W090', resultQty: 10, resultStatus: 'DONE' } as never, 7, 'user-7',
+      );
+      expect(routingCall()).toBeDefined();
+      expect(res.sensorApplyYn).toBe('X');
+    });
+
+    it('does not move anything for an in-progress result', async () => {
+      useManager(upsertManager({ div: 'W' }));
+      await service.upsertResult({ runNo: 'RUN-1', workstageCode: 'W090', resultQty: 10, resultStatus: 'WIP' } as never, 7, 'user-7');
+      expect(routingCall()).toBeUndefined();
+    });
+
+    it('a completed packing result only does the packing BOM deduction (no WIP movement call)', async () => {
+      const manager = useManager(upsertManager());
+      query.mockImplementation(flagRows('Y'));
+      await service.upsertResult({ runNo: 'RUN-1', machineCode: 'MC-1', resultQty: 10, resultStatus: 'DONE' } as never, 7, 'user-7');
+      expect(manager.query.mock.calls.some(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'))).toBe(true);
+      expect(routingCall()).toBeUndefined();
+    });
+
+    it('keeps the result, stays X and warns when the movement step fails', async () => {
+      useManager(upsertManager({ div: 'W' }));
+      query.mockImplementation((sql: string) => (String(sql).includes('P_ROUTING_RESULT_WIP')
+        ? Promise.reject(new Error('ORA-01400: cannot insert NULL'))
+        : Promise.resolve([])));
+
+      const res = await service.upsertResult(
+        { runNo: 'RUN-1', workstageCode: 'W090', resultQty: 10, resultStatus: 'DONE' } as never, 7, 'user-7',
+      );
+
+      expect(res.seqNo).toBe('01');
+      expect(res.sensorApplyYn).toBe('X');
+      expect(res.sensorWarning).toContain('ORA-01400');
+      const note = query.mock.calls.find(([s]) => String(s).includes('SET WIP_APPLY_MSG=:1'));
+      expect(String(note?.[1]?.[0])).toContain('공정 재공 이동 실패');
+    });
+
+    it('reverts only the WIP movement when a reflected non-packing result is cancelled', async () => {
+      const manager = {
+        query: jest.fn().mockImplementation((sql: string) => (sql.includes('FOR UPDATE')
+          ? Promise.resolve([{ st: 'DONE', applied: 'Y', workDiv: 'W', today: 'Y' }])
+          : Promise.resolve([]))),
+      };
+      transaction.mockImplementation((callback: (value: typeof manager) => unknown) => callback(manager));
+      query.mockImplementation(flagRows('C'));
+
+      const res = await service.cancelResult({ runNo: 'RUN-1', seqNo: '01' } as never, 7, 'user-7');
+
+      expect(res).toEqual({ cancelled: true });
+      expect(manager.query.mock.calls.some(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'))).toBe(false);
+      expect(routingCall()?.[1]).toEqual(['RUN-1', '01', 7, -1]);
+    });
+
+    it('does not revert anything for a result that was never reflected', async () => {
+      const manager = {
+        query: jest.fn().mockImplementation((sql: string) => (sql.includes('FOR UPDATE')
+          ? Promise.resolve([{ st: 'DONE', applied: 'X', workDiv: 'W', today: 'Y' }])
+          : Promise.resolve([]))),
+      };
+      transaction.mockImplementation((callback: (value: typeof manager) => unknown) => callback(manager));
+      await service.cancelResult({ runNo: 'RUN-1', seqNo: '01' } as never, 7, 'user-7');
+      expect(routingCall()).toBeUndefined();
+    });
+
+    it('retries only the WIP movement for a completed non-packing result', async () => {
+      query.mockImplementation((sql: string) => Promise.resolve(String(sql).includes('FROM IP_PRODUCT_RESULT wr')
+        ? [{ resultStatus: 'DONE', sensorApplyYn: 'X', workDiv: 'W' }]
+        : String(sql).includes('SELECT WORKSTAGE_ISSUE_YN AS "flag"') ? [{ flag: 'Y' }] : []));
+      const res = await service.applySensor({ runNo: 'RUN-1', seqNo: '01' }, 7);
+      expect(routingCall()?.[1]).toEqual(['RUN-1', '01', 7, 1]);
+      expect(res.sensorApplyYn).toBe('Y');
+      expect(transaction).not.toHaveBeenCalled();
+    });
+  });
+
+  it('refuses a different process than the packing process on an assembly work order without a process', async () => {
+    useManager(upsertManager());
+    await expect(service.upsertResult(
+      { runNo: 'RUN-1', workstageCode: 'W040', resultQty: 10, resultStatus: 'WIP' } as never, 7, 'user-7',
+    )).rejects.toThrow('W220');
+  });
+
+  it('reverts the inventory with sign -1 when a reflected result is cancelled', async () => {
+    const manager = {
+      query: jest.fn().mockImplementation((sql: string) => {
+        if (sql.includes('FOR UPDATE')) return Promise.resolve([{ st: 'DONE', applied: 'Y', workDiv: 'P', today: 'Y' }]);
+        if (sql.includes('SELECT WORKSTAGE_ISSUE_YN')) return Promise.resolve([{ flag: 'C', msg: null }]);
+        return Promise.resolve([]);
+      }),
+    };
+    transaction.mockImplementation((callback: (value: typeof manager) => unknown) => callback(manager));
+
+    const res = await service.cancelResult({ runNo: 'RUN-1', seqNo: '01' } as never, 7, 'user-7');
+
+    expect(res).toEqual({ cancelled: true });
+    const cancel = manager.query.mock.calls.find(([s]) => String(s).includes("RESULT_STATUS='CANCEL'"));
+    expect(String(cancel?.[0])).toContain("PRODUCT_ACTUAL_STATUS='C'");
+    const call = manager.query.mock.calls.find(([s]) => String(s).includes('P_PRODUCT_RESULT_WIP'));
+    expect(call?.[1]).toEqual(['RUN-1', '01', 7, -1]);
+  });
+});
+
+describe('WorkResultService process-bound run cards', () => {
+  const query = jest.fn();
+  const transaction = jest.fn();
+  const dataSource = { manager: { query, transaction } } as unknown as DataSource;
+  const service = new WorkResultService(dataSource);
+
+  function managerFor(fixed: string | null) {
+    // 가공 라인(W) 지시 — 공정이 빈 예전 지시는 어느 공정 실적도 받는다
+    const manager = upsertManager({ fixed, div: 'W' });
+    transaction.mockImplementation((callback: (value: typeof manager) => unknown) => callback(manager));
+    return manager;
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    query.mockResolvedValue([]);
+  });
+
+  it('list filters by process but keeps unassigned run cards', async () => {
+    await service.list('2026-10-14', '2026-10-14', '34', undefined, 7, undefined, true, undefined, 'W091');
+    const [sql, params] = query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toMatch(/\(r\.WORKSTAGE_CODE = :\d+ OR r\.WORKSTAGE_CODE IS NULL\)/);
+    expect(params).toContain('W091');
+  });
+
+  it('rejects a result for a different process than the run card', async () => {
+    const manager = managerFor('W091');
+    await expect(service.upsertResult(
+      { runNo: 'R1', machineCode: 'M1', workstageCode: 'W120', resultQty: 5, resultStatus: 'WIP' } as never, 7, 'U',
+    )).rejects.toThrow('W091');
+    expect(manager.query.mock.calls.some(([s]) => String(s).startsWith('INSERT INTO IP_PRODUCT_RESULT'))).toBe(false);
+  });
+
+  it('keeps a legacy run card without a process unassigned (only the machine is written back)', async () => {
+    const manager = managerFor(null);
+    await service.upsertResult(
+      { runNo: 'R1', machineCode: 'M1', workstageCode: 'W091', resultQty: 5, resultStatus: 'WIP' } as never, 7, 'U',
+    );
+    const write = manager.query.mock.calls.find(([s]) => String(s).startsWith('UPDATE IP_PRODUCT_RUN_CARD'));
+    expect(String(write?.[0])).toContain('SET MACHINE_CODE=:1 WHERE');
+    expect(String(write?.[0])).not.toContain('WORKSTAGE_CODE');
+  });
+});
+
+describe('WorkResultService machine downtime core', () => {
+  const query = jest.fn();
+  const transaction = jest.fn();
+  const dataSource = { manager: { query, transaction } } as unknown as DataSource;
+  const service = new WorkResultService(dataSource);
+
+  /** 설비 잠금·진행중 조회·채번에 답하는 트랜잭션 매니저 */
+  function managerWith(opts: {
+    locked: string[];
+    open?: Array<{ machineCode: string; dtSeq: number; reasonCode: string | null }>;
+    updateAffected?: number;
+  }) {
+    const manager = {
+      query: jest.fn().mockImplementation((sql: string) => {
+        if (sql.includes('FROM IMCN_MACHINE m') && sql.includes('FOR UPDATE')) {
+          return Promise.resolve(opts.locked.map((machineCode) => ({ machineCode, workstageCode: 'W040', lineCode: '04' })));
+        }
+        if (sql.includes('END_TIME IS NULL') && sql.startsWith('SELECT')) return Promise.resolve(opts.open ?? []);
+        if (sql.includes('NEXTVAL')) return Promise.resolve([{ seq: 501 }]);
+        if (sql.startsWith('UPDATE')) return Promise.resolve(opts.updateAffected ?? 1);
+        return Promise.resolve([]);
+      }),
+    };
+    transaction.mockImplementation((callback: (value: typeof manager) => unknown) => callback(manager));
+    return manager;
+  }
+  const sqlOf = (manager: { query: jest.Mock }) => manager.query.mock.calls.map(([sql]) => String(sql));
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('locks only downtime-target machines (ES- code, in use, not TEMP) before starting', async () => {
+    const manager = managerWith({ locked: ['ES-E-055'] });
+    await service.bulkDowntime({ action: 'START', machineCodes: ['ES-E-055'], runNo: 'RUN-1' } as never, 1, 'U1');
+    const lock = sqlOf(manager).find((sql) => sql.includes('FOR UPDATE')) ?? '';
+    expect(lock).toContain("MACHINE_CODE LIKE 'ES-%'");
+    expect(lock).toContain("<> 'TEMP'");
+    const insert = manager.query.mock.calls.find(([sql]) => String(sql).includes('INSERT INTO IP_EQUIP_DOWNTIME_RESULT'));
+    // 설비 · 작업지시 · 라인/공정(설비마스터) · 사유 · 시작시각만 — 동반정지 같은 구분은 없다
+    expect(String(insert?.[0])).not.toContain('CAUSE_YN');
+    expect(insert?.[1]).toEqual(['RUN-1', 501, 1, 'ES-E-055', 'W040', '04', null, null, null, 'U1']);
+  });
+
+  it('rejects a machine that is not a downtime target (old serial code row)', async () => {
+    managerWith({ locked: [] });
+    await expect(
+      service.bulkDowntime({ action: 'START', machineCodes: ['HIT413H05'] } as never, 1, 'U1'),
+    ).rejects.toThrow('비가동 대상 설비가 아닙니다');
+  });
+
+  it('skips machines already stopped on START instead of failing the batch', async () => {
+    managerWith({ locked: ['ES-E-055', 'ES-E-058'], open: [{ machineCode: 'ES-E-055', dtSeq: 9, reasonCode: 'EB01' }] });
+    await expect(
+      service.bulkDowntime({ action: 'START', machineCodes: ['ES-E-055', 'ES-E-058'] } as never, 1, 'U1'),
+    ).resolves.toEqual({ affected: 1, skipped: 1, targets: 2, skippedMachines: ['ES-E-055'] });
+  });
+
+  it('keeps the start reason on END when no new reason is given, but refuses when none exists', async () => {
+    const manager = managerWith({ locked: ['ES-E-055'], open: [{ machineCode: 'ES-E-055', dtSeq: 9, reasonCode: 'EB01' }] });
+    await service.bulkDowntime({ action: 'END', machineCodes: ['ES-E-055'] } as never, 1, 'U1');
+    const update = sqlOf(manager).find((sql) => sql.startsWith('UPDATE')) ?? '';
+    expect(update).toContain('NVL(:1, REASON_CODE)');
+    expect(update).toContain('END_TIME IS NULL');
+
+    managerWith({ locked: ['ES-E-055'], open: [{ machineCode: 'ES-E-055', dtSeq: 9, reasonCode: null }] });
+    await expect(
+      service.bulkDowntime({ action: 'END', machineCodes: ['ES-E-055'] } as never, 1, 'U1'),
+    ).rejects.toThrow('종료 시 비가동 사유를 선택하세요');
+  });
+
+  it('refuses to end a downtime that another screen already closed', async () => {
+    managerWith({ locked: ['ES-E-055'], open: [{ machineCode: 'ES-E-055', dtSeq: 9, reasonCode: 'EB01' }], updateAffected: 0 });
+    await expect(
+      service.bulkDowntime({ action: 'END', machineCodes: ['ES-E-055'] } as never, 1, 'U1'),
+    ).rejects.toThrow('이미 종료된 비가동입니다');
+  });
+
+  it('locks the machine before checking for an open downtime on a single start', async () => {
+    const manager = managerWith({ locked: ['ES-E-055'] });
+    await service.bulkDowntime({ action: 'START', machineCodes: ['ES-E-055'] } as never, 1, 'U1');
+    const sqls = sqlOf(manager);
+    const lockAt = sqls.findIndex((sql) => sql.includes('FOR UPDATE'));
+    const openAt = sqls.findIndex((sql) => sql.includes('END_TIME IS NULL'));
+    expect(lockAt).toBeGreaterThanOrEqual(0);
+    expect(lockAt).toBeLessThan(openAt);
   });
 });

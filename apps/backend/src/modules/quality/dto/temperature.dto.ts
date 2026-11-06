@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import {
-  IsBooleanString, IsDateString, IsInt, IsOptional, IsString, Length, Max, Min,
+  IsBooleanString, IsDateString, IsInt, IsOptional, IsString, Length, Matches, Max, MaxLength, Min,
 } from 'class-validator';
 
 /**
@@ -27,4 +27,31 @@ export class TemperatureCheckQueryDto {
   @IsOptional() @IsString() confirmYn?: string;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page = 1;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(5000) limit = 500;
+}
+
+/** 'YYYY-MM-DD HH:mm[:ss]' 또는 'YYYY-MM-DDTHH:mm[:ss]' — 화면의 datetime-local 값 */
+export const DATE_TIME_TEXT = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?$/;
+
+/**
+ * 이상 점검이력 등록·수정 — PB w_pln_product_tempreture_history_query dw_5 (d_mcn_temerature_check_lst).
+ * 이상 시작·종료는 둘 다 넣어야 하고 시작이 종료보다 늦으면 안 된다 (PB UPDATE 검사).
+ */
+export class TemperatureCheckUpsertDto {
+  @IsString() @Length(1, 30) machineCode!: string;
+  @Matches(DATE_TIME_TEXT, { message: '이상 시작일시 형식이 올바르지 않습니다.' }) checkStartDate!: string;
+  @Matches(DATE_TIME_TEXT, { message: '이상 종료일시 형식이 올바르지 않습니다.' }) checkEndDate!: string;
+  @IsOptional() @IsString() @MaxLength(10) ngReasonCode?: string;
+  @IsOptional() @IsString() @MaxLength(10) actionCode?: string;
+  @IsOptional() @IsString() @MaxLength(1) confirmYn?: string;
+  @IsOptional() @IsString() @MaxLength(1000) comments?: string;
+}
+
+/** 이상 점검이력 키 — 설비 + 점검항번 (PB key 컬럼 그대로) */
+export class TemperatureCheckKeyDto {
+  @IsString() @Length(1, 30) machineCode!: string;
+  @Type(() => Number) @IsInt() @Min(1) checkSequence!: number;
+}
+
+export class TemperatureCheckUpdateDto extends TemperatureCheckUpsertDto {
+  @Type(() => Number) @IsInt() @Min(1) checkSequence!: number;
 }

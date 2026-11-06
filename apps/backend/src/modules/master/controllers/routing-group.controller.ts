@@ -7,9 +7,9 @@ import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import {
-  BulkSaveRoutingMaterialDto, CreateRoutingGroupDto, CreateRoutingProcessDto,
-  ReorderRoutingProcessesDto, RoutingGroupQueryDto, UpdateRoutingGroupDto,
-  UpdateRoutingProcessDto,
+  AssignRoutingItemsDto, BulkSaveRoutingMaterialDto, CreateRoutingGroupDto, CreateRoutingProcessDto,
+  ReorderRoutingProcessesDto, RoutingCandidateItemQueryDto, RoutingGroupQueryDto, RoutingMaterialQueryDto,
+  UpdateRoutingGroupDto, UpdateRoutingProcessDto,
 } from '../dto/routing-group.dto';
 import { RoutingGroupService } from '../services/routing-group.service';
 
@@ -22,6 +22,14 @@ export class RoutingGroupController {
   @Get()
   async findAll(@Query() query: RoutingGroupQueryDto, @OrganizationId() organizationId: number) {
     const result = await this.svc.findAllGroups(query, organizationId);
+    return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
+  }
+
+  // 정적 경로는 ':code' 보다 먼저 선언해야 'candidate-items' 가 코드로 매칭되지 않는다.
+  @Get('candidate-items')
+  @ApiOperation({ summary: '라우팅을 붙일 수 있는 반제품·완제품 후보' })
+  async findCandidateItems(@Query() query: RoutingCandidateItemQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.svc.findCandidateItems(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -44,6 +52,18 @@ export class RoutingGroupController {
   async delete(@Param('code') code: string, @OrganizationId() organizationId: number) {
     await this.svc.deleteGroup(code, organizationId);
     return ResponseUtil.success(null, '라우팅 그룹이 삭제되었습니다.');
+  }
+
+  @Get(':code/items')
+  @ApiOperation({ summary: '이 라우팅을 따르는 품목' })
+  async findItems(@Param('code') code: string, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.svc.findRoutingItems(code, organizationId));
+  }
+
+  @Put(':code/items')
+  @ApiOperation({ summary: '품목에 라우팅 배정·해제 (ID_ITEM.ROUTING_CODE)' })
+  async assignItems(@Param('code') code: string, @Body() dto: AssignRoutingItemsDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.svc.assignItems(code, dto, organizationId), '라우팅 적용 품목이 저장되었습니다.');
   }
 
   @Get(':code/processes')
@@ -74,8 +94,8 @@ export class RoutingGroupController {
   }
 
   @Get(':code/processes/:seq/materials')
-  async findMaterials(@Param('code') code: string, @Param('seq', ParseIntPipe) seq: number, @OrganizationId() organizationId: number) {
-    return ResponseUtil.success(await this.svc.findMaterials(code, seq, organizationId));
+  async findMaterials(@Param('code') code: string, @Param('seq', ParseIntPipe) seq: number, @Query() query: RoutingMaterialQueryDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.svc.findMaterials(code, seq, query.itemCode, organizationId));
   }
 
   @Put(':code/processes/:seq/materials')

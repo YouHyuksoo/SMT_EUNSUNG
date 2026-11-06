@@ -4,6 +4,7 @@
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import type { WipCheckRow, WipEntryRow } from './wip-stocktake';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' as const, filterType: 'number' as const };
 const fmt = (v: unknown) => Number(v ?? 0).toLocaleString(undefined, { maximumFractionDigits: 4 });
@@ -17,7 +18,7 @@ export const wipCheckColumns: ColumnDef<WipCheckRow>[] = [
   { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'itemName', header: '품목명', size: 170 },
   { accessorKey: 'itemSpec', header: '규격', size: 180 },
-  { accessorKey: 'lineType', header: '거래유형', size: 70, meta: { align: 'center' } },
+  { accessorKey: 'lineType', header: '거래유형', size: 100, meta: { align: 'center' }, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'bookQty', header: '장부수량', size: 120, meta: right, cell: (c) => fmt(c.getValue()) },
   {
     accessorKey: 'movedQty', header: '실사 중 입고로 빠짐', size: 130, meta: right,

@@ -14,16 +14,9 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  UploadedFile,
-  UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import type { Request } from 'express';
-import { extname, join } from 'path';
-import { existsSync, mkdirSync, unlinkSync } from 'fs';
-import { OrganizationId } from '../../../common/decorators/tenant.decorator';
-import { ApiTags, ApiOperation, ApiParam, ApiConsumes } from '@nestjs/swagger';
+import { OrganizationId, UserId } from '../../../common/decorators/tenant.decorator';
+import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { PartService } from '../services/part.service';
 import { CreatePartDto, UpdatePartDto, PartQueryDto } from '../dto/part.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
@@ -56,55 +49,6 @@ export class PartController {
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
-  @Post(':id/image')
-  @UseInterceptors(
-    FileInterceptor('image', {
-      storage: diskStorage({
-        destination: (_req: Request, file: Express.Multer.File, callback: (error: Error | null, destination: string) => void) => {
-          const uploadPath = './uploads/parts';
-          if (!existsSync(uploadPath)) {
-            mkdirSync(uploadPath, { recursive: true });
-          }
-          callback(null, uploadPath);
-        },
-        filename: (_req: Request, file: Express.Multer.File, callback: (error: Error | null, filename: string) => void) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          callback(null, `part-${uniqueSuffix}${extname(file.originalname)}`);
-        },
-      }),
-      fileFilter: (_req: Request, file: Express.Multer.File, callback: (error: Error | null, acceptFile: boolean) => void) => {
-        if (!file.mimetype.match(/\/jpg|jpeg|png|gif|webp$/)) {
-          return callback(new Error('Only image files are allowed!'), false);
-        }
-        callback(null, true);
-      },
-      limits: { fileSize: 5 * 1024 * 1024 },
-    }),
-  )
-  @ApiOperation({ summary: '품목 이미지 업로드' })
-  @ApiConsumes('multipart/form-data')
-  async uploadImage(
-    @Param('id') id: string,
-    @UploadedFile() file: Express.Multer.File,
-    @OrganizationId() organizationId: number,
-  ) {
-    const imageUrl = `/uploads/parts/${file.filename}`;
-    const data = await this.partService.updateImage(id, imageUrl, organizationId);
-    return ResponseUtil.success(data, '품목 이미지가 업로드되었습니다.');
-  }
-
-  @Delete(':id/image')
-  @ApiOperation({ summary: '품목 이미지 삭제' })
-  async removeImage(@Param('id') id: string, @OrganizationId() organizationId: number) {
-    const existing = await this.partService.findById(id, organizationId);
-    if (existing.imageUrl) {
-      const filePath = join('.', existing.imageUrl);
-      try { if (existsSync(filePath)) unlinkSync(filePath); } catch { /* ignore */ }
-    }
-    const data = await this.partService.updateImage(id, null, organizationId);
-    return ResponseUtil.success(data, '품목 이미지가 삭제되었습니다.');
-  }
-
   @Get(':id')
   @ApiOperation({ summary: '품목 상세 조회' })
   async findById(@Param('id') id: string, @OrganizationId() organizationId: number) {
@@ -115,15 +59,20 @@ export class PartController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '품목 생성' })
-  async create(@Body() dto: CreatePartDto, @OrganizationId() organizationId: number) {
-    const data = await this.partService.create(dto, organizationId);
+  async create(@Body() dto: CreatePartDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    const data = await this.partService.create(dto, organizationId, userId);
     return ResponseUtil.success(data, '품목이 생성되었습니다.');
   }
 
   @Put(':id')
   @ApiOperation({ summary: '품목 수정' })
-  async update(@Param('id') id: string, @Body() dto: UpdatePartDto, @OrganizationId() organizationId: number) {
-    const data = await this.partService.update(id, dto, organizationId);
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdatePartDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    const data = await this.partService.update(id, dto, organizationId, userId);
     return ResponseUtil.success(data, '품목이 수정되었습니다.');
   }
 

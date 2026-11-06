@@ -15,7 +15,7 @@
       "pbFunction": "f_bom_query_prc",
       "action": "native",
       "target": "PKG_DESIGN.BOM_QUERY(p_parent_item_code, p_dateset, p_org)",
-      "usedBy": "apps/backend/src/modules/smt/smt-comparison.service.ts, apps/backend/src/modules/smt/smt-nc.service.ts",
+      "usedBy": "apps/backend/src/modules/smt/smt-comparison.service.ts, apps/backend/src/modules/smt/smt-nc.service.ts, apps/backend/src/modules/warehouse/barcode-issue.service.ts",
       "note": "PB 는 SQLCA.BOM_QUERY 를 감싸기만 했다. 웹은 패키지 함수를 그대로 부른다. 세션번호를 돌려주고 ID_ENG_BOM_TEMP 에 전개행을 깐다 — 읽은 뒤 그 세션 행만 지운다 (이 표는 3,357,661행 / 세션 70,117개가 2020년부터 쌓여 있다). 477 자재소요량은 형제 함수 PKG_DESIGN.BOM_EXPLOSION 을 같은 방식으로 쓴다 (requirement-plan.service.ts)."
     },
     {
@@ -616,6 +616,20 @@
       "target": "SUBSTR(TO_CHAR(SYSDATE,'YYYY'),4,1) || F_GET_MONTH_CODE2(TO_CHAR(SYSDATE,'MM')) || F_GET_DAY_CODE(TO_CHAR(SYSDATE,'DD'))",
       "usedBy": "apps/backend/src/modules/warehouse/receipt-slip.service.ts",
       "note": "롯트번호 날짜접두어. YYYYMMDD 가 아니라 3글자 코드다 (2026-09-28 → 69S). DB 에 동명 함수가 없고 PB 본문이 쓰는 F_GET_MONTH_CODE2·F_GET_DAY_CODE 는 DB 함수라 그대로 부른다. 실측 롯트번호 303,081건이 8자(3+5)."
+    },
+    {
+      "pbFunction": "f_get_new_scan_qty",
+      "action": "inlined",
+      "target": "DECODE(NVL(NEW_SCAN_QTY,0),0,SCAN_QTY,NEW_SCAN_QTY) FROM IM_ITEM_RECEIPT_BARCODE",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-issue.service.ts",
+      "note": "반품 바코드의 현재 릴 수량 (Issue Return Auto Set Qty · 로스 계산). PB 본문이 SELECT 한 줄이라 그대로 인라인했다."
+    },
+    {
+      "pbFunction": "f_set_replace_item_4_issue_bom_query",
+      "action": "inlined",
+      "target": "ID_ITEM_REPLACE 를 출고 BOM SQL 에 UNION ALL ('REPLACE')",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-issue.service.ts",
+      "note": "PB 는 dw_5 를 다 읽은 뒤 행마다 ID_ITEM_REPLACE 를 커서로 열어 대체품 행을 끼워 넣었다. 웹은 같은 조건(유효기간 오늘)을 한 SQL 로 붙인다."
     }
   ]
 }

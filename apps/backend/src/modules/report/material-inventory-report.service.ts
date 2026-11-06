@@ -260,45 +260,106 @@ export class MaterialInventoryReportService {
   // ───────────────────────────────── 368 자재장기재고리포트
 
   /**
-   * 장기재고 — 마지막 입고가 기준일에서 N개월 이전인 재고.
+   * 장기재고 — 두 조건을 모두 만족하는 롯트.
+   *   1. 마지막 입고가 기준일에서 N개월 이전이다
+   *      (PB: `LAST_RECEIPT_DATE <= ADD_MONTHS(TO_DATE(:arg_date), :arg_term * -1)`).
+   *   2. 같은 N개월 동안 그 품목의 출고율이 기준 % 이하다.
+   *      출고율 = 기간 출고량 ÷ 품목 재고량 × 100. 기간 출고가 없으면 0% 다.
    *
-   * PB: `LAST_RECEIPT_DATE <= ADD_MONTHS(TO_DATE(:arg_date), :arg_term * -1)`.
-   * 기간이 아니라 **기준일 + 개월수**다.
+   * 출고는 **품목 단위**로 센다. 롯트(릴)는 통째로 출고돼 재고가 남은 롯트에는
+   * 출고 기록이 거의 없다 (재고 롯트 4,784개 중 출고 기록 있는 롯트 673개 — 실측).
+   * 출고는 양산(M001)·양산불량(M002)의 정상(N) 건만 센다 — 불용재고와 같은 기준이다.
+   * 롯트분할(M016)은 소비가 아니라 뺀다.
    *
-   * 품목명을 함께 보여준다 — PB 는 품목코드만 보여줘서 무엇이 잠겨 있는지
-   * 코드를 외우지 않으면 알 수 없었다.
+   * 품목 재고량은 조회 조건(롯트·협력사)과 상관없이 그 품목의 전체 재고다.
+   *
+   * 재고금액은 재고수량 × 기준일에 유효한 구매단가(IM_ITEM_UNIT_PRICE)다.
+   * 기준일에 유효한 단가가 없으면 최근 적용일 단가(현재 단가)를 쓴다.
+   * 재고 행의 INVENTORY_AMT 는 쓰지 않는다 — 재고 4,900행 중 금액이 있는 것은
+   * 125행뿐이고 그것도 단가 1 이다 (실측). 단가가 여러 개면 롯트의 거래유형,
+   * 품목 기준정보 공급처, 최근 적용일 순으로 고른다 (자재재고마감 기초단가와 같은 순서).
    */
   async findLongTermInventory(query: MaterialLongTermQueryDto, organizationId: number) {
     const rows = (await this.dataSource.query(
-      `SELECT v.ITEM_CODE                               AS "itemCode",
+      `WITH c AS (
+         SELECT v.*
+           FROM IM_ITEM_INVENTORY v
+          WHERE v.LAST_RECEIPT_DATE <= ADD_MONTHS(TO_DATE(:baseDate, 'YYYY-MM-DD'),
+                                                  :termMonths * -1)
+            AND v.ITEM_CODE LIKE :itemCode ESCAPE '\\'
+            AND NVL(v.MATERIAL_MFS, '*') LIKE :materialMfs ESCAPE '\\'
+            AND NVL(v.SUPPLIER_CODE, '*') LIKE :supplierCode ESCAPE '\\'
+            AND v.ORGANIZATION_ID = :organizationId
+            AND v.INVENTORY_QTY > 0
+       ), s AS (
+         -- 품목 전체 재고 (출고율의 분모)
+         SELECT ITEM_CODE, SUM(INVENTORY_QTY) AS ITEM_QTY
+           FROM IM_ITEM_INVENTORY
+          WHERE ORGANIZATION_ID = :organizationId
+            AND INVENTORY_QTY > 0
+            AND ITEM_CODE IN (SELECT ITEM_CODE FROM c)
+          GROUP BY ITEM_CODE
+       ), o AS (
+         SELECT ITEM_CODE,
+                SUM(CASE WHEN ISSUE_DATE >= ADD_MONTHS(TO_DATE(:baseDate, 'YYYY-MM-DD'),
+                                                       :termMonths * -1)
+                         THEN ISSUE_QTY ELSE 0 END) AS TERM_QTY,
+                MAX(ISSUE_DATE) AS LAST_ISSUE_DATE
+           FROM IM_ITEM_ISSUE
+          WHERE ORGANIZATION_ID = :organizationId
+            AND ISSUE_ACCOUNT IN ('M001', 'M002')
+            AND ISSUE_STATUS = 'N'
+            AND ISSUE_DATE < TO_DATE(:baseDate, 'YYYY-MM-DD') + 1
+            AND ITEM_CODE IN (SELECT ITEM_CODE FROM c)
+          GROUP BY ITEM_CODE
+       )
+       SELECT c.ITEM_CODE                               AS "itemCode",
               i.ITEM_NAME                               AS "itemName",
               i.ITEM_SPEC                               AS "itemSpec",
               i.ITEM_UOM                                AS "itemUom",
-              v.MATERIAL_MFS                            AS "materialMfs",
-              v.SUPPLIER_CODE                           AS "supplierCode",
-              F_GET_SUPPLIER_NAME(v.SUPPLIER_CODE, v.ORGANIZATION_ID) AS "supplierName",
-              v.INVENTORY_QTY                           AS "inventoryQty",
-              v.LOCATION_ADDRESS_RACK                   AS "locationAddressRack",
-              TO_CHAR(v.LAST_RECEIPT_DATE, 'YYYY-MM-DD')             AS "lastReceiptDate",
+              c.MATERIAL_MFS                            AS "materialMfs",
+              c.SUPPLIER_CODE                           AS "supplierCode",
+              F_GET_SUPPLIER_NAME(c.SUPPLIER_CODE, c.ORGANIZATION_ID) AS "supplierName",
+              c.INVENTORY_QTY                           AS "inventoryQty",
+              up.UNIT_PRICE                             AS "unitPrice",
+              ROUND(c.INVENTORY_QTY * up.UNIT_PRICE)    AS "inventoryAmt",
+              c.LOCATION_ADDRESS_RACK                   AS "locationAddressRack",
+              TO_CHAR(c.LAST_RECEIPT_DATE, 'YYYY-MM-DD')             AS "lastReceiptDate",
               -- 며칠째 입고가 없는지. PB 는 날짜만 보여줘 며칠인지 세어야 했다.
-              TRUNC(TO_DATE(:baseDate, 'YYYY-MM-DD') - TRUNC(v.LAST_RECEIPT_DATE))
-                                                        AS "idleDays"
-         FROM IM_ITEM_INVENTORY v
+              TRUNC(TO_DATE(:baseDate, 'YYYY-MM-DD') - TRUNC(c.LAST_RECEIPT_DATE))
+                                                        AS "idleDays",
+              s.ITEM_QTY                                AS "itemInventoryQty",
+              NVL(o.TERM_QTY, 0)                        AS "termIssueQty",
+              ROUND(NVL(o.TERM_QTY, 0) / s.ITEM_QTY * 100, 2) AS "issueRate",
+              TO_CHAR(o.LAST_ISSUE_DATE, 'YYYY-MM-DD')  AS "lastIssueDate"
+         FROM c
+         JOIN s ON s.ITEM_CODE = c.ITEM_CODE
+         LEFT JOIN o ON o.ITEM_CODE = c.ITEM_CODE
          LEFT JOIN ID_ITEM i
-                ON i.ITEM_CODE = v.ITEM_CODE
-               AND i.ORGANIZATION_ID = v.ORGANIZATION_ID
-        WHERE v.LAST_RECEIPT_DATE <= ADD_MONTHS(TO_DATE(:baseDate, 'YYYY-MM-DD'),
-                                                :termMonths * -1)
-          AND v.ITEM_CODE LIKE :itemCode ESCAPE '\\'
-          AND NVL(v.MATERIAL_MFS, '*') LIKE :materialMfs ESCAPE '\\'
-          AND NVL(v.SUPPLIER_CODE, '*') LIKE :supplierCode ESCAPE '\\'
-          AND v.ORGANIZATION_ID = :organizationId
-          AND v.INVENTORY_QTY > 0
-        ORDER BY v.LAST_RECEIPT_DATE, v.ITEM_CODE
+                ON i.ITEM_CODE = c.ITEM_CODE
+               AND i.ORGANIZATION_ID = c.ORGANIZATION_ID
+        OUTER APPLY (
+          -- 기준일에 유효한 단가가 없으면 적용일과 상관없이 최근 적용일 단가(현재 단가)를 쓴다.
+          SELECT MAX(p.UNIT_PRICE) KEEP (DENSE_RANK FIRST ORDER BY
+                     CASE WHEN TRUNC(p.DATESET) <= TO_DATE(:baseDate, 'YYYY-MM-DD')
+                           AND p.DATEEND >= TO_DATE(:baseDate, 'YYYY-MM-DD')
+                          THEN 0 ELSE 1 END,
+                     CASE WHEN p.LINE_TYPE = c.LINE_TYPE THEN 0 ELSE 1 END,
+                     CASE WHEN p.SUPPLIER_CODE = i.SUPPLIER_CODE THEN 0 ELSE 1 END,
+                     p.DATESET DESC) AS UNIT_PRICE
+            FROM IM_ITEM_UNIT_PRICE p
+           WHERE p.ITEM_CODE = c.ITEM_CODE
+             AND p.ORGANIZATION_ID = c.ORGANIZATION_ID
+             AND p.UNIT_PRICE IS NOT NULL
+        ) up
+        -- 기간 출고가 없으면 0% 라 기준이 0 이어도 걸린다.
+        WHERE NVL(o.TERM_QTY, 0) / s.ITEM_QTY * 100 <= :maxIssueRate
+        ORDER BY c.LAST_RECEIPT_DATE, c.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       namedBinds({
         baseDate: query.baseDate,
         termMonths: query.termMonths,
+        maxIssueRate: query.maxIssueRate ?? 0,
         itemCode: likePrefix(query.itemCode),
         materialMfs: likePrefix(query.materialMfs),
         supplierCode: likePrefix(query.supplierCode),

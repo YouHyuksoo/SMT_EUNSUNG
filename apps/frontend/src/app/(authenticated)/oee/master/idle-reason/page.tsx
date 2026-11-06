@@ -2,7 +2,7 @@
 
 /**
  * @file (authenticated)/oee/master/idle-reason/page.tsx
- * @description 설비 비가동 사유코드 관리 — 사유코드·표준시간(대상/비대상)·분류별 매뉴얼(BFILE) 등록·조회 (IP_EQUIP_DOWNTIME_REASON 실 DB 연결)
+ * @description 비가동사유마스터 — 사유코드·표준시간(대상/비대상)·분류별 매뉴얼(BFILE) 등록·조회 (IP_EQUIP_DOWNTIME_REASON 실 DB 연결)
  *
  * API(글로벌 prefix /api → 백엔드 /api/v1):
  *   GET/POST/PUT /oee/idle-reason , DELETE /oee/idle-reason/:reasonCode
@@ -232,8 +232,8 @@ export default function IdleReasonMasterPage() {
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden p-6 gap-4">
         <div className="flex items-center justify-between flex-shrink-0">
           <div>
-            <h1 className="text-xl font-bold text-text">설비 비가동 사유코드 관리</h1>
-            <p className="text-sm text-text-muted mt-1">설비 비가동 사유코드 · 표준시간 · 분류별 매뉴얼(BFILE) 관리</p>
+            <h1 className="text-xl font-bold text-text">비가동사유마스터</h1>
+            <p className="text-sm text-text-muted mt-1">비가동 사유코드 · 표준시간 · 분류별 매뉴얼(BFILE) 관리</p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={search} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
@@ -252,7 +252,7 @@ export default function IdleReasonMasterPage() {
               enableColumnFilter
               enableExport
               enableFullscreen
-              exportFileName="설비비가동사유코드관리"
+              exportFileName="비가동사유마스터"
               emptyMessage={records.length ? '조회 결과가 없습니다' : '등록된 사유코드가 없습니다'}
               getRowId={(r) => r.reasonCode}
               toolbarLeft={
@@ -272,7 +272,7 @@ export default function IdleReasonMasterPage() {
         <div className="w-[540px] flex-shrink-0 border-l border-border bg-background flex flex-col h-full overflow-hidden shadow-2xl animate-slide-in-right">
           {/* 헤더: 취소/저장 (상단) */}
           <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
-            <h2 className="text-sm font-bold text-text">{form.isEdit ? '설비 비가동 사유코드 수정' : '설비 비가동 사유코드 등록'}</h2>
+            <h2 className="text-sm font-bold text-text">{form.isEdit ? '비가동사유 수정' : '비가동사유 등록'}</h2>
             <div className="flex items-center gap-2">
               <button onClick={() => setForm(null)} className="px-3 py-2 rounded border border-border text-text-muted text-sm">취소</button>
               <button onClick={save} className="px-4 py-2 rounded bg-primary text-white text-sm">저장</button>

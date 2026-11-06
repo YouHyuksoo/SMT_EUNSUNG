@@ -33,17 +33,12 @@ import type { ArrivalRow } from '../purchase-columns';
 type Tab = 'pending' | 'history';
 
 const today = () => getTodayLocal();
-const monthsAgo = (n: number) => {
-  const d = new Date();
-  d.setMonth(d.getMonth() - n);
-  return getTodayLocal(d);
-};
 const apiMessage = (error: unknown) =>
   (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
 
 export default function ArrivalPage() {
   const [tab, setTab] = useState<Tab>('pending');
-  const [dateFrom, setDateFrom] = useState(monthsAgo(1));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [supplierCond, setSupplierCond] = useState('');
   const [orderNoCond, setOrderNoCond] = useState('');

@@ -6,9 +6,43 @@ import { DataSource, IsNull, Repository } from 'typeorm';
 import { EquipDowntimeReason } from '../../entities/equip-downtime-reason.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { OeeDowntimeEvent } from '../../entities/oee-downtime-event.entity';
-import { WorktimeRange } from '../../entities/worktime-range.entity';
 import { MockLoggerService } from '@test/mock-logger.service';
 import { OeeMobileService } from './oee-mobile.service';
+
+import {
+  findDbNow, findOeeWorkContext, worktimeRangeType, type OeeMobileWorkContext,
+} from './oee-mobile-worktime';
+
+// 업무일·근무구간·지금 시각은 DB 가 정한다(oee-mobile-worktime.ts). 여기서는 가짜 시계를 DB 시각으로 본다.
+jest.mock('./oee-mobile-worktime', () => ({
+  ...jest.requireActual('./oee-mobile-worktime'),
+  findOeeWorkContext: jest.fn(),
+  findDbNow: jest.fn(),
+}));
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const KST_MS = 9 * 60 * 60 * 1000;
+/** 테스트용 DB 시각 — 가짜 시계를 초 단위로 자른다 (SYSDATE 와 같은 정밀도) */
+function dbClock(): Date {
+  const now = new Date();
+  now.setMilliseconds(0);
+  return now;
+}
+/** 실제 SQL 과 같은 규칙: 08:30 전이면 전날 업무일, 08:30~20:30 주간 */
+function workContextAt(now: Date): OeeMobileWorkContext {
+  const kst = new Date(now.getTime() + KST_MS);
+  const minutes = kst.getUTCHours() * 60 + kst.getUTCMinutes();
+  const day = new Date(Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate()) - (minutes < 510 ? DAY_MS : 0));
+  const workDate = day.toISOString().slice(0, 10);
+  const workDay = new Date(day.getTime() - KST_MS);
+  return {
+    workDate,
+    workDay,
+    workSegment: minutes >= 510 && minutes < 1230 ? 'DAY' : 'NIGHT',
+    now,
+    workStart: new Date(workDay.getTime() + 510 * 60 * 1000),
+  };
+}
 
 describe('OeeMobileService', () => {
   let target: OeeMobileService;
@@ -16,14 +50,14 @@ describe('OeeMobileService', () => {
   let userRepository: DeepMocked<Repository<IsysUser>>;
   let reasonRepository: DeepMocked<Repository<EquipDowntimeReason>>;
   let eventRepository: DeepMocked<Repository<OeeDowntimeEvent>>;
-  let worktimeRepository: DeepMocked<Repository<WorktimeRange>>;
 
   beforeEach(async () => {
+    jest.mocked(findDbNow).mockImplementation(async () => dbClock());
+    jest.mocked(findOeeWorkContext).mockImplementation(async () => workContextAt(dbClock()));
     dataSource = createMock<DataSource>();
     userRepository = createMock<Repository<IsysUser>>();
     reasonRepository = createMock<Repository<EquipDowntimeReason>>();
     eventRepository = createMock<Repository<OeeDowntimeEvent>>();
-    worktimeRepository = createMock<Repository<WorktimeRange>>();
     eventRepository.findOne.mockResolvedValue(null);
     eventRepository.find.mockResolvedValue([]);
     dataSource.query.mockResolvedValue([
@@ -46,7 +80,6 @@ describe('OeeMobileService', () => {
         { provide: getRepositoryToken(IsysUser), useValue: userRepository },
         { provide: getRepositoryToken(EquipDowntimeReason), useValue: reasonRepository },
         { provide: getRepositoryToken(OeeDowntimeEvent), useValue: eventRepository },
-        { provide: getRepositoryToken(WorktimeRange), useValue: worktimeRepository },
       ],
     })
       .setLogger(new MockLoggerService())
@@ -386,17 +419,6 @@ describe('OeeMobileService', () => {
     const now = new Date('2026-08-07T08:30:00+09:00');
     jest.useFakeTimers().setSystemTime(now);
     try {
-      worktimeRepository.find.mockResolvedValue([
-        {
-          organizationId: 7,
-          rangeType: 'SMTWORKTIME',
-          workType: 'A',
-          startTime: '083000',
-          endTime: '103000',
-          attribute01: null,
-          attribute02: null,
-        },
-      ] as WorktimeRange[]);
 
       await expect(
         target.getStatus('SMT', 'CELL', '02', '01', 7, 'EUNSUNG', '1'),
@@ -446,26 +468,13 @@ describe('OeeMobileService', () => {
         sortOrder: 1,
       },
     ]);
-    worktimeRepository.find.mockResolvedValue([
-      {
-        organizationId: 7,
-        rangeType,
-        workType: 'A',
-        startTime: '083000',
-        endTime: '103000',
-        attribute01: null,
-        attribute02: null,
-      },
-    ] as WorktimeRange[]);
     jest.useFakeTimers().setSystemTime(new Date('2026-08-07T08:30:00+09:00'));
     try {
       await expect(
         target.getStatus(processCode, resourceType, refCode, refCode, 7, 'EUNSUNG', '1'),
       ).resolves.toMatchObject({ state: 'RUNNING', workSegment: 'DAY' });
-      expect(worktimeRepository.find).toHaveBeenCalledWith({
-        where: { organizationId: 7, rangeType },
-        order: { workType: 'ASC' },
-      });
+      expect(findOeeWorkContext).toHaveBeenCalledWith(dataSource, processCode, 7);
+      expect(worktimeRangeType(processCode)).toBe(rangeType);
     } finally {
       jest.useRealTimers();
     }
@@ -518,7 +527,9 @@ describe('OeeMobileService', () => {
       organizationId: 7,
       useYn: 'Y',
     } as EquipDowntimeReason);
-    worktimeRepository.find.mockResolvedValue([]);
+    jest.mocked(findOeeWorkContext).mockRejectedValueOnce(
+      new BadRequestException('현재 업무시간 구간이 없습니다.'),
+    );
     await expect(target.startDowntime(command, 7, 'EUNSUNG', '1', 'LOGIN01')).rejects.toThrow(
       BadRequestException,
     );
@@ -565,17 +576,6 @@ describe('OeeMobileService', () => {
         organizationId: 7,
         useYn: 'Y',
       } as EquipDowntimeReason);
-      worktimeRepository.find.mockResolvedValue([
-        {
-          organizationId: 7,
-          rangeType: 'SMTWORKTIME',
-          workType: 'A',
-          startTime: '083000',
-          endTime: '103000',
-          attribute01: null,
-          attribute02: null,
-        },
-      ] as WorktimeRange[]);
       eventRepository.create.mockImplementation(
         (value) => value as unknown as OeeDowntimeEvent,
       );
@@ -715,16 +715,6 @@ describe('OeeMobileService', () => {
         organizationId: 7,
         useYn: 'Y',
       } as EquipDowntimeReason);
-      worktimeRepository.find.mockResolvedValue([
-        {
-          rangeType: 'SMTWORKTIME',
-          workType: 'A',
-          startTime: '083000',
-          endTime: '103000',
-          attribute01: null,
-          attribute02: null,
-        },
-      ] as WorktimeRange[]);
 
       await expect(target.startDowntime(command, 7, 'EUNSUNG', '1', 'LOGIN01')).rejects.toThrow(
         ConflictException,
@@ -851,16 +841,6 @@ describe('OeeMobileService', () => {
           sortOrder: 1,
         },
       ]);
-      worktimeRepository.find.mockResolvedValue([
-        {
-          rangeType: 'SMTWORKTIME',
-          workType: 'G',
-          startTime: '223000',
-          endTime: '003000',
-          attribute01: '0',
-          attribute02: '1',
-        },
-      ] as WorktimeRange[]);
       const openEvent = { eventId: 10, endTime: null } as OeeDowntimeEvent;
       eventRepository.find.mockResolvedValue([openEvent]);
       eventRepository.findOne.mockResolvedValue(openEvent);
@@ -924,16 +904,6 @@ describe('OeeMobileService', () => {
         organizationId: 7,
         useYn: 'Y',
       } as EquipDowntimeReason);
-      worktimeRepository.find.mockResolvedValue([
-        {
-          rangeType: 'SMTWORKTIME',
-          workType: 'A',
-          startTime: '083000',
-          endTime: '103000',
-          attribute01: null,
-          attribute02: null,
-        },
-      ] as WorktimeRange[]);
       eventRepository.findOne
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null)
@@ -1004,16 +974,6 @@ describe('OeeMobileService', () => {
         organizationId: 7,
         useYn: 'Y',
       } as EquipDowntimeReason);
-      worktimeRepository.find.mockResolvedValue([
-        {
-          rangeType: 'SMTWORKTIME',
-          workType: 'A',
-          startTime: '083000',
-          endTime: '103000',
-          attribute01: null,
-          attribute02: null,
-        },
-      ] as WorktimeRange[]);
       eventRepository.findOne
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null)

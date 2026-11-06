@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Ban, ScanLine, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import { kittingPidColumns, kittingRunCardColumns } from '../planning-columns';
@@ -92,8 +93,8 @@ export default function RunCardPidPage() {
   }, [selected, loadPids]);
 
   /** 스캔 한 건 처리. 성공하면 입력칸을 비우고 다시 포커스를 준다. */
-  const handleScan = useCallback(async () => {
-    const serialNo = scanValue.trim();
+  const handleScan = useCallback(async (scanned: string) => {
+    const serialNo = scanned.trim();
     if (!selected || serialNo === '') return;
     setBusy(true);
     try {
@@ -120,7 +121,7 @@ export default function RunCardPidPage() {
       setBusy(false);
       scanRef.current?.focus();
     }
-  }, [scanValue, selected, mode, modelMatching, loadPids]);
+  }, [selected, mode, modelMatching, loadPids]);
 
   const clear = useCallback(async () => {
     if (!selected) return;
@@ -200,20 +201,15 @@ export default function RunCardPidPage() {
               </Button>
             ))}
           </div>
-          <Input
+          <BarcodeScanInput
             ref={scanRef}
             aria-label="PID 스캔"
             placeholder={selected ? 'PID 를 스캔하세요' : '먼저 위에서 롯트카드를 고르세요'}
             value={scanValue}
             disabled={!selected || busy}
             className="w-72"
-            onChange={(e) => setScanValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                void handleScan();
-              }
-            }}
+            onChange={setScanValue}
+            onScan={handleScan}
           />
           {mode === 'scan' && (
             <label className="flex items-center gap-2 text-sm text-text">

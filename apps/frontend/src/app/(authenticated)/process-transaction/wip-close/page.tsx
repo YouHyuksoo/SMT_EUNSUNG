@@ -19,6 +19,7 @@ import toast from 'react-hot-toast';
 import { Calculator, Lock, Unlock } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import PartSearchField from '@/components/shared/PartSearchField';
 import { wipCloseColumns } from './columns';
 import { apiMessage, wipCloseApi, type WipCloseLine, type WipCloseStatus } from './wip-close';
 
@@ -133,7 +134,7 @@ export default function WipClosePage() {
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" variant="secondary" data-tooltip={TIP.preview}
             onClick={() => load()} disabled={loading}>
-            <Calculator className="mr-1 h-4 w-4" />계산
+            <Calculator className="mr-1 h-4 w-4" />미리보기
           </Button>
           <Button size="sm" data-tooltip={status?.reason ?? TIP.close}
             disabled={busy || loading || !status?.canClose} onClick={() => setPending('close')}>
@@ -153,7 +154,7 @@ export default function WipClosePage() {
           </label>
           <Input id="wip-close-month" type="month" value={month} className="w-40"
             onChange={(e) => setMonth(e.target.value)} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-48"
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-48"
             onChange={(e) => setItemCode(e.target.value)} />
           <span className={`text-sm ${status?.closed ? 'text-primary' : 'text-text-muted'}`}>{statusText}</span>
           {status && !status.closed && status.reason && (

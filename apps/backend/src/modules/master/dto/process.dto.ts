@@ -125,12 +125,6 @@ export class CreateProcessDto {
   @IsNumber()
   standardQty?: number;
 
-  @ApiPropertyOptional({ description: '시간당 생산량(UPH)' })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  uphValue?: number;
-
   @ApiPropertyOptional({ description: '생산능력(Capacity)' })
   @IsOptional()
   @Type(() => Number)

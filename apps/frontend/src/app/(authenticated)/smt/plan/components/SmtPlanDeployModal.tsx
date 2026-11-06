@@ -16,6 +16,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Play } from 'lucide-react';
 import { Button, Input, Modal } from '@/components/ui';
+import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import api from '@/services/api';
 import { SmtModelSelect, SmtPcbItemSelect } from '../../components/SmtSelects';
 
@@ -80,7 +81,7 @@ export default function SmtPlanDeployModal({
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">라인코드 *</span>
-            <Input value={lineCode} onChange={(e) => setLineCode(e.target.value)} />
+            <ProdLineSelect value={lineCode} onChange={setLineCode} fullWidth />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">PCB 면 * (양면 불가)</span>

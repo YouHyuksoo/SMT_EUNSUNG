@@ -30,7 +30,6 @@ export const PROCESS_FIELD_HELP = {
   stValue: { db: `${T}.ST_VALUE`, description: "정상 근무시간(ST)입니다." },
   otValue: { db: `${T}.OT_VALUE`, description: "초과 근무시간(OT)입니다." },
   standardQty: { db: `${T}.STANDARD_QTY`, description: "표준 생산 수량입니다." },
-  uphValue: { db: `${T}.UPH_VALUE`, description: "시간당 생산량(Units Per Hour)입니다. 생산능력 계산의 기준입니다." },
   capacity: { db: `${T}.CAPACITY`, description: "공정의 생산능력입니다." },
   capacityUom: { db: `${T}.CAPACITY_UOM`, description: "생산능력의 단위입니다 (ST=수량, KG=중량)." },
   useRate: { db: `${T}.USE_RATE`, description: "공정 가동률(%)입니다." },

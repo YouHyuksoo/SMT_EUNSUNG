@@ -76,7 +76,7 @@ describe('AppModule activated API modules', () => {
     expect(databaseModuleSource).toMatch(/entities:\s*\[[\s\S]*\bOeeDowntimeEvent\b/);
     expect(databaseModuleSource).toMatch(/entities:\s*\[[\s\S]*\bWorktimeRange\b/);
     expect(oeeModuleSource).toMatch(/forFeature\(\[[\s\S]*\bOeeDowntimeEvent\b/);
-    expect(oeeModuleSource).toMatch(/forFeature\(\[[\s\S]*\bWorktimeRange\b/);
+    // 업무시간 구간은 DB 쿼리(oee-mobile-worktime.ts)로 읽어 OEE 모듈은 WorktimeRange 저장소를 쓰지 않는다
     expect(oeeModuleSource).toMatch(/forFeature\(\[[\s\S]*\bIsysUser\b/);
     expect(oeeModuleSource).toMatch(/forFeature\(\[[\s\S]*\bComCode\b/);
   });

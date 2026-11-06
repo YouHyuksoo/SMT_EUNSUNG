@@ -8,19 +8,25 @@
  * 1. useMenuTree()로 권한 필터링된 메뉴 트리를 받아 리프(경로 있는) 항목만 평탄화
  * 2. Ctrl/Cmd+K로 어디서든 검색창 포커스, 방향키로 결과 탐색, Enter로 이동
  * 3. 클릭 외부 감지로 드롭다운 닫기
+ * 4. 이동은 사이드바·즐겨찾기와 같은 경로다 — addTab 후 navigateClientOnly. 화면은 탭으로 열리므로
+ *    Next router.push 만 쓰면 탭이 생기지 않아 페이지가 열리지 않는다.
  */
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { Search, CornerDownLeft } from "lucide-react";
 import Input from "@/components/ui/Input";
 import { useMenuTree } from "@/hooks/useMenuTree";
 import type { MenuConfigItem } from "@/config/menuConfig";
+import { useTabStore } from "@/stores/tabStore";
+import { navigateClientOnly } from "./clientNavigation";
 
 interface SearchableMenuItem {
   code: string;
   path: string;
+  labelKey: string;
+  /** 탭 parentId — 사이드바와 같이 바로 위 그룹 코드(없으면 자기 코드) */
+  parentCode: string;
   label: string;
   breadcrumb: string;
 }
@@ -32,6 +38,7 @@ function flattenSearchable(
   isMenuDisabled: (item: MenuConfigItem) => boolean,
   t: TFunction,
   parentLabel = "",
+  parentCode = "",
 ): SearchableMenuItem[] {
   const result: SearchableMenuItem[] = [];
   for (const item of items) {
@@ -41,6 +48,8 @@ function flattenSearchable(
         result.push({
           code: item.code,
           path: item.path,
+          labelKey: item.labelKey,
+          parentCode: parentCode || item.code,
           label,
           breadcrumb: parentLabel ? `${parentLabel} > ${label}` : label,
         });
@@ -48,7 +57,7 @@ function flattenSearchable(
       continue;
     }
     if (item.children) {
-      result.push(...flattenSearchable(item.children, isMenuDisabled, t, label));
+      result.push(...flattenSearchable(item.children, isMenuDisabled, t, label, item.code));
     }
   }
   return result;
@@ -56,7 +65,7 @@ function flattenSearchable(
 
 export default function HeaderMenuSearch() {
   const { t } = useTranslation();
-  const router = useRouter();
+  const addTab = useTabStore((s) => s.addTab);
   const { items, isMenuDisabled } = useMenuTree();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -109,11 +118,14 @@ export default function HeaderMenuSearch() {
   }, [open]);
 
   const goTo = useCallback((item: SearchableMenuItem) => {
-    router.push(item.path);
+    const opened = addTab({ id: item.code, path: item.path, labelKey: item.labelKey, parentId: item.parentCode });
+    // 최대 탭 수 초과로 차단되면 이동도 막는다(안내 모달은 TabBar 가 표시)
+    if (!opened) return;
+    navigateClientOnly(item.path);
     setQuery("");
     setOpen(false);
     inputRef.current?.blur();
-  }, [router]);
+  }, [addTab]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Escape") {

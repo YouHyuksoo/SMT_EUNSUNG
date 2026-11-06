@@ -10,7 +10,6 @@
  *   344 SMT PICKUP 리포트     w_smt_pickup_rate_rpt                    → ProductionReportService
  *   346 생산계획리포트        w_pln_master_plan_rpt                    → ProductionReportService
  *   347 런카드리포트          w_product_run_card_rpt                   → ProductionReportService
- *   348 제품 판매실적         w_prd_product_fg_issue_rpt               → ProductionReportService
  *   350 공정재공조회          w_product_workstage_stock_rpt            → ProductionReportService
  *   352 공정매거진조회        w_product_workstage_magazine_stock_rpt   → ProductionReportService
  *
@@ -47,9 +46,10 @@ import { MaterialIssueReportService } from './material-issue-report.service';
 import { MaterialReceiptReportService } from './material-receipt-report.service';
 import { MoldJigReportService } from './mold-jig-report.service';
 import { ProductionReportService } from './production-report.service';
+import { PurchaseDailyController } from './purchase-daily.controller';
+import { PurchaseDailyService } from './purchase-daily.service';
 import {
   CarrierBarcodeController,
-  FgIssueReportController,
   ItemMasterReportController,
   LineBarcodeReportController,
   MachineReportController,
@@ -84,7 +84,6 @@ import {
     PickupRateReportController,
     MasterPlanReportController,
     RunCardReportController,
-    FgIssueReportController,
     WorkstageStockReportController,
     MagazineStockReportController,
     MaterialBarcodeSlipController,
@@ -100,6 +99,7 @@ import {
     JigReportController,
     MoldReportController,
     FourMHistoryController,
+    PurchaseDailyController,
   ],
   providers: [
     MasterReportService,
@@ -109,6 +109,7 @@ import {
     MaterialIssueReportService,
     MaterialInventoryReportService,
     MoldJigReportService,
+    PurchaseDailyService,
   ],
 })
 export class ReportModule {}

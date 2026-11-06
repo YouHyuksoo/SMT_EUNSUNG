@@ -5,6 +5,7 @@
  *   동일한 connectString을 쓰도록 이 한 곳에서만 생성한다.
  *   oracledb/fs 등 서버 전용 모듈을 import하지 않아 클라이언트에서도 안전하게 사용 가능.
  */
+import { buildOracleConnectString, splitOracleHosts } from '@smt/shared';
 import type { DatabaseConfig } from '@/types/option';
 
 /**
@@ -15,6 +16,14 @@ import type { DatabaseConfig } from '@/types/option';
  *   디스크립터로 명시한다.
  */
 export function buildConnectString(cfg: DatabaseConfig): string {
+  // host 에 쉼표로 주소를 여러 개 적으면 앞에서부터 차례로 접속한다 (내부 → 외부).
+  if (splitOracleHosts(cfg.host).length > 1) {
+    return buildOracleConnectString({
+      host: cfg.host,
+      port: cfg.port,
+      ...(cfg.connectionType === 'SERVICE_NAME' ? { serviceName: cfg.sidOrService } : { sid: cfg.sidOrService }),
+    });
+  }
   if (cfg.connectionType === 'SERVICE_NAME') {
     return `${cfg.host}:${cfg.port}/${cfg.sidOrService}`;
   }

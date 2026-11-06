@@ -12,9 +12,9 @@ import ModelSearchField from '@/components/shared/ModelSearchField';
 import api from '@/services/api';
 import type { ResultQueryDefinition } from '../_lib/result-query-definitions';
 
+import { getTodayLocal } from '@/utils/date';
 type ResultRow = Record<string, unknown>;
-const today = () => new Date().toISOString().slice(0, 10);
-const monthAgo = () => { const date = new Date(); date.setMonth(date.getMonth() - 1); return date.toISOString().slice(0, 10); };
+const today = () => getTodayLocal();
 const resultOptions = ['', 'OK', 'NG', 'USEROK', 'USERNG'].map(value => ({ value, label: value || '전체 결과' }));
 const formatValue = (value: unknown) => value instanceof Date ? value.toLocaleString('ko-KR') : value == null ? '' : String(value);
 
@@ -22,7 +22,7 @@ export default function EquipmentResultQueryPage({ definition }: { definition: R
   const [rows, setRows] = useState<ResultRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [dateFrom, setDateFrom] = useState(monthAgo);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [lineCode, setLineCode] = useState('');
   const [pid, setPid] = useState('');

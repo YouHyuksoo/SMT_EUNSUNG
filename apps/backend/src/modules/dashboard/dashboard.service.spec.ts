@@ -10,6 +10,7 @@
  */
 import { Test, TestingModule } from '@nestjs/testing';
 import { DashboardService } from './dashboard.service';
+import { DASHBOARD_INSIGHTS_SQL } from './dashboard-insights.sql';
 import { DataSource } from 'typeorm';
 import { OracleService } from '../../common/services/oracle.service';
 import { MockLoggerService } from '@test/mock-logger.service';
@@ -90,6 +91,28 @@ describe('DashboardService', () => {
       expect(qc[0]).toContain('TRUNC(SYSDATE)');
     });
 
+    it('product actual comes from confirmed work results on the business day, not process-pass history', async () => {
+      mockDataSource.query.mockImplementation(async (sql: string) => answer(sql));
+
+      await target.getSummary('2026-10-14');
+
+      const sqls = (mockDataSource.query.mock.calls as [string, unknown][]).map(([sql]) => sql);
+      expect(sqls.some((sql) => sql.includes('IP_PRODUCT_ACTUAL_TIME_V'))).toBe(false);
+      const prod = sqls.find((sql) => sql.includes('"miActual"'))!;
+      expect(prod).toContain("wr.RESULT_STATUS = 'DONE'");
+      expect(prod).toContain("F_GET_WORK_ACTUAL_DATE(x.ENTER_DATE, 'A')");
+    });
+
+    it('product plan is the order quantity of that day (run cards), compared order by order', async () => {
+      mockDataSource.query.mockImplementation(async (sql: string) => answer(sql));
+
+      await target.getSummary('2026-10-14');
+
+      const prod = (mockDataSource.query.mock.calls as [string, unknown][]).map(([sql]) => sql).find((sql) => sql.includes('"miPlan"'))!;
+      expect(prod).toContain('SUM(o.LOT_SIZE)');
+      expect(prod).not.toContain('FROM IP_PRODUCT_MI_PLAN p');
+    });
+
     it('rejects a malformed date', async () => {
       await expect(target.getSummary('2026/09/30')).rejects.toThrow('YYYY-MM-DD');
       expect(mockDataSource.query).not.toHaveBeenCalled();
@@ -122,6 +145,17 @@ describe('DashboardService', () => {
       expect(sql).toContain('LEFT JOIN');
       expect(binds).toEqual({ day: '2026-10-06' });
       expect(mockDataSource.query).toHaveBeenCalledTimes(1);
+    });
+
+    it('insights product actual uses the business date of the result entry', () => {
+      expect(DASHBOARD_INSIGHTS_SQL).not.toContain('IP_PRODUCT_ACTUAL_TIME_V');
+      expect(DASHBOARD_INSIGHTS_SQL).toContain("wr.RESULT_STATUS = 'DONE'");
+      expect(DASHBOARD_INSIGHTS_SQL).toContain("F_GET_WORK_ACTUAL_DATE(x.ENTER_DATE, 'A')");
+    });
+
+    it('insights product plan is the order quantity by run date and line', () => {
+      expect(DASHBOARD_INSIGHTS_SQL).toContain('SUM(NVL(o.LOT_SIZE, 0))');
+      expect(DASHBOARD_INSIGHTS_SQL).not.toContain('FROM IP_PRODUCT_MI_PLAN p CROSS JOIN');
     });
 
     it('rejects a malformed date without querying', async () => {

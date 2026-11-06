@@ -14,7 +14,9 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Save, X } from 'lucide-react';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import EquipSelect from '@/components/shared/EquipSelect';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -179,7 +181,8 @@ export default function QcNotifyFormPanel({ mode, initialForm, onClose, onSaved 
         </label>
         <label className="block text-sm">
           <span className="text-text-muted">모델명</span>
-          <Input value={form.modelName} onChange={(e) => set('modelName', e.target.value)} />
+          <ModelSearchField value={form.modelName} className="w-full"
+            onChange={(v) => set('modelName', v)} />
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
@@ -203,8 +206,8 @@ export default function QcNotifyFormPanel({ mode, initialForm, onClose, onSaved 
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">설비코드</span>
-            <Input value={form.machineCode}
-              onChange={(e) => set('machineCode', e.target.value)} />
+            <EquipSelect value={form.machineCode} placeholder="선택"
+              onChange={(v) => set('machineCode', v)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">등급</span>

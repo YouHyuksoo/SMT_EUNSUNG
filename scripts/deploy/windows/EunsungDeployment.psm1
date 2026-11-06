@@ -333,7 +333,9 @@ function Test-EunsungReleaseHealth {
     [scriptblock]$HttpInvoker,
     [ValidateRange(1, 20)][int]$MaxAttempts = 20,
     [ValidateRange(1, 60)][int]$TimeoutSec = 5,
-    [ValidateRange(0, 60000)][int]$RetryDelayMs = 5000,
+    # 배포 직후 서버 디스크 캐시가 비어 있으면 백엔드 모듈 로딩만 2분 40초 걸린 적이 있다 (2026-10-15).
+    # 20회 × 15초 ≈ 5분을 기다린다.
+    [ValidateRange(0, 60000)][int]$RetryDelayMs = 15000,
     [scriptblock]$SleepAdapter
     ,[string]$ExpectedReleaseDir
     ,[string]$FrontendUrl = 'http://127.0.0.1:3100/'
@@ -580,12 +582,16 @@ function Assert-EunsungBuiltRelease {
   Assert-EunsungProtectedConfig -ReleaseDir $resolved -AccessValidator $AccessValidator -AttributeProvider $AttributeProvider
 }
 
+# 배포 성공 뒤 정리가 워크플로 완료를 붙잡지 않게 한 번에 지우는 개수에 상한을 둔다.
+# 실측: 옛 릴리스 트리 하나를 Remove-Item -Recurse 로 지우는 데 20분 넘게 걸리기도 했다.
+# 오래된 것부터 지우고, 못 지우는 폴더가 있어도 다음 배포에서 다시 시도한다.
 function Remove-EunsungOldSuccessfulReleases {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)][string]$ReleaseRoot,
     [Parameter(Mandatory)][string]$CurrentRelease,
     [ValidateRange(0, 20)][int]$PriorSuccessesToKeep = 2,
+    [ValidateRange(1, 20)][int]$MaxRemovals = 2,
     [scriptblock]$AttributeProvider
   )
   if (-not (Test-Path -LiteralPath $ReleaseRoot)) { return }
@@ -606,13 +612,23 @@ function Remove-EunsungOldSuccessfulReleases {
     } catch { continue }
   }
   $prior = @($prior | Sort-Object LastWriteTimeUtc -Descending)
-  @($prior | Select-Object -Skip $PriorSuccessesToKeep) | ForEach-Object {
-    Assert-EunsungNoReparseAncestry -Root $releaseRootFull -Target $_.FullName -AttributeProvider $AttributeProvider
-    $markerPath = Join-Path $_.FullName 'deployment.success.json'
+  $expired = @($prior | Select-Object -Skip $PriorSuccessesToKeep | Sort-Object LastWriteTimeUtc | Select-Object -First $MaxRemovals)
+  foreach ($old in $expired) {
+    Assert-EunsungNoReparseAncestry -Root $releaseRootFull -Target $old.FullName -AttributeProvider $AttributeProvider
+    $markerPath = Join-Path $old.FullName 'deployment.success.json'
     Assert-EunsungOrdinaryFile -Path $markerPath -AttributeProvider $AttributeProvider
     $marker = Get-Content -Raw -LiteralPath $markerPath | ConvertFrom-Json
-    if ([string]$marker.commitSha -cne $_.Name) { throw 'Successful release marker changed before retention' }
-    Remove-Item -LiteralPath $_.FullName -Recurse -Force
+    if ([string]$marker.commitSha -cne $old.Name) { throw 'Successful release marker changed before retention' }
+    # 서버 디스크에서 트리 하나를 지우는 데 수 분~20분이 걸린다. 배포가 그걸 기다리지 않게
+    # 이름만 먼저 바꿔(같은 볼륨이라 즉시) 다음 정리 대상에서 빼고, 삭제는 분리된 프로세스에 맡긴다.
+    # rd /s 는 정션을 따라가지 않고 링크만 지운다.
+    $expiredPath = Join-Path $releaseRootFull ($old.Name + '.expired-' + [guid]::NewGuid().ToString('N'))
+    try {
+      Move-Item -LiteralPath $old.FullName -Destination $expiredPath -ErrorAction Stop
+      Start-Process -FilePath 'cmd.exe' -ArgumentList '/d', '/c', ('rd /s /q "{0}"' -f $expiredPath) -WindowStyle Hidden | Out-Null
+    } catch {
+      Write-Warning ('Old release could not be expired: ' + $old.Name)
+    }
   }
 }
 
@@ -854,6 +870,8 @@ function Assert-EunsungPm2DefinitionFidelity {
       $expected = Get-EunsungObjectMember -Object $expectedPm.Value -Name $option
       if (-not $expected.Present) { continue }
       $actual = Get-EunsungObjectMember -Object $actualPm.Value -Name $option
+      # pm2 resurrect 로 되살린 fork 모드 앱은 jlist 에 instances 를 싣지 않는다. 빠진 것은 기본값 1 과 같다.
+      if (-not $actual.Present -and $option -ceq 'instances' -and [string]$expected.Value -ceq '1') { continue }
       if (-not $actual.Present) { throw "Restored PM2 option is missing: $name/$option" }
       $expectedJson = ConvertTo-Json -InputObject $expected.Value -Depth 12 -Compress
       $actualJson = ConvertTo-Json -InputObject $actual.Value -Depth 12 -Compress
@@ -1106,14 +1124,56 @@ function Copy-EunsungProtectedConfigs {
   }
 }
 
+# pnpm install 이 느렸던 두 원인을 여기서 막는다 (서버 실측: 설치 약 12분 -> 약 2.5분).
+#  1) 저장소가 C:(프로필)에 있고 릴리스는 D: 에 있으면 하드링크를 못 걸어 패키지 1,478개를
+#     전부 복사한다. 저장소를 배포 루트(릴리스와 같은 드라이브) 아래에 둔다.
+#  2) puppeteer postinstall 이 Chrome 을 내려받는다. puppeteer 는 문서 캡처 스크립트
+#     (public/manual/capture-*.js) 에서만 쓰고 서버 빌드·실행에는 필요 없다.
+function Get-EunsungInstallEnvironment {
+  param([string]$DeployRoot)
+  return @{
+    npm_config_store_dir = [IO.Path]::GetFullPath((Join-Path $DeployRoot 'pnpm-store'))
+    PUPPETEER_SKIP_DOWNLOAD = '1'
+  }
+}
+
+# 직전에 서비스한 릴리스의 Next.js 빌드 캐시(.next/cache: webpack · swc · .tsbuildinfo)를 새 릴리스로 복사한다.
+# 프론트 빌드가 처음부터 다시 컴파일·타입검사하지 않게 해서 시간을 줄인다 (서버 실측: 약 3분 50초).
+# 캐시는 속도용일 뿐이라 어떤 이유로든 복사하지 못해도 배포를 막지 않는다 (캐시 없이 빌드한다).
+# 정션/심볼릭 링크는 따라가지 않고(/XJ) 복사 대상은 방금 풀어 놓은 새 릴리스 안으로 고정한다.
+function Copy-EunsungBuildCache {
+  param([string]$DeployRoot, [string]$ReleaseDir, [scriptblock]$AttributeProvider)
+  try {
+    $currentPath = Join-Path $DeployRoot 'current.json'
+    if (-not (Test-Path -LiteralPath $currentPath -PathType Leaf)) { return }
+    $current = Get-Content -Raw -LiteralPath $currentPath | ConvertFrom-Json
+    if ([string]$current.commitSha -cnotmatch '^[0-9a-f]{40}$') { return }
+    $releaseRoot = Join-Path $DeployRoot 'releases'
+    $previousDir = Resolve-EunsungContainedPath -Root $releaseRoot -Candidate (Join-Path $releaseRoot ([string]$current.commitSha)) -AllowMissing
+    if ($previousDir -ceq $ReleaseDir) { return }
+    $source = Join-Path $previousDir 'apps/frontend/.next/cache'
+    if (-not (Test-Path -LiteralPath $source -PathType Container)) { return }
+    Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $source -AttributeProvider $AttributeProvider
+    $destination = Resolve-EunsungContainedPath -Root $ReleaseDir -Candidate (Join-Path $ReleaseDir 'apps/frontend/.next/cache') -AllowMissing
+    New-Item -ItemType Directory -Force -Path $destination | Out-Null
+    $robocopy = Join-Path $env:SystemRoot 'System32/robocopy.exe'
+    & $robocopy $source $destination /E /XJ /R:0 /W:0 /NFL /NDL /NJH /NJS /NP | Out-Null
+    # robocopy 는 0~7 이 성공이다. 실패하면 불완전한 캐시가 남지 않게 지운다.
+    if ($LASTEXITCODE -ge 8) { Remove-Item -LiteralPath $destination -Recurse -Force -ErrorAction SilentlyContinue }
+  } catch {
+    # 캐시 복사 실패는 무시한다.
+  }
+}
+
 function Invoke-EunsungBuild {
-  param([string]$ReleaseDir, [string]$CommitSha, [scriptblock]$NativeInvoker)
+  param([string]$ReleaseDir, [string]$CommitSha, [hashtable]$InstallEnvironment, [scriptblock]$NativeInvoker, [string]$DeployRoot, [scriptblock]$AttributeProvider)
   $pnpmPath = Get-EunsungBootstrappedToolPath -Name 'pnpm'
   $versionOutput = Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--version') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker
   if ($versionOutput.Trim() -cne '10.28.1') { throw 'Explicit pnpm version 10.28.1 was not selected' }
-  Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('install', '--frozen-lockfile') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
+  Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('install', '--frozen-lockfile') -WorkingDirectory $ReleaseDir -Environment $InstallEnvironment -NativeInvoker $NativeInvoker | Out-Null
   Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--filter', '@smt/shared', 'build') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
   Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--filter', '@eunsung/backend', 'build') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
+  if ($DeployRoot) { Copy-EunsungBuildCache -DeployRoot $DeployRoot -ReleaseDir $ReleaseDir -AttributeProvider $AttributeProvider }
   Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--filter', '@eunsung/frontend', 'build') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
   Write-EunsungBuildMarker -ReleaseDir $ReleaseDir -CommitSha $CommitSha
 }
@@ -1203,7 +1263,7 @@ function Invoke-EunsungDeployment {
       Expand-Archive -LiteralPath $archive -DestinationPath $releaseDir
       Copy-EunsungProtectedConfigs -DeployRoot $DeployRoot -ReleaseDir $releaseDir -AccessValidator $accessValidator -AttributeProvider $attributeProvider
       Set-Content -LiteralPath (Join-Path $releaseDir '.commit-sha') -Value $CommitSha -NoNewline -Encoding ASCII
-      Invoke-EunsungBuild -ReleaseDir $releaseDir -CommitSha $CommitSha -NativeInvoker $native
+      Invoke-EunsungBuild -ReleaseDir $releaseDir -CommitSha $CommitSha -InstallEnvironment (Get-EunsungInstallEnvironment -DeployRoot $DeployRoot) -NativeInvoker $native -DeployRoot $DeployRoot -AttributeProvider $attributeProvider
     } catch {
       Remove-EunsungFailedRelease -DeployRoot $DeployRoot -ReleaseDir $releaseDir -AttributeProvider $attributeProvider
       throw

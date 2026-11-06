@@ -10,9 +10,11 @@
  * 2. 기초: 전월 마감이 있으면 그 기말. 첫 마감(재고마감 시작월)이면 지금 재고(IM_ITEM_INVENTORY)에서
  *    그 달 시작일 이후의 입고를 빼고 출고를 더해 거꾸로 잡는다 — 원장 전체 합계는 재고 행 없이 원장에만
  *    남은 잔량이 섞여 실사로도 맞출 수 없기 때문이다 (공정 첫 마감과 같은 방식).
- *    첫 마감의 기초단가는 전월 말일에 유효한 단가(품목 기준정보 공급처 우선)다.
+ *    첫 마감의 기초단가는 전월 말일에 유효한 단가(품목 기준정보 공급처 우선, 거래유형은 보지 않음)다.
  * 3. 입고금액: 입고행에 금액(RECEIPT_AMT)이 있으면 그것, 없으면 입고행 단가 × 수량,
- *    그것도 없으면 입고일에 유효한 단가표(IM_ITEM_UNIT_PRICE, 공급처·품목·거래유형) × 수량.
+ *    그것도 없으면 입고일에 유효한 단가표(IM_ITEM_UNIT_PRICE, 공급처·품목) × 수량.
+ *    거래유형은 보지 않는다 — 입고는 대부분 무상구매(F)인데 단가표에는 F 행이 없다
+ *    (2026-10-16 실측: 9/1 이후 입고 32,175행 중 F 29,520행). 사용자 결정 2026-10-16.
  *    단가표가 0원이면 0원이다 (무상 F 자재 — 사용자 결정 2026-10-02). 입고행은 고치지 않는다.
  * 4. 출고: 출고계정별 수량. 반품·취소는 음수로 들어 있어 그대로 더하면 상쇄된다.
  *    재고조정(M009, 272 실사 조정 — 그 달 말일 날짜)은 따로 모은다. 모자람은 +, 남음은 − 다.
@@ -61,7 +63,6 @@ export function closeAggregateSql(firstClose: boolean): string {
        OPENING AS (
          SELECT O.ITEM_CODE, O.LOCATION_CODE, O.QTY,
                 NVL((SELECT MAX(P.UNIT_PRICE) KEEP (DENSE_RANK FIRST ORDER BY
-                               CASE WHEN P.LINE_TYPE = I.MASTER_LINE_TYPE THEN 0 ELSE 1 END,
                                CASE WHEN P.SUPPLIER_CODE = I.MAIN_SUPPLIER THEN 0 ELSE 1 END,
                                P.DATESET DESC)
                        FROM IM_ITEM_UNIT_PRICE P
@@ -112,7 +113,6 @@ RC AS (
         FROM IM_ITEM_UNIT_PRICE P
        WHERE P.SUPPLIER_CODE = R.SUPPLIER_CODE
          AND P.ITEM_CODE = R.ITEM_CODE
-         AND P.LINE_TYPE = R.LINE_TYPE
          AND P.ORGANIZATION_ID = R.ORGANIZATION_ID
          AND TRUNC(P.DATESET) <= TRUNC(R.RECEIPT_DATE)
          AND P.DATEEND >= TRUNC(R.RECEIPT_DATE)

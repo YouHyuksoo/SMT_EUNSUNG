@@ -4,7 +4,6 @@
  *              344 w_smt_pickup_rate_rpt                      SMT PICKUP 리포트
  *              346 w_pln_master_plan_rpt                       생산계획리포트
  *              347 w_product_run_card_rpt                      런카드리포트
- *              348 w_prd_product_fg_issue_rpt                  제품 판매실적
  *              350 w_product_workstage_stock_rpt               공정재공조회
  *              352 w_product_workstage_magazine_stock_rpt      공정매거진조회
  *
@@ -12,25 +11,15 @@
  * 1. **리포트에는 키가 없다.** 추적·조회는 제조번호·PID·Run No 로 한 건을 찾는데
  *    리포트는 GROUP BY 집계다. 그래서 `checkTrackingFilter` 를 쓸 수 없고
  *    **구동 원장의 날짜 인덱스를 타도록 기간을 필수로 받는다** (DTO 에서 강제).
- *    실측 규모: 픽업 97만행 · 판매실적 57만행 · 런카드 3.9만행.
+ *    실측 규모: 픽업 97만행 · 런카드 3.9만행.
  * 2. **344 픽업은 '미스 금액' 이 핵심이다.** (미스 + 인식오류) × 구매단가 다.
  *    PB 는 단가 하한 조건을 둬서 비싼 자재의 미스만 골라 봤다 — 그 조건을 유지한다.
  * 3. **346 은 r01~r10 열 열 개가 시간대다.** 생산 대분류(MI/SMD 계획)에서 쓴 것과
  *    같은 고정 슬롯 구조라 그 형태를 그대로 따른다. 크로스탭이 아니다
  *    (DataWindow processing=0, 즉 일반 표다 — 실측).
- * 4. **348 은 세 갈래다.** 상세 · 모델별 합계 · 일자×모델 크로스탭.
- *    세 가지를 실측으로 바로잡았다 —
- *      (a) 컬럼은 PRODUCT_LOCATION_CODE 가 아니라 **LOCATION_CODE** 다.
- *      (b) **수량에 부호가 붙는다**: `QTY * DECODE(TXN_DEFICIT, 3, 1, -1)`.
- *          3 출고는 +, 4 출고취소는 − 다 (코드표 실측, 현재 데이터는 3/4 만 쓴다:
- *          565,073 / 3,825건). 이 부호를 빼면 취소분이 판매실적에 더해진다.
- *      (c) 단가는 컬럼이 아니라 **DB 함수**다 —
- *          F_GET_SAL_LAST_PRICE_CFM(고객, 품목, 'T', 출하일, 조직). VALID 실측.
- *    크로스탭은 SQL 이 `(일자, 모델, 수량)` 3컬럼 목록을 돌려주고 **피벗은 화면에서
- *    한다** (PB 도 DataWindow 표현 계층에서 돌렸다 — processing=4).
- * 5. **350 은 대상이 0행이다** (IP_PRODUCT_WORKSTAGE_INV 실측 0건).
+ * 4. **350 은 대상이 0행이다** (IP_PRODUCT_WORKSTAGE_INV 실측 0건).
  *    화면은 동작하지만 볼 것이 없다 — 은성이 아직 공정재공을 쌓지 않는다.
- * 6. **352 의 불량·폐기 갈래는 기간이 필수다.** 그 둘은 입출고 원장
+ * 5. **352 의 불량·폐기 갈래는 기간이 필수다.** 그 둘은 입출고 원장
  *    (IP_PRODUCT_RUN_CARD_IO)을 집계하고 구동 조건이 RECEIPT_DATE 뿐이다.
  *    공정재공 갈래는 스냅샷(IP_PRODUCT_RUN_CARD_INV, 819행)이라 기간이 없다.
  */
@@ -39,7 +28,6 @@ import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import {
-  FgIssueReportQueryDto,
   MagazineStockQueryDto,
   MasterPlanReportQueryDto,
   PickupRateQueryDto,
@@ -58,6 +46,40 @@ const MAGAZINE_WORKSTAGES = {
 } as const;
 /** 매거진 라벨 유형. 'B' 불량 · 'D' 폐기 (PB SQL 그대로). */
 const MAGAZINE_LABEL_TYPE = { defect: 'B', destroy: 'D' } as const;
+
+/** 라인 시간대 집계 — 시간대 A~E 주간, F~J 야간 (ICOM_WORKTIME_RANGES 의 시간대 코드) */
+const PICKUP_SLOTS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'] as const;
+const PICKUP_HEAD_MAX_DAYS = 7;
+/** 시간대 수량 — 직전 차이가 음수면 원값, 차이가 없으면(첫 값) 원값 (PB 식 그대로) */
+const headQty = (slot: string, type: 'T' | 'M' | 'R', sum: 'HEAD_SUM' | 'HEAD_SUM_AMT', sim: 'SIM_COUNT' | 'SIM_AMT') =>
+  `SUM(DECODE(ACTUAL_TIME, '${slot}', DECODE(DATA_TYPE, '${type}', DECODE(SIGN(SIM_COUNT), -1, ${sum}, NVL(${sim}, ${sum})), 0), 0))`;
+const PICKUP_HEAD_SQL = `
+  SELECT LINE_CODE AS "lineCode", F_GET_LINE_NAME(LINE_CODE, 1) AS "lineName",
+         F_GET_REEL_CHANGE_COUNT(LINE_CODE, TO_CHAR(TO_DATE(:day, 'YYYY-MM-DD'), 'YYYY/MM/DD')) AS "reelChange",
+         ${PICKUP_SLOTS.map((s) => `${headQty(s, 'T', 'HEAD_SUM', 'SIM_COUNT')} AS "take${s}",
+         ${headQty(s, 'M', 'HEAD_SUM', 'SIM_COUNT')} AS "miss${s}",
+         ${headQty(s, 'R', 'HEAD_SUM', 'SIM_COUNT')} AS "reco${s}",
+         ${headQty(s, 'M', 'HEAD_SUM_AMT', 'SIM_AMT')} + ${headQty(s, 'R', 'HEAD_SUM_AMT', 'SIM_AMT')} AS "amt${s}"`).join(',\n         ')}
+    FROM (
+      SELECT LINE_CODE, ACTUAL_TIME, ACTUAL_DATE, DATA_TYPE, HEAD_SUM,
+             HEAD_SUM * INVENTORY_PRICE AS HEAD_SUM_AMT, SIM_COUNT, SIM_COUNT * INVENTORY_PRICE AS SIM_AMT
+        FROM (
+          SELECT T.LINE_CODE, T.DATA_TYPE, T.ACTUAL_TIME, T.ACTUAL_DATE,
+                 NVL(F_GET_MAT_MAX_UNIT_PRICE_CFM(T.ITEM_CODE, '*', SYSDATE, 1), 0) AS INVENTORY_PRICE,
+                 T.HEAD_SUM,
+                 DECODE(NVL(T.MACHINE_TYPE, 'CM'), 'NPM', T.HEAD_SUM,
+                        T.HEAD_SUM - LAG(T.HEAD_SUM) OVER (
+                          PARTITION BY T.LINE_CODE, T.MACHINE_CODE, T.PROGRAM_NAME, T.ADDRESS, T.SUB_ADDRESS, T.ITEM_CODE, T.DATA_TYPE
+                          ORDER BY T.LINE_CODE, T.MACHINE_CODE, T.PROGRAM_NAME, T.ADDRESS, T.SUB_ADDRESS, T.ITEM_CODE, T.DATA_TYPE,
+                                   T.ACTUAL_DATE, T.ACTUAL_TIME)) AS SIM_COUNT
+            FROM IQ_MACHINE_INSPECT_PICKUP_RATE T
+           WHERE (T.ACTUAL_DATE = TO_DATE(:day, 'YYYY-MM-DD')
+                  OR (T.ACTUAL_DATE = TO_DATE(:day, 'YYYY-MM-DD') - 1 AND T.ACTUAL_TIME = 'J'))
+             AND T.LINE_CODE LIKE :lineCode ESCAPE '\\'
+             AND T.ITEM_CODE = 'HEAD'))
+   WHERE ACTUAL_DATE = TO_DATE(:day, 'YYYY-MM-DD')
+   GROUP BY LINE_CODE
+   ORDER BY LINE_CODE`;
 
 @Injectable()
 export class ProductionReportService {
@@ -119,23 +141,20 @@ export class ProductionReportService {
   }
 
   /**
-   * 픽업 금액 집계 — 라인·일자별 미스 금액.
-   * PB 는 금액만 뽑았다. 수량도 함께 낸다 — 금액만으로는 단가 때문인지 미스가
-   * 늘어서인지 구분할 수 없다.
+   * 픽업 금액 집계 — 라인·일자별 미스 금액 (PB d_pickup_rate_by_line_amt_rpt).
+   * 미스·인식오류 수량을 함께 낸다. 집어올림은 내지 않는다 — 이 표의 TAKEUP_QTY 는 설비(헤드) 단위
+   * 값이 피더 줄마다 되풀이돼 있어 더하면 부풀려진다 (2026-10-12 01라인: 197,564 ↔ 실제 HEAD 집계).
+   * 라인 집어올림·픽업률은 findPickupHead(HEAD 시간대 집계)가 맡는다.
    */
   async findPickupAmount(query: PickupRateQueryDto) {
     const rows = (await this.dataSource.query(
       `SELECT p.LINE_CODE                               AS "lineCode",
               F_GET_LINE_NAME(p.LINE_CODE, 1)           AS "lineName",
               TO_CHAR(p.ACTUAL_DATE, 'YYYY-MM-DD')      AS "actualDate",
-              SUM(NVL(p.TAKEUP_QTY, 0))                 AS "takeupQty",
               SUM(NVL(p.MISS_QTY, 0))                   AS "missQty",
               SUM(NVL(p.RECOG_QTY, 0))                  AS "recogQty",
               SUM((NVL(p.MISS_QTY, 0) + NVL(p.RECOG_QTY, 0)) * p.PUR_UNIT_PRICE)
-                                                        AS "missAmount",
-              DECODE(SUM(NVL(p.TAKEUP_QTY, 0)), 0, NULL,
-                     ROUND(SUM(NVL(p.MISS_QTY, 0) + NVL(p.RECOG_QTY, 0))
-                           / SUM(NVL(p.TAKEUP_QTY, 0)) * 1000000))  AS "ppm"
+                                                        AS "missAmount"
          FROM IQ_MACHINE_INSPECT_PICKUP_QRY p
         WHERE ${this.pickupWhere()}
         GROUP BY p.LINE_CODE, p.ACTUAL_DATE
@@ -144,6 +163,38 @@ export class ProductionReportService {
       namedBinds(this.pickupBinds(query)),
     )) as Row[];
     return limited(rows);
+  }
+
+  /**
+   * 라인 시간대 집계 — PB w_smt_pickup_rate_head / d_smt_pickup_rate_by_line_head 그대로.
+   *
+   * 1. 마운터 HEAD 행(ITEM_CODE='HEAD')을 시간대 A~J 로 나눈다. A~E 가 주간, F~J 가 야간이다.
+   * 2. HEAD_SUM 은 누적값이라 직전 시간대와의 차이(LAG)를 그 시간대 수량으로 쓴다. 파나소닉 NPM 은
+   *    시간대 값이 이미 구간값이라 그대로 쓴다. 차이가 음수(카운터 리셋)면 그 시간대 원값을 쓴다.
+   *    A 시간대의 차이를 구하려고 전날 J 시간대를 함께 읽는다.
+   * 3. 릴 교체 수는 F_GET_REEL_CHANGE_COUNT (IB_SMT_CHECKHIST 릴 교체 검사 통과 건, 08:30 기준 하루).
+   *    미스 수량은 그대로 두고 릴 교체는 따로 보여준다 (PB 와 같다).
+   * 4. PB 는 생산일자 하루를 조회한다. 기간을 주면 하루씩 같은 쿼리를 돌려 일자별 줄로 낸다.
+   */
+  async findPickupHead(query: PickupRateQueryDto) {
+    const days: string[] = [];
+    const start = new Date(`${query.dateFrom}T00:00:00`);
+    const end = new Date(`${query.dateTo}T00:00:00`);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      days.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+    }
+    if (days.length > PICKUP_HEAD_MAX_DAYS) {
+      throw new BadRequestException(`라인 시간대 집계는 ${PICKUP_HEAD_MAX_DAYS}일까지 조회할 수 있습니다.`);
+    }
+    const out: Row[] = [];
+    for (const day of days) {
+      const rows = (await this.dataSource.query(
+        PICKUP_HEAD_SQL,
+        namedBinds({ day, lineCode: likePrefix(query.lineCode) }),
+      )) as Row[];
+      out.push(...rows.map((r) => ({ actualDate: day, ...r })));
+    }
+    return limited(out);
   }
 
   // ───────────────────────────────── 346 생산계획리포트
@@ -306,122 +357,6 @@ export class ProductionReportService {
       namedBinds(this.runCardBinds(query, organizationId)),
     )) as Row[];
     return { data: rows, total: rows.length, withQty: Boolean(query.withQty) };
-  }
-
-  // ───────────────────────────────── 348 제품 판매실적
-
-  private fgIssueWhere(withBarcode: boolean) {
-    return `f.ISSUE_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
-          AND f.ISSUE_DATE <  TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
-          AND NVL(f.MODEL_NAME, '*') LIKE :modelName ESCAPE '\\'
-          AND f.ORGANIZATION_ID = :organizationId`
-      + (withBarcode ? `\n          AND NVL(f.BARCODE, '*') LIKE :barcode ESCAPE '\\'` : '');
-  }
-
-  /** 출하 상세 — 제품 한 장씩 */
-  async findFgIssueDetail(query: FgIssueReportQueryDto, organizationId: number) {
-    const rows = (await this.dataSource.query(
-      `SELECT TO_CHAR(f.ISSUE_DATE, 'YYYY-MM-DD HH24:MI:SS') AS "issueDate",
-              f.ISSUE_SEQUENCE                          AS "issueSequence",
-              f.BARCODE                                 AS "barcode",
-              f.MODEL_NAME                              AS "modelName",
-              f.MODEL_SUFFIX                            AS "modelSuffix",
-              f.ITEM_CODE                               AS "itemCode",
-              -- 출고는 +, 출고취소는 − (PB DECODE(TXN_DEFICIT,3,1,-1) 그대로).
-              f.QTY * DECODE(f.TXN_DEFICIT, 3, 1, -1)   AS "qty",
-              f.QTY                                     AS "rawQty",
-              F_GET_SAL_LAST_PRICE_CFM(f.CUSTOMER_CODE, f.ITEM_CODE, 'T',
-                                       f.ISSUE_DATE, f.ORGANIZATION_ID) AS "issuePrice",
-              f.PACK_TYPE                               AS "packType",
-              f.TXN_DEFICIT                             AS "txnDeficit",
-              f.CUSTOMER_CODE                           AS "customerCode",
-              c.CUSTOMER_NAME                           AS "customerName",
-              f.LOCATION_CODE                           AS "locationCode",
-              f.LINE_CODE                               AS "lineCode",
-              f.WORKSTAGE_CODE                          AS "workstageCode",
-              f.MFS                                     AS "mfs",
-              f.PALLET_NO                               AS "palletNo",
-              TO_CHAR(f.PALLET_DATE, 'YYYY-MM-DD HH24:MI:SS') AS "palletDate",
-              f.SHIP_NO                                 AS "shipNo",
-              TO_CHAR(f.ACTUAL_DATE, 'YYYY-MM-DD')      AS "actualDate",
-              f.SHIFT_CODE                              AS "shiftCode",
-              f.WORK_TIME_ZONE                          AS "workTimeZone",
-              f.ENTER_BY                                AS "enterBy",
-              TO_CHAR(f.ENTER_DATE, 'YYYY-MM-DD HH24:MI:SS') AS "enterDate"
-         FROM IP_PRODUCT_FG_ISSUE f
-         LEFT JOIN ICOM_CUSTOMER c ON c.CUSTOMER_CODE = f.CUSTOMER_CODE
-        WHERE ${this.fgIssueWhere(true)}
-        ORDER BY f.ISSUE_DATE DESC, f.ISSUE_SEQUENCE
-        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      namedBinds({
-        dateFrom: query.dateFrom,
-        dateTo: query.dateTo,
-        modelName: likePrefix(query.modelName),
-        barcode: likePrefix(query.barcode),
-        organizationId,
-      }),
-    )) as Row[];
-    return limited(rows);
-  }
-
-  /** 출하 합계 — 모델·고객·위치별 */
-  async findFgIssueSummary(query: FgIssueReportQueryDto, organizationId: number) {
-    const rows = (await this.dataSource.query(
-      `SELECT f.MODEL_NAME                              AS "modelName",
-              f.MODEL_SUFFIX                            AS "modelSuffix",
-              f.CUSTOMER_CODE                           AS "customerCode",
-              c.CUSTOMER_NAME                           AS "customerName",
-              f.LOCATION_CODE                           AS "locationCode",
-              COUNT(*)                                  AS "issueCount",
-              SUM(NVL(f.QTY, 0) * DECODE(f.TXN_DEFICIT, 3, 1, -1)) AS "qty",
-              MAX(F_GET_SAL_LAST_PRICE_CFM(f.CUSTOMER_CODE, f.ITEM_CODE, 'T',
-                                           f.ISSUE_DATE, f.ORGANIZATION_ID)) AS "issuePrice"
-         FROM IP_PRODUCT_FG_ISSUE f
-         LEFT JOIN ICOM_CUSTOMER c ON c.CUSTOMER_CODE = f.CUSTOMER_CODE
-        WHERE ${this.fgIssueWhere(false)}
-        GROUP BY f.MODEL_NAME, f.MODEL_SUFFIX, f.CUSTOMER_CODE, c.CUSTOMER_NAME,
-                 f.LOCATION_CODE
-        ORDER BY f.MODEL_NAME, f.CUSTOMER_CODE
-        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      namedBinds({
-        dateFrom: query.dateFrom,
-        dateTo: query.dateTo,
-        modelName: likePrefix(query.modelName),
-        organizationId,
-      }),
-    )) as Row[];
-    return limited(rows);
-  }
-
-  /**
-   * 출하 크로스탭 원자료 — 일자 × 모델 수량.
-   *
-   * SQL 은 `(일자, 모델, 고객, 수량)` 목록을 돌려주고 **피벗은 화면에서 한다.**
-   * PB 도 DataWindow 크로스탭(processing=4)으로 표현 계층에서 돌렸다 — 열 집합이
-   * 데이터에 따라 달라지므로 서버가 고정 컬럼을 만들 수 없다.
-   */
-  async findFgIssueCrosstab(query: FgIssueReportQueryDto, organizationId: number) {
-    const rows = (await this.dataSource.query(
-      `SELECT TO_CHAR(TRUNC(f.ISSUE_DATE), 'YYYY-MM-DD') AS "issueDate",
-              f.MODEL_NAME                              AS "modelName",
-              f.MODEL_SUFFIX                            AS "modelSuffix",
-              f.CUSTOMER_CODE                           AS "customerCode",
-              f.LOCATION_CODE                           AS "locationCode",
-              SUM(NVL(f.QTY, 0) * DECODE(f.TXN_DEFICIT, 3, 1, -1)) AS "qty"
-         FROM IP_PRODUCT_FG_ISSUE f
-        WHERE ${this.fgIssueWhere(false)}
-        GROUP BY TRUNC(f.ISSUE_DATE), f.MODEL_NAME, f.MODEL_SUFFIX,
-                 f.CUSTOMER_CODE, f.LOCATION_CODE
-        ORDER BY 1, 2
-        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      namedBinds({
-        dateFrom: query.dateFrom,
-        dateTo: query.dateTo,
-        modelName: likePrefix(query.modelName),
-        organizationId,
-      }),
-    )) as Row[];
-    return limited(rows);
   }
 
   // ───────────────────────────────── 350 공정재공조회

@@ -12,8 +12,11 @@ import { useEffect, useState } from 'react';
 import { History, PauseCircle, PlayCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, CardContent } from '@/components/ui';
+import DataGrid from '@/components/data-grid/DataGrid';
+import DowntimeReasonGrid from '@/components/shared/DowntimeReasonGrid';
 import api from '@/services/api';
 import type { OpsMachine } from '../../equip-ops-status/types';
+import { targetMachineColumns } from '../../equip-ops-status/components/downtime-columns';
 
 interface Code { code: string; name: string; }
 
@@ -30,7 +33,6 @@ interface Props {
 export default function DowntimePanel({ targets, mode, workerCode, onHistoryClick, onChanged }: Props) {
   const [reasons, setReasons] = useState<Code[]>([]);
   const [reasonPick, setReasonPick] = useState<string | null>(null);
-  const [causeCodes, setCauseCodes] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
 
   const downTargets = targets.filter((m) => m.openDtSeq != null);
@@ -50,13 +52,6 @@ export default function DowntimePanel({ targets, mode, workerCode, onHistoryClic
       .catch(() => setReasons([]));
   }, [reasonSeed]);
 
-  const toggleCause = (code: string) =>
-    setCauseCodes((prev) => {
-      const next = new Set(prev);
-      if (next.has(code)) next.delete(code); else next.add(code);
-      return next;
-    });
-
   async function apply() {
     if (!actionTargets.length) return;
     if (willEnd && !reasonCode) return toast.error('비가동 사유를 선택하세요');
@@ -65,10 +60,6 @@ export default function DowntimePanel({ targets, mode, workerCode, onHistoryClic
       const res = await api.post('/oee/work-result/downtimes/bulk', {
         action: willEnd ? 'END' : 'START',
         machineCodes: actionTargets.map((m) => m.machineCode),
-        // 원인설비는 비가동 시작에서만 의미가 있다
-        causeMachineCodes: willEnd
-          ? undefined
-          : actionTargets.filter((m) => causeCodes.has(m.machineCode)).map((m) => m.machineCode),
         reasonCode: reasonCode || undefined,
         worker: workerCode || undefined,
       });
@@ -76,7 +67,6 @@ export default function DowntimePanel({ targets, mode, workerCode, onHistoryClic
       const verb = willEnd ? '가동 전환' : '비가동 시작';
       toast.success(d.skipped ? `${d.affected}대 ${verb} (${d.skipped}대는 이미 해당 상태)` : `${d.affected}대 ${verb}`);
       setReasonPick(null);
-      setCauseCodes(new Set());
       await onChanged();
     } catch (e: unknown) {
       const msg = e && typeof e === 'object' && 'response' in e ? (e as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
@@ -97,49 +87,23 @@ export default function DowntimePanel({ targets, mode, workerCode, onHistoryClic
           </div>
           <span className="text-[11px] text-text-muted">
             대상 {targets.length}대 · 비가동 <span className={downTargets.length ? 'text-red-500 font-semibold' : ''}>{downTargets.length}</span>대
-            {!willEnd && causeCodes.size > 0 && <> · 원인설비 <span className="text-amber-600 font-semibold">{causeCodes.size}</span>대</>}
           </span>
         </div>
 
         {/* 대상 설비 목록 — 여기만 스크롤한다 (사유/전환 버튼은 항상 보인다) */}
-        <div className="border border-border rounded flex-1 min-h-0 overflow-y-auto">
-          <table className="w-full table-fixed text-xs">
-            <thead className="bg-surface text-text-muted sticky top-0 z-10">
-              <tr><th className="py-1.5 px-0.5 text-center font-medium w-8">원인</th><th className="py-1.5 px-0.5 text-center font-medium w-[76px]">설비코드</th><th className="py-1.5 px-1 text-center font-medium">설비명</th><th className="py-1.5 px-0 text-center font-medium w-12">유형</th><th className="py-1.5 pl-0 pr-0.5 text-center font-medium w-16">상태</th></tr>
-            </thead>
-            <tbody>
-              {targets.map((m) => {
-                const down = m.openDtSeq != null;
-                return (
-                  <tr key={m.machineCode} className="border-t border-border">
-                    <td className="py-1.5 px-0.5 text-center">
-                      <input type="checkbox" checked={causeCodes.has(m.machineCode)}
-                        onChange={() => toggleCause(m.machineCode)}
-                        disabled={willEnd || down}
-                        title={willEnd ? '종료 처리에는 원인설비를 지정하지 않습니다' : down ? '이미 비가동 중인 설비입니다' : '이 설비를 라인 정지의 원인으로 표시'}
-                        aria-label={`${m.machineCode} 원인설비`}
-                        className="w-3.5 h-3.5 cursor-pointer rounded border-border disabled:cursor-not-allowed disabled:opacity-40" />
-                    </td>
-                    <td className="py-1.5 px-0.5 text-center font-mono truncate">{m.machineCode}</td>
-                    <td className="py-1.5 px-1 text-center truncate">{m.machineName ?? '-'}</td>
-                    <td className="py-1.5 px-0 text-center truncate">{m.machineTypeName ?? m.machineType ?? '-'}</td>
-                    <td className="py-1.5 pl-0 pr-0.5 text-center">
-                      {down ? (
-                        <span className="px-1.5 py-0.5 rounded bg-red-500 text-white">비가동</span>
-                      ) : (
-                        <span className="px-1.5 py-0.5 rounded bg-emerald-500 text-white">가동</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-              {!targets.length && (
-                <tr><td colSpan={5} className="p-6 text-center text-text-muted">
-                  {mode === 'LINE' ? '라인을 선택하세요' : '설비를 선택하세요'}
-                </td></tr>
-              )}
-            </tbody>
-          </table>
+        <div className="flex-1 min-h-0">
+          <DataGrid
+            data={targets}
+            columns={targetMachineColumns}
+            pageSize={1000}
+            showFooter={false}
+            enableColumnFilter={false}
+            enableFullscreen={false}
+            enableColumnReordering={false}
+            enableColumnPinning={false}
+            getRowId={(m) => m.machineCode}
+            emptyMessage={mode === 'LINE' ? '라인을 선택하세요' : '설비를 선택하세요'}
+          />
         </div>
 
         {/* 비가동 사유 — 사유가 많아 자리가 모자라면 여기가 줄어들고 스크롤한다 */}
@@ -147,18 +111,8 @@ export default function DowntimePanel({ targets, mode, workerCode, onHistoryClic
           <span className="text-xs text-text-muted">비가동 사유
             <span className="text-[11px]"> {willEnd ? '(종료 시 필수 — 대상 전체에 기록)' : '(선택)'}</span>
           </span>
-          <div className="grid grid-cols-3 gap-2 mt-1">
-            {reasons.map((r) => {
-              const active = reasonCode === r.code;
-              return (
-                <button key={r.code} type="button" onClick={() => setReasonPick(active ? '' : r.code)}
-                  className={`px-2 py-[3.4px] rounded border text-[11px] text-center transition-colors ${active ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'}`}>
-                  <span className="block font-medium leading-tight">{r.name}</span>
-                  <span className={`block text-[9px] font-mono ${active ? 'text-white/80' : 'text-text-muted'}`}>{r.code}</span>
-                </button>
-              );
-            })}
-            {!reasons.length && <span className="col-span-3 text-xs text-text-muted py-2">연계된 비가동 사유가 없습니다</span>}
+          <div className="mt-1">
+            <DowntimeReasonGrid reasons={reasons} value={reasonCode} onChange={setReasonPick} columns={3} dense />
           </div>
         </div>
 

@@ -35,5 +35,6 @@ export class ItemSupplierQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional() @IsOptional() @IsString() supplierCode?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() orderType?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() inspectRule?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() search?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() itemName?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() supplierName?: string;
 }

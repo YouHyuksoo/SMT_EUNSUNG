@@ -26,7 +26,6 @@ import {
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { OeeMasterService } from './oee-master.service';
 import { OeeLogService } from './oee-log.service';
-import { OeeDashboardService } from './oee-dashboard.service';
 import {
   ResourceCreateDto,
   ResourceUpdateDto,
@@ -43,7 +42,6 @@ export class OeeController {
   constructor(
     private readonly master: OeeMasterService,
     private readonly log: OeeLogService,
-    private readonly dashboard: OeeDashboardService,
     private readonly smtCloseRunPreview: SmtCloseRunPreviewService,
   ) {}
 
@@ -156,35 +154,5 @@ export class OeeController {
   ) {
     await this.log.saveShift(dto, organizationId, userId);
     return { ok: true };
-  }
-
-  // ── 대시보드(당일=실시간, 과거=스냅샷, 미마감 409) ──────────────────────────
-
-  @Get('dashboard/overview')
-  @ApiOperation({ summary: '공정별 OEE 종합 + 원자재준비/고객불량 위젯' })
-  async dashboardOverview(
-    @Query('date') date: string | undefined,
-    @OrganizationId() organizationId: number | undefined,
-  ) {
-    return this.dashboard.overview(date, organizationId);
-  }
-
-  @Get('dashboard/drilldown')
-  @ApiOperation({ summary: '공정 내 리소스별 OEE 드릴다운' })
-  async dashboardDrilldown(
-    @Query('processCode') processCode: string,
-    @Query('date') date?: string,
-    @OrganizationId() organizationId?: number,
-  ) {
-    return this.dashboard.drilldown(processCode, date, organizationId);
-  }
-
-  @Get('dashboard/loss')
-  @ApiOperation({ summary: 'OEE 로스 파레토(비가동 사유별 시간)' })
-  async dashboardLoss(
-    @Query('date') date: string | undefined,
-    @OrganizationId() organizationId: number | undefined,
-  ) {
-    return this.dashboard.lossPareto(date, organizationId);
   }
 }

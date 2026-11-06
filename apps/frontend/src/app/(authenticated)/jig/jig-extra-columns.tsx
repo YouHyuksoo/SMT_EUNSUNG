@@ -5,6 +5,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -99,10 +100,10 @@ export const jigRepairRequestColumns: ColumnDef<JigRepairRequestRow>[] = [
 export const repairableJigColumns: ColumnDef<RepairableJigRow>[] = [
   { accessorKey: 'jigCode', header: '지그코드', size: 140 },
   { accessorKey: 'jigName', header: '지그명', size: 170 },
-  { accessorKey: 'jigType', header: '유형', size: 80, meta: center },
+  { accessorKey: 'jigType', header: '유형', size: 80, meta: center, cell: comCodeCell('JIG TYPE') },
   { accessorKey: 'jigModelName', header: '지그모델', size: 140 },
   { accessorKey: 'lineName', header: '라인', size: 110 },
-  { accessorKey: 'useStatus', header: '상태', size: 80, meta: center },
+  { accessorKey: 'useStatus', header: '상태', size: 80, meta: center, cell: comCodeCell('USE STATUS') },
   {
     accessorKey: 'openRequestCount',
     header: '미완료 신청',

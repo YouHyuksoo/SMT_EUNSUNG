@@ -19,6 +19,7 @@ import { useCallback, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { AlertTriangle, Box, ScanLine, Undo2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import {
@@ -100,8 +101,8 @@ export default function MagazinePidPage() {
   }, [magazineScan, loadRows]);
 
   /** PID 를 찍으면 바로 처리하고 입력칸을 비운다 (현장은 연속으로 찍는다). */
-  const scanPid = useCallback(async () => {
-    const serialNo = pid.trim();
+  const scanPid = useCallback(async (scanned: string) => {
+    const serialNo = scanned.trim();
     if (!magazine || !serialNo) return;
     setBusy(true);
     try {
@@ -131,7 +132,7 @@ export default function MagazinePidPage() {
       setBusy(false);
       pidRef.current?.focus();
     }
-  }, [magazine, pid, mode, loadRows]);
+  }, [magazine, mode, loadRows]);
 
   const lotQty = Number(magazine?.lotQty ?? 0);
   const over = lotQty > 0 && rows.length > lotQty;
@@ -185,12 +186,12 @@ export default function MagazinePidPage() {
               </Button>
             ))}
           </div>
-          <Input ref={pidRef} aria-label="PID" placeholder="PID (10자 이상)"
+          <BarcodeScanInput ref={pidRef} aria-label="PID" placeholder="PID (10자 이상)"
             value={pid} className="w-72" disabled={!magazine || busy}
-            onChange={(e) => setPid(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void scanPid(); }} />
+            onChange={setPid}
+            onScan={scanPid} />
           <Button size="sm" disabled={!magazine || busy || !pid.trim()}
-            onClick={scanPid}>
+            onClick={() => void scanPid(pid)}>
             {mode === 'cancel' ? '빼기' : '등록'}
           </Button>
           {lastResult && (

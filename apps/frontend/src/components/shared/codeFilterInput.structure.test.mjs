@@ -30,16 +30,6 @@ const FORM_FILE = /(FormPanel|Modal|ActionPanel|ScanPanel)\.tsx$/;
 
 /** "경로:바인딩" → 이유 */
 const EXEMPT = {
-  "mold/issue/page.tsx:machineCode": "출고 등록 영역 입력 (조회 필터 아님)",
-  "quality/wqc/page.tsx:machineCode": "스캔 등록 영역 입력 (조회 필터 아님)",
-  "query/pda-ng/page.tsx:checkStatus": "선택 행 검사상태 저장 입력 (조회 필터 아님)",
-  "warehouse/etc-issue/page.tsx:workstageCode": "기타출고 등록 영역",
-  "warehouse/etc-issue/page.tsx:machineCode": "기타출고 등록 영역",
-  "warehouse/etc-issue/page.tsx:issueAccount": "기타출고 등록 영역",
-  "warehouse/etc-receipt/page.tsx:locationCode": "기타입고 등록 영역",
-  "warehouse/etc-receipt/page.tsx:supplierCode": "기타입고 등록 영역",
-  "warehouse/etc-receipt/page.tsx:lineType": "기타입고 등록 영역",
-  "warehouse/solder-label/page.tsx:supplierCode": "솔더 라벨 발행 등록 영역",
   "query/pda-scan/page.tsx:locationCode": "피더위치(창고 아님), PB sle_location_code 자유입력",
   "smt/location/page.tsx:locationCode": "피더 위치코드(창고 아님), PB 에 조건 없음",
 };

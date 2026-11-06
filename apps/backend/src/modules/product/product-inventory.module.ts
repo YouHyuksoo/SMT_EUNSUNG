@@ -7,13 +7,16 @@ import {
 import { ProductFgService } from './services/product-fg.service';
 import { ProductInventoryService } from './services/product-inventory.service';
 import { ProductPackService } from './services/product-pack.service';
+import { ShippingOrderController } from './controllers/shipping-order.controller';
+import { ShippingOrderService } from './services/shipping-order.service';
 
 @Module({
   controllers: [
     ProductInventoryController,
     ProductPackController,
     ProductFgController,
+    ShippingOrderController,
   ],
-  providers: [ProductInventoryService, ProductPackService, ProductFgService],
+  providers: [ProductInventoryService, ProductPackService, ProductFgService, ShippingOrderService],
 })
 export class ProductInventoryModule {}

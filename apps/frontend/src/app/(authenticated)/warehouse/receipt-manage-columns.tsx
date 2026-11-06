@@ -8,6 +8,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -153,15 +154,15 @@ export const receiptColumns: ColumnDef<ReceiptRow>[] = [
       ? <span className="text-text-muted">{String(c.getValue())}</span>
       : ''),
   },
-  { accessorKey: 'receiptType', header: '입고유형', size: 90, meta: center },
-  { accessorKey: 'lineType', header: '구매유형', size: 90, meta: center },
+  { accessorKey: 'receiptType', header: '입고유형', size: 90, meta: center, cell: comCodeCell('RECEIPT TYPE') },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   {
     id: 'supplierName',
     header: '협력사',
     size: 170,
     accessorFn: (r) => codeWithName(r.supplierCode, r.supplierName),
   },
-  { accessorKey: 'receiptStatus', header: '상태', size: 80, meta: center },
+  { accessorKey: 'receiptStatus', header: '상태', size: 80, meta: center, cell: comCodeCell('RECEIPT STATUS') },
   { accessorKey: 'confirmYn', header: '확정', size: 70, meta: center, cell: (c) => yesNo(c.getValue()) },
   { accessorKey: 'interfaceYn', header: '전송', size: 70, meta: center, cell: (c) => yesNo(c.getValue()) },
   { accessorKey: 'comments', header: '비고', size: 160 },
@@ -180,9 +181,9 @@ export const receiptInventoryColumns: ColumnDef<ReceiptInventoryRow>[] = [
   { accessorKey: 'locationCode', header: '창고', size: 80, meta: center },
   { accessorKey: 'locationAddress', header: '창고번지', size: 110 },
   { accessorKey: 'materialMfs', header: '자재 롯트', size: 130 },
-  { accessorKey: 'lineType', header: '구매유형', size: 90, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'supplierCode', header: '협력사', size: 110 },
-  { accessorKey: 'inventoryStatus', header: '재고상태', size: 100, meta: center },
+  { accessorKey: 'inventoryStatus', header: '재고상태', size: 100, meta: center, cell: comCodeCell('INVENTORY STATUS') },
   { accessorKey: 'inventoryHold', header: '보류', size: 80, meta: center },
   { accessorKey: 'comments', header: '비고', size: 150 },
 ];
@@ -194,8 +195,8 @@ export const arrivalColumns: ColumnDef<ArrivalRow>[] = [
   { accessorKey: 'arrivalSeqNo', header: '순번', size: 90, meta: right },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'arrivalQty', header: '예정수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'arrivalStatus', header: '상태', size: 90, meta: center },
-  { accessorKey: 'arrivalType', header: '유형', size: 80, meta: center },
+  { accessorKey: 'arrivalStatus', header: '상태', size: 90, meta: center, cell: comCodeCell('ARRIVAL STATUS') },
+  { accessorKey: 'arrivalType', header: '유형', size: 80, meta: center, cell: comCodeCell('ARRIVAL TYPE') },
   { accessorKey: 'unitPrice', header: '단가', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'arrivalAmt', header: '금액', size: 120, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'receiptDate', header: '입고일', size: 110, meta: center },

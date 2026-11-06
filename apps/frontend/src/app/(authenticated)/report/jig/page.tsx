@@ -31,10 +31,11 @@ import {
 } from '../report-b-columns';
 import type { JigCardRow, JigIssueReportRow, JigReportRow } from '../report-b-types';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 type Tab = 'list' | 'card' | 'issue';
@@ -42,7 +43,7 @@ type Tab = 'list' | 'card' | 'issue';
 export default function JigReportPage() {
   const [jigCode, setJigCode] = useState('');
   const [jigType, setJigType] = useState('');
-  const [dateFrom, setDateFrom] = useState(daysAgo(30));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
 
   const [tab, setTab] = useState<Tab>('list');

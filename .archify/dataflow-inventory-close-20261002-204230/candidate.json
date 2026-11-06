@@ -1,0 +1,315 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "은성 MES 재고 마감 흐름 (재료비)",
+    "output": ".archify/dataflow-inventory-close-20261002-204230/inventory-close.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1080,
+      640
+    ]
+  },
+  "stages": [
+    {
+      "label": "원자재 창고"
+    },
+    {
+      "label": "공정 (재공)"
+    },
+    {
+      "label": "생산 실적"
+    },
+    {
+      "label": "완제품"
+    },
+    {
+      "label": "출하"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "purchase",
+      "type": "external",
+      "label": "구매 입고",
+      "sublabel": "IM_ITEM_RECEIPT",
+      "stage": 0,
+      "row": 0,
+      "tag": "입고금액"
+    },
+    {
+      "id": "rawStock",
+      "type": "database",
+      "label": "원자재 재고",
+      "sublabel": "IM_ITEM_INVENTORY",
+      "stage": 0,
+      "row": 1,
+      "tag": "R 1,673품목"
+    },
+    {
+      "id": "rawClose",
+      "type": "database",
+      "label": "원자재 마감",
+      "sublabel": "IM_ITEM_INVENTORY_CLOSE",
+      "stage": 0,
+      "row": 3,
+      "tag": "운영 중"
+    },
+    {
+      "id": "backflush",
+      "type": "backend",
+      "label": "백플러시 잡",
+      "sublabel": "PKG_BACKFLUSH 1분",
+      "stage": 2,
+      "row": 1,
+      "tag": "단일 레벨"
+    },
+    {
+      "id": "wipStock",
+      "type": "database",
+      "label": "공정 재고",
+      "sublabel": "WORKSTAGE_INVENTORY",
+      "stage": 1,
+      "row": 1,
+      "tag": "실사 후 시작"
+    },
+    {
+      "id": "wipClose",
+      "type": "database",
+      "label": "공정 마감",
+      "sublabel": "WORKSTAGE_INV_CLOSE",
+      "stage": 1,
+      "row": 3,
+      "tag": "예정"
+    },
+    {
+      "id": "smt",
+      "type": "backend",
+      "label": "SMT 센서 실적",
+      "sublabel": "B면·T면 반제품",
+      "stage": 2,
+      "row": 0,
+      "tag": "인터락"
+    },
+    {
+      "id": "scrap",
+      "type": "security",
+      "label": "공정 폐기 등록",
+      "sublabel": "IP_PRODUCT_WORK_QC",
+      "stage": 2,
+      "row": 2,
+      "tag": "불량 출고"
+    },
+    {
+      "id": "fgReceipt",
+      "type": "backend",
+      "label": "완제품 입고",
+      "sublabel": "IP_PRODUCT_FG_RECEIPT",
+      "stage": 3,
+      "row": 0,
+      "tag": "PB·웹 공통"
+    },
+    {
+      "id": "fgStock",
+      "type": "database",
+      "label": "완제품 재고",
+      "sublabel": "FG_INVENTORY",
+      "stage": 3,
+      "row": 1,
+      "tag": "바코드 단위"
+    },
+    {
+      "id": "productClose",
+      "type": "database",
+      "label": "반제품·완제품 마감",
+      "sublabel": "PRODUCT_INVENTORY_CLOSE",
+      "stage": 3,
+      "row": 3,
+      "tag": "예정"
+    },
+    {
+      "id": "customer",
+      "type": "external",
+      "label": "고객 출하",
+      "sublabel": "IP_PRODUCT_FG_ISSUE",
+      "stage": 4,
+      "row": 1,
+      "tag": "출하·반품"
+    }
+  ],
+  "flows": [
+    {
+      "id": "buy",
+      "from": "purchase",
+      "to": "rawStock",
+      "label": "입고",
+      "classification": "단가표로 금액 보충",
+      "variant": "default",
+      "labelAt": [
+        100,
+        201
+      ]
+    },
+    {
+      "id": "rawIssue",
+      "from": "rawStock",
+      "to": "wipStock",
+      "label": "원자재 출고",
+      "classification": "트리거로 공정입고",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rawAvg",
+      "from": "rawStock",
+      "to": "rawClose",
+      "label": "월총평균",
+      "classification": "기초+입고−출고",
+      "variant": "dashed",
+      "labelAt": [
+        100,
+        330
+      ]
+    },
+    {
+      "id": "smtQueue",
+      "from": "smt",
+      "to": "backflush",
+      "label": "큐 1줄",
+      "classification": "실패해도 인터락 계속",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        530,
+        214
+      ]
+    },
+    {
+      "id": "fgQueue",
+      "from": "fgReceipt",
+      "to": "backflush",
+      "label": "큐 1줄",
+      "classification": "입고·취소",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "scrapQueue",
+      "from": "scrap",
+      "to": "backflush",
+      "label": "큐 1줄",
+      "classification": "폐기 보드",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        530,
+        328
+      ]
+    },
+    {
+      "id": "consume",
+      "from": "backflush",
+      "to": "wipStock",
+      "label": "반제품 입고·자품목 소비",
+      "classification": "IP 사급자재 제외",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right",
+      "labelAt": [
+        423,
+        322
+      ]
+    },
+    {
+      "id": "fgIn",
+      "from": "fgReceipt",
+      "to": "fgStock",
+      "label": "재고 증가",
+      "classification": "기존 트리거",
+      "variant": "default",
+      "labelAt": [
+        745,
+        214
+      ]
+    },
+    {
+      "id": "ship",
+      "from": "fgStock",
+      "to": "customer",
+      "label": "출하",
+      "classification": "반품은 되돌림",
+      "variant": "emphasis"
+    },
+    {
+      "id": "wipLedger",
+      "from": "wipStock",
+      "to": "wipClose",
+      "label": "백플러시 원장 합산",
+      "classification": "실사 차이 조정",
+      "variant": "dashed",
+      "labelAt": [
+        315,
+        360
+      ]
+    },
+    {
+      "id": "rawCost",
+      "from": "rawClose",
+      "to": "wipClose",
+      "label": "출고금액 = 재료비",
+      "classification": "원자재 평균단가",
+      "variant": "dashed"
+    },
+    {
+      "id": "wipCost",
+      "from": "wipClose",
+      "to": "productClose",
+      "label": "반제품 재료비",
+      "classification": "BOM 소요 × 평균단가",
+      "variant": "dashed"
+    },
+    {
+      "id": "fgQty",
+      "from": "fgStock",
+      "to": "productClose",
+      "label": "입고·출하 수량",
+      "classification": "월총평균",
+      "variant": "dashed",
+      "labelAt": [
+        745,
+        360
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "마감 순서",
+      "items": [
+        "원자재 → 공정 → 반제품·완제품 순으로 마감하고, 취소는 역순",
+        "마감한 달은 잠그고, 마감 전 백플러시 큐가 비었는지 확인",
+        "금액은 재료비만 (노무비·경비 제외)"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "백플러시 규칙 (단일 레벨)",
+      "items": [
+        "SMT 실적: 레이아웃과 겹치는 반제품을 공정재고에 입고하고 그 직속 원자재 소비",
+        "완제품 입고: 직속 자품목(TOP·BOT 반제품 + 직속 원자재) 소비",
+        "공정 폐기: 그때까지 SMT로 만든 품목을 불량 출고"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "남은 일",
+      "items": [
+        "백플러시 DDL 적용·검증 (초안 작성 완료)",
+        "공정 실사·조정 화면으로 공정 기초 확정",
+        "공정 마감, 반제품·완제품 마감, 마감월 잠금"
+      ]
+    }
+  ]
+}

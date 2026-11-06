@@ -353,6 +353,12 @@ export const LINE_DIVISION_LABELS: Record<LineDivisionValue, string> = {
 export const SMT_LINE_DIVISIONS: readonly LineDivisionValue[] = ['D', 'SMT'];
 
 /**
+ * 작업지시가 내려가는 후공정 라인구분 — 조립라인(L)·가공공정(W).
+ * 검사라인(T)·공용·수리에는 작업지시가 없다(현업 확인, 2026-10-14).
+ */
+export const WORK_ORDER_LINE_DIVISIONS: readonly LineDivisionValue[] = ['L', 'W'];
+
+/**
  * 생산팀 — 라인구분(LINE_DIVISION)으로 나눈다 (현업 결정).
  * 1팀 = D(SMT), 2팀 = W(가공공정)·T(검사라인)·L(조립라인).
  * 공용(ETC)·수리(REPAIR)는 어느 팀에도 넣지 않는다 — 팀 '전체' 일 때만 보인다.

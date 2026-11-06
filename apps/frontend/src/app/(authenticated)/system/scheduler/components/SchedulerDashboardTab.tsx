@@ -8,17 +8,19 @@
  * 1. **StatCard 4개**: 오늘 실행, 성공, 실패, 성공률
  * 2. **7일 추이 LineChart**: 성공/실패 일별 트렌드 (recharts)
  * 3. **작업별 BarChart**: 작업별 성공/실패 스택 바 차트
- * 4. **최근 실패**: 5건 테이블
+ * 4. **최근 실패**: 5건 그리드 (DataGrid)
  * 5. API: GET /scheduler/logs/summary
  */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Activity, CheckCircle, XCircle, TrendingUp, RefreshCw } from "lucide-react";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Card, CardContent, Button, StatCard } from "@/components/ui";
+import DataGrid from "@/components/data-grid/DataGrid";
 import api from "@/services/api";
 
 /** 대시보드 요약 데이터 */
@@ -29,15 +31,21 @@ interface DashboardSummary {
   successRate: number;
   trend: { date: string; success: number; fail: number }[];
   jobStats: { jobCode: string; jobName: string; success: number; fail: number }[];
-  recentFails: {
-    jobCode: string; startTime: string; errorMsg: string | null;
-  }[];
+  recentFails: RecentFail[];
+}
+
+/** 최근 실패 1건 */
+interface RecentFail {
+  jobCode: string; startTime: string; errorMsg: string | null;
 }
 
 const EMPTY: DashboardSummary = {
   todayTotal: 0, todaySuccess: 0, todayFail: 0, successRate: 0,
   trend: [], jobStats: [], recentFails: [],
 };
+
+/** ISO 일시를 "YYYY-MM-DD HH:mm:ss" 로 */
+const fmtDt = (v: string | null) => v ? v.replace("T", " ").slice(0, 19) : "-";
 
 export default function SchedulerDashboardTab() {
   const { t } = useTranslation();
@@ -58,7 +66,20 @@ export default function SchedulerDashboardTab() {
 
   useEffect(() => { search(); }, [search]);
 
-  const fmtDt = (v: string | null) => v ? v.replace("T", " ").slice(0, 19) : "-";
+  /** 최근 실패 그리드 컬럼 — 에러상세는 400px 에서 자르고 전체는 툴팁으로 본다 */
+  const failColumns = useMemo<ColumnDef<RecentFail>[]>(() => [
+    { accessorKey: "jobCode", header: t("system.scheduler.jobCode", "작업코드"), size: 140,
+      cell: ({ getValue }) => <span className="text-primary font-medium">{String(getValue() ?? "")}</span> },
+    { id: "startTime", header: t("system.scheduler.startTime", "시작시각"), size: 160,
+      accessorFn: (row) => fmtDt(row.startTime) },
+    { id: "errorMsg", header: t("system.scheduler.errorMsg", "에러상세"), size: 400,
+      accessorFn: (row) => row.errorMsg ?? "-",
+      cell: ({ getValue }) => (
+        <span className="block max-w-[400px] truncate text-red-600 dark:text-red-400" title={String(getValue())}>
+          {String(getValue())}
+        </span>
+      ) },
+  ], [t]);
 
   return (
     <div className="flex flex-col h-full gap-4 overflow-y-auto min-h-0">
@@ -130,36 +151,8 @@ export default function SchedulerDashboardTab() {
       <Card className="flex-shrink-0">
         <CardContent>
           <h3 className="text-sm font-semibold text-text mb-3">{t("system.scheduler.recentFails", "최근 실패")}</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-border text-text-muted">
-                  <th className="text-left px-3 py-2">{t("system.scheduler.jobCode", "작업코드")}</th>
-                  <th className="text-left px-3 py-2">{t("system.scheduler.startTime", "시작시각")}</th>
-                  <th className="text-left px-3 py-2">{t("system.scheduler.errorMsg", "에러상세")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.recentFails.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="text-center py-6 text-text-muted">
-                      {t("common.noData", "데이터 없음")}
-                    </td>
-                  </tr>
-                ) : (
-                  data.recentFails.slice(0, 5).map((row, i) => (
-                    <tr key={i} className="border-b border-border/50 hover:bg-surface transition-colors">
-                      <td className="px-3 py-2 text-primary font-medium">{row.jobCode}</td>
-                      <td className="px-3 py-2">{fmtDt(row.startTime)}</td>
-                      <td className="px-3 py-2 max-w-[400px] truncate text-red-600 dark:text-red-400">
-                        {row.errorMsg ?? "-"}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <DataGrid data={data.recentFails.slice(0, 5)} columns={failColumns} enableColumnFilter={false}
+            enableFullscreen={false} showFooter={false} emptyMessage={t("common.noData", "데이터 없음")} />
         </CardContent>
       </Card>
     </div>

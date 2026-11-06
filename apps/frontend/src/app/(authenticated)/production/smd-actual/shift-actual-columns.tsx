@@ -11,6 +11,7 @@
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, dateOnly, num } from '@/components/shared/grid-format';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 export interface SmdShiftActualRow {
   planDate: string;
@@ -120,7 +121,7 @@ export const smdShiftActualColumns: ColumnDef<SmdShiftActualRow>[] = [
       return n > 1 ? <span className="text-amber-600">{n}건 (자동 실적 공유)</span> : '';
     },
   },
-  { accessorKey: 'lastReceiptDate', header: '최종 센서 집계', size: 140 },
+  { accessorKey: 'lastReceiptDate', header: '최종 실적 시각', size: 140 },
   {
     id: 'dayManualInfo',
     header: '주간 수기 입력',
@@ -141,5 +142,5 @@ export const smdShiftActualColumns: ColumnDef<SmdShiftActualRow>[] = [
     size: 110,
     accessorFn: (r) => codeWithName(r.planStatus, r.planStatusName),
   },
-  { accessorKey: 'confirmYn', header: '확정', size: 70 },
+  { accessorKey: 'confirmYn', header: '확정', size: 70, cell: comCodeCell('CONFIRM YN') },
 ];

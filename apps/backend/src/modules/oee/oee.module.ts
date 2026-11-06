@@ -8,7 +8,6 @@ import { OeeResource } from '../../entities/oee-resource.entity';
 import { OeeDowntimeReason } from '../../entities/oee-downtime-reason.entity';
 import { OeeOperationLog } from '../../entities/oee-operation-log.entity';
 import { OeeDowntimeEvent } from '../../entities/oee-downtime-event.entity';
-import { WorktimeRange } from '../../entities/worktime-range.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { IsysOrganization } from '../../entities/isys-organization.entity';
 import { ComCode } from '../../entities/com-code.entity';
@@ -16,12 +15,9 @@ import { EquipDowntimeReason } from '../../entities/equip-downtime-reason.entity
 import { OeeController } from './oee.controller';
 import { OeeMasterService } from './oee-master.service';
 import { OeeLogService } from './oee-log.service';
-import { OeeDashboardService } from './oee-dashboard.service';
 import { ProdLineMaster } from '../../entities/prod-line-master.entity';
 import { OeeMobileController } from './oee-mobile.controller';
 import { OeeMobileService } from './oee-mobile.service';
-import { OeeMultiEntryController } from './oee-multi-entry.controller';
-import { OeeMultiEntryService } from './oee-multi-entry.service';
 import { SmtCloseRunPreviewService } from './smt-close-run-preview.service';
 
 @Module({
@@ -31,7 +27,6 @@ import { SmtCloseRunPreviewService } from './smt-close-run-preview.service';
       OeeDowntimeReason,
       OeeOperationLog,
       OeeDowntimeEvent,
-      WorktimeRange,
       IsysUser,
       IsysOrganization,
       ComCode,
@@ -39,13 +34,11 @@ import { SmtCloseRunPreviewService } from './smt-close-run-preview.service';
       ProdLineMaster,
     ]),
   ],
-  controllers: [OeeController, OeeMobileController, OeeMultiEntryController],
+  controllers: [OeeController, OeeMobileController],
   providers: [
     OeeMasterService,
     OeeLogService,
-    OeeDashboardService,
     OeeMobileService,
-    OeeMultiEntryService,
     SmtCloseRunPreviewService,
   ],
 })

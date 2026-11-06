@@ -20,6 +20,7 @@ import { Save, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import LineSelect from '@/components/shared/LineSelect';
 import ModelSearchField from '@/components/shared/ModelSearchField';
+import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import { useRunAfterRender } from '@/hooks/useRunAfterRender';
 import Select from '@/components/ui/Select';
 import { Button, Card, CardContent, Input } from '@/components/ui';
@@ -273,9 +274,10 @@ export default function PdaNgQueryPage() {
                   disabled={!selected} />
               </div>
             </label>
-            <Input aria-label="검사상태" placeholder="검사상태" value={checkStatus}
+            <ComCodeSelect groupCode="CHECK STATUS" includeAll={false}
+              aria-label="검사상태" placeholder="검사상태" value={checkStatus}
               className="w-32" disabled={!selected}
-              onChange={(e) => setCheckStatus(e.target.value)} />
+              onChange={setCheckStatus} />
             <Button size="sm" onClick={save} disabled={!selected || busy}>
               <Save className="mr-1 h-4 w-4" />저장
             </Button>

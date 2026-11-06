@@ -46,16 +46,17 @@ import type {
 } from '../query-types';
 import PartSearchField from '@/components/shared/PartSearchField';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 type Tab = 'detail' | 'group' | 'barcode' | 'issue';
 
 export default function PdaScanQueryPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(3));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [lineCode, setLineCode] = useState('');
   const [itemCode, setItemCode] = useState('');

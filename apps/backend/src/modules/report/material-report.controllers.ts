@@ -271,6 +271,15 @@ export class MaterialIssueSumController {
   ) {
     return paged(await this.service.findIssueSumByAccount(query, organizationId));
   }
+
+  @Get('matrix')
+  @ApiOperation({ summary: '366 출고 × 일자 원자료. 피벗은 화면에서 한다.' })
+  async matrix(
+    @Query() query: MaterialIssueSumQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findIssueSumMatrix(query, organizationId));
+  }
 }
 
 @ApiTags('리포트 - 자재랙이동')

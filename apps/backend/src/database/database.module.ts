@@ -9,6 +9,7 @@
  * 4. **expireTime**: 유휴 커넥션 만료 시간(초) — 오래된 연결 자동 정리
  */
 
+import { buildOracleConnectString } from '@smt/shared';
 import { Module, Global, Logger } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -78,7 +79,6 @@ import { ProductModelMaster } from '../entities/product-model-master.entity';
 import { ProductRunCard } from '../entities/product-run-card.entity';
 import { ProductSensorActual } from '../entities/product-sensor-actual.entity';
 import { SmdShiftManual } from '../entities/smd-shift-manual.entity';
-import { ProductWorkResult } from '../entities/product-work-result.entity';
 import { ProductWorkDefect } from '../entities/product-work-defect.entity';
 import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
 import { AiChatFeedback } from '../entities/ai-chat-feedback.entity';
@@ -96,15 +96,17 @@ import { AiChatFeedback } from '../entities/ai-chat-feedback.entity';
 
         logger.log(`Oracle DB 연결: ${host}:${port}`);
 
+        // ORACLE_HOST 에 쉼표로 주소를 여러 개 적으면 앞에서부터 차례로 접속한다 (oracle-connect-string.ts).
         return {
           type: 'oracle',
-          host,
-          port,
+          connectString: buildOracleConnectString({
+            host,
+            port,
+            sid: configService.get<string>('ORACLE_SID'),
+            serviceName: configService.get<string>('ORACLE_SERVICE_NAME', 'JSHNSMES'),
+          }),
           username: configService.get<string>('ORACLE_USER', 'HNSMES'),
           password: configService.get<string>('ORACLE_PASSWORD', 'your-oracle-password'),
-          ...(configService.get<string>('ORACLE_SID')
-            ? { sid: configService.get<string>('ORACLE_SID') }
-            : { serviceName: configService.get<string>('ORACLE_SERVICE_NAME', 'JSHNSMES') }),
           synchronize: false,
           logging: ['query', 'error', 'warn'],
           logger: new SqlDebugTypeormLogger(),
@@ -178,7 +180,6 @@ import { AiChatFeedback } from '../entities/ai-chat-feedback.entity';
             ProductRunCard,
             ProductSensorActual,
             SmdShiftManual,
-            ProductWorkResult,
             ProductWorkDefect,
             EquipDowntimeResult,
           ],

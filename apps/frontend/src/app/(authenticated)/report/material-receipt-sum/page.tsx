@@ -25,7 +25,7 @@ import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
-import { CrosstabGrid, type CrosstabSpec } from '../components/CrosstabGrid';
+import { useCrosstab, type CrosstabSpec } from '../components/crosstab';
 import {
   materialReceiptSumItemColumns,
   materialReceiptSumSupplierColumns,
@@ -39,16 +39,17 @@ import type {
 } from '../report-b-types';
 import PartSearchField from '@/components/shared/PartSearchField';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 type Tab = 'item' | 'contact' | 'supplier' | 'warehouse' | 'matrix';
 
 export default function MaterialReceiptSumPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [supplierCode, setSupplierCode] = useState('');
   const [itemCode, setItemCode] = useState('');
@@ -101,23 +102,23 @@ export default function MaterialReceiptSumPage() {
 
   useEffect(() => { void search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const itemColumns = useMemo(() => materialReceiptSumItemColumns(false), []);
-  const contactColumns = useMemo(() => materialReceiptSumItemColumns(true), []);
+  const itemColumns = useMemo(() => materialReceiptSumItemColumns(), []);
 
   const spec = useMemo<CrosstabSpec<MaterialTxnMatrixRow>>(() => ({
     // 입고와 출고를 같은 품목·위치에서 따로 줄로 놓는다 — 섞으면 상계돼 버린다.
     rowKey: (r) => [r.itemCode, r.txnKind, r.locationCode, r.supplierCode, r.deficit].join('|'),
     rowLabels: [
-      { header: '품목코드', value: (r) => r.itemCode ?? '', width: 150 },
-      { header: '구분', value: (r) => (r.txnKind === 'RECEIPT' ? '입고' : '출고') },
-      { header: '입출고', value: (r) => r.deficitName ?? r.deficit ?? '' },
-      { header: '창고', value: (r) => r.locationName ?? r.locationCode ?? '' },
-      { header: '협력사', value: (r) => r.supplierName ?? r.supplierCode ?? '' },
+      { id: 'itemCode', header: '품목코드', value: (r) => r.itemCode ?? '', width: 150 },
+      { id: 'txnKind', header: '구분', value: (r) => (r.txnKind === 'RECEIPT' ? '입고' : '출고'), width: 60 },
+      { id: 'deficit', header: '입출고', value: (r) => r.deficitName ?? r.deficit ?? '', width: 100 },
+      { id: 'location', header: '창고', value: (r) => r.locationName ?? r.locationCode ?? '', width: 120 },
+      { id: 'supplier', header: '협력사', value: (r) => r.supplierName ?? r.supplierCode ?? '', width: 150 },
     ],
     colKey: (r) => r.txnDate,
     colHeader: (k) => k.slice(5),
     value: (r) => Number(r.qty ?? 0),
   }), []);
+  const matrixGrid = useCrosstab(matrix, spec);
 
   const totalQty = byItem.reduce((sum, r) => sum + Number(r.receiptQty ?? 0), 0);
 
@@ -184,7 +185,7 @@ export default function MaterialReceiptSumPage() {
           {tab === 'contact' && (
             <DataGrid
               data={withContact}
-              columns={contactColumns}
+              columns={itemColumns}
               isLoading={loading}
               pageSize={100}
               enableColumnFilter
@@ -218,11 +219,17 @@ export default function MaterialReceiptSumPage() {
             />
           )}
           {tab === 'matrix' && (
-            <CrosstabGrid
-              rows={matrix}
-              spec={spec}
+            <DataGrid
+              key={matrixGrid.gridKey}
+              data={matrixGrid.data}
+              columns={matrixGrid.columns}
               isLoading={loading}
+              pageSize={100}
+              enableColumnFilter
+              enableExport
               exportFileName="자재입출고_일자별"
+              enableColumnPinning
+              defaultPinnedColumns={matrixGrid.pinned}
               emptyMessage={searched ? '기간에 입출고가 없습니다.' : '조회하세요.'}
             />
           )}

@@ -1,10 +1,15 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { OrganizationId } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId, UserId } from '../../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import { TemperatureCheckQueryDto, TemperatureRawQueryDto } from '../dto/temperature.dto';
+import {
+  TemperatureCheckKeyDto, TemperatureCheckQueryDto, TemperatureCheckUpdateDto,
+  TemperatureCheckUpsertDto, TemperatureRawQueryDto,
+} from '../dto/temperature.dto';
 import { TemperatureService } from '../services/temperature.service';
+
+const DEFAULT_USER = 'ADMIN';
 
 @ApiTags('품질관리 - 온도상태')
 @UseGuards(JwtAuthGuard)
@@ -36,5 +41,38 @@ export class TemperatureController {
   ) {
     const result = await this.service.findChecks(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
+  }
+
+  @Post('checks')
+  @ApiOperation({ summary: '이상 점검이력 등록 (항번·확인일시는 서버가 채운다)' })
+  async createCheck(
+    @Body() dto: TemperatureCheckUpsertDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.createCheck(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Put('checks')
+  @ApiOperation({ summary: '이상 점검이력 수정 (설비·항번은 바꿀 수 없다)' })
+  async updateCheck(
+    @Body() dto: TemperatureCheckUpdateDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.updateCheck(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Delete('checks')
+  @ApiOperation({ summary: '이상 점검이력 삭제' })
+  async removeCheck(
+    @Body() dto: TemperatureCheckKeyDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(await this.service.removeCheck(dto, organizationId));
   }
 }

@@ -5,6 +5,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -144,7 +145,7 @@ export const dividedColumns: ColumnDef<DividedRow>[] = [
   { accessorKey: 'supplierCode', header: '협력사', size: 110 },
   { accessorKey: 'issueCompareYn', header: '출고됨', size: 90, meta: center },
   { accessorKey: 'holdingYn', header: '보류', size: 80, meta: center },
-  { accessorKey: 'inventoryType', header: '재고유형', size: 100, meta: center },
+  { accessorKey: 'inventoryType', header: '재고유형', size: 100, meta: center, cell: comCodeCell('INVENTORY TYPE') },
   { accessorKey: 'mslPassedTime', header: 'MSL 경과', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'enterBy', header: '처리자', size: 100 },
 ];

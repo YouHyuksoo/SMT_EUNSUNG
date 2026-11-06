@@ -21,13 +21,9 @@ import api from '@/services/api';
 import { jigRepairColumns, type JigRepairRow } from './columns';
 import RepairActionPanel from './components/RepairActionPanel';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
-const monthAgo = () => {
-  const date = new Date();
-  date.setMonth(date.getMonth() - 1);
-  return isoDate(date);
-};
 
 export default function JigRepairPage() {
   const [rows, setRows] = useState<JigRepairRow[]>([]);
@@ -35,7 +31,7 @@ export default function JigRepairPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [selected, setSelected] = useState<JigRepairRow | null>(null);
-  const [dateFrom, setDateFrom] = useState(monthAgo);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [jigCode, setJigCode] = useState('');
   const [repairStatus, setRepairStatus] = useState('');

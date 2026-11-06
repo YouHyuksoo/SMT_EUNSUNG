@@ -1,6 +1,6 @@
 /**
  * @file src/app/(authenticated)/quality/repair-query-columns.tsx
- * @description 281 공정수리이력조회 요약 행 타입 + 컬럼.
+ * @description 281 공정수리이력분석 요약 행 타입 + 컬럼.
  *
  * 일별과 위치별은 **묶는 기준만 다르다** — 그래서 컬럼도 첫 칸 머리글만 바꿔
  * 같은 정의를 쓴다.

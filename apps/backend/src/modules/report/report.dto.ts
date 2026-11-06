@@ -246,26 +246,6 @@ export class RunCardReportQueryDto {
   withQty?: boolean;
 }
 
-// ───────────────────────────────── 348 제품 판매실적
-
-export class FgIssueReportQueryDto {
-  @ApiProperty({ description: '출하일 시작 (YYYY-MM-DD)' })
-  @IsString() @Matches(DATE_ONLY)
-  dateFrom!: string;
-
-  @ApiProperty({ description: '출하일 종료 (YYYY-MM-DD)' })
-  @IsString() @Matches(DATE_ONLY)
-  dateTo!: string;
-
-  @ApiPropertyOptional({ description: '모델명 (앞부분 일치)' })
-  @IsOptional() @IsString() @Length(0, 60)
-  modelName?: string;
-
-  @ApiPropertyOptional({ description: '제품 바코드 (앞부분 일치). 상세에만 쓴다.' })
-  @IsOptional() @IsString() @Length(0, 60)
-  barcode?: string;
-}
-
 // ───────────────────────────────── 350 공정재공조회 · 352 공정매거진조회
 
 export class WorkstageStockQueryDto {

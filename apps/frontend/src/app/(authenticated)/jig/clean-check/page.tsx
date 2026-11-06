@@ -28,6 +28,7 @@ import {
 import { jigCleanCheckColumns } from '../jig-extra-columns';
 import type { JigCleanCheckRow } from '../jig-extra-columns';
 
+import { getTodayLocal } from '@/utils/date';
 interface JigInfo {
   jigCode: string;
   jigName: string | null;
@@ -40,12 +41,7 @@ interface JigInfo {
   lastCleanDate: string | null;
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-};
+const today = () => getTodayLocal();
 
 /** OK/NG 를 고르는 작은 토글 — 세척과 외관이 같은 모양이다. */
 function OkNgToggle({ label, value, onChange }: {
@@ -65,7 +61,7 @@ function OkNgToggle({ label, value, onChange }: {
 }
 
 export default function JigCleanCheckPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [jigLotNoCond, setJigLotNoCond] = useState('');
   const [rows, setRows] = useState<JigCleanCheckRow[]>([]);

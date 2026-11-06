@@ -66,7 +66,6 @@ export interface MaterialReceiptRow {
   /** 기준단가. 입고단가와 다르면 단가확인이 안 된 입고다 (DB 함수가 계산). */
   checkUnitPrice: number | null;
   receiptAmt: number | null;
-  materialCostAmt: number | null;
   exchangeRate: number | null;
   foreignReceiptAmt: number | null;
   currency: string | null;
@@ -108,7 +107,6 @@ export interface MaterialReceiptSupplierRow {
   receiptQty: number | null;
   unitPrice: number | null;
   receiptAmt: number | null;
-  materialCostAmt: number | null;
   exchangeRate: number | null;
   foreignReceiptAmt: number | null;
   currency: string | null;
@@ -146,18 +144,23 @@ export interface MaterialReceiptSumItemRow {
   itemName: string | null;
   itemSpec: string | null;
   itemUom: string | null;
-  virtualReceiptYn: string | null;
   supplierCode: string | null;
   supplierName: string | null;
   supplierAddress: string | null;
   supplierTelNo: string | null;
   supplierFaxNo: string | null;
-  receiptType: string | null;
-  invoiceNo: string | null;
+  receiptCount: number | null;
+  invoiceCount: number | null;
+  firstReceiptDate: string | null;
+  lastReceiptDate: string | null;
   receiptQty: number | null;
   /** PB 와 같이 단순 평균이다 (수량 가중이 아니다). */
   receiptPrice: number | null;
+  /** 구매단가 마스터의 현재 유효 단가 (품목 + 협력사) */
+  lastReceiptPrice: number | null;
   receiptAmt: number | null;
+  minReceiptAmt: number | null;
+  maxReceiptAmt: number | null;
   foreignReceiptAmt: number | null;
 }
 
@@ -183,6 +186,20 @@ export interface MaterialReceiptSumWarehouseRow {
 }
 
 /** 364 입출고 매트릭스 원자료 한 줄. `txnKind` 로 입고·출고를 가른다. */
+/** 366 출고 × 일자 원자료 한 줄 (화면에서 피벗한다) */
+export interface MaterialIssueMatrixRow {
+  txnDate: string;
+  itemCode: string | null;
+  itemName: string | null;
+  issueAccount: string | null;
+  issueAccountName: string | null;
+  locationCode: string | null;
+  locationName: string | null;
+  supplierCode: string | null;
+  supplierName: string | null;
+  qty: number | null;
+}
+
 export interface MaterialTxnMatrixRow {
   txnDate: string;
   txnKind: 'RECEIPT' | 'ISSUE';
@@ -287,12 +304,9 @@ export interface SmtCheckHistoryRow {
 /** 366 품목별 출고합계 한 줄 */
 export interface MaterialIssueSumItemRow {
   itemCode: string | null;
-  lineType: string | null;
   itemName: string | null;
   itemSpec: string | null;
   itemUom: string | null;
-  supplierCode: string | null;
-  supplierName: string | null;
   issueQty: number | null;
   issueAmt: number | null;
 }
@@ -330,9 +344,20 @@ export interface MaterialLongTermRow {
   supplierCode: string | null;
   supplierName: string | null;
   inventoryQty: number | null;
+  /** 기준일에 유효한 구매단가 */
+  unitPrice: number | null;
+  /** 재고수량 × 구매단가 */
+  inventoryAmt: number | null;
   locationAddressRack: string | null;
   lastReceiptDate: string | null;
   idleDays: number | null;
+  /** 품목 전체 재고 (출고율의 분모) */
+  itemInventoryQty: number | null;
+  /** 개월수 기간의 품목 출고량 (양산·양산불량) */
+  termIssueQty: number | null;
+  /** 기간 출고량 ÷ 품목 재고 × 100 */
+  issueRate: number | null;
+  lastIssueDate: string | null;
 }
 
 /** 369 롯트별 재고 상세 한 줄 */

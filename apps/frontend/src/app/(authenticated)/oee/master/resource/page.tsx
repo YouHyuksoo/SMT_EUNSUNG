@@ -289,6 +289,33 @@ export default function OeeResourceMasterPage() {
     setCandidatePickerOpen(false);
   }
 
+  // 라인 후보 선택 팝업 그리드 — [선택] 버튼으로 1건을 고른다 (pickCandidate 가 form 을 읽는다)
+  const candidateColumns = useMemo<ColumnDef<LineCandidate>[]>(
+    () => [
+      // 라인코드는 00·01 처럼 숫자로만 된 값이 있어 자동 정렬(숫자=우측) 대신 왼쪽으로 고정한다
+      { accessorKey: 'lineCode', header: '라인코드', meta: { align: 'left' as const }, cell: ({ row }) => <span className="font-mono">{row.original.lineCode}</span> },
+      { id: 'lineName', header: '라인명', accessorFn: (candidate) => candidate.lineName || '-' },
+      { id: 'parentLineCode', header: '상위라인', meta: { align: 'left' as const }, accessorFn: (candidate) => candidate.parentLineCode || '-', cell: ({ getValue }) => <span className="font-mono">{String(getValue())}</span> },
+      {
+        id: 'actions',
+        header: '선택',
+        size: 80,
+        enableSorting: false,
+        meta: { align: 'center' as const, filterType: 'none' as const },
+        cell: ({ row }) => (
+          <button
+            type="button"
+            onClick={(event) => { event.stopPropagation(); pickCandidate(row.original); }}
+            className="whitespace-nowrap rounded border border-primary px-3 py-1 text-xs text-primary hover:bg-surface"
+          >
+            선택
+          </button>
+        ),
+      },
+    ],
+    [form],
+  );
+
   async function save() {
     if (!form) return;
     if (!form.lineCode) {
@@ -472,32 +499,17 @@ export default function OeeResourceMasterPage() {
             leftIcon={<Search className="h-4 w-4" />}
             fullWidth
           />
-          <div className="max-h-[50vh] overflow-auto rounded border border-border">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0">
-                <tr className="bg-surface text-text-muted">
-                  <th className="p-2 text-left">라인코드</th>
-                  <th className="p-2 text-left">라인명</th>
-                  <th className="p-2 text-left">상위라인</th>
-                  <th className="w-20 p-2 text-center">선택</th>
-                </tr>
-              </thead>
-              <tbody>
-                {candidateItems.map((candidate) => (
-                  <tr key={`${candidate.lineCode}-${candidate.parentLineCode}`} className="border-t border-border">
-                    <td className="whitespace-nowrap p-2 font-mono">{candidate.lineCode}</td>
-                    <td className="p-2">{candidate.lineName || '-'}</td>
-                    <td className="p-2 font-mono">{candidate.parentLineCode || '-'}</td>
-                    <td className="w-20 p-2 text-center">
-                      <button type="button" onClick={() => pickCandidate(candidate)} className="whitespace-nowrap rounded border border-primary px-3 py-1 text-xs text-primary hover:bg-surface">선택</button>
-                    </td>
-                  </tr>
-                ))}
-                {candidateLoading && <tr><td colSpan={4} className="p-4 text-center text-text-muted">라인 후보를 불러오는 중입니다.</td></tr>}
-                {!candidateLoading && !candidateItems.length && <tr><td colSpan={4} className="p-4 text-center text-text-muted">선택 가능한 라인이 없습니다.</td></tr>}
-              </tbody>
-            </table>
-          </div>
+          <DataGrid
+            data={candidateItems}
+            columns={candidateColumns}
+            isLoading={candidateLoading}
+            pageSize={300}
+            maxHeight="50vh"
+            showFooter={false}
+            enableFullscreen={false}
+            getRowId={(candidate) => `${candidate.lineCode}-${candidate.parentLineCode}`}
+            emptyMessage="선택 가능한 라인이 없습니다."
+          />
           <p className="text-[11px] text-text-muted">최대 300건 표시. 검색으로 후보를 좁혀 선택하세요.</p>
         </div>
       </Modal>

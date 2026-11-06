@@ -18,6 +18,7 @@ export class RunCardController {
     @Query('modelName') modelName?: string,
     @Query('lineCode') lineCode?: string,
     @Query('lotNo') lotNo?: string,
+    @Query('customerCode') customerCode?: string,
   ) {
     return {
       list: await this.service.list({
@@ -27,6 +28,7 @@ export class RunCardController {
         modelName: modelName || undefined,
         lineCode: lineCode || undefined,
         lotNo: lotNo || undefined,
+        customerCode: customerCode || undefined,
       }),
     };
   }

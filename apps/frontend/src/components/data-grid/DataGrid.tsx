@@ -11,6 +11,7 @@
  * 4. **컬럼 크기 조절**: 헤더 경계를 드래그하여 컬럼 너비 조절
  * 5. **컬럼 위치 조정**: 헤더를 드래그하여 컬럼 순서 변경
  * 6. **자동 정렬**: 숫자(우측), 날짜(중앙), 문자(좌측)
+ * 7. **합계 행**: 컬럼에 `footer` 를 주면 표 아래에 고정된 합계 행이 생긴다.
  */
 import {
   useReactTable,
@@ -41,7 +42,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { ResizeHandle } from './ResizeHandle';
 import { ColumnFilterInput } from './ColumnFilterInput';
 import { PaginationControls } from './PaginationControls';
-import { detectAlignment, getAlignmentClass, getPinnedStyle, withLeadingPinnedColumns } from './utils';
+import { detectAlignment, getAlignmentClass, getPinnedStyle, pinnedWidthStyle, withLeadingPinnedColumns } from './utils';
 import { numberRangeFilterFn } from './numberFilterFn';
 import { dateRangeFilterFn } from './dateFilterFn';
 import { textInFilterFn } from './textFilterFn';
@@ -120,7 +121,16 @@ export interface DataGridProps<T> {
   initialSorting?: SortingState;
   /** false 면 컬럼을 내용 폭으로만 두고 남는 오른쪽을 비운다 (기본 true: 그리드 폭을 꽉 채움) */
   fillWidth?: boolean;
+  /** 그리드에 포커스가 있을 때 ↑↓ 로 선택 행을 옮기고 onRowClick 을 부른다. selectedRowId·getRowId 가 함께 필요하다 (마스터-상세 화면용) */
+  keyboardRowNavigation?: boolean;
 }
+
+/** 행이 이보다 많으면 화면에 보이는 행만 그린다 */
+const WINDOW_MIN_ROWS = 100;
+/** 보이는 범위 위아래로 미리 그려 두는 행 수 (빠르게 스크롤할 때 빈칸 방지) */
+const WINDOW_OVERSCAN = 10;
+const WINDOW_INITIAL_ROWS = 60;
+const DEFAULT_ROW_HEIGHT = 33;
 
 function DataGrid<T>({
   data,
@@ -139,7 +149,8 @@ function DataGrid<T>({
   exportFileName = "export",
   exportExcludeColumns,
   toolbarLeft,
-  enableColumnPinning = false,
+  // 모든 그리드에서 컬럼 고정을 쓸 수 있게 기본으로 켠다 (화면마다 켜고 안 켜서 들쭉날쭉했다)
+  enableColumnPinning = true,
   defaultPinnedColumns,
   selectedRowId,
   getRowId,
@@ -150,6 +161,7 @@ function DataGrid<T>({
   sqlFilters,
   initialSorting,
   fillWidth = true,
+  keyboardRowNavigation = false,
 }: DataGridProps<T>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -169,8 +181,9 @@ function DataGrid<T>({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
-  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const draggedColumnRef = useRef<string | null>(null);
+  const draggedElRef = useRef<HTMLElement | null>(null);
+  const dropTargetElRef = useRef<HTMLElement | null>(null);
   const [showFilterRow, setShowFilterRow] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSql, setShowSql] = useState(false);
@@ -215,6 +228,7 @@ function DataGrid<T>({
   // cell 을 따로 주지 않은 컬럼의 기본 표시. 서버가 Date 를 그대로 내려 UTC ISO 가 찍히던 것을
   // 공용 포맷(YYYY-MM-DD / YYYY-MM-DD HH:mm:ss)으로 통일한다. 날짜가 아닌 값은 기존과 같다.
   const defaultColumn = useMemo<Partial<ColumnDef<T, unknown>>>(() => ({
+    minSize: 40,
     cell: ({ renderValue }) => {
       const value = renderValue();
       if (typeof value === 'string' || value instanceof Date) return formatDisplayDate(value);
@@ -244,6 +258,68 @@ function DataGrid<T>({
   });
 
   const activeFilterCount = columnFilters.length;
+  // 폭을 한 번이라도 조절하면(리사이즈 시작 때 모든 컬럼 폭을 잡아 둔다) 고정 레이아웃으로 바꾼다.
+  // 자동 레이아웃은 줄바꿈 없는 내용보다 좁게 줄일 수 없어 폭을 줄여도 그대로였다.
+  const isSized = Object.keys(columnSizing).length > 0;
+
+  // 행이 많으면 화면에 보이는 행만 그리고 나머지는 빈 높이로 둔다. 컬럼 이동·정렬·폭 조절 때
+  // 다시 그리는 양이 보이는 행만큼으로 줄어 한 페이지 500행에서도 멈추지 않는다.
+  // 셀은 줄바꿈이 없어 행 높이가 같으므로 첫 행 높이로 위치를 계산한다.
+  const pageRows = table.getRowModel().rows;
+  const windowed = pageRows.length > WINDOW_MIN_ROWS;
+  const rowHeightRef = useRef(DEFAULT_ROW_HEIGHT);
+  const [rowWindow, setRowWindow] = useState({ start: 0, end: WINDOW_INITIAL_ROWS });
+  const updateRowWindow = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const headHeight = el.querySelector('thead')?.getBoundingClientRect().height ?? 0;
+    const firstRow = el.querySelector<HTMLElement>('tbody tr[data-row]');
+    if (firstRow) rowHeightRef.current = firstRow.getBoundingClientRect().height || rowHeightRef.current;
+    const h = rowHeightRef.current;
+    const start = Math.max(0, Math.floor((el.scrollTop - headHeight) / h) - WINDOW_OVERSCAN);
+    const end = Math.ceil((el.scrollTop + el.clientHeight - headHeight) / h) + WINDOW_OVERSCAN;
+    setRowWindow((prev) => (prev.start === start && prev.end === end ? prev : { start, end }));
+  }, []);
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!windowed || !el) return;
+    updateRowWindow();
+    let frame = 0;
+    const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(updateRowWindow); };
+    el.addEventListener('scroll', schedule, { passive: true });
+    const observer = new ResizeObserver(schedule);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener('scroll', schedule);
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [windowed, updateRowWindow, isFullscreen, pageRows.length]);
+  const visibleStart = windowed ? Math.min(rowWindow.start, pageRows.length) : 0;
+  const visibleEnd = windowed ? Math.min(rowWindow.end, pageRows.length) : pageRows.length;
+  const spacerColSpan = table.getVisibleLeafColumns().length;
+
+  // ↑↓ 로 선택 행 이동 — 현재 페이지(정렬·필터 반영) 순서를 따른다. 필터 입력칸의 키는 건드리지 않는다
+  const handleRowKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!keyboardRowNavigation || !onRowClick || !getRowId || pageRows.length === 0) return;
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    if ((e.target as HTMLElement).closest('input, select, textarea, [contenteditable="true"]')) return;
+    e.preventDefault();
+    const current = pageRows.findIndex((row) => getRowId(row.original) === selectedRowId);
+    const next = current < 0 ? 0 : Math.min(pageRows.length - 1, Math.max(0, current + (e.key === 'ArrowDown' ? 1 : -1)));
+    if (next === current) return;
+    onRowClick(pageRows[next].original);
+    // 행 높이가 같으므로 위치를 계산해 보이게 한다 (가려 그리는 행도 마찬가지)
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const headHeight = el.querySelector('thead')?.getBoundingClientRect().height ?? 0;
+    const firstRow = el.querySelector<HTMLElement>('tbody tr[data-row]');
+    const h = firstRow?.getBoundingClientRect().height || rowHeightRef.current;
+    const top = headHeight + next * h;
+    if (top < el.scrollTop + headHeight) el.scrollTop = top - headHeight;
+    else if (top + h > el.scrollTop + el.clientHeight) el.scrollTop = top + h - el.clientHeight;
+  };
+  const hasFooter = table.getVisibleLeafColumns().some((col) => col.columnDef.footer != null);
 
   const handleExport = useCallback(async (format: ExportFormat) => {
     setIsExporting(true);
@@ -251,12 +327,20 @@ function DataGrid<T>({
       const exportRows = activeFilterCount > 0
         ? table.getPrePaginationRowModel().rows.map(r => r.original)
         : data;
-      await exportData({ data: exportRows, columns, fileName: exportFileName, excludeColumns: exportExcludeColumns }, format);
+      // 합계 행이 있으면 화면과 같은 값으로 마지막 줄에 붙인다 (문자·숫자 footer 만)
+      const footerRow = hasFooter
+        ? Object.fromEntries((table.getFooterGroups().at(-1)?.headers ?? []).map((header) => {
+          const footer = header.column.columnDef.footer;
+          const value = typeof footer === 'function' ? footer(header.getContext()) : footer;
+          return [header.column.id, typeof value === 'string' || typeof value === 'number' ? value : ''];
+        }))
+        : undefined;
+      await exportData({ data: exportRows, columns, fileName: exportFileName, excludeColumns: exportExcludeColumns, footerRow }, format);
     } finally {
       setIsExporting(false);
       setMenuOpen(false);
     }
-  }, [activeFilterCount, table, data, columns, exportFileName, exportExcludeColumns, exportData]);
+  }, [activeFilterCount, table, data, columns, exportFileName, exportExcludeColumns, exportData, hasFooter]);
 
   // 컬럼 순서 초기화
   useEffect(() => {
@@ -285,31 +369,59 @@ function DataGrid<T>({
   };
 
   // 드래그 앤 드롭 핸들러
-  const handleDragStart = useCallback((e: React.DragEvent, columnId: string) => {
+  // 끄는 동안의 표시(끌리는 헤더 흐림, 놓을 자리 강조)는 헤더 DOM 의 data 속성만 바꾼다.
+  // 상태로 두면 dragover 마다 표 전체가 다시 그려져 컬럼·행이 많은 화면이 멈춘다.
+  const clearDropTarget = useCallback(() => {
+    if (dropTargetElRef.current) delete dropTargetElRef.current.dataset.dropTarget;
+    dropTargetElRef.current = null;
+  }, []);
+
+  const handleDragStart = useCallback((e: React.DragEvent<HTMLElement>, columnId: string) => {
     if (!enableColumnReordering) return;
-    setDraggedColumn(columnId);
+    draggedColumnRef.current = columnId;
+    draggedElRef.current = e.currentTarget;
+    e.currentTarget.dataset.dragging = 'true';
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', columnId);
   }, [enableColumnReordering]);
 
-  const handleDragOver = useCallback((e: React.DragEvent, columnId: string) => {
-    if (!enableColumnReordering || !draggedColumn) return;
+  /** 화면에 보이는 순서(좌측 고정 → 일반 → 우측 고정)의 컬럼 id */
+  const getVisualOrder = useCallback(() => table.getVisibleLeafColumns().map((col) => col.id), [table]);
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLElement>, columnId: string, pinned: boolean) => {
+    // 고정 컬럼 위에는 놓지 못한다 (고정 컬럼 순서는 고정 상태가 정한다)
+    if (!enableColumnReordering || !draggedColumnRef.current || pinned) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    if (columnId !== draggedColumn) setDropTarget(columnId);
-  }, [enableColumnReordering, draggedColumn]);
+    if (columnId === draggedColumnRef.current) { clearDropTarget(); return; }
+    // 오른쪽으로 옮기면 놓은 컬럼 뒤에, 왼쪽으로 옮기면 앞에 들어간다 — 표시도 그 쪽 경계에 그린다
+    const order = getVisualOrder();
+    const side = order.indexOf(draggedColumnRef.current) < order.indexOf(columnId) ? 'after' : 'before';
+    if (dropTargetElRef.current === e.currentTarget && e.currentTarget.dataset.dropTarget === side) return;
+    clearDropTarget();
+    dropTargetElRef.current = e.currentTarget;
+    e.currentTarget.dataset.dropTarget = side;
+  }, [enableColumnReordering, clearDropTarget, getVisualOrder]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLElement>) => {
+    // 헤더 안 자식 요소로 옮겨 갈 때도 dragleave 가 오므로, 헤더 밖으로 나갈 때만 강조를 끈다
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+    if (dropTargetElRef.current === e.currentTarget) clearDropTarget();
+  }, [clearDropTarget]);
 
   const handleDragEnd = useCallback(() => {
-    setDraggedColumn(null);
-    setDropTarget(null);
-  }, []);
+    if (draggedElRef.current) delete draggedElRef.current.dataset.dragging;
+    draggedElRef.current = null;
+    draggedColumnRef.current = null;
+    clearDropTarget();
+  }, [clearDropTarget]);
 
   const handleDrop = useCallback((e: React.DragEvent, targetColumnId: string) => {
+    const draggedColumn = draggedColumnRef.current;
     if (!enableColumnReordering || !draggedColumn) return;
     e.preventDefault();
-    const currentOrder = columnOrder.length > 0
-      ? columnOrder
-      : table.getAllLeafColumns().map((col) => col.id);
+    // 저장된 순서에는 나중에 생긴 컬럼이 빠져 있을 수 있어 화면 순서를 기준으로 옮긴다
+    const currentOrder = getVisualOrder();
     const draggedIndex = currentOrder.indexOf(draggedColumn);
     const targetIndex = currentOrder.indexOf(targetColumnId);
     if (draggedIndex !== -1 && targetIndex !== -1 && draggedIndex !== targetIndex) {
@@ -318,9 +430,8 @@ function DataGrid<T>({
       newOrder.splice(targetIndex, 0, draggedColumn);
       setColumnOrder(newOrder);
     }
-    setDraggedColumn(null);
-    setDropTarget(null);
-  }, [enableColumnReordering, draggedColumn, columnOrder, table]);
+    handleDragEnd();
+  }, [enableColumnReordering, getVisualOrder, handleDragEnd]);
 
   // 정렬 아이콘
   const SortIcon = ({ isSorted }: { isSorted: false | 'asc' | 'desc' }) => {
@@ -473,7 +584,9 @@ function DataGrid<T>({
       <div className="relative flex-1 min-h-0 flex flex-col">
         <div
           ref={scrollContainerRef}
-          className="relative overflow-auto rounded-[var(--radius)] border border-border flex-1"
+          tabIndex={keyboardRowNavigation ? 0 : undefined}
+          onKeyDown={keyboardRowNavigation ? handleRowKeyDown : undefined}
+          className="relative overflow-auto rounded-[var(--radius)] border border-border flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           style={maxHeight ? { maxHeight } : undefined}
         >
           {/* 로딩 오버레이 */}
@@ -491,15 +604,16 @@ function DataGrid<T>({
           )}
         <table
           className="font-data text-xs"
-          style={{ minWidth: fillWidth ? '100%' : undefined, width: 'max-content' }}
+          style={isSized
+            ? { tableLayout: 'fixed', width: table.getTotalSize() }
+            : { minWidth: fillWidth ? '100%' : undefined, width: 'max-content' }}
         >
-          {/* Header */}
-          <thead className="bg-background sticky top-0 z-10">
+          {/* Header — thead 는 sticky+z 로 자기 쌓임 맥락을 만들므로, 고정 컬럼 본문 칸(z 11)보다 높아야
+              세로 스크롤 때 고정 컬럼 헤더가 본문에 덮이지 않는다 */}
+          <thead className="bg-background sticky top-0 z-20">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const isDragging = draggedColumn === header.id;
-                  const isDropTarget = dropTarget === header.id;
                   const headerAlign = getHeaderAlignment(header);
                   const pinned = header.column.getIsPinned();
                   const isLastLeftPinned = pinned === 'left' && header.column.getIsLastColumn('left');
@@ -512,24 +626,27 @@ function DataGrid<T>({
                       className={`
                         group/resize relative px-3 py-2 font-semibold text-text
                         border-b border-r border-border last:border-r-0
-                        whitespace-nowrap
-                        transition-all duration-150
+                        whitespace-nowrap ${isSized ? 'overflow-hidden text-ellipsis' : ''}
+                        transition-colors duration-150
                         ${getAlignmentClass(headerAlign)}
-                        ${isDragging ? 'opacity-50 bg-primary/10' : ''}
-                        ${isDropTarget ? 'bg-primary/20 border-l-2 border-l-primary' : ''}
+                        data-[dragging=true]:opacity-50 data-[dragging=true]:bg-primary/10
+                        data-[drop-target]:bg-primary/20
+                        data-[drop-target=before]:border-l-2 data-[drop-target=before]:border-l-primary
+                        data-[drop-target=after]:border-r-2 data-[drop-target=after]:border-r-primary
                         ${pinned ? 'bg-slate-200 dark:bg-slate-800' : 'bg-slate-200 dark:bg-slate-800'}
                       `}
                       style={{
-                        width: columnSizing[header.id] ? header.getSize() : 'auto',
-                        minWidth: header.column.columnDef.minSize ?? 50,
+                        width: isSized ? header.getSize() : 'auto',
+                        minWidth: isSized ? undefined : header.column.columnDef.minSize ?? 50,
+                        ...pinnedWidthStyle(pinned, header.getSize()),
                         ...getPinnedStyle(pinned, header.column.getStart('left'), header.column.getAfter('right'), isLastLeftPinned, isFirstRightPinned, 12),
                       }}
                       draggable={canDrag}
                       onDragStart={(e) => canDrag && handleDragStart(e, header.id)}
-                      onDragOver={(e) => handleDragOver(e, header.id)}
+                      onDragOver={(e) => handleDragOver(e, header.id, !!pinned)}
                       onDragEnd={handleDragEnd}
                       onDrop={(e) => handleDrop(e, header.id)}
-                      onDragLeave={() => setDropTarget(null)}
+                      onDragLeave={handleDragLeave}
                     >
                       {header.isPlaceholder ? null : (
                         <div className={`flex items-center gap-1 ${headerAlign === 'right' ? 'justify-end' : headerAlign === 'center' ? 'justify-center' : 'justify-start'}`}>
@@ -542,7 +659,7 @@ function DataGrid<T>({
                                 e.stopPropagation();
                                 header.column.pin(pinned ? false : 'left');
                               }}
-                              className={`flex-shrink-0 p-0.5 rounded hover:bg-primary/10 transition-colors ${pinned ? 'text-primary' : 'text-text-muted opacity-0 group-hover/resize:opacity-50 hover:!opacity-100'}`}
+                              className={`flex-shrink-0 p-0.5 rounded hover:bg-primary/10 transition-colors ${pinned ? 'text-primary' : 'text-text-muted opacity-30 group-hover/resize:opacity-60 hover:!opacity-100'}`}
                               title={pinned ? '고정 해제' : '컬럼 고정'}
                             >
                               {pinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
@@ -578,7 +695,10 @@ function DataGrid<T>({
                     <th
                       key={`filter-${header.id}`}
                       className={`px-1 py-1 border-b border-r border-border last:border-r-0 ${pinned ? 'bg-surface dark:bg-surface' : ''}`}
-                      style={getPinnedStyle(pinned, header.column.getStart('left'), header.column.getAfter('right'), isLastLeftPinned, isFirstRightPinned, 12)}
+                      style={{
+                        ...pinnedWidthStyle(pinned, header.getSize()),
+                        ...getPinnedStyle(pinned, header.column.getStart('left'), header.column.getAfter('right'), isLastLeftPinned, isFirstRightPinned, 12),
+                      }}
                     >
                       <ColumnFilterInput column={header.column} data={data} />
                     </th>
@@ -590,20 +710,28 @@ function DataGrid<T>({
 
           {/* Body */}
           <tbody>
-            {table.getRowModel().rows.length === 0 ? (
+            {pageRows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="px-3 py-16 text-center text-text-muted">
                   {isLoading ? '\u00A0' : emptyMessage}
                 </td>
               </tr>
             ) : (
-              table.getRowModel().rows.map((row, index) => {
+              <>
+              {visibleStart > 0 && (
+                <tr aria-hidden style={{ height: visibleStart * rowHeightRef.current }}>
+                  <td colSpan={spacerColSpan} className="p-0" />
+                </tr>
+              )}
+              {pageRows.slice(visibleStart, visibleEnd).map((row, offset) => {
+                const index = visibleStart + offset;
                 const isSelected = selectedRowId != null && getRowId
                   ? getRowId(row.original) === selectedRowId
                   : false;
                 return (
                 <tr
                   key={row.id}
+                  data-row
                   onClick={() => onRowClick?.(row.original)}
                   className={`
                     border-b border-border last:border-b-0
@@ -629,10 +757,11 @@ function DataGrid<T>({
                     return (
                       <td
                         key={cell.id}
-                        className={`px-3 py-2 whitespace-nowrap text-inherit ${getAlignmentClass(cellAlign)} ${pinnedBg} ${showColumnBorder ? 'border-r border-border last:border-r-0' : ''}`}
+                        className={`px-3 py-2 whitespace-nowrap text-inherit ${getAlignmentClass(cellAlign)} ${pinnedBg} ${pinned || isSized ? 'overflow-hidden text-ellipsis' : ''} ${showColumnBorder ? 'border-r border-border last:border-r-0' : ''}`}
                         style={{
-                          width: columnSizing[cell.column.id] ? cell.column.getSize() : 'auto',
-                          minWidth: cell.column.columnDef.minSize ?? 50,
+                          width: isSized ? cell.column.getSize() : 'auto',
+                          minWidth: isSized ? undefined : cell.column.columnDef.minSize ?? 50,
+                          ...pinnedWidthStyle(pinned, cell.column.getSize()),
                           ...getPinnedStyle(pinned, cell.column.getStart('left'), cell.column.getAfter('right'), isLastLeftPinned, isFirstRightPinned, 11),
                         }}
                       >
@@ -642,9 +771,44 @@ function DataGrid<T>({
                   })}
                 </tr>
                 );
-              })
+              })}
+              {visibleEnd < pageRows.length && (
+                <tr aria-hidden style={{ height: (pageRows.length - visibleEnd) * rowHeightRef.current }}>
+                  <td colSpan={spacerColSpan} className="p-0" />
+                </tr>
+              )}
+              </>
             )}
           </tbody>
+
+          {/* 합계 행 — 컬럼에 footer 를 준 그리드만. 값은 footer 함수가 정한다(보통 필터된 전체 행 합계) */}
+          {hasFooter && pageRows.length > 0 && (
+            <tfoot className="sticky bottom-0 z-20">
+              {table.getFooterGroups().map((footerGroup) => (
+                <tr key={footerGroup.id}>
+                  {footerGroup.headers.map((header) => {
+                    const pinned = header.column.getIsPinned();
+                    const isLastLeftPinned = pinned === 'left' && header.column.getIsLastColumn('left');
+                    const isFirstRightPinned = pinned === 'right' && header.column.getIsFirstColumn('right');
+                    return (
+                      <td
+                        key={header.id}
+                        className={`px-3 py-2 whitespace-nowrap font-semibold text-text bg-slate-100 dark:bg-slate-800 border-t border-border ${getAlignmentClass(header.column.columnDef.meta?.align ?? 'left')} ${pinned || isSized ? 'overflow-hidden text-ellipsis' : ''} ${showColumnBorder ? 'border-r last:border-r-0' : ''}`}
+                        style={{
+                          width: isSized ? header.getSize() : 'auto',
+                          minWidth: isSized ? undefined : header.column.columnDef.minSize ?? 50,
+                          ...pinnedWidthStyle(pinned, header.getSize()),
+                          ...getPinnedStyle(pinned, header.column.getStart('left'), header.column.getAfter('right'), isLastLeftPinned, isFirstRightPinned, 12),
+                        }}
+                      >
+                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.footer, header.getContext())}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tfoot>
+          )}
         </table>
         </div>
       </div>

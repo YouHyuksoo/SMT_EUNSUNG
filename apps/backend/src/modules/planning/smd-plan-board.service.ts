@@ -68,13 +68,13 @@ export class SmdPlanBoardService {
     const divisionList = Object.keys(divisionBinds).map((k) => `:${k}`).join(', ');
 
     const [slots, lines, extraActuals, noteRows] = await Promise.all([
-      this.dataSource.query(
+      this.dataSource.query<Row[]>(
         `SELECT WORK_TYPE AS "code", START_TIME AS "startTime", END_TIME AS "endTime"
            FROM ICOM_WORKTIME_RANGES
           WHERE RANGE_TYPE = 'SMTWORKTIME'
           ORDER BY WORK_TYPE`,
-      ) as Promise<Row[]>,
-      this.dataSource.query(
+      ),
+      this.dataSource.query<Row[]>(
         `SELECT l.LINE_CODE AS "lineCode", l.LINE_NAME AS "lineName"
            FROM IP_PRODUCT_LINE l
           WHERE l.ORGANIZATION_ID = :organizationId
@@ -89,8 +89,8 @@ export class SmdPlanBoardService {
                                        AND n.PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')))
           ORDER BY NVL(l.MES_DISPLAY_SEQUENCE, 9999), l.LINE_CODE`,
         namedBinds({ organizationId, planDate: date, ...divisionBinds }),
-      ) as Promise<Row[]>,
-      this.dataSource.query(
+      ),
+      this.dataSource.query<Row[]>(
         `SELECT v.LINE_CODE AS "lineCode", v.MODEL_NAME AS "modelName",
                 v.MODEL_SUFFIX AS "modelSuffix", v.PCB_ITEM AS "pcbItem",
                 pcb.CODE_MEAN_KOR AS "pcbItemName",
@@ -105,8 +105,8 @@ export class SmdPlanBoardService {
                      AND ${smd.actualJoin.map(([planCol, viewCol]) => `p.${planCol} = v.${viewCol}`).join('\n                     AND ')})
           ORDER BY v.LINE_CODE, v.MODEL_NAME, v.PCB_ITEM`,
         namedBinds({ organizationId, planDate: date }),
-      ) as Promise<Row[]>,
-      this.dataSource.query(
+      ),
+      this.dataSource.query<Row[]>(
         `SELECT LINE_CODE AS "lineCode", NOTE_SEQ AS "noteSeq", NOTE_TEXT AS "noteText",
                 ENTER_BY AS "enterBy", TO_CHAR(ENTER_DATE, 'YYYY-MM-DD HH24:MI') AS "enterDate"
            FROM IP_PRODUCT_SMD_PLAN_NOTE
@@ -114,7 +114,7 @@ export class SmdPlanBoardService {
             AND PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')
           ORDER BY LINE_CODE, NOTE_SEQ`,
         namedBinds({ organizationId, planDate: date }),
-      ) as Promise<Row[]>,
+      ),
     ]);
 
     const notes = groupNotes(noteRows);

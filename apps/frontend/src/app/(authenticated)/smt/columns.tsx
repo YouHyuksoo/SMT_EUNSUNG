@@ -19,8 +19,10 @@ import type {
   SmtNcRow,
   SmtPickupRow,
   SmtPlanLineRow,
+  SmtPlanSummaryRow,
   SmtPlanRow,
 } from './types';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 
@@ -40,7 +42,7 @@ export const smtLineColumns: ColumnDef<SmtLineRow>[] = [
     size: 130,
     accessorFn: (r) => codeWithName(r.lineStatus, r.lineStatusName),
   },
-  { accessorKey: 'lineDivision', header: '라인구분', size: 100 },
+  { accessorKey: 'lineDivision', header: '라인구분', size: 100, cell: comCodeCell('LINE DIVISION') },
   { accessorKey: 'showTableYn', header: '테이블표시', size: 100 },
   {
     accessorKey: 'locationCount',
@@ -170,86 +172,107 @@ export const smtBomColumns: ColumnDef<SmtBomRow>[] = [
   { accessorKey: 'comments', header: '비고', size: 180 },
 ];
 
+/** 아래 피더 배치 (PB d_smt_plandata_simple_4_plan 열 순서) */
 export const smtPlanColumns: ColumnDef<SmtPlanRow>[] = [
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 190 },
   {
     id: 'activeYnName',
     header: '활성',
-    size: 100,
+    size: 90,
     accessorFn: (r) => codeWithName(r.activeYn, r.activeYnName),
   },
-  { accessorKey: 'replaceYn', header: '대체', size: 70 },
-  { accessorKey: 'lineCode', header: '라인', size: 80 },
-  { accessorKey: 'machine', header: '설비', size: 90 },
-  { accessorKey: 'tableId', header: '테이블', size: 80 },
-  { accessorKey: 'locationCode', header: '위치코드', size: 120 },
   {
-    id: 'pcbItemName',
-    header: 'PCB면',
-    size: 110,
-    accessorFn: (r) => codeWithName(r.pcbItem, r.pcbItemName),
-  },
-  {
-    accessorKey: 'itemUnitQty',
-    header: '소요량',
-    size: 100,
-    meta: right,
-    cell: (c) => num(c.getValue()),
-  },
-  {
-    accessorKey: 'feedingQty',
-    header: '투입량',
-    size: 100,
-    meta: right,
-    cell: (c) => num(c.getValue()),
+    id: 'ccsYnName',
+    header: 'CCS',
+    size: 90,
+    accessorFn: (r) => codeWithName(r.ccsYn, r.ccsYnName),
   },
   {
     id: 'checkStatusName',
     header: '체크상태',
-    size: 120,
+    size: 110,
     accessorFn: (r) => codeWithName(r.checkStatus, r.checkStatusName),
   },
-  { accessorKey: 'checkMsg', header: '체크메시지', size: 180 },
-  { accessorKey: 'fullCheckYn', header: '풀체크', size: 90 },
+  { accessorKey: 'checkYn', header: '체크', size: 60 },
+  { accessorKey: 'replaceYn', header: '대체', size: 60 },
   {
-    id: 'ccsYnName',
-    header: 'CCS',
-    size: 100,
-    accessorFn: (r) => codeWithName(r.ccsYn, r.ccsYnName),
+    id: 'pcbItemName',
+    header: 'PCB면',
+    size: 90,
+    accessorFn: (r) => codeWithName(r.pcbItem, r.pcbItemName),
   },
+  { accessorKey: 'feederShaft', header: '피더축', size: 70 },
+  { accessorKey: 'tableId', header: '테이블', size: 70 },
+  { accessorKey: 'locationCode', header: '위치코드', size: 100 },
+  {
+    accessorKey: 'itemUnitQty',
+    header: '소요량',
+    size: 80,
+    meta: right,
+    cell: (c) => num(c.getValue()),
+  },
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'lotNo', header: 'LOT번호', size: 140 },
-  { accessorKey: 'revision', header: '리비전', size: 90 },
-  { accessorKey: 'feederShaft', header: '피더축', size: 80 },
+  { accessorKey: 'modelName', header: '모델명', size: 170 },
+  { accessorKey: 'smtModelName', header: 'SMT모델', size: 170 },
+  { accessorKey: 'itemBarcode', header: '자재 바코드', size: 200 },
+  {
+    accessorKey: 'feedingQty',
+    header: '투입량',
+    size: 90,
+    meta: right,
+    cell: (c) => num(c.getValue()),
+  },
   {
     accessorKey: 'feedingDate',
     header: '투입일시',
     size: 150,
     cell: (c) => dateTime(c.getValue()),
   },
-  { accessorKey: 'planDate', header: '계획일', size: 110 },
+  { accessorKey: 'revision', header: '리비전', size: 70 },
+  { accessorKey: 'machine', header: '설비', size: 90 },
+  { accessorKey: 'lineCode', header: '라인', size: 70 },
+  { accessorKey: 'fullCheckYn', header: '풀체크', size: 70 },
+  { accessorKey: 'checkMsg', header: '체크메시지', size: 200 },
+  { accessorKey: 'planDate', header: '계획일', size: 100 },
 ];
 
-export const smtPlanLineColumns: ColumnDef<SmtPlanLineRow>[] = [
-  { accessorKey: 'lineCode', header: '라인코드', size: 110 },
-  { accessorKey: 'lineName', header: '라인명', size: 170 },
-  { accessorKey: 'activeModelName', header: '활성 모델', size: 190 },
+/** 오른쪽 위 Summary (PB d_smt_plandata_lst 열 순서) */
+export const smtPlanSummaryColumns: ColumnDef<SmtPlanSummaryRow>[] = [
+  { accessorKey: 'activeYn', header: '활성', size: 60 },
+  { accessorKey: 'lineCode', header: '라인', size: 60 },
+  { accessorKey: 'pcbItem', header: 'PCB면', size: 65 },
+  { accessorKey: 'feederShaft', header: '피더축', size: 65 },
+  { accessorKey: 'revision', header: '리비전', size: 70 },
+  { accessorKey: 'modelName', header: '모델명', size: 200 },
+  { accessorKey: 'smtModelName', header: 'SMT모델', size: 190 },
+  { accessorKey: 'masterSmtModelName', header: '모델마스터 SMT모델', size: 170 },
+  { accessorKey: 'modelSpec', header: '모델사양', size: 150 },
+  { accessorKey: 'planDate', header: '배포일', size: 100 },
+  { accessorKey: 'modelSuffix', header: '서픽스', size: 80 },
   {
-    accessorKey: 'activeModelCount',
-    header: '활성 모델수',
-    size: 110,
+    accessorKey: 'planRows',
+    header: '행수',
+    size: 60,
     meta: right,
     cell: (c) => num(c.getValue()),
   },
+];
+
+/** 왼쪽 위 Line (PB d_ib_line_master_distinct_4_plan_lst) — 활성 모델은 웹에서 더한 칸 */
+export const smtPlanLineColumns: ColumnDef<SmtPlanLineRow>[] = [
+  { accessorKey: 'lineStatus', header: '라인상태', size: 90, cell: comCodeCell('LINE STATUS') },
+  { accessorKey: 'lineName', header: '라인명', size: 120 },
+  { accessorKey: 'nsnpStatus', header: 'NSNP', size: 70 },
+  { accessorKey: 'lineCode', header: '라인코드', size: 80 },
+  { accessorKey: 'activeModelName', header: '활성 모델', size: 180 },
   {
     accessorKey: 'planRows',
     header: '계획 행수',
-    size: 110,
+    size: 90,
     meta: right,
     cell: (c) => num(c.getValue()),
   },
-  { accessorKey: 'lineStatus', header: '라인상태', size: 100 },
-  { accessorKey: 'nsnpStatus', header: 'NSNP', size: 90 },
 ];
 
 export const smtBomReportColumns: ColumnDef<SmtBomReportRow>[] = [
@@ -309,7 +332,7 @@ export const smtBomExplodeColumns: ColumnDef<SmtBomExplodeRow>[] = [
   },
   { accessorKey: 'feederLocations', header: '피더 위치', size: 220 },
   { accessorKey: 'itemClass', header: '품목분류', size: 110 },
-  { accessorKey: 'lineType', header: '라인유형', size: 100 },
+  { accessorKey: 'lineType', header: '라인유형', size: 100, cell: comCodeCell('LINE TYPE') },
 ];
 
 export const smtNcColumns: ColumnDef<SmtNcRow>[] = [
@@ -321,7 +344,13 @@ export const smtNcColumns: ColumnDef<SmtNcRow>[] = [
   { accessorKey: 'tableId', header: '테이블', size: 80 },
   { accessorKey: 'address', header: '주소', size: 80 },
   { accessorKey: 'position', header: '위치', size: 110 },
-  { accessorKey: 'partName', header: '부품코드', size: 150 },
+  {
+    accessorKey: 'partName', header: '부품코드', size: 150,
+    // 품목마스터에 없는 품번은 [적용]이 거부된다 — 빨갛게 표시해 품번 교체·삭제 대상을 보인다
+    cell: (c) => (c.row.original.itemExists === 'N'
+      ? <span className="font-semibold text-red-500" title="품목마스터에 없는 품번">{String(c.getValue() ?? '')}</span>
+      : String(c.getValue() ?? '')),
+  },
   { accessorKey: 'partItemName', header: '부품명', size: 180 },
   { accessorKey: 'chipName', header: 'CHIP명', size: 130 },
   { accessorKey: 'pcbItem', header: 'PCB면', size: 90 },

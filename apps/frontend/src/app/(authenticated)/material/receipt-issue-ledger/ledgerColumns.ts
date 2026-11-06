@@ -7,6 +7,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import type { TFunction } from "i18next";
+import { processNameCell } from "@/components/shared/codeCells";
 import type {
   FeederLayoutRow,
   IssueLossRow,
@@ -73,7 +74,7 @@ export function ledgerColumns(t: TFunction): ColumnDef<LedgerRow>[] {
     { accessorKey: "qty", header: c("qty"), size: 100, ...qtyCell },
     { accessorKey: "receiptIssueDeficit", header: c("receiptIssueDeficit"), size: 110 },
     { accessorKey: "invoiceNo", header: c("invoiceNo"), size: 130 },
-    { accessorKey: "workstageCode", header: c("workstageCode"), size: 90 },
+    { accessorKey: "workstageCode", header: c("workstageCode"), size: 120, cell: processNameCell() },
     { accessorKey: "supplierCode", header: c("supplierCode"), size: 110 },
     { accessorKey: "receiptIssueType", header: c("receiptIssueType"), size: 100 },
     { accessorKey: "receiptIssueStatus", header: c("receiptIssueStatus"), size: 100 },

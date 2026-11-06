@@ -18,11 +18,13 @@ import { Save, X } from 'lucide-react';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateFilter from '@/components/shared/DateFilter';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import type { SampleMasterRow } from '../columns';
 
+import { getTodayLocal } from '@/utils/date';
 export interface SampleForm {
   sampleCode: string;
   sampleLotNo: string;
@@ -42,7 +44,7 @@ export interface SampleForm {
   managementCommnets: string;
 }
 
-const todayIso = () => new Date().toISOString().slice(0, 10);
+const todayIso = () => getTodayLocal();
 
 /** PB 'INSERT' 분기의 기본값 */
 export const emptySampleForm = (): SampleForm => ({
@@ -151,8 +153,8 @@ export default function SampleFormPanel({ mode, initialForm, onClose, onSaved }:
           <LineSelect label="라인" value={form.lineCode} onChange={(v) => set('lineCode', v)} />
           <ProcessSelect label="공정" value={form.workstageCode}
             onChange={(v) => set('workstageCode', v)} />
-          <Input label="모델명" value={form.modelName}
-            onChange={(e) => set('modelName', e.target.value)} />
+          <ModelSearchField label="모델명" value={form.modelName} className="w-full"
+            onChange={(v) => set('modelName', v)} />
           <Input label="샘플바코드 (스캔 가능)" value={form.sampleBarcode}
             onChange={(e) => set('sampleBarcode', e.target.value)} />
           <Input label="보관위치" value={form.locationAddress}

@@ -103,6 +103,8 @@ next-env.d.ts
 *.dll
 *.ocx
 *.exe
+# 작업자 PC 출력 에이전트 배포본 — 백엔드 /print-agent/download 가 이 파일을 내려준다
+!apps/print-agent/release/eunsung-print-agent.exe
 
 # 은성: AI 지식 sqlite 캐시(대용량, 재생성 가능)
 apps/backend/data/ai-knowledge/

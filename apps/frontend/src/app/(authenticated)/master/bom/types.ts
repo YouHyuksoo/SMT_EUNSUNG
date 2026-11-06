@@ -60,6 +60,8 @@ export interface BomTreeItem {
   processCode?: string;
   processName?: string | null;
   side?: string;
+  /** 로케이션 (ID_ENG_BOM.LOCATION_INFO, 예: C1,C2,R5) */
+  location?: string | null;
   validFrom?: string;
   validTo?: string;
   useYn: string;

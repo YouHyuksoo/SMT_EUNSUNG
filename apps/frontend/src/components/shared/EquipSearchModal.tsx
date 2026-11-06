@@ -14,6 +14,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Modal, Input } from "@/components/ui";
 import DataGrid from "@/components/data-grid/DataGrid";
 import api from "@/services/api";
+import { processNameCell } from "./codeCells";
 
 export interface EquipItem {
   equipCode: string; equipName: string; equipType: string; lineCode: string; processCode: string;
@@ -73,7 +74,7 @@ export default function EquipSearchModal({ isOpen, onClose, onSelect, modalSize 
     { accessorKey: "equipName", header: "설비명", size: 200 },
     { accessorKey: "equipType", header: "유형", size: 100 },
     { accessorKey: "lineCode", header: "라인", size: 90 },
-    { accessorKey: "processCode", header: "공정", size: 100 },
+    { accessorKey: "processCode", header: "공정", size: 120, cell: processNameCell() },
   ], []);
 
   return (

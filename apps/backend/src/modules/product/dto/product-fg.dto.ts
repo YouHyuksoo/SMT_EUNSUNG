@@ -14,6 +14,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
 } from 'class-validator';
 
@@ -24,6 +25,14 @@ export class FgReceiptQueryDto {
   @IsOptional() @IsString() barcode?: string;
   /** `'1'` 입고 · `'2'` 입고취소. 비우면 전체. */
   @IsOptional() @IsString() txnDeficit?: string;
+}
+
+/** 제품입고조회 합계 기준 — 품목별 · 일자별. */
+export const FG_RECEIPT_SUMMARY_GROUPS = ['item', 'date'] as const;
+export type FgReceiptSummaryGroup = (typeof FG_RECEIPT_SUMMARY_GROUPS)[number];
+
+export class FgReceiptSummaryQueryDto extends FgReceiptQueryDto {
+  @IsOptional() @IsIn(FG_RECEIPT_SUMMARY_GROUPS) groupBy?: FgReceiptSummaryGroup;
 }
 
 export class FgIssueQueryDto {
@@ -51,6 +60,11 @@ export class FgIssuableQueryDto {
   @IsOptional() @IsString() locationCode?: string;
 }
 
+/** 307 선입선출 — 이 박스보다 먼저 내보내야 할 박스 */
+export class FgFifoQueryDto {
+  @IsString() @IsNotEmpty() barcode!: string;
+}
+
 export class FgReceiptDto {
   /** 박스 바코드. */
   @IsString() @IsNotEmpty() barcode!: string;
@@ -73,6 +87,8 @@ export class FgIssueDto {
   @IsString() @IsNotEmpty() customerCode!: string;
   @IsString() @IsNotEmpty() locationCode!: string;
   @IsOptional() @IsBoolean() cancel?: boolean;
+  /** 출하지시번호(제품납품계획) — 있으면 출고한 박스를 그 지시에 잇는다. 취소는 박스 기록으로 지시를 찾는다 */
+  @IsOptional() @IsString() @MaxLength(30) shipOrderNo?: string;
 }
 
 export class FgModelIssueDto {

@@ -148,7 +148,25 @@ const MOLD_LOCATION_SEARCH: PopupQueryDef = {
 };
 
 /** 쿼리명 → SQL 정의. 카탈로그의 `query` 와 짝이 맞아야 한다 */
+/** 지그 — PB d_mcn_jig_popup. 지그는 LOT 마다 한 행이라 같은 지그코드가 여러 줄 나온다 (PB 와 같다) */
+const JIG_SEARCH: PopupQueryDef = {
+  sql: `
+    SELECT j.JIG_CODE       AS "jigCode",
+           j.JIG_LOT_NO     AS "jigLotNo",
+           j.JIG_NAME       AS "jigName",
+           j.SUPPLIER_CODE  AS "supplierCode",
+           j.NATION_CODE    AS "nationCode"
+      FROM IMCN_JIG j
+     WHERE j.ORGANIZATION_ID = :organizationId
+       AND j.JIG_CODE <> '*'
+       AND UPPER(j.JIG_CODE) LIKE :jigCode
+       AND UPPER(NVL(j.SUPPLIER_CODE, '*')) LIKE :supplierCode`,
+  orderBy: 'j.JIG_CODE, j.JIG_LOT_NO',
+  binds: { jigCode: 'prefix', supplierCode: 'contains' },
+};
+
 export const POPUP_QUERIES: Readonly<Record<string, PopupQueryDef>> = {
+  'jig-search': JIG_SEARCH,
   'supplier-search': SUPPLIER_SEARCH,
   'mold-supplier-search': MOLD_SUPPLIER_SEARCH,
   'customer-search': CUSTOMER_SEARCH,

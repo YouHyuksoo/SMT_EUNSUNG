@@ -237,6 +237,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/master/interlock-condition": {
+      const mod = await import("./page-registries/master__interlock-condition.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/master/item-supplier": {
       const mod = await import("./page-registries/master__item-supplier.generated");
       component = mod.getPageComponent();
@@ -244,6 +249,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/master/label": {
       const mod = await import("./page-registries/master__label.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/master/label-form": {
+      const mod = await import("./page-registries/master__label-form.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -392,8 +402,13 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/oee/dashboard": {
-      const mod = await import("./page-registries/oee__dashboard.generated");
+    case "/oee/equip-inspect-result": {
+      const mod = await import("./page-registries/oee__equip-inspect-result.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/oee/equip-inspect-result-free": {
+      const mod = await import("./page-registries/oee__equip-inspect-result-free.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -414,6 +429,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/oee/field-ops": {
       const mod = await import("./page-registries/oee__field-ops.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/oee/equip-work-result-free": {
+      const mod = await import("./page-registries/oee__equip-work-result-free.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -439,6 +459,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/oee/multi-entry": {
       const mod = await import("./page-registries/oee__multi-entry.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/oee/multi-entry-assy": {
+      const mod = await import("./page-registries/oee__multi-entry-assy.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -539,6 +564,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/product/pack-history": {
       const mod = await import("./page-registries/product__pack-history.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/product/shipping-order": {
+      const mod = await import("./page-registries/product__shipping-order.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -737,11 +767,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/report/fg-issue": {
-      const mod = await import("./page-registries/report__fg-issue.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/report/four-m": {
       const mod = await import("./page-registries/report__four-m.generated");
       component = mod.getPageComponent();
@@ -834,6 +859,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/report/pickup-rate": {
       const mod = await import("./page-registries/report__pickup-rate.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/purchase-daily": {
+      const mod = await import("./page-registries/report__purchase-daily.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -932,6 +962,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/tracking/forward-trace": {
+      const mod = await import("./page-registries/tracking__forward-trace.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/tracking/line-dashboard": {
       const mod = await import("./page-registries/tracking__line-dashboard.generated");
       component = mod.getPageComponent();
@@ -959,6 +994,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/tracking/pid": {
       const mod = await import("./page-registries/tracking__pid.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/tracking/reverse-trace": {
+      const mod = await import("./page-registries/tracking__reverse-trace.generated");
       component = mod.getPageComponent();
       break;
     }

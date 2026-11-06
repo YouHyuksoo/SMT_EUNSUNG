@@ -17,6 +17,7 @@ import type {
   SolderStageCountRow,
 } from './warehouse-types';
 import { formatDisplayDate } from '@/utils/date';
+import { processNameCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -155,7 +156,7 @@ export const solderColumns: ColumnDef<SolderRow>[] = [
     accessorFn: (r) => codeWithName(r.lineCode, r.lineName),
   },
   { accessorKey: 'machineCode', header: '설비', size: 110 },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'modelName', header: '모델', size: 140 },
   { accessorKey: 'runNo', header: 'Run No', size: 130 },
   { accessorKey: 'returnDate', header: '반납', size: 160, cell: (c) => ts(c.getValue()) },

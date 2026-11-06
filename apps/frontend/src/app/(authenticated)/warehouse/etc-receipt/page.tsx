@@ -32,18 +32,20 @@ import { receiptColumns, receiptInventoryColumns } from '../receipt-manage-colum
 import type { ReceiptInventoryRow, ReceiptRow } from '../receipt-manage-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import SupplierSelect from '@/components/shared/SupplierSelect';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 type Mode = 'create' | 'edit';
 
 export default function EtcReceiptPage() {
   // 조회
-  const [dateFrom, setDateFrom] = useState(daysAgo(30));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [invItemCode, setInvItemCode] = useState('');
   const [invLocationCode, setInvLocationCode] = useState('');
@@ -340,14 +342,14 @@ export default function EtcReceiptPage() {
               </div>
             )}
 
-            <Input label="창고코드" value={locationCode} readOnly={mode === 'edit'}
-              onChange={(e) => setLocationCode(e.target.value)} />
+            <ComCodeSelect groupCode="MATERIAL LOCATION CODE" includeAll={false} label="창고코드"
+              value={locationCode} disabled={mode === 'edit'} onChange={setLocationCode} />
             <Input label="자재 롯트 (MATERIAL_MFS)" value={materialMfs} readOnly={mode === 'edit'}
               onChange={(e) => setMaterialMfs(e.target.value)} />
-            <Input label="협력사코드" value={supplierCode} readOnly={mode === 'edit'}
-              onChange={(e) => setSupplierCode(e.target.value)} />
-            <Input label="구매유형" value={lineType} readOnly={mode === 'edit'}
-              onChange={(e) => setLineType(e.target.value)} />
+            <SupplierSelect label="협력사코드" value={supplierCode} disabled={mode === 'edit'}
+              onChange={setSupplierCode} />
+            <ComCodeSelect groupCode="LINE TYPE" includeAll={false} label="구매유형"
+              value={lineType} disabled={mode === 'edit'} onChange={setLineType} />
             <Input label="단가" value={unitPrice} inputMode="numeric"
               onChange={(e) => setUnitPrice(e.target.value)} />
             <Input label="전표번호 (비우면 자동)" value={invoiceNo}

@@ -13,12 +13,14 @@ export class ItemSupplierService {
     const page = query.page ?? 1, limit = query.limit ?? 50;
     const conditions = ['m.ORGANIZATION_ID = :organizationId'];
     const binds: Record<string, unknown> = { organizationId };
-    for (const field of ['itemCode', 'supplierCode', 'orderType', 'inspectRule'] as const) {
+    for (const field of ['supplierCode', 'orderType', 'inspectRule'] as const) {
       if (query[field]) { conditions.push(`m.${field.replace(/[A-Z]/g, c => `_${c}`).toUpperCase()} = :${field}`); binds[field] = query[field]; }
     }
-    if (query.search) {
-      conditions.push('(UPPER(m.ITEM_CODE) LIKE :search OR UPPER(i.ITEM_NAME) LIKE :search OR UPPER(m.SUPPLIER_CODE) LIKE :search OR UPPER(s.SUPPLIER_NAME) LIKE :search)');
-      binds.search = `%${query.search.toUpperCase()}%`;
+    // 품목코드·품명·공급처명은 각각 부분 일치로 거른다
+    const like = { itemCode: 'm.ITEM_CODE', itemName: 'i.ITEM_NAME', supplierName: 's.SUPPLIER_NAME' } as const;
+    for (const [field, column] of Object.entries(like) as [keyof typeof like, string][]) {
+      const value = query[field]?.trim();
+      if (value) { conditions.push(`UPPER(${column}) LIKE :${field}`); binds[field] = `%${value.toUpperCase()}%`; }
     }
     const where = conditions.join(' AND ');
     const totalRows = await this.dataSource.query(`SELECT COUNT(*) "total" FROM IM_ITEM_MASTER m LEFT JOIN ID_ITEM i ON i.ITEM_CODE=m.ITEM_CODE AND i.ORGANIZATION_ID=m.ORGANIZATION_ID LEFT JOIN ICOM_SUPPLIER s ON s.SUPPLIER_CODE=m.SUPPLIER_CODE AND s.ORGANIZATION_ID=m.ORGANIZATION_ID WHERE ${where}`, namedBinds(binds));

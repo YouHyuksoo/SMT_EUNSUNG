@@ -25,11 +25,13 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import DateFilter from '@/components/shared/DateFilter';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { dailyReportColumns } from '../planning-columns';
 import type { DailyReportRow } from '../planning-types';
 
+import { getTodayLocal } from '@/utils/date';
 type Basis = 'run' | 'actual';
 
 const BASES: Array<{ key: Basis; label: string; hint: string }> = [
@@ -37,7 +39,7 @@ const BASES: Array<{ key: Basis; label: string; hint: string }> = [
   { key: 'actual', label: '실생산일 기준', hint: '생산시작(PDA ON) 시각의 날짜로 묶는다' },
 ];
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getTodayLocal();
 
 export default function DailyReportPage() {
   const [basis, setBasis] = useState<Basis>('run');
@@ -102,22 +104,11 @@ export default function DailyReportPage() {
         </Button>
       </header>
 
-      <div className="flex gap-1 border-b border-border">
-        {BASES.map((b) => (
-          <button
-            key={b.key}
-            type="button"
-            onClick={() => setBasis(b.key)}
-            className={`px-4 py-2 text-sm ${
-              basis === b.key
-                ? 'border-b-2 border-primary font-semibold text-text'
-                : 'text-text-muted'
-            }`}
-          >
-            {b.label}
-          </button>
-        ))}
-      </div>
+      <ScreenTabs
+        tabs={BASES.map((b) => ({ key: b.key, label: b.label }))}
+        active={basis}
+        onChange={setBasis}
+      />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">

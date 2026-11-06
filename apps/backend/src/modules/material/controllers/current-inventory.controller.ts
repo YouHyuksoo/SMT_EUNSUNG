@@ -6,7 +6,7 @@ import { ResponseUtil } from '../../../common/dto/response.dto';
 import { CurrentInventoryQueryDto } from '../dto/current-inventory.dto';
 import { CurrentInventoryService } from '../services/current-inventory.service';
 
-@ApiTags('자재관리 - 현재고조회')
+@ApiTags('자재관리 - 자재현재고조회')
 @UseGuards(JwtAuthGuard)
 @Controller('material/current-inventory')
 export class CurrentInventoryController {

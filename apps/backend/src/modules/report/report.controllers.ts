@@ -9,7 +9,6 @@
  *   /report/pickup-rate        344 SMT PICKUP 리포트
  *   /report/master-plan        346 생산계획리포트
  *   /report/run-card           347 런카드리포트
- *   /report/fg-issue           348 제품 판매실적
  *   /report/workstage-stock    350 공정재공조회
  *   /report/magazine-stock     352 공정매거진조회
  */
@@ -26,7 +25,6 @@ import {
   CarrierBarcodeCreateDto,
   CarrierBarcodeDeleteDto,
   CarrierBarcodeQueryDto,
-  FgIssueReportQueryDto,
   ItemMasterReportQueryDto,
   LineBarcodeQueryDto,
   MachineOperationQueryDto,
@@ -167,9 +165,15 @@ export class PickupRateReportController {
   }
 
   @Get('amount')
-  @ApiOperation({ summary: '344 라인·일자별 미스 금액 집계 (PPM 포함)' })
+  @ApiOperation({ summary: '344 라인·일자별 미스 금액 집계' })
   async amount(@Query() query: PickupRateQueryDto) {
     return paged(await this.service.findPickupAmount(query));
+  }
+
+  @Get('head')
+  @ApiOperation({ summary: '344 라인 시간대 집계 — HEAD 집어올림·미스·인식오류·릴교체 (주간 A~E, 야간 F~J)' })
+  async head(@Query() query: PickupRateQueryDto) {
+    return paged(await this.service.findPickupHead(query));
   }
 }
 
@@ -213,43 +217,6 @@ export class RunCardReportController {
     @OrganizationId() organizationId: number,
   ) {
     return paged(await this.service.findRunCardSummary(query, organizationId));
-  }
-}
-
-@ApiTags('리포트 - 제품 판매실적')
-@UseGuards(JwtAuthGuard)
-@Controller('report/fg-issue')
-export class FgIssueReportController {
-  constructor(private readonly service: ProductionReportService) {}
-
-  @Get('detail')
-  @ApiOperation({ summary: '348 출하 상세' })
-  async detail(
-    @Query() query: FgIssueReportQueryDto,
-    @OrganizationId() organizationId: number,
-  ) {
-    return paged(await this.service.findFgIssueDetail(query, organizationId));
-  }
-
-  @Get('summary')
-  @ApiOperation({ summary: '348 모델·고객·위치별 합계' })
-  async summary(
-    @Query() query: FgIssueReportQueryDto,
-    @OrganizationId() organizationId: number,
-  ) {
-    return paged(await this.service.findFgIssueSummary(query, organizationId));
-  }
-
-  @Get('crosstab')
-  @ApiOperation({
-    summary: '348 크로스탭 원자료 (일자 × 모델 수량). 열 집합이 데이터에 따라'
-      + ' 달라지므로 피벗은 화면에서 한다 — PB 도 표현 계층에서 돌렸다.',
-  })
-  async crosstab(
-    @Query() query: FgIssueReportQueryDto,
-    @OrganizationId() organizationId: number,
-  ) {
-    return paged(await this.service.findFgIssueCrosstab(query, organizationId));
   }
 }
 

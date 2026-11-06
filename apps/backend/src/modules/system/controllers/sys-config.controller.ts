@@ -23,7 +23,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { OrganizationId } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId, UserRole } from '../../../common/decorators/tenant.decorator';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { SysConfigService } from '../services/sys-config.service';
 import {
@@ -59,8 +59,9 @@ export class SysConfigController {
   async create(
     @Body() dto: CreateSysConfigDto,
     @OrganizationId() organizationId: number,
+    @UserRole() role: string | undefined,
   ) {
-    const data = await this.sysConfigService.create(dto, organizationId);
+    const data = await this.sysConfigService.create(dto, organizationId, role);
     return ResponseUtil.success(data, '설정이 등록되었습니다.');
   }
 
@@ -71,8 +72,9 @@ export class SysConfigController {
     @Param('id') id: string,
     @Body() dto: UpdateSysConfigDto,
     @OrganizationId() organizationId: number,
+    @UserRole() role: string | undefined,
   ) {
-    const data = await this.sysConfigService.update(id, dto, organizationId);
+    const data = await this.sysConfigService.update(id, dto, organizationId, role);
     return ResponseUtil.success(data, '설정이 수정되었습니다.');
   }
 
@@ -81,8 +83,9 @@ export class SysConfigController {
   async bulkUpdate(
     @Body() dto: BulkUpdateSysConfigDto,
     @OrganizationId() organizationId: number,
+    @UserRole() role: string | undefined,
   ) {
-    const data = await this.sysConfigService.bulkUpdate(dto, organizationId);
+    const data = await this.sysConfigService.bulkUpdate(dto, organizationId, role);
     return ResponseUtil.success(data, '설정이 저장되었습니다.');
   }
 
@@ -92,8 +95,9 @@ export class SysConfigController {
   async remove(
     @Param('id') id: string,
     @OrganizationId() organizationId: number,
+    @UserRole() role: string | undefined,
   ) {
-    const data = await this.sysConfigService.remove(id, organizationId);
+    const data = await this.sysConfigService.remove(id, organizationId, role);
     return ResponseUtil.success(data, '설정이 삭제되었습니다.');
   }
 }

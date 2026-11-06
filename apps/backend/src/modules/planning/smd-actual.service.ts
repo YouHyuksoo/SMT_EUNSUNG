@@ -3,20 +3,23 @@
  * @description 반제품생산실적관리 — PB w_pln_assembly_actual_master 이식
  *
  * 초보자 가이드:
- * 1. **이 표는 센서가 올린 생산실적이다.** 라인 센서가 카운트를 올리면 한 줄이
- *    쌓인다. 109,644행 있고 계속 늘어난다 — 그래서 조회는 기간이 필수다.
- * 2. **집계일시(RECEIPT_DATE)는 시각까지 있는 DATE 다.** ISO 문자열로 왕복시키면
+ * 1. **생산실적은 조립실적(IP_ASSEMBLY_RESULT)이다** (2026-10-17 센서실적에서 바꿈).
+ *    AOI 양품 자동 · 수기 작업실적 · 보정이 한 뷰(IP_ASSEMBLY_RESULT_SENSOR_V)에 모인다.
+ *    뷰는 예전 센서 시간대 테이블과 칼럼 이름이 같다. 조회는 기간이 필수다.
+ * 2. **집계일시(RECEIPT_DATE)는 작업일이다** (조립실적 PRODUCT_DATE). ISO 문자열로 왕복시키면
  *    JSON 직렬화가 UTC 로 바꾸는 바람에 9시간 밀린다(백엔드는 KST 고정).
  *    그래서 목록은 `receiptDateKey`(YYYYMMDDHH24MISS)를 함께 내리고,
  *    수정·삭제는 그 불투명 키로만 행을 찾는다.
- * 3. **고칠 수 있는 것은 실적수량과 보정수량뿐이다.** 센서 원시값(ORIGIN_COUNT)은
- *    건드리지 않는다 — 고치면 센서 이력과 화면이 갈려 원인을 못 찾는다.
+ * 3. **행을 고치거나 지우지 않는다. 보정 행을 더한다** (AssemblyResultService).
+ *    수정 = (새 수량 − 지금 수량) 보정, 삭제 = −지금 수량 보정. 같은 런·시각으로 들어가
+ *    작업일·시간대가 같고, 전환 이후 실적이면 공정재고도 같이 움직인다.
  * 4. 캐리어 규격은 SQL 안에서 F_GET_CARRIER_SIZE 를 그대로 부른다.
  *    PB 도 같았다 — TypeScript 로 다시 계산하면 PB 화면과 값이 갈린다.
  */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
+import { AssemblyResultService } from '../assembly-result/assembly-result.service';
 import {
   SmdActualKeyDto,
   SmdActualQueryDto,
@@ -43,12 +46,13 @@ export class SmdActualService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly tx: TransactionService,
+    private readonly assembly: AssemblyResultService,
   ) {}
 
   /** 목록 — PB d_pln_product_sensor_actual_time_modify. */
   async find(query: SmdActualQueryDto, organizationId: number) {
     const rows = (await this.dataSource.query(
-      `SELECT a.RECEIPT_DATE AS "receiptDate",
+      `SELECT TO_CHAR(a.RECEIPT_DATE, 'YYYY-MM-DD') AS "receiptDate",
               TO_CHAR(a.RECEIPT_DATE, 'YYYYMMDDHH24MISS') AS "receiptDateKey",
               a.RECEIPT_SEQUENCE AS "receiptSequence",
               a.LINE_CODE AS "lineCode", pl.LINE_NAME AS "lineName",
@@ -64,10 +68,13 @@ export class SmdActualService {
               a.TIME_DIVISION AS "timeDivision",
               a.IS_LAST_YN AS "isLastYn",
               a.LAST_RECEIPT_DATE AS "lastReceiptDate",
+              TO_CHAR(a.LAST_RECEIPT_DATE, 'YYYY-MM-DD HH24:MI') AS "actualTime",
               F_GET_CARRIER_SIZE(a.MODEL_NAME, a.ORGANIZATION_ID) AS "carrierSize",
+              a.RUN_NO AS "runNo", a.ITEM_CODE AS "itemCode",
+              a.ACTUAL_SOURCE AS "actualSource", a.REMARK AS "remark",
               a.ENTER_BY AS "enterBy", a.ENTER_DATE AS "enterDate",
               a.LAST_MODIFY_BY AS "lastModifyBy", a.LAST_MODIFY_DATE AS "lastModifyDate"
-         FROM IP_PRODUCT_SENSOR_ACTUAL_TIME a
+         FROM IP_ASSEMBLY_RESULT_SENSOR_V a
          LEFT JOIN IP_PRODUCT_LINE pl
                 ON pl.LINE_CODE = a.LINE_CODE
                AND pl.ORGANIZATION_ID = a.ORGANIZATION_ID
@@ -106,7 +113,7 @@ export class SmdActualService {
               SUM(NVL(a.PRODUCT_ACTUAL_LOST_QTY, 0)) AS "productActualLostQty",
               MIN(a.RECEIPT_DATE) AS "firstDate",
               MAX(a.RECEIPT_DATE) AS "lastDate"
-         FROM IP_PRODUCT_SENSOR_ACTUAL_TIME a
+         FROM IP_ASSEMBLY_RESULT_SENSOR_V a
          LEFT JOIN IP_PRODUCT_LINE pl
                 ON pl.LINE_CODE = a.LINE_CODE
                AND pl.ORGANIZATION_ID = a.ORGANIZATION_ID
@@ -129,34 +136,14 @@ export class SmdActualService {
     )) as Row[];
   }
 
-  /** 불투명 키로 행을 찾는 WHERE. 날짜를 문자열로 왕복시키지 않는다. */
-  private readonly KEY_WHERE = `
-    TO_CHAR(RECEIPT_DATE, 'YYYYMMDDHH24MISS') = :receiptDateKey
-    AND RECEIPT_SEQUENCE = :receiptSequence
-    AND ORGANIZATION_ID = :organizationId`;
-
-  async update(dto: SmdActualUpdateDto, organizationId: number, userId: string) {
-    return this.tx.run(async (qr) => {
-      const result = await qr.query(
-        `UPDATE IP_PRODUCT_SENSOR_ACTUAL_TIME
-            SET PRODUCT_ACTUAL_QTY = :productActualQty,
-                ADJUST_QTY = :adjustQty,
-                LAST_MODIFY_BY = :userId,
-                LAST_MODIFY_DATE = SYSDATE
-          WHERE ${this.KEY_WHERE}`,
-        namedBinds({
-          productActualQty: dto.productActualQty,
-          adjustQty: dto.adjustQty ?? null,
-          userId,
-          receiptDateKey: dto.receiptDateKey,
-          receiptSequence: dto.receiptSequence,
-          organizationId,
-        }),
-      );
-      const affected = Number(affectedRows(result) ?? 0);
-      if (affected === 0) throw new NotFoundException('생산실적을 찾을 수 없습니다.');
-      return { changed: affected };
-    });
+  /** 수정 — 행을 바꾸지 않고 (새 수량 − 지금 수량)만큼 보정 행을 더한다. 보정수량 칸은 보정 행에서 계산된다. */
+  async update(dto: SmdActualUpdateDto, _organizationId: number, userId: string) {
+    return this.assembly.adjustRow(
+      dto,
+      (current) => dto.productActualQty - current,
+      dto.reason?.trim() || '반제품생산실적 수정',
+      userId,
+    );
   }
 
   /**
@@ -176,7 +163,7 @@ export class SmdActualService {
                 SUM(CASE WHEN a.TIME_DIVISION IN (${sqlInList(NIGHT_TIME_DIVISIONS)})
                          THEN NVL(a.PRODUCT_ACTUAL_QTY, 0) ELSE 0 END) AS NIGHT_QTY,
                 MAX(a.LAST_RECEIPT_DATE) AS LAST_RECEIPT_DATE
-           FROM IP_PRODUCT_SENSOR_ACTUAL_TIME a
+           FROM IP_ASSEMBLY_RESULT_SENSOR_V a
           WHERE a.ORGANIZATION_ID = :organizationId
             AND a.RECEIPT_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
             AND a.RECEIPT_DATE < TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
@@ -344,19 +331,9 @@ export class SmdActualService {
     });
   }
 
-  async remove(key: SmdActualKeyDto, organizationId: number) {
-    return this.tx.run(async (qr) => {
-      const result = await qr.query(
-        `DELETE FROM IP_PRODUCT_SENSOR_ACTUAL_TIME WHERE ${this.KEY_WHERE}`,
-        namedBinds({
-          receiptDateKey: key.receiptDateKey,
-          receiptSequence: key.receiptSequence,
-          organizationId,
-        }),
-      );
-      const affected = Number(affectedRows(result) ?? 0);
-      if (affected === 0) throw new NotFoundException('생산실적을 찾을 수 없습니다.');
-      return { deleted: affected };
-    });
+  /** 삭제 — 행을 지우지 않고 지금 수량만큼 음수 보정 행을 더한다. */
+  async remove(key: SmdActualKeyDto, _organizationId: number, userId: string) {
+    const r = await this.assembly.adjustRow(key, (current) => -current, key.reason?.trim() || '반제품생산실적 삭제', userId);
+    return { deleted: r.changed };
   }
 }

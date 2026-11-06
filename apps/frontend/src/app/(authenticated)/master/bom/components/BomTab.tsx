@@ -199,7 +199,7 @@ export default function BomTab({ selectedParent, onViewRouting, onSelectItem, se
       </div>
 
       <div className="flex-1 overflow-auto min-h-0 rounded-[var(--radius)] border border-border">
-        <table className="font-data text-xs min-w-[1160px] table-fixed">
+        <table className="font-data text-xs min-w-[1400px] table-fixed">
           <thead className="bg-background">
             <tr>
               <th className="px-2 py-2 text-left font-semibold text-text border-b border-r border-border w-10 whitespace-nowrap">Lv</th>
@@ -210,6 +210,7 @@ export default function BomTab({ selectedParent, onViewRouting, onSelectItem, se
               <th className="px-2 py-2 text-right font-semibold text-text border-b border-r border-border w-24 whitespace-nowrap">{t("master.bom.qtyPer")}</th>
               <th className="px-2 py-2 text-center font-semibold text-text border-b border-r border-border w-16 whitespace-nowrap">{t("master.bom.revision")}</th>
               <th className="px-2 py-2 text-center font-semibold text-text border-b border-r border-border w-14 whitespace-nowrap">{t("master.bom.side", "사이드")}</th>
+              <th className="px-2 py-2 text-left font-semibold text-text border-b border-r border-border w-60 whitespace-nowrap">{t("master.bom.location", "로케이션")}</th>
               <th className="px-2 py-2 text-center font-semibold text-text border-b border-r border-border w-24 whitespace-nowrap">{t("master.bom.validFrom")}</th>
               <th className="px-2 py-2 text-center font-semibold text-text border-b border-r border-border w-24 whitespace-nowrap">{t("master.bom.validTo")}</th>
               <th className="sticky right-0 z-10 bg-background px-2 py-2 text-center font-semibold text-text border-b border-l border-border w-20 whitespace-nowrap">{t("common.actions")}</th>
@@ -217,9 +218,9 @@ export default function BomTab({ selectedParent, onViewRouting, onSelectItem, se
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={11} className="px-4 py-12 text-center text-text-muted">{t("common.loading")}</td></tr>
+              <tr><td colSpan={12} className="px-4 py-12 text-center text-text-muted">{t("common.loading")}</td></tr>
             ) : treeWithRoot.length === 0 ? (
-              <tr><td colSpan={11} className="px-4 py-12 text-center text-text-muted">{t("master.bom.noBomData", "BOM 데이터가 없습니다.")}</td></tr>
+              <tr><td colSpan={12} className="px-4 py-12 text-center text-text-muted">{t("master.bom.noBomData", "BOM 데이터가 없습니다.")}</td></tr>
             ) : (
               <BomTreeRows items={treeWithRoot} expanded={expanded} onToggle={toggleExpand}
                 onEdit={handleEdit} onDelete={setDeletingBom} onViewRouting={handleViewRouting}
@@ -371,6 +372,7 @@ function BomTreeRows({
               <td className="px-2 py-1.5 border-r border-border text-right font-mono whitespace-nowrap">{(item.qtyPer ?? 0).toLocaleString()} {item.unit}</td>
               <td className="px-2 py-1.5 border-r border-border text-center whitespace-nowrap">{item.revision}</td>
               <td className={`px-2 py-1.5 border-r border-border text-center whitespace-nowrap ${isSelected ? "text-white/80" : "text-text-muted"}`}>{item.side || "-"}</td>
+              <td className="px-2 py-1.5 border-r border-border font-mono whitespace-nowrap truncate" title={item.location ?? ""}>{item.location || "-"}</td>
               <td className="px-2 py-1.5 border-r border-border text-center font-mono whitespace-nowrap">{validFrom}</td>
               <td className="px-2 py-1.5 border-r border-border text-center font-mono whitespace-nowrap">{validTo}</td>
               {/* 가로 스크롤과 관계없이 보이도록 오른쪽 고정. 고정 칸은 행 배경을 받지 않아 같은 색을 직접 준다 */}

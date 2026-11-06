@@ -24,7 +24,7 @@ import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent } from '@/components/ui';
 import api from '@/services/api';
 import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
-import { CrosstabGrid, type CrosstabSpec } from '../components/CrosstabGrid';
+import { useCrosstab, type CrosstabSpec } from '../components/crosstab';
 import {
   materialReceiptColumns,
   materialReceiptSupplierColumns,
@@ -36,16 +36,17 @@ import type {
 } from '../report-b-types';
 import PartSearchField from '@/components/shared/PartSearchField';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 type Tab = 'detail' | 'supplier' | 'return' | 'matrix';
 
 export default function MaterialReceiptReportPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [supplierCode, setSupplierCode] = useState('');
   const [itemCode, setItemCode] = useState('');
@@ -98,16 +99,17 @@ export default function MaterialReceiptReportPage() {
   const spec = useMemo<CrosstabSpec<MaterialReceiptMatrixRow>>(() => ({
     rowKey: (r) => r.itemCode ?? '',
     rowLabels: [
-      { header: '품목코드', value: (r) => r.itemCode ?? '', width: 150 },
-      { header: '품목명', value: (r) => r.itemName ?? '', width: 170 },
-      { header: '규격', value: (r) => r.itemSpec ?? '' },
-      { header: '단위', value: (r) => r.itemUom ?? '' },
+      { id: 'itemCode', header: '품목코드', value: (r) => r.itemCode ?? '', width: 150 },
+      { id: 'itemName', header: '품목명', value: (r) => r.itemName ?? '', width: 170 },
+      { id: 'itemSpec', header: '규격', value: (r) => r.itemSpec ?? '', width: 150 },
+      { id: 'itemUom', header: '단위', value: (r) => r.itemUom ?? '', width: 60 },
     ],
     colKey: (r) => r.receiptDate,
     // 열이 30개면 연도는 자리만 차지한다.
     colHeader: (k) => k.slice(5),
     value: (r) => Number(r.receiptQty ?? 0),
   }), []);
+  const matrixGrid = useCrosstab(matrix, spec);
 
   const priceMismatch = detail.filter((r) => r.checkUnitPrice != null
     && r.unitPrice != null
@@ -200,11 +202,17 @@ export default function MaterialReceiptReportPage() {
             />
           )}
           {tab === 'matrix' && (
-            <CrosstabGrid
-              rows={matrix}
-              spec={spec}
+            <DataGrid
+              key={matrixGrid.gridKey}
+              data={matrixGrid.data}
+              columns={matrixGrid.columns}
               isLoading={loading}
+              pageSize={100}
+              enableColumnFilter
+              enableExport
               exportFileName="자재입고_품목별일자"
+              enableColumnPinning
+              defaultPinnedColumns={matrixGrid.pinned}
               emptyMessage={searched ? '기간에 입고가 없습니다.' : '조회하세요.'}
             />
           )}

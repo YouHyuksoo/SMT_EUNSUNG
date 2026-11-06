@@ -15,8 +15,10 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { ClipboardCheck, ScanLine, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import EquipSelect from '@/components/shared/EquipSelect';
 import LineSelect from '@/components/shared/LineSelect';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProcessSelect from '@/components/shared/ProcessSelect';
@@ -24,13 +26,9 @@ import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui'
 import api from '@/services/api';
 import { wqcColumns, type WqcRow } from '../qc-columns';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
-const weekAgo = () => {
-  const date = new Date();
-  date.setDate(date.getDate() - 7);
-  return isoDate(date);
-};
 
 export default function WqcPage() {
   const scanRef = useRef<HTMLInputElement>(null);
@@ -39,7 +37,7 @@ export default function WqcPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const [dateFrom, setDateFrom] = useState(weekAgo);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [lineCode, setLineCode] = useState('');
   const [workstageCode, setWorkstageCode] = useState('');
@@ -59,7 +57,7 @@ export default function WqcPage() {
   const [lastPid, setLastPid] = useState('');
   const [cancelOpen, setCancelOpen] = useState(false);
 
-  const search = useCallback(async () => {
+  const search = useCallback(async (scannedPid?: string) => {
     setLoading(true);
     try {
       const response = await api.get('/quality/wqc', {
@@ -68,7 +66,7 @@ export default function WqcPage() {
           lineCode: lineCode || undefined,
           workstageCode: workstageCode || undefined,
           modelName: modelName || undefined,
-          serialNo: serialNo || undefined,
+          serialNo: (scannedPid ?? serialNo) || undefined,
         },
       });
       setRows(response.data?.data ?? []);
@@ -94,8 +92,8 @@ export default function WqcPage() {
     }
   }, []);
 
-  const scan = useCallback(async () => {
-    const pid = barcode.trim();
+  const scan = useCallback(async (scanned: string) => {
+    const pid = scanned.trim();
     if (!pid || busy) return;
     if (!scanLine) return toast.error('라인을 고르세요.');
     if (!scanWorkstage) return toast.error('공정을 고르세요.');
@@ -118,7 +116,7 @@ export default function WqcPage() {
       setBarcode('');
       scanRef.current?.focus();
     }
-  }, [barcode, busy, scanLine, scanWorkstage, badReasonCode, machineCode, comments, loadPid]);
+  }, [busy, scanLine, scanWorkstage, badReasonCode, machineCode, comments, loadPid]);
 
   const cancel = useCallback(async () => {
     setCancelOpen(false);
@@ -151,7 +149,7 @@ export default function WqcPage() {
             {searched ? `${rows.length}/${total}건` : '기간을 정하고 조회하세요'}
           </p>
         </div>
-        <Button size="sm" onClick={search} disabled={loading}>
+        <Button size="sm" onClick={() => search()} disabled={loading}>
           <Search className="mr-1 h-4 w-4" />조회
         </Button>
       </header>
@@ -179,8 +177,8 @@ export default function WqcPage() {
           </label>
           <label className="text-xs text-text-muted">
             설비코드
-            <Input value={machineCode} className="w-32"
-              onChange={(e) => setMachineCode(e.target.value)} />
+            <EquipSelect value={machineCode} className="w-32" placeholder="선택"
+              onChange={setMachineCode} />
           </label>
           <label className="text-xs text-text-muted">
             비고
@@ -189,15 +187,15 @@ export default function WqcPage() {
           </label>
           <label className="text-xs text-text-muted">
             PID 스캔
-            <Input
+            <BarcodeScanInput
               ref={scanRef}
               autoFocus
               placeholder="PID 를 스캔하세요"
               value={barcode}
               disabled={busy}
               className="w-56"
-              onChange={(e) => setBarcode(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') void scan(); }}
+              onChange={setBarcode}
+              onScan={async (value) => { await scan(value); }}
             />
           </label>
           <Button size="sm" variant="secondary" disabled={!lastPid || busy}
@@ -237,8 +235,9 @@ export default function WqcPage() {
             onChange={setWorkstageCode} className="w-44" />
           <ModelSearchField value={modelName} onChange={(v) => setModelName(v)}
             className="w-44" aria-label="모델명" placeholder="모델명" />
-          <Input aria-label="PID" placeholder="PID" value={serialNo}
-            className="w-48" onChange={(e) => setSerialNo(e.target.value)} />
+          <BarcodeScanInput aria-label="PID" placeholder="PID" value={serialNo}
+            className="w-48" onChange={setSerialNo} onScan={search}
+            maintainFocus={false} blinkIndicator={false} />
         </CardContent>
       </Card>
 

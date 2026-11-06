@@ -1,11 +1,20 @@
 "use client";
 
-import { useState, type MutableRefObject } from "react";
+/**
+ * @file src/app/(authenticated)/master/part/partColumns.tsx
+ * @description 품목마스터 그리드 컬럼 — ID_ITEM 109개 컬럼 전부.
+ *
+ * 컬럼 순서·라벨은 @smt/shared ITEM_MASTER_COLUMNS 의 구역 순서(기본정보 → … → 이력)를 따르고,
+ * 맨 앞은 품목코드 → 품명이다 (gridItemColumnOrder 규칙).
+ * 기준코드 컬럼은 코드 뜻을 배지로, 날짜는 KST 일자로 보여 준다. 코드성 컬럼은 다중선택 필터다.
+ */
+import type { MutableRefObject } from "react";
 import type { TFunction } from "i18next";
-import { Edit2, ImageIcon, Trash2 } from "lucide-react";
+import { Edit2, Trash2 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
+import type { ItemMasterColumn } from "@smt/shared";
 import { ComCodeBadge } from "@/components/ui";
-import { createPartColumns as createBasePartColumns } from "@/lib/table-utils";
+import { kstDate, kstDateTime, ORDERED_ITEM_COLUMNS } from "./components/PartFieldHelp";
 import { Part } from "./types";
 
 interface CreatePartGridColumnsOptions {
@@ -17,18 +26,32 @@ interface CreatePartGridColumnsOptions {
   onDeletePart: (part: Part) => void;
 }
 
-/** 품목 썸네일 - 이미지 로드 실패 시 placeholder 아이콘으로 fallback */
-function PartImageThumb({ src, alt }: { src: string; alt: string }) {
-  const [errored, setErrored] = useState(false);
-  if (errored) return <ImageIcon className="w-4 h-4 text-text-muted mx-auto" />;
-  return (
-    <img
-      src={src}
-      alt={alt}
-      onError={() => setErrored(true)}
-      className="w-8 h-8 object-cover rounded border border-border bg-surface mx-auto"
-    />
-  );
+/** 다중선택 필터를 거는 입력 방식 */
+const MULTI_INPUTS = new Set(["code", "yn", "abc", "supplier", "customer", "line"]);
+
+/** 고정 폭 — 긴 글자 컬럼 */
+const WIDE = new Set(["itemName", "spec", "imageUrl", "remark", "ecoCheckComments", "hsName", "hsSpec", "hsNameSale", "itemNo"]);
+
+function columnDef(col: ItemMasterColumn): ColumnDef<Part> {
+  const right = col.type === "number";
+  const filterType = MULTI_INPUTS.has(col.input) ? "multi" : right ? "number" : "text";
+  return {
+    id: col.key,
+    accessorKey: col.key,
+    header: col.label,
+    size: WIDE.has(col.key) ? 200 : Math.max(80, col.label.length * 14 + 30),
+    meta: { filterType, ...(right ? { align: "right" as const } : {}) },
+    cell: ({ getValue }) => {
+      const value = getValue();
+      if (value === null || value === undefined || value === "") return "";
+      if (col.input === "code" && col.codeGroup) {
+        return <ComCodeBadge groupCode={col.codeGroup} code={String(value)} />;
+      }
+      if (col.type === "date") return col.section === "audit" ? kstDateTime(value) : kstDate(value);
+      if (col.type === "number") return Number(value).toLocaleString();
+      return String(value);
+    },
+  };
 }
 
 export function createPartGridColumns({
@@ -71,80 +94,6 @@ export function createPartGridColumns({
         </div>
       ),
     },
-    { accessorKey: "itemNo", header: t("master.part.partNo", "품번"), size: 120, meta: { filterType: "text" as const } },
-    {
-      accessorKey: "imageUrl",
-      header: t("master.part.image", "사진"),
-      size: 55,
-      meta: { align: "center" as const, filterType: "none" as const },
-      cell: ({ getValue, row }) => {
-        const imageUrl = getValue() as string | null | undefined;
-        return imageUrl ? (
-          <PartImageThumb src={imageUrl} alt={row.original.itemName} />
-        ) : (
-          <ImageIcon className="w-4 h-4 text-text-muted mx-auto" />
-        );
-      },
-    },
-    ...createBasePartColumns<Part>(t).map((col) => ({ ...col, size: 140 })),
-    {
-      accessorKey: "itemType",
-      header: t("master.part.type"),
-      size: 70,
-      meta: { filterType: "multi" as const },
-      cell: ({ getValue }) => <ComCodeBadge groupCode="ITEM_TYPE" code={getValue() as string} />,
-    },
-    {
-      accessorKey: "itemClass",
-      header: t("master.part.itemClass", "품목분류"),
-      size: 80,
-      meta: { filterType: "multi" as const },
-      cell: ({ getValue }) => <ComCodeBadge groupCode="ITEM_CLASS" code={getValue() as string} />,
-    },
-    { accessorKey: "modelName", header: t("master.part.modelName", "차종"), size: 100, meta: { filterType: "text" as const }, cell: ({ getValue }) => getValue() || "-" },
-    {
-      accessorKey: "modelSuffix",
-      header: t("master.part.modelSuffix", "모델접미"),
-      size: 80,
-      meta: { filterType: "multi" as const },
-      cell: ({ getValue }) => {
-        const v = getValue() as string;
-        return <span className="text-xs">{v || "-"}</span>;
-      },
-    },
-    { accessorKey: "spec", header: t("master.part.spec"), size: 130, meta: { filterType: "text" as const } },
-    { accessorKey: "rev", header: t("master.part.rev", "Rev"), size: 45 },
-    { accessorKey: "markingText", header: t("master.part.markingText", "마킹문구"), size: 120, meta: { filterType: "text" as const }, cell: ({ getValue }) => getValue() || "-" },
-    { accessorKey: "custPartNo", header: t("master.part.custPartNo", "고객품번"), size: 120, meta: { filterType: "text" as const }, cell: ({ getValue }) => getValue() || "-" },
-    {
-      accessorKey: "itemUom",
-      header: t("master.part.unit"),
-      size: 90,
-      cell: ({ getValue }) => <ComCodeBadge groupCode="ITEM_UOM" code={getValue() as string} />,
-    },
-    { accessorKey: "color", header: t("master.part.color", "색상"), size: 80, meta: { filterType: "text" as const }, cell: ({ getValue }) => getValue() || "-" },
-    { accessorKey: "boxQty", header: t("master.part.boxQty", "박스장입수량"), size: 90, meta: { filterType: "number" as const }, cell: ({ getValue }) => { const v = getValue() as number; return v ? v.toLocaleString() : "-"; } },
-    { accessorKey: "minPackQty", header: t("master.part.minPackQty", "최소불출단위수량(자재)"), size: 135, meta: { filterType: "number" as const }, cell: ({ getValue }) => { const v = getValue() as number; return v > 0 ? v.toLocaleString() : "-"; } },
-    { accessorKey: "lotUnitQty", header: t("master.part.lotUnitQty", "묶음단위수량(생산공정품)"), size: 150, meta: { filterType: "number" as const }, cell: ({ getValue }) => { const v = getValue() as number; return v != null ? v.toLocaleString() : "-"; } },
-    { accessorKey: "expiryDate", header: t("master.part.expiryDate", "유효기간"), size: 70, meta: { filterType: "number" as const }, cell: ({ getValue }) => { const v = getValue() as number; return v > 0 ? t("master.part.daysSuffix", "{{count}}일", { count: v }) : "-"; } },
-    { accessorKey: "expiryExtDays", header: t("master.part.expiryExtDays", "연장기간"), size: 70, meta: { filterType: "number" as const }, cell: ({ getValue }) => { const v = getValue() as number; return v > 0 ? t("master.part.daysSuffix", "{{count}}일", { count: v }) : "-"; } },
-    { accessorKey: "packUnit", header: t("master.part.palletUnit", "팔레트구성단위"), size: 90, meta: { filterType: "number" as const }, cell: ({ getValue }) => { const v = getValue() as number; return v ? v.toLocaleString() : "-"; } },
-    { accessorKey: "storageLocation", header: t("master.part.storageLocation", "품목고정 적재로케이션"), size: 130, cell: ({ getValue }) => getValue() || "-" },
-    {
-      accessorKey: "mesDisplayYn",
-      header: t("common.useYn", "사용여부"),
-      size: 60,
-      meta: { filterType: "multi" as const },
-      cell: ({ getValue }) => {
-        const v = getValue() as string;
-        return (
-          <span className={`px-1.5 py-0.5 text-xs rounded ${v === "Y"
-            ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-            : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"}`}>
-            {v === "Y" ? "Y" : "N"}
-          </span>
-        );
-      },
-    },
+    ...ORDERED_ITEM_COLUMNS.map(columnDef),
   ];
 }

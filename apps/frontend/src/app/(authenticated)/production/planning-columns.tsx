@@ -19,6 +19,7 @@ import type {
   SmdActualSummaryRow,
 } from './planning-types';
 import { SLOT_INDEXES } from './planning-types';
+import { comCodeCell, processNameCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 
@@ -54,11 +55,11 @@ function planCommonColumns(variant: 'mi' | 'smd'): ColumnDef<PlanRow>[] {
   ];
 
   if (variant === 'mi') {
-    base.push({ accessorKey: 'workstageCode', header: '공정', size: 90 });
+    base.push({ accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() });
   } else {
     base.push(
       { accessorKey: 'shiftCode', header: '교대', size: 80 },
-      { accessorKey: 'productionType', header: '생산유형', size: 100 },
+      { accessorKey: 'productionType', header: '생산유형', size: 100, cell: comCodeCell('PRODUCTION TYPE') },
       { accessorKey: 'mfsGroupNo', header: 'MFS그룹', size: 110 },
     );
   }
@@ -116,13 +117,14 @@ function planCommonColumns(variant: 'mi' | 'smd'): ColumnDef<PlanRow>[] {
       size: 120,
       accessorFn: (r) => codeWithName(r.planStatus, r.planStatusName),
     },
-    { accessorKey: 'confirmYn', header: '확정', size: 70 },
-    // '*' 면 롯트카드가 아직 안 붙은 계획이다. 그대로 보여주면 오해하므로 바꿔 적는다.
+    { accessorKey: 'confirmYn', header: '확정', size: 70, cell: comCodeCell('CONFIRM YN') },
+    // 제조번호는 등록 때 'SMD'/'MI'||순번 으로 정해지고, 롯트카드의 LOT_NO 가 이 값을 가리킨다.
+    // '*' 는 그 규칙 전에 웹으로 만든 계획이다 — 롯트카드와 이을 수 없다.
     {
       id: 'mfs',
-      header: '롯트카드',
+      header: '제조번호',
       size: 130,
-      accessorFn: (r) => (!r.mfs || r.mfs === '*' ? '미발행' : r.mfs),
+      accessorFn: (r) => (!r.mfs || r.mfs === '*' ? '없음' : r.mfs),
     },
     { accessorKey: 'customerCode', header: '고객', size: 110 },
     { accessorKey: 'comments', header: '비고', size: 200 },
@@ -162,14 +164,29 @@ export const planTimeSlotColumns: ColumnDef<PlanRow>[] = SLOT_INDEXES.flatMap((s
   },
 ]);
 
+/** 생산실적 구분 — 조립실적 ENTER_BY */
+const ACTUAL_SOURCE_LABEL: Record<string, string> = {
+  AOI_JOB: 'AOI 자동',
+  WORK_RESULT: '수기',
+  ASSY_ADJUST: '보정',
+};
+
 export const smdActualColumns: ColumnDef<SmdActualRow>[] = [
   {
     accessorKey: 'receiptDate',
-    header: '집계일시',
-    size: 160,
-    cell: (c) => dateTime(c.getValue()),
+    header: '작업일',
+    size: 110,
+    cell: (c) => dateOnly(c.getValue()),
   },
+  { accessorKey: 'actualTime', header: '실적시각', size: 140 },
   { accessorKey: 'receiptSequence', header: '순번', size: 80, meta: right },
+  {
+    id: 'actualSource',
+    header: '구분',
+    size: 90,
+    accessorFn: (r) => ACTUAL_SOURCE_LABEL[r.actualSource ?? ''] ?? r.actualSource,
+  },
+  { accessorKey: 'runNo', header: '런카드', size: 150 },
   {
     id: 'lineName',
     header: '라인',
@@ -178,7 +195,7 @@ export const smdActualColumns: ColumnDef<SmdActualRow>[] = [
   },
   { accessorKey: 'modelName', header: '모델명', size: 190 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   {
     id: 'pcbItemName',
     header: 'PCB면',
@@ -199,32 +216,10 @@ export const smdActualColumns: ColumnDef<SmdActualRow>[] = [
     meta: right,
     cell: (c) => num(c.getValue()),
   },
-  {
-    accessorKey: 'productActualLostQty',
-    header: '로스수량',
-    size: 110,
-    meta: right,
-    cell: (c) => num(c.getValue()),
-  },
-  // 센서 원시값. 화면에서 고칠 수 없다 — 고치면 센서 이력과 갈린다.
-  {
-    accessorKey: 'originCount',
-    header: '센서 원시값',
-    size: 120,
-    meta: right,
-    cell: (c) => num(c.getValue()),
-  },
-  {
-    accessorKey: 'productActualSum',
-    header: '누적실적',
-    size: 110,
-    meta: right,
-    cell: (c) => num(c.getValue()),
-  },
+  { accessorKey: 'itemCode', header: '생산품목', size: 150 },
+  { accessorKey: 'timeDivision', header: '시간구분', size: 90 },
+  { accessorKey: 'remark', header: '비고(사유)', size: 220 },
   { accessorKey: 'carrierSize', header: '캐리어', size: 90, meta: right },
-  { accessorKey: 'actualType', header: '실적유형', size: 100 },
-  { accessorKey: 'timeDivision', header: '시간구분', size: 100 },
-  { accessorKey: 'isLastYn', header: '최종', size: 70 },
   { accessorKey: 'enterBy', header: '등록자', size: 90 },
   {
     accessorKey: 'lastModifyDate',
@@ -314,7 +309,7 @@ export const kittingPidColumns: ColumnDef<KittingPidRow>[] = [
   { accessorKey: 'modelCode', header: '모델코드', size: 100 },
   { accessorKey: 'modelName', header: '모델명', size: 180 },
   { accessorKey: 'lineCode', header: '라인', size: 80 },
-  { accessorKey: 'workstageCode', header: '공정', size: 80 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   {
     id: 'barcodeStatusName',
     header: '바코드상태',
@@ -349,7 +344,7 @@ export const resultPeriodColumns: ColumnDef<ResultPeriodRow>[] = [
     size: 130,
     accessorFn: (r) => codeWithName(r.lineCode, r.lineName),
   },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'lotQty', header: 'LOT수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   {
     accessorKey: 'resultQty',
@@ -370,7 +365,7 @@ export const resultRunColumns: ColumnDef<ResultRunRow>[] = [
     size: 140,
     accessorFn: (r) => codeWithName(r.lineCode, r.lineName),
   },
-  { accessorKey: 'workstageCode', header: '공정', size: 110 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   {
     accessorKey: 'resultQty',
     header: '실적수량',

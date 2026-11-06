@@ -11,14 +11,29 @@
  *    대신 비교 전에 바인드 값을 대문자로 올린다.
  * 3. **NG 판정은 설비 기준범위와 비교한다** — IMCN_MACHINE 의 최소/최대 온도·습도.
  *    PB 계산식을 그대로 옮겼다.
- * 4. 이 화면은 조회 전용이다. PB 에도 저장 경로가 없다.
+ * 4. **이상 점검이력(IMCN_TEMPERATURE_CHECK_MASTER)은 등록·수정·삭제한다** — PB dw_5 의
+ *    INSERT/UPDATE/DELETE 그대로다. 항번은 SEQ_CHECK_SEQ, 확인여부 기본 'W'(대기),
+ *    확인일시는 등록 시각이다. 이상 시작·종료는 둘 다 필수이고 시작 ≤ 종료여야 한다.
+ *    이 테이블에는 기본키·트리거가 없어 설비 + 항번 + 조직을 키로 다룬다 (PB key 컬럼).
+ * 5. 노드현황·원시데이터는 조회 전용이다.
  */
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { TemperatureCheckQueryDto, TemperatureRawQueryDto } from '../dto/temperature.dto';
+import {
+  TemperatureCheckKeyDto, TemperatureCheckQueryDto, TemperatureCheckUpdateDto,
+  TemperatureCheckUpsertDto, TemperatureRawQueryDto,
+} from '../dto/temperature.dto';
 import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
+
+/** 'YYYY-MM-DDTHH:mm[:ss]' → 'YYYY-MM-DD HH:mm:ss' (TO_DATE 형식에 맞춘다) */
+function toDateTimeText(value: string): string {
+  const text = value.trim().replace('T', ' ');
+  return text.length === 16 ? `${text}:00` : text;
+}
+
+const EMPTY_TO_NULL = (value?: string) => (value?.trim() ? value.trim() : null);
 
 @Injectable()
 export class TemperatureService {
@@ -146,5 +161,95 @@ export class TemperatureService {
       namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
+  }
+
+  /** 이상 시작·종료 검사 — PB UPDATE 의 검사식 그대로 */
+  private checkPeriod(dto: TemperatureCheckUpsertDto) {
+    const start = toDateTimeText(dto.checkStartDate);
+    const end = toDateTimeText(dto.checkEndDate);
+    if (start > end) throw new BadRequestException('이상 시작일시가 종료일시보다 늦습니다.');
+    return { start, end };
+  }
+
+  /** 이상 점검이력 등록 — 항번·확인일시·등록자는 서버가 채운다 */
+  async createCheck(dto: TemperatureCheckUpsertDto, organizationId: number, userId: string) {
+    const { start, end } = this.checkPeriod(dto);
+    const [{ seq }] = await this.dataSource.query(
+      `SELECT SEQ_CHECK_SEQ.NEXTVAL AS "seq" FROM DUAL`, [],
+    ) as Array<{ seq: number }>;
+    await this.dataSource.query(
+      `INSERT INTO IMCN_TEMPERATURE_CHECK_MASTER
+         (MACHINE_CODE, ORGANIZATION_ID, CHECK_SEQUENCE, CHECK_START_DATE, CHECK_END_DATE,
+          NG_REASON_CODE, ACTION_CODE, CONFIRM_YN, CONFIRM_DATE, COMMENTS,
+          ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE)
+       VALUES (:machineCode, :organizationId, :checkSequence,
+          TO_DATE(:checkStartDate, 'YYYY-MM-DD HH24:MI:SS'), TO_DATE(:checkEndDate, 'YYYY-MM-DD HH24:MI:SS'),
+          :ngReasonCode, :actionCode, NVL(:confirmYn, 'W'), SYSDATE, :comments,
+          :userId, SYSDATE, :userId, SYSDATE)`,
+      namedBinds({
+        machineCode: dto.machineCode.trim(),
+        organizationId,
+        checkSequence: Number(seq),
+        checkStartDate: start,
+        checkEndDate: end,
+        ngReasonCode: EMPTY_TO_NULL(dto.ngReasonCode),
+        actionCode: EMPTY_TO_NULL(dto.actionCode),
+        confirmYn: EMPTY_TO_NULL(dto.confirmYn),
+        comments: EMPTY_TO_NULL(dto.comments),
+        userId,
+      }),
+    );
+    return { machineCode: dto.machineCode.trim(), checkSequence: Number(seq) };
+  }
+
+  private async checkExists(key: TemperatureCheckKeyDto, organizationId: number) {
+    const rows = await this.dataSource.query(
+      `SELECT COUNT(*) AS "cnt" FROM IMCN_TEMPERATURE_CHECK_MASTER
+        WHERE MACHINE_CODE = :machineCode AND CHECK_SEQUENCE = :checkSequence
+          AND ORGANIZATION_ID = :organizationId`,
+      namedBinds({ machineCode: key.machineCode, checkSequence: key.checkSequence, organizationId }),
+    ) as OracleRow[];
+    if (Number(rows[0]?.cnt ?? 0) === 0) throw new NotFoundException('이상 점검이력을 찾을 수 없습니다.');
+  }
+
+  /** 이상 점검이력 수정 — 설비·항번은 키라 바꾸지 않는다 */
+  async updateCheck(dto: TemperatureCheckUpdateDto, organizationId: number, userId: string) {
+    const { start, end } = this.checkPeriod(dto);
+    await this.checkExists(dto, organizationId);
+    await this.dataSource.query(
+      `UPDATE IMCN_TEMPERATURE_CHECK_MASTER
+          SET CHECK_START_DATE = TO_DATE(:checkStartDate, 'YYYY-MM-DD HH24:MI:SS'),
+              CHECK_END_DATE = TO_DATE(:checkEndDate, 'YYYY-MM-DD HH24:MI:SS'),
+              NG_REASON_CODE = :ngReasonCode, ACTION_CODE = :actionCode,
+              CONFIRM_YN = NVL(:confirmYn, CONFIRM_YN), COMMENTS = :comments,
+              LAST_MODIFY_BY = :userId, LAST_MODIFY_DATE = SYSDATE
+        WHERE MACHINE_CODE = :machineCode AND CHECK_SEQUENCE = :checkSequence
+          AND ORGANIZATION_ID = :organizationId`,
+      namedBinds({
+        checkStartDate: start,
+        checkEndDate: end,
+        ngReasonCode: EMPTY_TO_NULL(dto.ngReasonCode),
+        actionCode: EMPTY_TO_NULL(dto.actionCode),
+        confirmYn: EMPTY_TO_NULL(dto.confirmYn),
+        comments: EMPTY_TO_NULL(dto.comments),
+        userId,
+        machineCode: dto.machineCode,
+        checkSequence: dto.checkSequence,
+        organizationId,
+      }),
+    );
+    return { machineCode: dto.machineCode, checkSequence: dto.checkSequence };
+  }
+
+  /** 이상 점검이력 삭제 */
+  async removeCheck(key: TemperatureCheckKeyDto, organizationId: number) {
+    await this.checkExists(key, organizationId);
+    await this.dataSource.query(
+      `DELETE FROM IMCN_TEMPERATURE_CHECK_MASTER
+        WHERE MACHINE_CODE = :machineCode AND CHECK_SEQUENCE = :checkSequence
+          AND ORGANIZATION_ID = :organizationId`,
+      namedBinds({ machineCode: key.machineCode, checkSequence: key.checkSequence, organizationId }),
+    );
+    return { deleted: true };
   }
 }

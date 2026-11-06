@@ -168,6 +168,22 @@ export interface SmtPlanRow {
 }
 
 /** 라인별 배포 요약 (IP_PRODUCT_LINE 기준) */
+/** 배포 요약 (PB d_smt_plandata_lst) — 라인·모델·PCB면별 한 줄 */
+export interface SmtPlanSummaryRow {
+  activeYn: string | null;
+  planDate: string | null;
+  modelName: string;
+  lineCode: string;
+  modelSpec: string | null;
+  modelSuffix: string | null;
+  pcbItem: string | null;
+  feederShaft: string | null;
+  masterSmtModelName: string | null;
+  smtModelName: string | null;
+  revision: string | null;
+  planRows: number;
+}
+
 export interface SmtPlanLineRow {
   lineCode: string;
   lineName: string | null;
@@ -243,6 +259,10 @@ export interface SmtBomExplodeRow {
 
 /** PB IB_MNT_PLANDATA — 적재된 마운터 배치표 */
 export interface SmtNcRow {
+  /** 작업표 행 위치 (ROWID) — 키가 없는 작업표라 한 줄 삭제에 쓴다 */
+  rowKey: string;
+  /** 품번이 품목마스터에 있는가 — 없으면 [적용]이 거부된다 */
+  itemExists: 'Y' | 'N';
   lineCode: string | null;
   machineCode: string | null;
   machineGroup: string | null;

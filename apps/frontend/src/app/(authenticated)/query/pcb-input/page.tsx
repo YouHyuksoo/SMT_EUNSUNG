@@ -30,10 +30,11 @@ import { pcbInputColumns } from '../query-columns';
 import type { PcbInputRow } from '../query-types';
 import PartSearchField from '@/components/shared/PartSearchField';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 export default function PcbInputQueryPage() {
@@ -43,7 +44,7 @@ export default function PcbInputQueryPage() {
   const [itemCode, setItemCode] = useState('');
   const [itemBarcode, setItemBarcode] = useState('');
   const [manufactureWeek, setManufactureWeek] = useState('');
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
 
   const [rows, setRows] = useState<PcbInputRow[]>([]);

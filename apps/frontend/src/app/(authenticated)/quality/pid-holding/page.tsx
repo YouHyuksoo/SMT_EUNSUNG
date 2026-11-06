@@ -16,6 +16,7 @@ import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Lock, LockOpen, Search, ShieldAlert } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import LineSelect from '@/components/shared/LineSelect';
 import ModelSearchField from '@/components/shared/ModelSearchField';
@@ -46,8 +47,10 @@ export default function PidHoldingPage() {
     serialNo.trim() || runNo.trim() || magazineNo.trim() || boxNo.trim(),
   );
 
-  const search = useCallback(async () => {
-    if (!hasRequired) {
+  // 스캔은 serialNo 상태가 반영되기 전에 호출되므로 스캔값을 직접 받는다
+  const search = useCallback(async (scannedPid?: string) => {
+    const pid = scannedPid ?? serialNo;
+    if (!(pid.trim() || runNo.trim() || magazineNo.trim() || boxNo.trim())) {
       toast.error('PID · RUN번호 · 매거진번호 · BOX번호 중 최소 하나를 입력하세요.');
       return;
     }
@@ -55,7 +58,7 @@ export default function PidHoldingPage() {
     try {
       const response = await api.get('/quality/pid/holding', {
         params: {
-          serialNo: serialNo || undefined,
+          serialNo: pid || undefined,
           runNo: runNo || undefined,
           magazineNo: magazineNo || undefined,
           boxNo: boxNo || undefined,
@@ -73,7 +76,7 @@ export default function PidHoldingPage() {
     } finally {
       setLoading(false);
     }
-  }, [hasRequired, serialNo, runNo, magazineNo, boxNo, modelName, lineCode, barcodeStatus]);
+  }, [serialNo, runNo, magazineNo, boxNo, modelName, lineCode, barcodeStatus]);
 
   const apply = useCallback(async (status: 'H' | 'N') => {
     setConfirm(null);
@@ -117,7 +120,7 @@ export default function PidHoldingPage() {
             {searched ? `${rows.length}/${total}건 · ${picked.size}건 선택` : 'PID 를 입력하고 조회하세요'}
           </p>
         </div>
-        <Button size="sm" onClick={search} disabled={loading}>
+        <Button size="sm" onClick={() => search()} disabled={loading}>
           <Search className="mr-1 h-4 w-4" />조회
         </Button>
       </header>
@@ -128,9 +131,8 @@ export default function PidHoldingPage() {
             <span className="text-xs font-semibold text-text">
               아래 넷 중 최소 하나 (필수)
             </span>
-            <Input aria-label="PID" placeholder="PID" value={serialNo}
-              className="w-52" onChange={(e) => setSerialNo(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
+            <BarcodeScanInput aria-label="PID" placeholder="PID 스캔" value={serialNo}
+              className="w-52" onChange={setSerialNo} onScan={search} />
             <Input aria-label="RUN번호" placeholder="RUN번호" value={runNo}
               className="w-40" onChange={(e) => setRunNo(e.target.value)} />
             <Input aria-label="매거진번호" placeholder="매거진번호" value={magazineNo}

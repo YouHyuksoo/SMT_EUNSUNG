@@ -18,6 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as archiver from 'archiver';
 
+import { formatDate } from '@smt/shared';
 /** 백업 실행 파라미터 */
 interface BackupParams {
   /** 백업 저장 루트 디렉토리 (기본: ./backups) */
@@ -267,8 +268,9 @@ export class DbBackupService {
     // 날짜/타임스탬프 타입
     if (upperType.includes('TIMESTAMP') || upperType === 'DATE') {
       if (value instanceof Date) {
-        const iso = value.toISOString().replace('T', ' ').replace('Z', '');
-        return `TO_TIMESTAMP('${iso}', 'YYYY-MM-DD HH24:MI:SS.FF')`;
+        // DB 값은 KST 벽시계 시각이다 — toISOString(UTC) 으로 쓰면 복원 때 9시간 당겨진다
+        const local = `${formatDate(value, 'YYYY-MM-DD HH:mm:ss')}.${String(value.getMilliseconds()).padStart(3, '0')}`;
+        return `TO_TIMESTAMP('${local}', 'YYYY-MM-DD HH24:MI:SS.FF')`;
       }
       const strVal = String(value);
       return `TO_TIMESTAMP('${strVal}', 'YYYY-MM-DD HH24:MI:SS.FF')`;

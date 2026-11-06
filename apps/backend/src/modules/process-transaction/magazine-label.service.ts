@@ -12,14 +12,16 @@
  *        P 정상 241,341건 · B 불량 4건(마지막 2024-05) · R 수리 0건 · D 폐기 0건
  *    6년간 0~4건인 경로를 검증 없이 옮기면 위험만 늘어난다 — 필요해지면 그때
  *    실측을 다시 하고 붙인다.
- * 4. **재출력(RePrint)은 옮기지 않았다.** PB 코드를 읽어보면 DB 를 전혀 건드리지
- *    않고 프린터로 같은 라벨을 다시 찍기만 한다. 웹에는 대응물이 없다.
- * 5. **라벨 인쇄 자체도 제외다.** PB 는 DataWindow 5개를 프린터로 보낸다
- *    (`d_pln_product_magazine_*_label_rpt`). 라벨 프린터 연동은 장비 결정이 필요하므로
- *    **원장(라벨 행)만 만든다.** 발행된 라벨번호는 화면에 돌려주므로 출력은 뒤에 붙일 수 있다.
- * 6. **폐기(Destroy)는 옮겼다.** 실측 `IP_PRODUCT_RUN_CARD_IO_BACK` 6,952건, 오늘도
+ * 4. **라벨 인쇄는 화면이 한다.** PB 는 정상 라벨을 `d_pln_product_magazine_label_rpt_es`
+ *    로 찍었다. 여기서는 그 DataWindow 와 같은 값(`findPrintData`)만 내주고, 화면이 라벨을
+ *    그려 브라우저 인쇄 또는 Print Agent 로 보낸다. 재출력도 같은 값으로 다시 찍을 뿐 DB 는
+ *    건드리지 않는다 (PB 와 같다).
+ * 5. **폐기(Destroy)는 옮겼다.** 실측 `IP_PRODUCT_RUN_CARD_IO_BACK` 6,952건, 오늘도
  *    들어온다 — 살아있는 경로다. 라벨을 이력표로 **옮기고 원본을 지운다.**
- * 7. **쓰기는 실행하지 않고 parse 로만 검증했다** (사용자 결정). 현장 확인이 필요하다.
+ * 6. **원장에 들어가는 값은 PB 실측과 같아야 한다** (2026-10-14 실측):
+ *    - 장입수량은 작업자가 넣는다. 모델기준정보 `MAGAZINE_SIZE` 는 327개 중 301개가 비어 있다.
+ *    - 세트번호는 한 번 발행에 하나다 — 라벨번호와 같은 형태로 먼저 하나 뽑아 그때 나온 라벨 전부에 붙인다.
+ *    - `ENTER_BY` 는 화면에서 찍은 작업자 ID, `LAST_MODIFY_BY` 는 로그인 계정이다.
  */
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
@@ -251,6 +253,56 @@ export class MagazineLabelService {
     };
   }
 
+  /**
+   * 라벨 출력 값 (PB `d_pln_product_magazine_label_rpt_es` 와 같은 값).
+   * 라인·공정·PCB·라벨구분은 PB 처럼 이름으로 바꿔 내준다 (SQL 안에서 부르던 DB 함수).
+   */
+  async findPrintData(magazineLabelNos: string[], organizationId: number) {
+    const labelNos = [...new Set(magazineLabelNos.map((n) => n.trim()).filter(Boolean))];
+    if (labelNos.length === 0) return [];
+    const binds: Record<string, unknown> = { organizationId };
+    const keys = labelNos.map((no, i) => {
+      binds[`l${i}`] = no;
+      return `:l${i}`;
+    });
+    const rows = (await this.dataSource.query(
+      `SELECT a.MAGAZINE_LABEL_NO AS "magazineLabelNo",
+              a.MODEL_NAME        AS "modelName",
+              F_GET_LINE_NAME(a.LINE_CODE, a.ORGANIZATION_ID) AS "lineName",
+              F_GET_WORKSTAGE_NAME(a.WORKSTAGE_CODE)          AS "workstageName",
+              a.LOT_QTY           AS "lotQty",
+              F_GET_BASECODE('PCB ITEM', a.PCB_ITEM, 'K', a.ORGANIZATION_ID) AS "pcbItemName",
+              F_GET_BASECODE('MAGAZINE LABEL TYPE', a.MAGAZINE_LABEL_TYPE, 'K', a.ORGANIZATION_ID)
+                                  AS "labelTypeName",
+              a.ENTER_BY          AS "enterBy",
+              a.RUN_NO            AS "runNo",
+              b.LOT_SIZE          AS "lotSize",
+              TO_CHAR(a.RECEIPT_DATE, 'YYYY-MM-DD HH24:MI') AS "receiptDate"
+         FROM IP_PRODUCT_RUN_CARD_IO a
+         LEFT JOIN IP_PRODUCT_RUN_CARD b
+                ON b.RUN_NO = a.RUN_NO
+               AND b.ORGANIZATION_ID = a.ORGANIZATION_ID
+        WHERE a.ORGANIZATION_ID = :organizationId
+          AND a.MAGAZINE_LABEL_NO IN (${keys.join(', ')})`,
+      namedBinds(binds),
+    )) as Row[];
+    // 요청한 순서대로 찍는다.
+    const order = new Map(labelNos.map((no, i) => [no, i]));
+    return rows.sort((x, y) => (order.get(String(x.magazineLabelNo)) ?? 0)
+      - (order.get(String(y.magazineLabelNo)) ?? 0));
+  }
+
+  /** 작업자 ID → 이름 (PB `sle_user_id` modified). 이름이 없는 라인 작업자 ID 도 그대로 쓴다. */
+  async findWorkerName(workerId: string, organizationId: number) {
+    const id = workerId.trim().toUpperCase().split('@')[0];
+    const rows = (await this.dataSource.query(
+      `SELECT MAX(USER_NAME) AS "userName" FROM ISYS_USERS
+        WHERE USER_ID = :id AND ORGANIZATION_ID = :organizationId`,
+      namedBinds({ id, organizationId }),
+    )) as Row[];
+    return { workerId: workerId.trim().toUpperCase(), userName: (rows[0]?.userName as string) ?? null };
+  }
+
   // ───────────────────────────────── 발행 (쓰기)
 
   /**
@@ -290,7 +342,11 @@ export class MagazineLabelService {
       throw new BadRequestException('발행할 라벨이 없습니다.');
     }
 
-    const lineCode = String(runCard.lineCode ?? '');
+    const lineCode = (dto.lineCode ?? '').trim() || String(runCard.lineCode ?? '');
+    const workerId = dto.workerId.trim().toUpperCase();
+    if (!workerId) {
+      throw new BadRequestException('작업자 ID 를 찍으세요.');
+    }
     // **공정은 런카드에서 가져오면 안 된다.** PB 도 런카드를 보지 않고 PC 설정
     // (`WORKENV.INI [WORKSTAGE] MAGAZINE`)에서 읽어 콤보에 꽂아 두고, 그 콤보 값을
     // 원장에 넣었다. 실측으로도 `IP_PRODUCT_RUN_CARD.WORKSTAGE_CODE` 는 최근 30일
@@ -306,16 +362,22 @@ export class MagazineLabelService {
 
     return this.tx.run(async (qr) => {
       // 날짜접두어는 자재 롯트번호와 같은 3글자 코드다 (PB `f_ymd_sysdate()`).
+      // 세트번호용 시퀀스를 라벨보다 먼저 하나 뽑는다 (PB `IVS_MAGAZINE_SET_NO`).
       const prefixRows = (await qr.query(
         `SELECT SUBSTR(TO_CHAR(SYSDATE, 'YYYY'), 4, 1)
                 || F_GET_MONTH_CODE2(TO_CHAR(SYSDATE, 'MM'))
-                || F_GET_DAY_CODE(TO_CHAR(SYSDATE, 'DD')) AS "datePrefix"
+                || F_GET_DAY_CODE(TO_CHAR(SYSDATE, 'DD')) AS "datePrefix",
+                ${SEQUENCES.label}.NEXTVAL                AS "setSeq"
            FROM DUAL`,
       )) as Row[];
       const datePrefix = String(prefixRows[0]?.datePrefix ?? '');
       if (!datePrefix) {
         throw new BadRequestException('라벨번호 날짜코드를 만들 수 없습니다.');
       }
+      // 세트번호도 라벨번호와 같은 형태다 — 이번 발행 라벨 전부가 같은 값을 갖는다.
+      const magazineSetNo = buildMagazineLabelNo(
+        lineCode, datePrefix, Number(prefixRows[0]?.setSeq ?? 0),
+      );
 
       // 장수만큼 시퀀스를 한 번에 뽑는다 (PB 는 장마다 DB 를 왕복했다).
       const seqRows = (await qr.query(
@@ -352,7 +414,7 @@ export class MagazineLabelService {
            SELECT :runNo, SYSDATE, :receiptSequence, :itemCode,
                   :modelName, :modelSuffix, :lineCode, :workstageCode,
                   :receiptDeficit, :qty, :organizationId,
-                  SYSDATE, :userId, SYSDATE, :userId,
+                  SYSDATE, :workerId, SYSDATE, :userId,
                   :lineCode, :workstageCode,
                   :magazineLabelNo, :pcbItem, :receiptStatus, :receiptConfirmYn,
                   :transactionType, :receiptSequence, :magazineLabelType,
@@ -376,6 +438,7 @@ export class MagazineLabelService {
             receiptDeficit: FIXED.receiptDeficit,
             qty,
             organizationId,
+            workerId,
             userId,
             magazineLabelNo,
             pcbItem: String(runCard.pcbItem ?? ''),
@@ -383,7 +446,7 @@ export class MagazineLabelService {
             receiptConfirmYn: FIXED.receiptConfirmYn,
             transactionType: FIXED.transactionType,
             magazineLabelType: MAGAZINE_LABEL_TYPE.normal,
-            magazineSetNo: dto.magazineSetNo ?? magazineLabelNo,
+            magazineSetNo,
             mfsGroupNo: FIXED.mfsGroupNo,
             parentMagazineLabelNo: FIXED.parentMagazineLabelNo,
           }),
@@ -403,6 +466,7 @@ export class MagazineLabelService {
       return {
         runNo: String(runCard.runNo),
         modelName: dto.modelName,
+        magazineSetNo,
         issued,
         labelCount: issued.length,
         totalQty: issued.reduce((sum, l) => sum + l.qty, 0),

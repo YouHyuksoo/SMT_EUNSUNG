@@ -18,9 +18,9 @@ import {
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import {
   ApplySensorDto,
+  CancelResultDto,
   DefectSaveDto,
   DowntimeBulkDto,
-  DowntimeUpsertDto,
   PlanDowntimeCreateDto,
   WorkResultUpsertDto,
 } from './work-result.dto';
@@ -67,6 +67,7 @@ export class WorkResultController {
     @OrganizationId() organizationId?: number,
     @Query('excludeSmt') excludeSmt?: string,
     @Query('lineCodes') lineCodes?: string,
+    @Query('workstageCode') workstageCode?: string,
   ) {
     const parsedLineCodes = parseLineCodes(lineCodes);
     const rows = await this.service.list(
@@ -78,6 +79,7 @@ export class WorkResultController {
       machineCode || undefined,
       excludeSmt === 'Y',
       parsedLineCodes,
+      workstageCode || undefined,
     );
 
     if (!parsedLineCodes) return { list: rows };
@@ -130,13 +132,23 @@ export class WorkResultController {
     return await this.service.upsertResult(dto, organizationId, userId);
   }
 
-  /** 센서 반영 재시도 — 완료인데 미반영인 실적을 다시 프로시저로 넘긴다 */
+  /** 공정재고 반영 재시도 — 완료인데 미반영인 조립라인 실적을 다시 반영한다 (경로 이름은 예전 그대로) */
   @Post('results/apply-sensor')
   async applySensor(
     @Body() dto: ApplySensorDto,
     @OrganizationId() organizationId?: number,
   ) {
     return await this.service.applySensor(dto, organizationId);
+  }
+
+  /** 실적 취소 — 오늘 업무일 실적만. 공정재고에 반영된 실적이면 되돌린다 */
+  @Post('results/cancel')
+  async cancelResult(
+    @Body() dto: CancelResultDto,
+    @OrganizationId() organizationId?: number,
+    @UserId() userId?: string,
+  ) {
+    return await this.service.cancelResult(dto, organizationId, userId);
   }
 
   /** 작업지시 대표불량 조회 */
@@ -203,6 +215,15 @@ export class WorkResultController {
     };
   }
 
+  /** OEE 비가동 입력 보드 — 공정의 라인별 비가동 대상 설비와 진행중 비가동 (한 번에) */
+  @Get('downtime-board')
+  async downtimeBoard(
+    @Query('processCode') processCode: string,
+    @OrganizationId() organizationId?: number,
+  ) {
+    return await this.service.downtimeBoard(processCode, organizationId);
+  }
+
   /** 비가동 실적 목록 (설비별) + DB 현재시각 */
   @Get('downtimes')
   async downtimes(
@@ -241,31 +262,7 @@ export class WorkResultController {
     return await this.service.deleteDowntime(Number(dtSeq), organizationId);
   }
 
-  /** 비가동 시작(신규) */
-  @Post('downtimes')
-  async createDowntime(
-    @Body() dto: DowntimeUpsertDto,
-    @OrganizationId() organizationId?: number,
-    @UserId() userId?: string,
-  ) {
-    return await this.service.upsertDowntime(
-      { ...dto, dtSeq: undefined },
-      organizationId,
-      userId,
-    );
-  }
-
-  /** 비가동 종료/수정 */
-  @Put('downtimes')
-  async updateDowntime(
-    @Body() dto: DowntimeUpsertDto,
-    @OrganizationId() organizationId?: number,
-    @UserId() userId?: string,
-  ) {
-    return await this.service.upsertDowntime(dto, organizationId, userId);
-  }
-
-  /** 라인/설비 일괄 비가동 시작·종료 (ADR 0002) */
+  /** 설비 비가동 시작·종료 — 비가동을 쓰는 유일한 API (ADR 0002·0003) */
   @Post('downtimes/bulk')
   async bulkDowntime(
     @Body() dto: DowntimeBulkDto,

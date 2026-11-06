@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: e72c84ab
+verifiedCommit: bad18d14
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: e72c84ab
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 204 | 174 | 29 | 1 |
+| 209 | 176 | 32 | 1 |
 
 ## 전체 연결표
 
@@ -33,8 +33,8 @@ verifiedCommit: e72c84ab
 | 기준정보 | 고객마스터 | `MST_CUSTOMER` | `/master/customer` | PB 연결 | `w_com_customer_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 설비마스터 | `EQUIP_MASTER` | `/master/equip` | PB 연결 | `w_mcn_machine_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 표준시간 관리 | `OEE_MST_STD_TIME` | `/oee/master/standard-time` | 웹 신규 |  | PB 대응 없음 |
-| 기준정보 | 설비 비가동 사유코드 | `OEE_MST_IDLE_REASON` | `/oee/master/idle-reason` | 웹 신규 |  | PB 대응 없음 |
-| 기준정보 | 설비별 비가동 사유 연계 | `OEE_MST_EQUIP_REASON` | `/oee/master/equip-reason-map` | 웹 신규 |  | PB 대응 없음 |
+| 기준정보 | 비가동사유마스터 | `OEE_MST_IDLE_REASON` | `/oee/master/idle-reason` | 웹 신규 |  | PB 대응 없음 |
+| 기준정보 | 설비별 비가동코드 관리 | `OEE_MST_EQUIP_REASON` | `/oee/master/equip-reason-map` | 웹 신규 |  | PB 대응 없음 |
 | 기준정보 | 공정관리 | `MST_PROCESS` | `/master/process` | PB 연결 | `w_pln_workstage_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 생산라인관리 | `MST_PROD_LINE` | `/master/prod-line` | PB 연결 | `w_pln_line_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 라우팅관리 | `MST_ROUTING` | `/master/routing` | 웹 신규 |  | PB 대응 없음 |
@@ -42,7 +42,9 @@ verifiedCommit: e72c84ab
 | 기준정보 | 작업자관리 | `MST_WORKER` | `/master/worker` | 웹 신규 |  | PB 대응 없음 |
 | 기준정보 | 작업지도서관리 | `MST_WORK_INST` | `/master/work-instruction` | 웹 신규 |  | PB 대응 없음 |
 | 기준정보 | 창고관리 | `MST_WAREHOUSE` | `/master/warehouse` | 웹 신규 |  | PB 대응 없음 |
-| 기준정보 | 라벨다자인관리 | `MST_LABEL` | `/master/label` | PB 연결 | `w_product_label_master` | PB 메뉴 인벤토리 |
+| 기준정보 | 라벨다자인관리 | `MST_LABEL` | `/master/label` | 웹 신규 |  | PB 대응 없음 |
+| 기준정보 | 제품별 라벨양식 관리 | `MST_LABEL_FORM` | `/master/label-form` | PB 연결 | `w_product_label_master` | PB 메뉴 인벤토리 |
+| 기준정보 | 인터락조건관리 | `MST_INTERLOCK_CONDITION` | `/master/interlock-condition` | PB 연결 | `w_com_interlock_inspect_condition_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 구매단가관리 | `MST_PURCHASE_PRICE` | `/master/purchase-price` | PB 연결 | `w_mat_buy_price_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 품목별 공급처 관리 | `MST_ITEM_SUPPLIER` | `/master/item-supplier` | PB 연결 | `w_mat_item_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 제품판매단가관리 | `MST_SALE_PRICE` | `/master/sale-price` | PB 연결 | `w_sal_sale_price_master` | PB 메뉴 인벤토리 |
@@ -60,11 +62,9 @@ verifiedCommit: e72c84ab
 | 설비관리 | 솔더점도 검사결과조회 | `EQUIP_RESULT_SOLDER` | `/equipment/result-query/solder` | PB 연결 | `w_qc_machine_inspect_data_solder_query` | PB 메뉴 인벤토리 |
 | 설비관리 | REFLOW 작업결과조회 | `EQUIP_RESULT_REFLOW` | `/equipment/result-query/reflow` | PB 연결 | `w_qc_machine_inspect_data_reflow_query` | PB 메뉴 인벤토리 |
 | 설비관리 | 성능 검사결과조회 | `EQUIP_RESULT_PERFORMANCE` | `/equipment/result-query/performance` | PB 연결 | `w_qc_machine_inspect_data_eol_query` | PB 메뉴 인벤토리 |
-| OEE 관리 | 공정별 OEE 종합 | `OEE_DASHBOARD` | `/oee/dashboard` | 웹 신규 |  | PB 대응 없음 |
-| OEE 관리 | OEE 비가동 입력 | `OEE_MULTI_ENTRY` | `/oee/multi-entry` | 웹 신규 |  | PB 대응 없음 |
-| OEE 관리 | OEE 실적 입력 | `OEE_RESULT_ENTRY` | `/oee/result-entry` | 웹 신규 |  | PB 대응 없음 |
+| OEE 관리 | OEE 비가동 입력(SMT) | `OEE_MULTI_ENTRY` | `/oee/multi-entry` | 웹 신규 |  | PB 대응 없음 |
+| OEE 관리 | OEE 비가동 입력(ASSY) | `OEE_MULTI_ENTRY_ASSY` | `/oee/multi-entry-assy` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | OEE 종합 현황 | `OEE_OVERALL_STATUS` | `/oee/overall-status` | 웹 신규 |  | PB 대응 없음 |
-| OEE 관리 | 설비별 작업 실적관리 | `OEE_EQUIP_WORK_RESULT` | `/oee/equip-work-result` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | 설비 운영 현황 | `OEE_EQUIP_OPS_STATUS` | `/oee/equip-ops-status` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | 설비 운영 및 실적관리(현장) | `OEE_FIELD_OPS` | `/oee/field-ops` | 웹 신규 |  | PB 대응 없음 |
 | 자재발주 | 자재소요량관리 | `PUR_REQUIREMENT` | `/purchase/requirement` | PB 연결 | `w_mat_requirment_plan_master` | PB 메뉴 인벤토리 |
@@ -131,8 +131,9 @@ verifiedCommit: e72c84ab
 | 제품재고관리 | 제품패킹이력 | `PRD_PACK_HISTORY` | `/product/pack-history` | PB 연결 | `w_prd_product_packing_history` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품입고관리(PID) | `PRD_FG_RECEIPT` | `/product/fg-receipt` | PB 연결 | `w_prd_product_fg_receipt` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품입고관리(모델단위) | `PRD_FG_MODEL_RECEIPT` | `/product/fg-model-receipt` | PB 연결 | `w_prd_product_fg_4_model_receipt` | PB 메뉴 인벤토리 |
+| 제품재고관리 | 제품납품계획 | `PRD_SHIPPING_ORDER` | `/product/shipping-order` | PB 연결 | `w_pln_product_delivery_master` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품출하관리 | `PRD_FG_ISSUE` | `/product/fg-issue` | PB 연결 | `w_prd_product_fg_issue` | PB 메뉴 인벤토리 |
-| 제품재고관리 | 제품출하조회 | `PRD_FG_ISSUE_QUERY` | `/product/fg-issue-query` | 웹 신규 |  | PB 대응 없음 |
+| 제품재고관리 | 제품출하조회 | `PRD_FG_ISSUE_QUERY` | `/product/fg-issue-query` | PB 연결 | `w_prd_product_fg_issue_rpt` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품출고관리(모델단위) | `PRD_FG_MODEL_ISSUE` | `/product/fg-model-issue` | PB 연결 | `w_prd_product_fg_4_model_issue` | PB 메뉴 인벤토리 |
 | 재고마감 | 재고마감일자설정 | `SYS_INV_CLOSE_DATE` | `/system/inventory-close-date` | PB 연결 | `w_system_inventory_close_date_setup` | PB 메뉴 인벤토리 |
 | 재고마감 | 자재재고마감 | `INV_CLOSE` | `/inventory-query/inventory-close` | PB 연결 | `w_mat_inventory_close_report` | PB 메뉴 인벤토리 |
@@ -149,6 +150,9 @@ verifiedCommit: e72c84ab
 | 생산관리 | 롯트카드-PID 매핑관리 | `PRD_RUN_CARD_PID` | `/production/run-card-pid` | PB 연결 | `w_pln_product_pcb_kitting_scan_master` | PB 메뉴 인벤토리 |
 | 생산관리 | 기간별 생산실적 조회 | `PRD_PCB_RESULT` | `/production/pcb-result` | PB 연결 | `w_pln_product_pcb_result_query` | PB 메뉴 인벤토리 |
 | 생산관리 | 생산일보 리포트 | `PRD_DAILY_REPORT` | `/production/daily-report` | PB 연결 | `w_pln_product_pcb_result_report` | PB 메뉴 인벤토리 |
+| 생산관리 | OEE 실적 입력 | `OEE_RESULT_ENTRY` | `/oee/result-entry` | 웹 신규 |  | PB 대응 없음 |
+| 생산관리 | 설비별 작업 실적관리 | `OEE_EQUIP_WORK_RESULT` | `/oee/equip-work-result` | 웹 신규 |  | PB 대응 없음 |
+| 생산관리 | 설비별 검사실적관리 | `OEE_EQUIP_INSPECT_RESULT` | `/oee/equip-inspect-result` | 웹 신규 |  | PB 대응 없음 |
 | 추적 | 자재 제조번호 기준 추적 | `TRK_MATERIAL_LOT` | `/tracking/material-lot` | PB 연결 | `w_product_pid_tracking_rpt` | PB 메뉴 인벤토리 |
 | 추적 | 자재추적조회(동적) | `TRK_MATERIAL_DYNAMIC` | `/tracking/material-dynamic` | PB 연결 | `w_product_material_tracking_rpt` | PB 메뉴 인벤토리 |
 | 추적 | 자재사용이력조회 | `TRK_MATERIAL_USAGE` | `/tracking/material-usage` | PB 연결 | `w_product_material_tracking_msl_rpt` | PB 메뉴 인벤토리 |
@@ -157,6 +161,8 @@ verifiedCommit: e72c84ab
 | 추적 | 롯트추적조회(ALL) | `TRK_LOT_ALL` | `/tracking/lot-all` | PB 연결 | `w_pln_product_all_barcode_tracking` | PB 메뉴 인벤토리 |
 | 추적 | 생산현황데쉬보드 | `TRK_LINE_DASHBOARD` | `/tracking/line-dashboard` | PB 연결 | `w_com_production_status_dashboard` | PB 메뉴 인벤토리 |
 | 추적 | 공정통과이력 관리 | `PLN_WORKSTAGE_PASS` | `/process-transaction/workstage-pass` | PB 연결 | `w_pln_product_inout_scan_master` | PB 메뉴 인벤토리 |
+| 추적 | 정추적(PCB→자재) | `TRK_FORWARD_TRACE` | `/tracking/forward-trace` | 웹 신규 |  | PB 대응 없음 |
+| 추적 | 역추적(자재→PCB) | `TRK_REVERSE_TRACE` | `/tracking/reverse-trace` | 웹 신규 |  | PB 대응 없음 |
 | 정보조회 | PID 정보조회 | `QRY_PID_INFO` | `/query/pid-info` | PB 연결 | `w_pln_product_barcode_query` | PB 메뉴 인벤토리 |
 | 정보조회 | 마킹이력조회 | `QRY_MARKING` | `/query/marking` | PB 연결 | `w_pln_product_pcb_marking_query` | PB 메뉴 인벤토리 |
 | 정보조회 | PCB 투입 리스트조회 | `QRY_PCB_INPUT` | `/query/pcb-input` | PB 연결 | `w_qc_pcb_input_scan_master` | PB 메뉴 인벤토리 |
@@ -173,7 +179,6 @@ verifiedCommit: e72c84ab
 | 정보조회 | SMT PICKUP 리포트 | `RPT_PICKUP_RATE` | `/report/pickup-rate` | PB 연결 | `w_smt_pickup_rate_rpt` | PB 메뉴 인벤토리 |
 | 정보조회 | 생산계획리포트 | `RPT_MASTER_PLAN` | `/report/master-plan` | PB 연결 | `w_pln_master_plan_rpt` | PB 메뉴 인벤토리 |
 | 정보조회 | 런카드리포트 | `RPT_RUN_CARD` | `/report/run-card` | PB 연결 | `w_product_run_card_rpt` | PB 메뉴 인벤토리 |
-| 정보조회 | 제품 판매실적 | `RPT_FG_ISSUE` | `/report/fg-issue` | PB 연결 | `w_prd_product_fg_issue_rpt` | PB 메뉴 인벤토리 |
 | 정보조회 | 공정재공조회 | `RPT_WORKSTAGE_STOCK` | `/report/workstage-stock` | PB 연결 | `w_product_workstage_stock_rpt` | PB 메뉴 인벤토리 |
 | 정보조회 | 공정매거진조회 | `RPT_MAGAZINE_STOCK` | `/report/magazine-stock` | PB 연결 | `w_product_workstage_magazine_stock_rpt` | PB 메뉴 인벤토리 |
 | 정보조회 | S-PARTS입고리포트 | `RPT_MOLD_RECEIPT` | `/report/mold-receipt` | PB 연결 | `w_mcn_mold_receipt_rpt` | PB 메뉴 인벤토리 |
@@ -190,7 +195,7 @@ verifiedCommit: e72c84ab
 | 정보조회 | 자재장기재고리포트 | `RPT_MATERIAL_LONG_TERM` | `/report/material-long-term` | PB 연결 | `w_mat_long_term_inventory_report` | PB 메뉴 인벤토리 |
 | 정보조회 | 재고리포트 | `RPT_MATERIAL_INVENTORY` | `/report/material-inventory` | PB 연결 | `w_mat_current_inventory_report` | PB 메뉴 인벤토리 |
 | 정보조회 | 자재입출고수불원장 | `MAT_RECEIPT_ISSUE_LEDGER` | `/material/receipt-issue-ledger` | PB 연결 | `w_mat_ledger_report` | PB 메뉴 인벤토리 |
-| 정보조회 | 현재고조회 | `MAT_CURRENT_INVENTORY` | `/material/current-inventory` | PB 연결 | `w_mat_current_inventory_master` | PB 메뉴 인벤토리 |
+| 정보조회 | 자재현재고조회 | `MAT_CURRENT_INVENTORY` | `/material/current-inventory` | PB 연결 | `w_mat_current_inventory_master` | PB 메뉴 인벤토리 |
 | 정보조회 | 총재고조회 | `INV_TOTAL` | `/inventory-query/total-inventory` | PB 연결 | `w_mat_total_inventory_query` | PB 메뉴 인벤토리 |
 | 정보조회 | 베이킹재고조회 | `WH_BAKING_STOCK` | `/warehouse/baking-stock` | PB 연결 | `w_mat_baking_scan_query` | PB 메뉴 인벤토리 |
 | 정보조회 | 진공포장재고조회 | `WH_VACUUM_STOCK` | `/warehouse/vacuum-stock` | PB 연결 | `w_mat_vacuum_scan_query` | PB 메뉴 인벤토리 |
@@ -211,7 +216,7 @@ verifiedCommit: e72c84ab
 | 품질관리 | 공정품질검사이력 | `QC_WQC` | `/quality/wqc` | PB 연결 | `w_qc_workstage_inspect_data_master_es` | PB 메뉴 인벤토리 |
 | 품질관리 | 온도상태조회 | `QC_TEMPERATURE` | `/quality/temperature` | PB 연결 | `w_pln_product_tempreture_history_query` | PB 메뉴 인벤토리 |
 | 품질관리 | 공정수리이력조회 | `QC_REPAIR_HISTORY` | `/quality/repair-history` | PB 연결 | `w_pln_product_pcb_repair_master` | PB 메뉴 인벤토리 |
-| 품질관리 | 공정수리이력조회 | `QC_REPAIR_QUERY` | `/quality/repair-query` | PB 연결 | `w_pln_product_pcb_repair_query` | PB 메뉴 인벤토리 |
+| 품질관리 | 공정수리이력분석 | `QC_REPAIR_QUERY` | `/quality/repair-query` | PB 연결 | `w_pln_product_pcb_repair_query` | PB 메뉴 인벤토리 |
 | 품질관리 | 공정폐기관리 | `QC_PRODUCT_DESTROY` | `/quality/product-destroy` | PB 연결 | `w_pln_product_pcb_destroy_master` | PB 메뉴 인벤토리 |
 | 승인 | 구매단가승인 | `CFM_BUY_PRICE` | `/confirm/buy-price` | PB 연결 | `w_mat_buy_price_confirm` | PB 메뉴 인벤토리 |
 | 승인 | 판매단가승인 | `CFM_SALE_PRICE` | `/confirm/sale-price` | PB 연결 | `w_sal_sale_price_confirm` | PB 메뉴 인벤토리 |

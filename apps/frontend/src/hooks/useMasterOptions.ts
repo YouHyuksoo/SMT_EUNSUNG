@@ -60,7 +60,10 @@ interface LineItem {
 interface ProcessItem {
   processCode: string;
   processName: string;
+  /** 공정유형 (공통코드 WORKSTAGE TYPE: I 일반 / L 최종 / Q 검사) */
   processType: string;
+  /** 공정그룹 (공통코드 WORKSTAGE CODE GROUP: SMT / PBA / PACKING …) */
+  codeGroup?: string | null;
 }
 
 interface EquipItem {

@@ -45,11 +45,13 @@ import type {
   SolderSlipRow,
 } from '../solder-label-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
+import SupplierSelect from '@/components/shared/SupplierSelect';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 const FACTORY_OPTIONS = SOLDER_FACTORIES.map((f) => ({ value: f, label: `공장 ${f}` }));
@@ -62,7 +64,7 @@ const parseDivide = (text: string) => text
   .filter((n) => Number.isFinite(n));
 
 export default function SolderLabelPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(30));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [slipNoCond, setSlipNoCond] = useState('');
   const [itemCodeCond, setItemCodeCond] = useState('');
@@ -325,8 +327,8 @@ export default function SolderLabelPage() {
               onChange={(e) => setDivideText(e.target.value)} />
             <Input label="유효기한" type="date" value={validDate}
               onChange={(e) => setValidDate(e.target.value)} />
-            <Input label="협력사코드" value={supplierCode}
-              onChange={(e) => setSupplierCode(e.target.value)} />
+            <SupplierSelect label="협력사코드" value={supplierCode}
+              onChange={setSupplierCode} />
             <Input label="협력사 바코드" value={supplierBarcode}
               onChange={(e) => setSupplierBarcode(e.target.value)} />
 

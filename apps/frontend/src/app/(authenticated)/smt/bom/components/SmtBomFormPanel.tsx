@@ -15,12 +15,14 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Save, X } from 'lucide-react';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import { SmtMachineSelect, SmtPcbItemSelect } from '../../components/SmtSelects';
 import type { SmtBomRow } from '../../types';
 import PartSearchField from '@/components/shared/PartSearchField';
 
+import { getTodayLocal } from '@/utils/date';
 export interface SmtBomForm {
   parentItemCode: string;
   childItemCode: string;
@@ -47,7 +49,7 @@ export interface SmtBomForm {
 
 const text = (value: unknown) => (value == null ? '' : String(value));
 const day = (value: unknown) => (value ? String(value).slice(0, 10) : '');
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getTodayLocal();
 
 export const emptySmtBomForm = (modelName = ''): SmtBomForm => ({
   parentItemCode: modelName, childItemCode: '', dateSet: today(), locationCode: '',
@@ -186,8 +188,8 @@ export default function SmtBomFormPanel({ mode, initialForm, onClose, onSaved }:
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">라인코드 *</span>
-            <Input value={form.lineCode} disabled={edit}
-              onChange={(e) => set('lineCode', e.target.value)} />
+            <ProdLineSelect value={form.lineCode} disabled={edit} fullWidth
+              onChange={(v) => set('lineCode', v)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">설비코드 *</span>

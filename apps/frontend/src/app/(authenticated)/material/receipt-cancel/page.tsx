@@ -18,6 +18,7 @@ import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui'
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateFilter from '@/components/shared/DateFilter';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
@@ -25,8 +26,8 @@ import { buildReceiptCancelColumns } from './columns';
 import { receiptKey, type ReceiptCancelMode, type ReceiptCancelRow } from './types';
 import PartSearchField from '@/components/shared/PartSearchField';
 
-const today = () => new Date().toISOString().slice(0, 10);
-const firstDayOfMonth = () => `${new Date().toISOString().slice(0, 7)}-01`;
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 export default function ReceiptCancelPage() {
   const [mode, setMode] = useState<ReceiptCancelMode>('CANCEL');
@@ -43,7 +44,7 @@ export default function ReceiptCancelPage() {
   const [supplierCode, setSupplierCode] = useState('');
   const [locationCode, setLocationCode] = useState('');
   const [invoiceNo, setInvoiceNo] = useState('');
-  const [dateFrom, setDateFrom] = useState(firstDayOfMonth);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [cancelDate, setCancelDate] = useState(today);
   const [allowLastMonth, setAllowLastMonth] = useState(false);
@@ -152,21 +153,14 @@ export default function ReceiptCancelPage() {
         </div>
       </header>
 
-      <nav className="flex flex-wrap gap-1 border-b border-border" aria-label="조회 모드">
-        {([['CANCEL', '취소대상'], ['HISTORY', '이력']] as const).map(([value, label]) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => changeMode(value)}
-            aria-current={mode === value ? 'page' : undefined}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
-              mode === value ? 'border-b-2 border-primary text-primary' : 'text-text-muted hover:text-text'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
+      <ScreenTabs
+        tabs={[
+          { key: 'CANCEL', label: '취소대상' },
+          { key: 'HISTORY', label: '이력' },
+        ]}
+        active={mode}
+        onChange={changeMode}
+      />
 
       <Card className="shrink-0" padding="sm">
         <div className="flex flex-wrap items-center gap-2">

@@ -24,6 +24,8 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import Select from '@/components/ui/Select';
+import { useSupplierOptions } from '@/hooks/useMasterOptions';
 import api from '@/services/api';
 import {
   TruncationNotice,
@@ -43,10 +45,11 @@ import type {
 } from '../barcode-receipt-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 type TabKey = 'waiting' | 'barcodes' | 'receipts' | 'noReceipt';
@@ -66,7 +69,7 @@ export default function BarcodeReceiptPage() {
   const [barcodeCond, setBarcodeCond] = useState('');
   const [lotNo, setLotNo] = useState('');
   const [slipNo, setSlipNo] = useState('');
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
 
   const [waiting, setWaiting] = useState<BarcodeRow[]>([]);
@@ -82,6 +85,7 @@ export default function BarcodeReceiptPage() {
   const [ourBarcode, setOurBarcode] = useState('');
   const [supplierLotNo, setSupplierLotNo] = useState('');
   const [originSupplierCode, setOriginSupplierCode] = useState('');
+  const { options: supplierOptions, isLoading: supplierLoading } = useSupplierOptions();
   const [ignoreSupplierBarcode, setIgnoreSupplierBarcode] = useState(false);
   const [lookup, setLookup] = useState<BarcodeScanLookup | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -265,9 +269,10 @@ export default function BarcodeReceiptPage() {
                 <Input aria-label="협력사 롯트번호" placeholder="협력사 롯트번호"
                   value={supplierLotNo} className="w-48"
                   onChange={(e) => setSupplierLotNo(e.target.value)} />
-                <Input aria-label="원 협력사코드" placeholder="원 협력사코드"
-                  value={originSupplierCode} className="w-44"
-                  onChange={(e) => setOriginSupplierCode(e.target.value)} />
+                <Select aria-label="원 협력사코드" placeholder="원 협력사코드"
+                  value={originSupplierCode} className="w-44" disabled={supplierLoading}
+                  options={[{ value: '', label: '원 협력사 없음' }, ...supplierOptions]}
+                  onChange={setOriginSupplierCode} />
               </>
             )}
             <label className="flex items-center gap-2 text-sm text-text">

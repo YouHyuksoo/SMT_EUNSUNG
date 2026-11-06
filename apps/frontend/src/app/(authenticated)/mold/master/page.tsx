@@ -19,6 +19,7 @@ import toast from 'react-hot-toast';
 import { Boxes, Edit2, Layers, Plus, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import MoldCodeField from '../components/MoldCodeField';
@@ -193,25 +194,21 @@ export default function MoldMasterPage() {
 
         <Card padding="none" className="h-60 shrink-0 overflow-hidden">
           <CardContent className="flex h-full flex-col p-3">
-            <nav className="mb-2 flex gap-1 border-b border-border" aria-label="상세 탭">
-              {([['bills', '소요품목'], ['inventory', '재고']] as const).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setTab(key)}
-                  className={`px-3 py-1.5 text-sm ${
-                    tab === key
-                      ? 'border-b-2 border-primary font-semibold text-text'
-                      : 'text-text-muted'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-              <span className="ml-auto self-center text-xs text-text-muted">
+            <div className="mb-2 flex items-end border-b border-border">
+              <div className="-mb-px min-w-0 flex-1">
+                <ScreenTabs
+                  tabs={[
+                    { key: 'bills', label: '소요품목' },
+                    { key: 'inventory', label: '재고' },
+                  ]}
+                  active={tab}
+                  onChange={setTab}
+                />
+              </div>
+              <span className="self-center text-xs text-text-muted">
                 {selected ? selected.moldCode : 'S-PARTS 를 선택하세요'}
               </span>
-            </nav>
+            </div>
             <div className="min-h-0 flex-1">
               {tab === 'bills' ? (
                 <DataGrid

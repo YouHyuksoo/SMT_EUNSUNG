@@ -6,6 +6,7 @@
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, dateOnly, dateTime, num } from '@/components/shared/grid-format';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 
@@ -49,7 +50,7 @@ export const pidHoldingColumns: ColumnDef<PidHoldingRow>[] = [
   { accessorKey: 'shiftCode', header: '교대', size: 80 },
   { accessorKey: 'receiptDate', header: '입고일시', size: 150, cell: (c) => dateTime(c.getValue()) },
   { accessorKey: 'shippingDate', header: '출하일시', size: 150, cell: (c) => dateTime(c.getValue()) },
-  { accessorKey: 'shippingDeficit', header: '출하구분', size: 90 },
+  { accessorKey: 'shippingDeficit', header: '출하구분', size: 90, cell: comCodeCell('SHIPPING DEFICIT') },
   { accessorKey: 'enterBy', header: '등록자', size: 90 },
   { accessorKey: 'enterDate', header: '등록일시', size: 150, cell: (c) => dateTime(c.getValue()) },
 ];
@@ -80,7 +81,7 @@ export const pidIssueScanColumns: ColumnDef<PidIssueScanRow>[] = [
   { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'scanDate', header: '스캔일시', size: 160, cell: (c) => dateTime(c.getValue()) },
   { accessorKey: 'serialNo', header: 'PID', size: 190 },
-  { accessorKey: 'pidIssueType', header: '이슈유형', size: 120 },
+  { accessorKey: 'pidIssueType', header: '이슈유형', size: 120, cell: comCodeCell('PID ISSUE TYPE') },
   { accessorKey: 'modelName', header: '모델명', size: 180 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
   { id: 'lineName', header: '라인', size: 120, accessorFn: (r) => codeWithName(r.lineCode, r.lineName) },
@@ -139,7 +140,7 @@ export const iqcInspectHistoryColumns: ColumnDef<IqcInspectHistoryRow>[] = [
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
   { id: 'itemClassName', header: '품목분류', size: 130, accessorFn: (r) => codeWithName(r.itemClass, r.itemClassName) },
   { accessorKey: 'lotNo', header: 'LOT번호', size: 140 },
-  { accessorKey: 'inspectType', header: '검사유형', size: 110 },
+  { accessorKey: 'inspectType', header: '검사유형', size: 110, cell: comCodeCell('INSPECT TYPE') },
   { id: 'inspectResultName', header: '판정', size: 100, accessorFn: (r) => codeWithName(r.inspectResult, r.inspectResultName) },
   { id: 'badReasonName', header: '불량원인', size: 130, accessorFn: (r) => codeWithName(r.badReasonCode, r.badReasonName) },
   { accessorKey: 'defectCode', header: '결함코드', size: 120 },

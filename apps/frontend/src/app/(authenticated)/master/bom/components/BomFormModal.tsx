@@ -65,7 +65,7 @@ export default function BomFormModal({ isOpen, onClose, onSave, editingItem, par
       setProcessCode(editingItem.processCode || "");
       setValidFrom(formatDateOnly(editingItem.validFrom));
       setValidTo(formatDateOnly(editingItem.validTo));
-      setRemark("");
+      setRemark(editingItem.location || "");
     } else {
       setSelectedChild(null); setChildSearch(""); setQtyPer("1"); setSeq("0");
       setRevision("A"); setProcessCode(""); setValidFrom(getTodayLocal()); setValidTo(DEFAULT_VALID_TO); setRemark("");
@@ -101,7 +101,8 @@ export default function BomFormModal({ isOpen, onClose, onSave, editingItem, par
         qtyPer: Number(qtyPer), seq: Number(seq), revision,
         processCode: processCode || undefined,
         validFrom, validTo,
-        remark: remark || undefined, useYn: "Y",
+        // 수정 때는 빈 값도 보내 로케이션을 지울 수 있게 한다
+        remark: editingItem ? remark : remark || undefined, useYn: "Y",
       };
       if (editingItem) {
         await api.put(`/master/boms/${getBomKey(editingItem)}`, body);
@@ -152,7 +153,7 @@ export default function BomFormModal({ isOpen, onClose, onSave, editingItem, par
           <FieldProcessSelect field="processCode" label={t("master.bom.processCode", "공정코드")} value={processCode} onChange={(v) => setProcessCode(v)} />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <FieldInput field="remark" label={t("master.bom.remark")} value={remark} onChange={(e) => setRemark(e.target.value)} />
+          <FieldInput field="remark" label={t("master.bom.location", "로케이션")} value={remark} onChange={(e) => setRemark(e.target.value)} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <FieldInput field="validFrom" label={t("master.bom.validFrom")} type="date" value={validFrom} onChange={(e) => setValidFrom(e.target.value)} required />

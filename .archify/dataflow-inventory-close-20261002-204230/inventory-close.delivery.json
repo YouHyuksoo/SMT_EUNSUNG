@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "8f261547-5f99-4165-bb5b-99c1a6a0e384",
+  "status": "current",
+  "command": "deliver",
+  "type": "dataflow",
+  "input": "C:\\Project\\MES\\Infinity21 MES SMT_EUNSUNG\\.archify\\dataflow-inventory-close-20261002-204230\\candidate.json",
+  "output": "C:\\Project\\MES\\Infinity21 MES SMT_EUNSUNG\\.archify\\dataflow-inventory-close-20261002-204230\\inventory-close.html",
+  "specification": {
+    "sha256": "8520c85db207380032e178b59f0c31b11da879701da16683714057cd9d25aab5",
+    "bytes": 7192
+  },
+  "artifact": {
+    "sha256": "57660c6ea6b15f9d69aada687fbcd7a3e2009b3ee9476d4ba02986a2cdd78808",
+    "bytes": 769503
+  }
+}

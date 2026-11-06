@@ -22,7 +22,8 @@ import MoldCodeField from '../components/MoldCodeField';
 import { moldRepairColumns, moldRepairTargetColumns } from '../columns';
 import type { MoldRepairRow, MoldRepairTargetRow } from '../types';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const isoDate = (date: Date) => getTodayLocal(date);
 const yearAgo = () => {
   const date = new Date();
   date.setFullYear(date.getFullYear() - 1);

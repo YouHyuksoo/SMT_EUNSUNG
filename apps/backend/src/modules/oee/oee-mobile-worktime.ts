@@ -1,181 +1,91 @@
-const SEOUL_TIME_ZONE = 'Asia/Seoul';
-const DAY_MS = 24 * 60 * 60 * 1000;
-const BUSINESS_DAY_START_MINUTES = 8 * 60 + 30;
+/**
+ * @file src/modules/oee/oee-mobile-worktime.ts
+ * @description OEE 비가동 입력의 현재 업무일·근무구간 — DB 시각으로 정한다.
+ *
+ * 초보자 가이드:
+ * 1. **지금 시각은 DB 의 SYSDATE 다.** 앱 서버 시계를 쓰지 않는다 — 저장되는 시작·종료시각도 같은 값이다.
+ * 2. **업무일은 DB 함수 F_GET_WORK_ACTUAL_DATE(SYSDATE, 'A')** — ICOM_WORKTIME_RANGES 의
+ *    SMTWORKTIME A 시작시각(08:30) 전이면 전날이다. 생산보드와 같은 기준이다.
+ * 3. **근무구간은 ICOM_WORKTIME_RANGES 의 A~J 중 지금을 포함하는 한 칸이다.**
+ *    ATTRIBUTE01/02 는 시작·종료가 업무일에서 며칠 뒤인지(0/1)다. A~E 는 주간(DAY), F~J 는 야간(NIGHT).
+ */
+import { BadRequestException } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { namedBinds } from '../../common/utils/named-binds.util';
+
 export const OEE_MOBILE_WORK_SEGMENTS = ['DAY', 'NIGHT'] as const;
 export type OeeMobileWorkSegment = (typeof OEE_MOBILE_WORK_SEGMENTS)[number];
 
-export interface WorktimeRangeRow {
-  workType: string;
-  startTime: string | Date | null | undefined;
-  endTime: string | Date | null | undefined;
-  attribute01?: string | number | null;
-  attribute02?: string | number | null;
-}
-
 export interface OeeMobileWorkContext {
+  /** 업무일 'YYYY-MM-DD' */
   workDate: string;
+  /** 업무일 0시 (DB DATE 그대로 — WORK_DATE 컬럼에 저장할 값) */
+  workDay: Date;
   workSegment: OeeMobileWorkSegment;
+  /** DB 지금 시각 (SYSDATE) */
+  now: Date;
+  /** 업무일 시작 시각 — 업무일 + A 구간 시작 */
+  workStart: Date;
 }
 
-interface ClockTime {
-  milliseconds: number;
+/** 'HHMI[SS]' 문자열 + 날짜 offset → 업무일 기준 일수 */
+const offsetExpr = (time: string, dayOffset: string) =>
+  `NVL(TO_NUMBER(${dayOffset}), 0) + TO_NUMBER(SUBSTR(${time}, 1, 2)) / 24 + TO_NUMBER(SUBSTR(${time}, 3, 2)) / 1440`;
+
+export const OEE_WORK_CONTEXT_SQL = `
+  WITH w AS (
+    SELECT SYSDATE AS NOW, F_GET_WORK_ACTUAL_DATE(SYSDATE, 'A') AS WORK_DATE FROM DUAL
+  ), r AS (
+    SELECT WORK_TYPE,
+           ${offsetExpr('START_TIME', 'ATTRIBUTE01')} AS START_OFFSET,
+           ${offsetExpr('END_TIME', 'ATTRIBUTE02')} AS END_OFFSET
+      FROM ICOM_WORKTIME_RANGES
+     WHERE RANGE_TYPE = :rangeType AND ORGANIZATION_ID = :organizationId
+  )
+  SELECT TO_CHAR(w.WORK_DATE, 'YYYY-MM-DD') AS "workDate", w.WORK_DATE AS "workDay",
+         r.WORK_TYPE AS "workType",
+         w.NOW AS "now",
+         w.WORK_DATE + (SELECT a.START_OFFSET FROM r a WHERE a.WORK_TYPE = 'A') AS "workStart"
+    FROM w
+    JOIN r ON w.NOW >= w.WORK_DATE + r.START_OFFSET AND w.NOW < w.WORK_DATE + r.END_OFFSET`;
+
+/** SMT 는 SMTWORKTIME, 그 외 공정은 WORKTIME 구간을 쓴다 */
+export function worktimeRangeType(processCode: string): string {
+  return processCode === 'SMT' ? 'SMTWORKTIME' : 'WORKTIME';
 }
 
-interface SeoulDateTime extends ClockTime {
-  day: number;
-}
-
-const seoulFormatter = new Intl.DateTimeFormat('en-US', {
-  timeZone: SEOUL_TIME_ZONE,
-  calendar: 'gregory',
-  numberingSystem: 'latn',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  hourCycle: 'h23',
-});
-
-function formatDateParts(date: Date): Record<string, number> {
-  const parts = seoulFormatter.formatToParts(date);
-  const values: Record<string, number> = {};
-
-  for (const part of parts) {
-    if (part.type !== 'literal') values[part.type] = Number(part.value);
-  }
-
-  if (
-    !Number.isInteger(values.year) ||
-    !Number.isInteger(values.month) ||
-    !Number.isInteger(values.day) ||
-    !Number.isInteger(values.hour) ||
-    !Number.isInteger(values.minute) ||
-    !Number.isInteger(values.second)
-  ) {
-    throw new Error('Asia/Seoul 시각을 해석할 수 없습니다.');
-  }
-
-  return values;
-}
-
-function toSeoulDateTime(value: Date): SeoulDateTime {
-  if (Number.isNaN(value.getTime())) throw new Error('유효하지 않은 서버 시각입니다.');
-
-  const parts = formatDateParts(value);
-  const day = Date.UTC(parts.year, parts.month - 1, parts.day);
-  const milliseconds =
-    (((parts.hour * 60 + parts.minute) * 60 + parts.second) * 1000) + value.getUTCMilliseconds();
-
-  return { day, milliseconds };
-}
-
-function parseClockTime(value: string | Date | null | undefined, fieldName: string): ClockTime {
-  if (value instanceof Date) {
-    if (Number.isNaN(value.getTime())) throw new Error(`잘못된 ${fieldName}입니다.`);
-    const parts = formatDateParts(value);
-    return {
-      milliseconds:
-        (((parts.hour * 60 + parts.minute) * 60 + parts.second) * 1000) +
-        value.getUTCMilliseconds(),
-    };
-  }
-
-  if (typeof value !== 'string') throw new Error(`잘못된 ${fieldName}입니다.`);
-  const normalized = value.trim();
-  const match = normalized.match(
-    /^(?:(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,6}))?|)|(\d{2})(\d{2})(\d{2})?)$/,
-  );
-  if (!match) throw new Error(`잘못된 ${fieldName}입니다: ${value}`);
-
-  const hour = Number(match[1] ?? match[5]);
-  const minute = Number(match[2] ?? match[6]);
-  const second = Number(match[3] ?? match[7] ?? 0);
-  const fraction = match[4] ?? '';
-  const milliseconds = fraction ? Number(fraction.padEnd(3, '0').slice(0, 3)) : 0;
-
-  if (hour > 23 || minute > 59 || second > 59) {
-    throw new Error(`잘못된 ${fieldName}입니다: ${value}`);
-  }
-
-  return { milliseconds: (((hour * 60 + minute) * 60 + second) * 1000) + milliseconds };
-}
-
-function parseDateOffset(value: string | number | null | undefined, fieldName: string): number {
-  if (value == null || (typeof value === 'string' && value.trim() === '')) return 0;
-
-  if (typeof value === 'number') {
-    if (Number.isSafeInteger(value)) return value;
-    throw new Error(`잘못된 ${fieldName} 날짜 offset입니다: ${value}`);
-  }
-
-  const normalized = value.trim();
-  if (!/^[+-]?\d+$/.test(normalized)) {
-    throw new Error(`잘못된 ${fieldName} 날짜 offset입니다: ${value}`);
-  }
-
-  const offset = Number(normalized);
-  if (!Number.isSafeInteger(offset)) {
-    throw new Error(`잘못된 ${fieldName} 날짜 offset입니다: ${value}`);
-  }
-  return offset;
-}
-
-function getWorkDate(day: number, milliseconds: number): number {
-  return milliseconds >= BUSINESS_DAY_START_MINUTES * 60 * 1000 ? day : day - DAY_MS;
-}
-
-function rangeInstant(day: number, offset: number, clock: ClockTime): number {
-  return day + offset * DAY_MS + clock.milliseconds;
-}
-
-function formatYmd(day: number): string {
-  return new Date(day).toISOString().slice(0, 10);
-}
-
-function mapSourceWorkType(workType: string): OeeMobileWorkSegment {
+export function mapSourceWorkType(workType: string): OeeMobileWorkSegment {
   return 'ABCDE'.includes(workType) ? 'DAY' : 'NIGHT';
 }
 
-/**
- * 서버 시각과 ICOM_WORKTIME_RANGES의 한 업무일 구간을 결합한다.
- * Date의 로컬 getter는 사용하지 않고 Intl의 Asia/Seoul 변환만 사용한다.
- */
-export function resolveOeeMobileWorkContext(
-  serverTime: Date,
-  rows: WorktimeRangeRow[],
-): OeeMobileWorkContext {
-  const current = toSeoulDateTime(serverTime);
-  const workDateDay = getWorkDate(current.day, current.milliseconds);
-  const currentInstant = current.day + current.milliseconds;
-  const matches: Array<{ workType: string; workSegment: OeeMobileWorkSegment }> = [];
+/** 지금(DB 시각)의 업무일·근무구간 */
+export async function findOeeWorkContext(
+  dataSource: Pick<DataSource, 'query'>,
+  processCode: string,
+  organizationId: number,
+): Promise<OeeMobileWorkContext> {
+  const rows = (await dataSource.query(
+    OEE_WORK_CONTEXT_SQL,
+    namedBinds({ rangeType: worktimeRangeType(processCode), organizationId }),
+  )) as Array<{ workDate: string; workDay: Date; workType: string; now: Date; workStart: Date | null }>;
 
-  for (const row of rows) {
-    if (!/^[A-J]$/.test(row.workType)) {
-      throw new Error(`잘못된 WORK_TYPE입니다: ${row.workType}`);
-    }
-
-    const start = parseClockTime(row.startTime, 'START_TIME');
-    const end = parseClockTime(row.endTime, 'END_TIME');
-    const startOffset = parseDateOffset(row.attribute01, 'ATTRIBUTE01');
-    const endOffset = parseDateOffset(row.attribute02, 'ATTRIBUTE02');
-    const startInstant = rangeInstant(workDateDay, startOffset, start);
-    const endInstant = rangeInstant(workDateDay, endOffset, end);
-
-    if (endInstant <= startInstant) {
-      throw new Error(`START_TIME/END_TIME 순서가 잘못된 WORK_TYPE입니다: ${row.workType}`);
-    }
-
-    if (startInstant <= currentInstant && currentInstant < endInstant) {
-      matches.push({ workType: row.workType, workSegment: mapSourceWorkType(row.workType) });
-    }
+  if (rows.length === 0) throw new BadRequestException('현재 업무시간 구간이 없습니다.');
+  if (rows.length > 1) {
+    throw new BadRequestException(`겹치는 업무구간이 있습니다: ${rows.map((row) => row.workType).join(',')}`);
   }
+  const [row] = rows;
+  if (!row.workStart) throw new BadRequestException('업무시간 A 구간이 없습니다.');
+  return {
+    workDate: row.workDate,
+    workDay: new Date(row.workDay),
+    workSegment: mapSourceWorkType(row.workType),
+    now: new Date(row.now),
+    workStart: new Date(row.workStart),
+  };
+}
 
-  if (matches.length === 0) throw new Error('일치하는 업무구간이 없습니다.');
-  if (matches.length > 1) {
-    throw new Error(`겹치는 업무구간이 있습니다: ${matches.map((match) => match.workType).join(',')}`);
-  }
-
-  return { workDate: formatYmd(workDateDay), workSegment: matches[0].workSegment };
+/** DB 지금 시각 (SYSDATE, 초 단위) */
+export async function findDbNow(dataSource: Pick<DataSource, 'query'>): Promise<Date> {
+  const rows = (await dataSource.query(`SELECT SYSDATE AS "now" FROM DUAL`, [])) as Array<{ now: Date }>;
+  return new Date(rows[0].now);
 }

@@ -26,7 +26,8 @@ import { TruncationNotice, useTruncation } from '../components/TruncationNotice'
 import { masterPlanColumns } from '../report-columns';
 import type { MasterPlanRow } from '../report-types';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 export default function MasterPlanReportPage() {
   const [planDate, setPlanDate] = useState(today());

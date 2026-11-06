@@ -15,16 +15,25 @@ export class WorkResultUpsertDto {
   @IsString() @IsNotEmpty() runNo: string;
   @IsOptional() @IsString() seqNo?: string; // 신규면 미지정(서버 생성), 수정이면 지정
   @IsOptional() @IsString() machineCode?: string;
-  @IsString() @IsNotEmpty() workstageCode: string;
+  // 공정: 작업지시에 공정이 있으면 그 공정이다. 비어 있는 조립라인 지시는 서버가 포장 공정(W220)으로 둔다.
+  @IsOptional() @IsString() workstageCode?: string;
   @IsInt() resultQty: number;
   @IsOptional() @IsInt() workTime?: number;
   @IsOptional() @IsInt() workerCount?: number;
   @IsOptional() @IsString() workerName?: string;
   @IsIn(['WIP', 'DONE']) resultStatus: string;
+  // 타임구간 A~J (작업시간 관리). 안 보내면 비워 둔다
+  @IsOptional() @Matches(/^[A-J]$/) timeZone?: string;
 }
 
-// 센서 반영 재시도 — 완료 상태인데 P_INTERLOCK_SENSOR_ACTUAL_NEO 호출이 실패한 실적 대상
+// 공정재고 반영 재시도 — 완료 상태인데 반영이 실패한 조립라인 실적 대상
 export class ApplySensorDto {
+  @IsString() @IsNotEmpty() runNo: string;
+  @IsString() @IsNotEmpty() seqNo: string;
+}
+
+// 실적 취소 — 행은 남기고 RESULT_STATUS='CANCEL', 공정재고에 반영된 실적이면 되돌린다
+export class CancelResultDto {
   @IsString() @IsNotEmpty() runNo: string;
   @IsString() @IsNotEmpty() seqNo: string;
 }
@@ -37,31 +46,16 @@ export class DefectSaveDto {
   @IsOptional() @IsString() remark?: string;
 }
 
-// 라인/설비 일괄 비가동 시작·종료 (ADR 0002 — 이미 그 상태인 설비는 건너뛴다)
+// 설비 비가동 시작·종료 — 비가동을 쓰는 유일한 입력 (ADR 0002·0003, 이미 그 상태인 설비는 건너뛴다)
 export class DowntimeBulkDto {
   @IsIn(['START', 'END']) action: string;
-  @IsOptional() @IsString() lineCode?: string;   // 라인 전체 대상
-  @IsOptional() @IsArray() @IsString({ each: true }) machineCodes?: string[]; // 설비 직접 지정
-  // 라인 정지의 원인설비. 여기 담긴 설비의 비가동 행에만 CAUSE_YN='Y'가 붙는다.
-  // 원인은 여러 대일 수 있다. START에서만 의미가 있다.
-  @IsOptional() @IsArray() @IsString({ each: true }) causeMachineCodes?: string[];
-  @IsOptional() @IsString() reasonCode?: string; // 종료 시 필수, 시작 시 선택
+  @IsOptional() @IsString() lineCode?: string;   // 라인의 비가동 대상 설비 전부
+  @IsOptional() @IsArray() @IsString({ each: true }) machineCodes?: string[]; // 설비 직접 지정 (1대도 이걸로)
+  @IsOptional() @IsString() runNo?: string; // 비가동이 일어난 작업지시(선택 맥락)
+  @IsOptional() @IsString() reasonCode?: string; // 종료 때 없으면 시작 사유 유지, 그것도 없으면 거절
   @IsOptional() @IsString() memo?: string;
   @IsOptional() @IsString() worker?: string;
   @IsOptional() @IsString() userId?: string;
-}
-
-export class DowntimeUpsertDto {
-  @IsOptional() @IsString() runNo?: string; // 작업지시 없이 발생한 비가동은 미지정
-  @IsOptional() @IsInt() dtSeq?: number; // 신규(시작)면 미지정, 종료/수정이면 지정
-  @IsString() @IsNotEmpty() machineCode: string;
-  @IsOptional() @IsString() workstageCode?: string;
-  @IsOptional() @IsString() reasonCode?: string;
-  @IsOptional() @IsString() startTime?: string; // 'YYYY-MM-DD HH24:MI'
-  @IsOptional() @IsString() endTime?: string;
-  @IsOptional() @IsBoolean() endNow?: boolean; // true면 종료시각을 DB 현재시각(SYSDATE)으로 — 시작(SYSDATE)과 동일 시계
-  @IsOptional() @IsString() memo?: string;
-  @IsOptional() @IsString() worker?: string;
 }
 
 /**

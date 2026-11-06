@@ -5,6 +5,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
+import { processNameCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -234,7 +235,7 @@ export const magazinePidColumns: ColumnDef<MagazinePidRow>[] = [
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
   { accessorKey: 'runNo', header: '런카드', size: 130 },
   { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
-  { accessorKey: 'workstageCode', header: '공정', size: 90, meta: center },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, meta: center, cell: processNameCell() },
   { accessorKey: 'enterBy', header: '작성자', size: 100 },
   {
     accessorKey: 'enterDate',

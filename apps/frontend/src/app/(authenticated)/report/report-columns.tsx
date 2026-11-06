@@ -6,12 +6,10 @@
  * 시각 문자열은 서버가 만들어 보낸 것을 그대로 쓴다 (new Date() 로 다시 파싱하지 않는다 —
  * UTC 로 해석돼 9시간 틀어진다).
  */
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, HeaderContext } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
 import type {
   CarrierBarcodeRow,
-  FgIssueDetailRow,
-  FgIssueSummaryRow,
   ItemMasterRow,
   LineBarcodeRow,
   MachineOperationRow,
@@ -20,11 +18,14 @@ import type {
   MasterPlanRow,
   PickupAmountRow,
   PickupDetailRow,
+  PickupHeadRow,
+  PickupSlot,
   RunCardReportRow,
   RunCardSummaryRow,
   WorkstageStockRow,
 } from './report-types';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell, processNameCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -93,7 +94,7 @@ export const itemMasterColumns: ColumnDef<ItemMasterRow>[] = [
     size: 130,
     accessorFn: (r) => codeWithName(r.lineType, r.lineTypeName),
   },
-  { accessorKey: 'itemDivision', header: '품목구분', size: 100 },
+  { accessorKey: 'itemDivision', header: '품목구분', size: 100, cell: comCodeCell('ITEM DIVISION') },
   { accessorKey: 'setItemYn', header: 'SET', size: 70, meta: center, cell: (c) => yn(c.getValue()) },
   { accessorKey: 'abcGrade', header: 'ABC', size: 70, meta: center },
   { accessorKey: 'barcode', header: '바코드', size: 150 },
@@ -121,9 +122,9 @@ export const lineBarcodeColumns: ColumnDef<LineBarcodeRow>[] = [
   },
   { accessorKey: 'machine', header: '설비', size: 120 },
   { accessorKey: 'machineName', header: '설비명', size: 180 },
-  { accessorKey: 'machineType', header: '설비유형', size: 110 },
+  { accessorKey: 'machineType', header: '설비유형', size: 110, cell: comCodeCell('MACHINE TYPE') },
   { accessorKey: 'machineModelName', header: '설비모델', size: 160 },
-  { accessorKey: 'useStatus', header: '사용상태', size: 100, meta: center },
+  { accessorKey: 'useStatus', header: '사용상태', size: 100, meta: center, cell: comCodeCell('USE STATUS') },
 ];
 
 // ───────────────────────────────── 341 캐리어바코드
@@ -155,17 +156,17 @@ export const machineColumns: ColumnDef<MachineRow>[] = [
     size: 130,
     accessorFn: (r) => codeWithName(r.lineCode, r.lineName),
   },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: processNameCell() },
   { accessorKey: 'capacity', header: '능력', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'reservedCapacity', header: '예비능력', size: 100, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'useStatus', header: '사용상태', size: 100, meta: center },
+  { accessorKey: 'useStatus', header: '사용상태', size: 100, meta: center, cell: comCodeCell('USE STATUS') },
   {
     id: 'customerName',
     header: '고객',
     size: 150,
     accessorFn: (r) => codeWithName(r.customerCode, r.customerName),
   },
-  { accessorKey: 'acquisitionType', header: '취득구분', size: 100 },
+  { accessorKey: 'acquisitionType', header: '취득구분', size: 100, cell: comCodeCell('ACQUISITION TYPE') },
   { accessorKey: 'acquisitionDate', header: '취득일', size: 110 },
   { accessorKey: 'nationCode', header: '국가', size: 80, meta: center },
   { accessorKey: 'manualLocationComment', header: '위치메모', size: 200 },
@@ -176,7 +177,7 @@ export const machineColumns: ColumnDef<MachineRow>[] = [
 export const machineOperationColumns: ColumnDef<MachineOperationRow>[] = [
   { accessorKey: 'machineCode', header: '설비코드', size: 130 },
   { accessorKey: 'machineName', header: '설비명', size: 180 },
-  { accessorKey: 'machineType', header: '설비유형', size: 110 },
+  { accessorKey: 'machineType', header: '설비유형', size: 110, cell: comCodeCell('MACHINE TYPE') },
   {
     id: 'lineName',
     header: '라인',
@@ -201,7 +202,7 @@ export const machineOperationColumns: ColumnDef<MachineOperationRow>[] = [
     meta: right,
     cell: (c) => num(c.getValue()),
   },
-  { accessorKey: 'machineStatusCode', header: '상태', size: 90, meta: center },
+  { accessorKey: 'machineStatusCode', header: '상태', size: 90, meta: center, cell: comCodeCell('MACHINE STATUS CODE') },
 ];
 
 // ───────────────────────────────── 344 SMT PICKUP 리포트
@@ -255,21 +256,8 @@ export const pickupAmountColumns: ColumnDef<PickupAmountRow>[] = [
     size: 140,
     accessorFn: (r) => codeWithName(r.lineCode, r.lineName),
   },
-  { accessorKey: 'takeupQty', header: '집어올림', size: 120, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'missQty', header: '미스', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'recogQty', header: '인식오류', size: 100, meta: right, cell: (c) => num(c.getValue()) },
-  {
-    accessorKey: 'ppm',
-    header: 'PPM',
-    size: 100,
-    meta: right,
-    cell: (c) => {
-      const n = Number(c.getValue() ?? 0);
-      return n >= 10000
-        ? <span className="font-semibold text-red-500">{num(c.getValue())}</span>
-        : num(c.getValue());
-    },
-  },
   {
     accessorKey: 'missAmount',
     header: '미스 금액',
@@ -277,6 +265,58 @@ export const pickupAmountColumns: ColumnDef<PickupAmountRow>[] = [
     meta: right,
     cell: (c) => <span className="font-semibold">{money(c.getValue())}</span>,
   },
+];
+
+/**
+ * 라인 시간대 집계 — PB SMT Pickup Inquiry(HEAD) 와 같은 칸.
+ * 합계 → 주간(A~E) → 야간(F~J) → 시간대별 순이다. 픽업률 = (1 - (미스 + 인식오류) / 집어올림) × 100.
+ * 표 아래 합계 줄의 픽업률은 걸러진 줄의 수량 합으로 다시 계산한다 (비율을 더하지 않는다).
+ */
+const PICKUP_SLOTS: PickupSlot[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+const DAY_SLOTS: PickupSlot[] = ['A', 'B', 'C', 'D', 'E'];
+const NIGHT_SLOTS: PickupSlot[] = ['F', 'G', 'H', 'I', 'J'];
+const slotSum = (r: PickupHeadRow, kind: 'take' | 'miss' | 'reco' | 'amt', slots: PickupSlot[]) =>
+  slots.reduce((sum, s) => sum + Number(r[`${kind}${s}`] ?? 0), 0);
+const pickupRate = (take: number, miss: number, reco: number) =>
+  (take > 0 ? ((1 - (miss + reco) / take) * 100).toFixed(2) : '');
+const sumFooter = (get: (r: PickupHeadRow) => number) =>
+  ({ table }: HeaderContext<PickupHeadRow, unknown>) =>
+    num(table.getFilteredRowModel().rows.reduce((sum, row) => sum + get(row.original), 0));
+const rateFooter = (slots: PickupSlot[]) =>
+  ({ table }: HeaderContext<PickupHeadRow, unknown>) => {
+    const rows = table.getFilteredRowModel().rows.map((row) => row.original);
+    const total = (kind: 'take' | 'miss' | 'reco') => rows.reduce((sum, r) => sum + slotSum(r, kind, slots), 0);
+    return pickupRate(total('take'), total('miss'), total('reco'));
+  };
+
+/** 시간대 묶음(합계/주간/야간/한 시간대) 하나의 집어올림·미스·인식오류·픽업률 네 칸 */
+function slotGroup(id: string, label: string, slots: PickupSlot[]): ColumnDef<PickupHeadRow>[] {
+  const value = (kind: 'take' | 'miss' | 'reco') => (r: PickupHeadRow) => slotSum(r, kind, slots);
+  return [
+    { id: `${id}Take`, header: `${label} 집어올림`, size: 110, meta: right, accessorFn: value('take'), cell: (c) => num(c.getValue()), footer: sumFooter(value('take')) },
+    { id: `${id}Miss`, header: `${label} 미스`, size: 80, meta: right, accessorFn: value('miss'), cell: (c) => num(c.getValue()), footer: sumFooter(value('miss')) },
+    { id: `${id}Reco`, header: `${label} 인식오류`, size: 90, meta: right, accessorFn: value('reco'), cell: (c) => num(c.getValue()), footer: sumFooter(value('reco')) },
+    {
+      id: `${id}Rate`, header: `${label} 픽업률`, size: 90, meta: right,
+      accessorFn: (r) => pickupRate(slotSum(r, 'take', slots), slotSum(r, 'miss', slots), slotSum(r, 'reco', slots)),
+      footer: rateFooter(slots),
+    },
+  ];
+}
+
+export const pickupHeadColumns: ColumnDef<PickupHeadRow>[] = [
+  { accessorKey: 'actualDate', header: '생산일', size: 110, footer: '합계' },
+  { id: 'lineName', header: '라인', size: 140, accessorFn: (r) => codeWithName(r.lineCode, r.lineName) },
+  ...slotGroup('total', '합계', PICKUP_SLOTS).slice(0, 1),
+  // 릴 교체는 미스와 따로 센다 (IB_SMT_CHECKHIST 릴 교체 검사 통과 건, 08:30 기준 하루)
+  {
+    accessorKey: 'reelChange', header: '릴교체', size: 80, meta: right,
+    cell: (c) => num(c.getValue()), footer: sumFooter((r) => Number(r.reelChange ?? 0)),
+  },
+  ...slotGroup('total', '합계', PICKUP_SLOTS).slice(1),
+  ...slotGroup('day', '주간', DAY_SLOTS),
+  ...slotGroup('night', '야간', NIGHT_SLOTS),
+  ...PICKUP_SLOTS.flatMap((s) => slotGroup(`slot${s}`, `${s}`, [s])),
 ];
 
 // ───────────────────────────────── 346 생산계획리포트
@@ -390,80 +430,6 @@ export function runCardSummaryColumns(withQty: boolean): ColumnDef<RunCardSummar
   }
   return cols;
 }
-
-// ───────────────────────────────── 348 제품 판매실적
-
-export const fgIssueDetailColumns: ColumnDef<FgIssueDetailRow>[] = [
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'issueDate', header: '출하시각', size: 160, cell: (c) => ts(c.getValue()) },
-  { accessorKey: 'barcode', header: '제품 바코드', size: 170 },
-  { accessorKey: 'modelName', header: '모델', size: 150 },
-  { accessorKey: 'modelSuffix', header: '모델 SFX', size: 100 },
-  {
-    accessorKey: 'qty',
-    header: '수량 (부호)',
-    size: 110,
-    meta: right,
-    cell: (c) => {
-      const n = Number(c.getValue() ?? 0);
-      return n < 0
-        ? <span className="font-semibold text-red-500">{num(c.getValue())}</span>
-        : num(c.getValue());
-    },
-  },
-  { accessorKey: 'issuePrice', header: '단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
-  {
-    accessorKey: 'txnDeficit',
-    header: '구분',
-    size: 100,
-    meta: center,
-    // 3 출고 · 4 출고취소 (현재 데이터에 쓰이는 두 값 — 실측)
-    cell: (c) => {
-      const v = String(c.getValue() ?? '');
-      if (v === '3') return '출고';
-      if (v === '4') return <span className="text-red-500">출고취소</span>;
-      return v;
-    },
-  },
-  {
-    id: 'customerName',
-    header: '고객',
-    size: 160,
-    accessorFn: (r) => codeWithName(r.customerCode, r.customerName),
-  },
-  { accessorKey: 'locationCode', header: '위치', size: 110 },
-  { accessorKey: 'packType', header: '포장', size: 90 },
-  { accessorKey: 'palletNo', header: '파렛트', size: 110 },
-  { accessorKey: 'palletDate', header: '파렛트시각', size: 160, cell: (c) => ts(c.getValue()) },
-  { accessorKey: 'shipNo', header: '출하번호', size: 120 },
-  { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
-  { accessorKey: 'workstageCode', header: '공정', size: 90 },
-  { accessorKey: 'mfs', header: 'MFS', size: 110 },
-  { accessorKey: 'actualDate', header: '실적일', size: 110 },
-  { accessorKey: 'shiftCode', header: '교대', size: 80, meta: center },
-  { accessorKey: 'enterBy', header: '등록자', size: 90 },
-];
-
-export const fgIssueSummaryColumns: ColumnDef<FgIssueSummaryRow>[] = [
-  { accessorKey: 'modelName', header: '모델', size: 160 },
-  { accessorKey: 'modelSuffix', header: '모델 SFX', size: 100 },
-  {
-    id: 'customerName',
-    header: '고객',
-    size: 180,
-    accessorFn: (r) => codeWithName(r.customerCode, r.customerName),
-  },
-  { accessorKey: 'locationCode', header: '위치', size: 110 },
-  { accessorKey: 'issueCount', header: '출하 건수', size: 110, meta: right, cell: (c) => num(c.getValue()) },
-  {
-    accessorKey: 'qty',
-    header: '수량 (취소 차감)',
-    size: 140,
-    meta: right,
-    cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
-  },
-  { accessorKey: 'issuePrice', header: '단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
-];
 
 // ───────────────────────────────── 350 공정재공 · 352 공정매거진
 

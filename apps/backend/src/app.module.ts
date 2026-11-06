@@ -27,6 +27,8 @@ import { IdleReasonModule } from './modules/idle-reason/idle-reason.module';
 import { EquipReasonMapModule } from './modules/equip-reason-map/equip-reason-map.module';
 import { ProductModelModule } from './modules/product-model/product-model.module';
 import { WorkResultModule } from './modules/work-result/work-result.module';
+import { AssemblyResultModule } from './modules/assembly-result/assembly-result.module';
+import { InspectResultModule } from './modules/inspect-result/inspect-result.module';
 import { JigModule } from './modules/jig/jig.module';
 import { MoldModule } from './modules/mold/mold.module';
 import { PlanningModule } from './modules/planning/planning.module';
@@ -78,6 +80,9 @@ import { MasterRoutingModule } from './modules/master/master-routing.module';
 import { MasterRoutingGroupModule } from './modules/master/master-routing-group.module';
 import { MasterPurchasePriceModule } from './modules/master/master-purchase-price.module';
 import { MasterSalePriceModule } from './modules/master/master-sale-price.module';
+import { MasterInterlockConditionModule } from './modules/master/master-interlock-condition.module';
+import { MasterLabelFormModule } from './modules/master/master-label-form.module';
+import { PrintAgentModule } from './modules/print-agent/print-agent.module';
 import { MasterItemSupplierModule } from './modules/master/master-item-supplier.module';
 import { MasterCustomerModule } from './modules/master/master-customer.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -115,6 +120,8 @@ import { SharedModule } from './shared/shared.module';
     EquipReasonMapModule,
     ProductModelModule,
     WorkResultModule,
+    AssemblyResultModule,
+    InspectResultModule,
     EquipOpsModule,
 
     JigModule,
@@ -218,6 +225,12 @@ import { SharedModule } from './shared/shared.module';
     MasterRoutingGroupModule,
     MasterPurchasePriceModule,
     MasterSalePriceModule,
+    // 기준정보 인터락조건 (/master/interlock-conditions)
+    MasterInterlockConditionModule,
+    // 기준정보 제품별 라벨양식 (/master/label-forms)
+    MasterLabelFormModule,
+    // 작업자 PC 출력 에이전트 설치 파일 (/print-agent/info, /print-agent/download)
+    PrintAgentModule,
 
     // 대시보드 (/dashboard/summary)
     DashboardModule,

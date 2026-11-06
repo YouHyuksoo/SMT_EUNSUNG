@@ -32,7 +32,8 @@ interface LineSelectionModalProps {
   onApply: (processCode: OeeProcessCode, lineCodes: string[]) => void;
 }
 
-const PROCESS_CODES: OeeProcessCode[] = ['SMT', 'ASSY'];
+// SMT 실적은 AOI 로 자동 집계된다 — 이 화면은 조립 공정 지시만 받는다
+const PROCESS_CODES: OeeProcessCode[] = ['ASSY'];
 const LINE_SELECTION_STORAGE_PREFIX = 'oee-result-entry-line-selection';
 
 function currentKstDate(): string {
@@ -47,7 +48,7 @@ function currentKstDate(): string {
 }
 
 function isProcessCode(value: unknown): value is OeeProcessCode {
-  return value === 'SMT' || value === 'ASSY';
+  return value === 'ASSY';
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -237,7 +238,7 @@ function LineSelectionModal({
           </div>
         )}
         {!resourcesLoading && resourceError && (
-          <div className="rounded-xl border border-amber-400/50 bg-amber-50 p-3 text-sm font-semibold text-amber-800" role="status">
+          <div className="rounded-xl border border-warning/50 bg-warning/10 p-3 text-sm font-semibold text-warning" role="status">
             {resourceError}
           </div>
         )}
@@ -293,7 +294,7 @@ export default function OeeResultEntryPage() {
   const [resources, setResources] = useState<OeeResource[]>([]);
   const [resourcesLoading, setResourcesLoading] = useState(true);
   const [resourceError, setResourceError] = useState('');
-  const [appliedProcessCode, setAppliedProcessCode] = useState<OeeProcessCode>('SMT');
+  const [appliedProcessCode, setAppliedProcessCode] = useState<OeeProcessCode>('ASSY');
   const [appliedLineCodes, setAppliedLineCodes] = useState<string[]>([]);
   const [lineModalOpen, setLineModalOpen] = useState(false);
   const [selectionHydratedFor, setSelectionHydratedFor] = useState<string | null>(null);
@@ -376,7 +377,7 @@ export default function OeeResultEntryPage() {
     if (resourcesLoading || selectionHydratedFor === selectionScope) return;
 
     const stored = lineSelectionStorageKey ? readStoredSelection(lineSelectionStorageKey) : null;
-    const restoredProcessCode = stored?.processCode ?? 'SMT';
+    const restoredProcessCode = stored?.processCode ?? 'ASSY';
     const availableLineCodes = new Set(
       resources.filter((resource) => resource.processCode === restoredProcessCode).map((resource) => resource.lineCode),
     );
@@ -546,30 +547,30 @@ export default function OeeResultEntryPage() {
   }
 
   return (
-    <div data-target="1280x800" className="oee-result-entry-canvas flex h-full min-h-0 min-w-0 w-full flex-col overflow-hidden bg-[#07111d] text-slate-100">
+    <div data-target="1280x800" className="oee-result-entry-canvas flex h-full min-h-0 min-w-0 w-full flex-col overflow-hidden bg-background text-text">
       <div className="mx-auto flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden p-3">
-        <header className="flex shrink-0 items-center justify-between gap-3 rounded-2xl border border-slate-700/80 bg-[#0d1a2a] px-4 py-3 shadow-[0_12px_32px_rgba(0,0,0,0.24)]">
+        <header className="flex shrink-0 items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3 shadow-[0_12px_32px_rgba(0,0,0,0.24)]">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 p-2.5 text-cyan-300">
+            <div className="rounded-xl border border-primary/30 bg-primary/10 p-2.5 text-primary">
               <ClipboardList className="h-7 w-7" aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-300">PRODUCTION / RESULT ENTRY</p>
-              <h1 className="truncate text-xl font-black tracking-tight text-white">OEE 실적 입력</h1>
+              <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-primary">PRODUCTION / RESULT ENTRY</p>
+              <h1 className="truncate text-xl font-black tracking-tight text-text">OEE 실적 입력</h1>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <div className={`hidden min-h-11 items-center gap-2 rounded-xl border px-3 sm:flex ${online ? 'border-emerald-400/35 bg-emerald-400/10 text-emerald-100' : 'border-red-400/40 bg-red-400/10 text-red-100'}`} role="status">
+            <div className={`hidden min-h-11 items-center gap-2 rounded-xl border px-3 sm:flex ${online ? 'border-success/40 bg-success/10 text-success' : 'border-error/40 bg-error/10 text-error'}`} role="status">
               {online ? <Wifi className="h-5 w-5" aria-hidden="true" /> : <WifiOff className="h-5 w-5" aria-hidden="true" />}
               <span className="text-sm font-bold">{online ? '온라인' : '오프라인'}</span>
             </div>
-            <div className="hidden min-h-11 max-w-56 items-center rounded-xl border border-slate-700 bg-[#101f31] px-3 text-sm font-semibold text-slate-200 md:flex">
+            <div className="hidden min-h-11 max-w-56 items-center rounded-xl border border-border bg-surface px-3 text-sm font-semibold text-text md:flex">
               <span className="truncate">{user?.name || user?.empNo || user?.id || '작업자 미확인'}</span>
             </div>
             <button
               type="button"
               onClick={switchView}
-              className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-slate-600 px-3 text-sm font-bold text-slate-100 transition hover:border-cyan-300 hover:bg-cyan-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+              className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-border px-3 text-sm font-bold text-text transition hover:border-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               {isFullView ? <Minimize2 className="h-5 w-5" aria-hidden="true" /> : <Expand className="h-5 w-5" aria-hidden="true" />}
               {isFullView ? '메뉴 보기' : '전체 화면'}
@@ -579,13 +580,13 @@ export default function OeeResultEntryPage() {
 
         <main className="grid min-h-0 flex-1 grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-3" data-testid="oee-result-entry-grid" data-layout="60-40">
           <section className="flex min-h-0 min-w-0 flex-col gap-3 overflow-hidden" data-testid="oee-result-entry-left-workspace" aria-label="작업지시 조회 영역">
-            <section data-testid="oee-result-entry-query-bar" className="shrink-0 rounded-2xl border border-slate-700/80 bg-[#0d1a2a] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.2)]" aria-labelledby="result-entry-query-title">
+            <section data-testid="oee-result-entry-query-bar" className="shrink-0 rounded-2xl border border-border bg-surface p-3 shadow-[0_12px_32px_rgba(0,0,0,0.2)]" aria-labelledby="result-entry-query-title">
               <div data-testid="oee-result-entry-query-row-1" className="flex min-w-0 items-end gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-mono text-xs font-black tracking-[0.2em] text-cyan-300">QUERY</p>
-                  <h2 id="result-entry-query-title" className="mt-1 whitespace-nowrap text-lg font-black text-white">조회조건</h2>
+                  <p className="font-mono text-xs font-black tracking-[0.2em] text-primary">QUERY</p>
+                  <h2 id="result-entry-query-title" className="mt-1 whitespace-nowrap text-lg font-black text-text">조회조건</h2>
                 </div>
-                <label className="flex min-w-36 flex-col gap-1 text-[11px] font-bold text-slate-400">
+                <label className="flex min-w-36 flex-col gap-1 text-[11px] font-bold text-text-muted">
                   작업일
                   <input
                     type="date"
@@ -593,8 +594,8 @@ export default function OeeResultEntryPage() {
                     onChange={(event) => handleDateChange(event.target.value)}
                     aria-label="작업일"
                     required
-                    style={{ colorScheme: 'dark' }}
-                    className="min-h-11 rounded-xl border border-slate-600 bg-[#07111d] px-2 font-mono text-sm font-bold text-slate-100 outline-none focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/30"
+                   
+                    className="min-h-11 rounded-xl border border-border bg-background px-2 font-mono text-sm font-bold text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
                   />
                 </label>
                 <button
@@ -602,7 +603,7 @@ export default function OeeResultEntryPage() {
                   data-testid="oee-result-entry-query"
                   onClick={queryOrders}
                   disabled={ordersLoading || resourcesLoading || !workDate || appliedLineCodes.length === 0}
-                  className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-cyan-400 px-5 text-sm font-black text-slate-950 shadow-lg shadow-cyan-400/15 transition hover:bg-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200 disabled:cursor-not-allowed disabled:opacity-45"
+                  className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-black text-white shadow-lg shadow-primary/15 transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   <RefreshCw className={`h-4 w-4 ${ordersLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
                   조회
@@ -610,8 +611,8 @@ export default function OeeResultEntryPage() {
               </div>
               <div data-testid="oee-result-entry-query-row-2" className="mt-2 flex min-w-0 items-center gap-2">
                 <div className="min-w-0 flex-1">
-                  <span className="mb-1 block text-[11px] font-bold text-slate-400">선택 라인</span>
-                  <div className="flex min-h-11 min-w-0 flex-wrap items-center gap-1.5 rounded-xl border border-slate-600 bg-[#07111d] px-2 py-1.5">
+                  <span className="mb-1 block text-[11px] font-bold text-text-muted">선택 라인</span>
+                  <div className="flex min-h-11 min-w-0 flex-wrap items-center gap-1.5 rounded-xl border border-border bg-background px-2 py-1.5">
                     {appliedLineResources.map((resource, index) => {
                       const lineCode = appliedLineCodes[index];
                       return (
@@ -621,15 +622,15 @@ export default function OeeResultEntryPage() {
                           data-testid="oee-result-entry-line-chip"
                           onClick={() => handleRemoveAppliedLine(lineCode)}
                           aria-label={`${resource?.lineName ?? lineCode} 라인 제거`}
-                          className="inline-flex min-h-11 max-w-52 cursor-pointer items-center gap-1.5 rounded-lg border border-cyan-300/50 bg-cyan-400/10 px-2.5 text-left text-xs font-bold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-400/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+                          className="inline-flex min-h-11 max-w-52 cursor-pointer items-center gap-1.5 rounded-lg border border-primary/50 bg-primary/10 px-2.5 text-left text-xs font-bold text-primary transition hover:border-primary hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         >
                           <span className="truncate font-mono">{lineCode}</span>
-                          <span className="truncate text-cyan-100/75">{resource?.lineName ?? '라인'}</span>
+                          <span className="truncate text-text-muted">{resource?.lineName ?? '라인'}</span>
                           <X className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                         </button>
                       );
                     })}
-                    {!appliedLineCodes.length && <span className="px-1 text-sm font-semibold text-slate-500">라인을 선택하세요</span>}
+                    {!appliedLineCodes.length && <span className="px-1 text-sm font-semibold text-text-muted">라인을 선택하세요</span>}
                   </div>
                 </div>
                 <button
@@ -638,35 +639,35 @@ export default function OeeResultEntryPage() {
                   onClick={() => setLineModalOpen(true)}
                   aria-haspopup="dialog"
                   aria-expanded={lineModalOpen}
-                  className="mt-5 inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-cyan-300/60 px-4 text-sm font-black text-cyan-100 transition hover:bg-cyan-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+                  className="mt-5 inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-primary/60 px-4 text-sm font-black text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <GitBranch className="h-4 w-4" aria-hidden="true" />
                   라인 선택
                 </button>
               </div>
-              <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-400">
+              <div className="mt-2 flex items-center justify-between gap-3 text-xs text-text-muted">
                 <span>{appliedLineCodes.length ? `${appliedProcessCode} · ${appliedLineCodes.length}개 라인` : '라인을 선택한 뒤 조회하세요.'}</span>
-                {resourceError && <span className="truncate text-amber-200">{resourceError}</span>}
+                {resourceError && <span className="truncate text-warning">{resourceError}</span>}
               </div>
             </section>
 
-            <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-700/80 bg-[#0d1a2a] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.2)]" aria-labelledby="result-entry-orders-title">
+            <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-surface p-3 shadow-[0_12px_32px_rgba(0,0,0,0.2)]" aria-labelledby="result-entry-orders-title">
             <div className="flex shrink-0 items-start justify-between gap-2">
               <div>
-                <p className="font-mono text-xs font-black tracking-[0.2em] text-amber-300">01 / WORK ORDER</p>
-                <h2 id="result-entry-orders-title" data-testid="oee-result-entry-orders-title" className="mt-1 text-lg font-black text-white">작업지시 목록</h2>
+                <p className="font-mono text-xs font-black tracking-[0.2em] text-primary">01 / WORK ORDER</p>
+                <h2 id="result-entry-orders-title" data-testid="oee-result-entry-orders-title" className="mt-1 text-lg font-black text-text">작업지시 목록</h2>
               </div>
-              <span className="rounded-full border border-slate-600 px-2.5 py-1 font-mono text-xs font-bold text-slate-300">{orders.length}건</span>
+              <span className="rounded-full border border-border px-2.5 py-1 font-mono text-xs font-bold text-text">{orders.length}건</span>
             </div>
-            <p className="mt-1 shrink-0 text-xs text-slate-400">미완료 작업지시를 먼저, 라인코드와 작업지시번호 순으로 표시합니다.</p>
+            <p className="mt-1 shrink-0 text-xs text-text-muted">미완료 작업지시를 먼저, 라인코드와 작업지시번호 순으로 표시합니다.</p>
 
             <div className="mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
               {!ordersLoading && ordersTruncated && (
-                <div data-testid="oee-result-entry-truncated-notice" className="mb-2 rounded-xl border border-amber-300/50 bg-amber-300/10 px-3 py-2 text-xs font-bold leading-5 text-amber-100" role="status">
+                <div data-testid="oee-result-entry-truncated-notice" className="mb-2 rounded-xl border border-warning/50 bg-warning/10 px-3 py-2 text-xs font-bold leading-5 text-warning" role="status">
                   조회 결과가 100건으로 제한되었습니다. 라인 또는 작업일 조건을 좁혀 다시 조회하세요.
                 </div>
               )}
-              {ordersLoading && <div className="flex h-full min-h-24 items-center justify-center gap-2 text-sm text-slate-300"><Loader2 className="h-5 w-5 animate-spin text-amber-300" aria-hidden="true" />조회 중</div>}
+              {ordersLoading && <div className="flex h-full min-h-24 items-center justify-center gap-2 text-sm text-text"><Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden="true" />조회 중</div>}
               {!ordersLoading && orders.map((order) => {
                 const selected = workOrderKey(order) === selectedRunKey;
                 const complete = isComplete(order);
@@ -676,25 +677,25 @@ export default function OeeResultEntryPage() {
                     type="button"
                     onClick={() => selectOrder(workOrderKey(order))}
                     aria-pressed={selected}
-                    className={`mb-2 min-h-[92px] w-full cursor-pointer rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${selected ? 'border-amber-300 bg-amber-300/12 ring-2 ring-amber-300/20' : 'border-slate-700 bg-[#07111d] hover:border-amber-300/70'}`}
+                    className={`mb-2 min-h-[92px] w-full cursor-pointer rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${selected ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border bg-background hover:border-primary/60'}`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <strong className="truncate font-mono text-sm text-white">{order.runNo}</strong>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-black ${complete ? 'bg-blue-400/15 text-blue-200' : 'bg-amber-300/15 text-amber-100'}`}>{complete ? '완료' : '입력 가능'}</span>
+                      <strong className="truncate font-mono text-sm text-text">{order.runNo}</strong>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-black ${complete ? 'bg-info/15 text-info' : 'bg-warning/15 text-warning'}`}>{complete ? '완료' : '입력 가능'}</span>
                     </div>
                     <div className="mt-1 flex min-w-0 items-center gap-2 text-xs">
-                      <span className="shrink-0 rounded bg-cyan-400/10 px-1.5 py-0.5 font-mono font-black text-cyan-200">{order.lineCode ?? '-'}</span>
-                      <span className="min-w-0 truncate font-semibold text-cyan-100">{order.lineName ?? '-'}</span>
+                      <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 font-mono font-black text-primary">{order.lineCode ?? '-'}</span>
+                      <span className="min-w-0 truncate font-semibold text-primary">{order.lineName ?? '-'}</span>
                     </div>
-                    <p className="mt-1 truncate text-xs font-semibold text-slate-200">{order.itemCode || '-'} · {order.itemName || order.modelName || '-'}</p>
-                    <p className="mt-1 flex justify-between text-[11px] text-slate-400"><span>계획 {Number(order.planQty ?? 0).toLocaleString()}</span><span>누적 {Number(order.resultQty ?? 0).toLocaleString()}</span></p>
+                    <p className="mt-1 truncate text-xs font-semibold text-text">{order.itemCode || '-'} · {order.itemName || order.modelName || '-'}</p>
+                    <p className="mt-1 flex justify-between text-[11px] text-text-muted"><span>계획 {Number(order.planQty ?? 0).toLocaleString()}</span><span>누적 {Number(order.resultQty ?? 0).toLocaleString()}</span></p>
                   </button>
                 );
               })}
-              {!ordersLoading && !appliedLineCodes.length && <div className="flex h-full min-h-24 items-center justify-center text-center text-sm font-semibold text-slate-500">라인 선택 버튼에서 라인을 선택하세요.</div>}
-              {!ordersLoading && appliedLineCodes.length > 0 && !hasQueried && <div className="flex h-full min-h-24 items-center justify-center text-center text-sm font-semibold text-slate-500">조건을 확인한 뒤 조회 버튼을 누르세요.</div>}
-              {!ordersLoading && appliedLineCodes.length > 0 && hasQueried && !orders.length && !orderError && <div className="flex h-full min-h-24 items-center justify-center text-center text-sm font-semibold text-slate-500">선택한 조건의 작업지시가 없습니다.</div>}
-              {!ordersLoading && orderError && <div className="rounded-xl border border-red-300/40 bg-red-300/10 p-3 text-sm font-semibold text-red-100">{orderError}<button type="button" onClick={queryOrders} className="mt-3 flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg border border-red-200/50 font-bold hover:bg-red-200/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200">다시 조회</button></div>}
+              {!ordersLoading && !appliedLineCodes.length && <div className="flex h-full min-h-24 items-center justify-center text-center text-sm font-semibold text-text-muted">라인 선택 버튼에서 라인을 선택하세요.</div>}
+              {!ordersLoading && appliedLineCodes.length > 0 && !hasQueried && <div className="flex h-full min-h-24 items-center justify-center text-center text-sm font-semibold text-text-muted">조건을 확인한 뒤 조회 버튼을 누르세요.</div>}
+              {!ordersLoading && appliedLineCodes.length > 0 && hasQueried && !orders.length && !orderError && <div className="flex h-full min-h-24 items-center justify-center text-center text-sm font-semibold text-text-muted">선택한 조건의 작업지시가 없습니다.</div>}
+              {!ordersLoading && orderError && <div className="rounded-xl border border-error/40 bg-error/10 p-3 text-sm font-semibold text-error">{orderError}<button type="button" onClick={queryOrders} className="mt-3 flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg border border-error/40 font-bold hover:bg-error/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error">다시 조회</button></div>}
             </div>
             </section>
           </section>
@@ -710,10 +711,10 @@ export default function OeeResultEntryPage() {
               onDirtyChange={setDraftDirty}
             />
           ) : (
-            <section className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-700/80 bg-[#f4f7f8] text-slate-900 shadow-[0_12px_32px_rgba(0,0,0,0.2)]" aria-labelledby="result-entry-console-empty-title">
-              <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 text-center text-slate-500">
-                <ClipboardList className="h-10 w-10 text-teal-700" aria-hidden="true" />
-                <h2 id="result-entry-console-empty-title" className="font-black text-slate-800">작업지시를 선택하세요</h2>
+            <section className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-background text-text shadow-[0_12px_32px_rgba(0,0,0,0.2)]" aria-labelledby="result-entry-console-empty-title">
+              <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 text-center text-text-muted">
+                <ClipboardList className="h-10 w-10 text-primary" aria-hidden="true" />
+                <h2 id="result-entry-console-empty-title" className="font-black text-text">작업지시를 선택하세요</h2>
                 <p className="text-sm">왼쪽 목록에서 작업지시를 선택하면 터치 입력 콘솔이 열립니다.</p>
               </div>
             </section>

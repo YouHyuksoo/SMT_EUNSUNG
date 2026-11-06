@@ -6,6 +6,7 @@
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, dateOnly, dateTime, num } from '@/components/shared/grid-format';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 
@@ -159,7 +160,7 @@ export const inventoryHoldTargetColumns: ColumnDef<InventoryHoldTargetRow>[] = [
   { accessorKey: 'inventoryQty', header: '재고수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'itemUom', header: '단위', size: 80 },
   { accessorKey: 'locationCode', header: '로케이션', size: 110 },
-  { accessorKey: 'lineType', header: '거래유형', size: 100 },
+  { accessorKey: 'lineType', header: '거래유형', size: 100, cell: comCodeCell('LINE TYPE') },
   { id: 'holdStatusName', header: '통제상태', size: 110, accessorFn: (r) => codeWithName(r.holdStatus, r.holdStatusName) },
   { accessorKey: 'holdingDate', header: '통제일시', size: 150, cell: (c) => dateTime(c.getValue()) },
   { accessorKey: 'holdComments', header: '통제사유', size: 200 },
@@ -236,7 +237,7 @@ export const oqcHistoryColumns: ColumnDef<OqcHistoryRow>[] = [
   { accessorKey: 'badReasonDivision', header: '원인구분', size: 110 },
   { accessorKey: 'badReasonResult', header: '원인결과', size: 110 },
   { accessorKey: 'defectCode', header: '결함코드', size: 120 },
-  { accessorKey: 'inspectType', header: '검사유형', size: 110 },
+  { accessorKey: 'inspectType', header: '검사유형', size: 110, cell: comCodeCell('INSPECT TYPE') },
   { accessorKey: 'inspectQty', header: '검사수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'defectQty', header: '결함수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'inspector', header: '검사자', size: 100 },

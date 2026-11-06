@@ -1,0 +1,620 @@
+/**
+ * @file src/components/trace/TraceabilityScreen.tsx
+ * @description 정추적(PCB→자재) 화면 — 바코드 목록 + 추적성 조회.
+ *              webdisplay 멕시코 정추적 화면을 가져왔고 데이터는 /api/trace/forward.
+ * 초보자 가이드:
+ * 1. 상단: [조회 조건] 위자드로 바코드·RUN_NO 등 입력 → 좌측 사이드바에 SERIAL_NO 목록 표시
+ * 2. 사이드바: 바코드 목록 + 찾기 필터 (직접 바코드 입력 시 단건 조회)
+ * 3. 바코드 선택 시 가운데에 추적성 결과 (마스터 + 공정별/타임라인)
+ * 4. 우측 체크박스: 조회할 테이블. 전부 체크면 tables=all, 일부면 목록을 넘긴다.
+ * 5. 번역은 next-intl(TraceIntlProvider) 의 mxvc.* 키를 쓴다.
+ */
+'use client';
+
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
+import { traceSourceLabel } from '@/lib/trace/trace-source-label';
+import * as XLSX from 'xlsx';
+import TraceabilityMaster from '@/components/trace/TraceabilityMaster';
+import TraceabilityTimeline from '@/components/trace/TraceabilityTimeline';
+import BarcodeSearchWizard from '@/components/trace/traceability/BarcodeSearchWizard';
+import Spinner from '@/components/trace/TraceSpinner';
+import type { TraceabilityResponse } from '@/types/trace/traceability';
+import type {
+  BarcodeSearchMode,
+  BarcodeSingleModeInput,
+  BarcodeRepairModeInput,
+  BarcodeDateRangeModeInput,
+} from '@/types/trace/traceability-wizard';
+
+/** 섹션 라벨 키 목록 (sources 네임스페이스와 매칭) */
+const KNOWN_SOURCE_KEYS = new Set([
+  'MATERIAL_BOARD',
+  'MATERIAL_DETAIL',
+  'MATERIAL_PANASONIC',
+  'IQ_MACHINE_INSPECT_RESULT',
+  'IQ_MACHINE_INSPECT_DATA_SPI',
+  'IQ_MACHINE_INSPECT_DATA_AOI',
+  'IQ_MACHINE_INSPECT_DATA_MAOI',
+  'IP_PRODUCT_2D_BARCODE',
+  'IP_PRODUCT_PACK_SERIAL',
+  'IP_PRODUCT_WORK_QC',
+  'IMCN_JIG_INPUT_HIST',
+  'IM_ITEM_SOLDER_INPUT_HIST',
+  'IB_SMT_CHECKHIST',
+  'IP_PRODUCT_PCB_SCAN_MASTER',
+  'IP_PRODUCT_WORKSTAGE_IO',
+  'IP_PRODUCT_MAGAZINE_MASTER',
+  'IP_PRODUCT_RUN_CARD',
+  'IQ_MACHINE_INSPECT_DATA_MK',
+  'IQ_MACHINE_INSPECT_DATA_SP',
+  'IQ_MACHINE_INSPECT_DATA_REFLOW',
+  'LOG_LCR',
+]);
+
+const DEFAULT_API_BASE = '/api/trace/forward';
+
+interface BarcodeItem {
+  SERIAL_NO: string;
+  PCB_ITEM: string | null;
+}
+
+export interface TraceabilityScreenProps {
+  /** API prefix. 기본 /api/trace/forward */
+  apiBase?: string;
+}
+
+export function TraceabilityScreen({
+  apiBase = DEFAULT_API_BASE,
+}: TraceabilityScreenProps) {
+  const t = useTranslations('mxvc.traceability');
+
+  const sectionLabel = useCallback((source: string): string => {
+    if (KNOWN_SOURCE_KEYS.has(source)) return t(`sources.${source}`);
+    return traceSourceLabel(source);
+  }, [t]);
+
+  /* 바코드 목록 */
+  const [barcodes, setBarcodes] = useState<BarcodeItem[]>([]);
+  const [listLoading, setListLoading] = useState(false);
+
+  /* 선택된 바코드 & 추적성 결과 */
+  const [selectedBarcode, setSelectedBarcode] = useState('');
+  const [data, setData] = useState<TraceabilityResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  /* 옵션 */
+  const [viewMode, setViewMode] = useState<'process' | 'timeline'>('process');
+
+  /* 사이드바 찾기 */
+  const [search, setSearch] = useState('');
+
+  /* 바코드 조회 위자드 */
+  const [isWizardOpen, setWizardOpen] = useState(true);
+  const [currentSearch, setCurrentSearch] = useState<{
+    mode: BarcodeSearchMode;
+    summary: string;
+  } | null>(null);
+
+  /* 추적 대상 테이블 체크박스 */
+  const [availableTables, setAvailableTables] = useState<string[]>([]);
+  const [selectedTables, setSelectedTables] = useState<Set<string>>(new Set());
+
+  /* 페이지 로드 시 테이블 목록 조회. U1 은 defaultTables(헤더+U1)만 기본 체크. */
+  useEffect(() => {
+    fetch(`${apiBase}?mode=tables`, { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((json: { tables: string[]; defaultTables?: string[] }) => {
+        const tbls = json.tables ?? [];
+        setAvailableTables(tbls);
+        const defaults = json.defaultTables;
+        setSelectedTables(new Set(defaults?.length ? defaults : tbls));
+      })
+      .catch(() => {});
+  }, [apiBase]);
+
+  const toggleTable = (t: string) => {
+    setSelectedTables((prev) => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t);
+      else next.add(t);
+      return next;
+    });
+  };
+
+  const allChecked = availableTables.length > 0 && selectedTables.size === availableTables.length;
+
+  /** 바코드 목록 조회 (공통) — 위자드에서 입력받은 조건으로 신규 API 호출 */
+  const fetchBarcodes = useCallback(async (url: string, summary: { mode: BarcodeSearchMode; text: string }) => {
+    setListLoading(true);
+    setBarcodes([]);
+    setSelectedBarcode('');
+    setData(null);
+    setError('');
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error ?? `HTTP ${res.status}`);
+      }
+      const json = await res.json();
+      setBarcodes(json.barcodes ?? []);
+      setCurrentSearch({ mode: summary.mode, summary: summary.text });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setListLoading(false);
+    }
+  }, []);
+
+
+
+  /** 수리이력 모드 제출 */
+  const handleRepairSubmit = useCallback((input: BarcodeRepairModeInput) => {
+    setWizardOpen(false);
+    const p = new URLSearchParams({
+      mode: 'repair',
+      dateFrom: input.dateFrom,
+      dateTo: input.dateTo,
+      itemCode: input.itemCode,
+    });
+    fetchBarcodes(
+      `${apiBase}/barcodes?${p}`,
+      {
+        mode: 'repair',
+        text: t('wizard.summary.repair', {
+          dateFrom: input.dateFrom,
+          dateTo: input.dateTo,
+          itemCode: input.itemCode,
+        }),
+      },
+    );
+  }, [apiBase, fetchBarcodes, t]);
+
+  /** SPI/AOI 설비 로그 기준 제출 */
+  const handleDateRangeSubmit = useCallback((input: BarcodeDateRangeModeInput) => {
+    setWizardOpen(false);
+    const p = new URLSearchParams({
+      mode: input.mode,
+      dateFrom: input.dateFrom,
+      dateTo: input.dateTo,
+    });
+    fetchBarcodes(
+      `${apiBase}/barcodes?${p}`,
+      {
+        mode: input.mode,
+        text: t(`wizard.summary.${input.mode}`, { dateFrom: input.dateFrom, dateTo: input.dateTo }),
+      },
+    );
+  }, [apiBase, fetchBarcodes, t]);
+
+  /** 바코드로 추적성 조회 */
+  const fetchTraceability = useCallback(async (barcode: string) => {
+    if (!barcode) return;
+    setSelectedBarcode(barcode);
+    setLoading(true);
+    setError('');
+    setData(null);
+    try {
+      const params = new URLSearchParams({ barcode });
+      if (selectedTables.size === availableTables.length && availableTables.length > 0) {
+        params.set('tables', 'all');
+      } else if (selectedTables.size > 0) {
+        params.set('tables', Array.from(selectedTables).join(','));
+      }
+      const res = await fetch(`${apiBase}?${params}`);
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          typeof json.error === 'string' ? json.error : `HTTP ${res.status}`,
+        );
+      }
+      const payload = json as TraceabilityResponse & { pairedSerials?: string[] };
+      setData(payload);
+      const paired = payload.pairedSerials?.filter(Boolean) ?? [];
+      if (paired.length > 1) {
+        setBarcodes((prev) => {
+          const have = new Set(prev.map((b) => b.SERIAL_NO));
+          const extra = paired
+            .filter((s) => !have.has(s))
+            .map((s) => ({ SERIAL_NO: s, PCB_ITEM: 'PAIR' }));
+          return extra.length > 0 ? [...prev, ...extra] : prev;
+        });
+      }
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [apiBase, selectedTables, availableTables.length]);
+
+  /** 단일값 모드 제출 — 바코드는 목록 없이 바로 추적 */
+  const handleSingleSubmit = useCallback((input: BarcodeSingleModeInput) => {
+    setWizardOpen(false);
+    if (input.mode === 'barcode') {
+      const serial = input.value.trim();
+      setBarcodes([{ SERIAL_NO: serial, PCB_ITEM: null }]);
+      setCurrentSearch({
+        mode: 'barcode',
+        summary: t('wizard.summary.barcode', { value: serial }),
+      });
+      fetchTraceability(serial);
+      return;
+    }
+    const p = new URLSearchParams({ mode: input.mode, value: input.value });
+    fetchBarcodes(
+      `${apiBase}/barcodes?${p}`,
+      { mode: input.mode, text: t(`wizard.summary.${input.mode}`, { value: input.value }) },
+    );
+  }, [apiBase, fetchBarcodes, fetchTraceability, t]);
+
+  /** 사이드바 찾기에서 Enter → 목록 필터 or 직접 바코드 조회 */
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Enter') return;
+    const trimmed = search.trim();
+    if (!trimmed) return;
+    /* 목록에 없는 값이면 직접 바코드 단건 조회 */
+    const found = barcodes.some((b) => b.SERIAL_NO.includes(trimmed));
+    if (!found && trimmed.length > 10) {
+      fetchTraceability(trimmed);
+    }
+  };
+
+  /** 필터된 바코드 목록 */
+  const filteredBarcodes = search.trim()
+    ? barcodes.filter((b) => b.SERIAL_NO.includes(search.trim().toUpperCase()))
+    : barcodes;
+
+  const resultCount = data?.timeline?.length ?? 0;
+
+  /** 섹션별 그룹핑 (source 기준) */
+  const groupedSections = useMemo(() => {
+    if (!data?.timeline) return [] as Array<{ source: string; label: string; rows: Record<string, unknown>[] }>;
+    const map = new Map<string, Record<string, unknown>[]>();
+    for (const ev of data.timeline) {
+      if (!map.has(ev.source)) map.set(ev.source, []);
+      map.get(ev.source)!.push(ev.data);
+    }
+    return Array.from(map.entries()).map(([source, rows]) => ({
+      source,
+      label: sectionLabel(source),
+      rows,
+    }));
+  }, [data, sectionLabel]);
+
+  const hasExport = !!data && groupedSections.length > 0;
+
+  /** Excel 다운로드: 마스터 + 섹션별 시트 */
+  const handleExportExcel = useCallback(() => {
+    if (!hasExport || !data) return;
+    const wb = XLSX.utils.book_new();
+
+    /* 마스터 시트 */
+    if (data.master) {
+      const ws = XLSX.utils.json_to_sheet([data.master]);
+      XLSX.utils.book_append_sheet(wb, ws, t('sheetMaster'));
+    }
+    if (data.runCard) {
+      const ws = XLSX.utils.json_to_sheet([data.runCard]);
+      XLSX.utils.book_append_sheet(wb, ws, 'RunCard');
+    }
+    if (data.modelMaster) {
+      const ws = XLSX.utils.json_to_sheet([data.modelMaster]);
+      XLSX.utils.book_append_sheet(wb, ws, t('sheetModelMaster'));
+    }
+
+    /* 섹션별 시트 (이름 31자 제한, 중복 회피) */
+    const usedNames = new Set<string>();
+    for (const sec of groupedSections) {
+      if (sec.rows.length === 0) continue;
+      let name = sec.label.slice(0, 31);
+      let i = 1;
+      while (usedNames.has(name)) name = `${sec.label.slice(0, 27)}_${i++}`;
+      usedNames.add(name);
+      const ws = XLSX.utils.json_to_sheet(sec.rows);
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    }
+
+    const fileName = `${t('fileNameBase')}_${selectedBarcode || 'data'}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  }, [hasExport, data, groupedSections, selectedBarcode, t]);
+
+  /** HTML 테이블 생성 공통 함수 */
+  const buildSectionHtml = useCallback((print: boolean) => {
+    if (!data) return '';
+    const toTable = (rows: Record<string, unknown>[], title: string, color: string) => {
+      if (rows.length === 0) return '';
+      const cols = Array.from(new Set(rows.flatMap((r) => Object.keys(r))));
+      const thead = cols.map((c) => `<th>${c}</th>`).join('');
+      const tbody = rows.map((r) =>
+        `<tr>${cols.map((c) => `<td>${String(r[c] ?? '')}</td>`).join('')}</tr>`
+      ).join('');
+      return `<section><h2 style="color:${color}">${title} (${t('eventCount', { count: rows.length })})</h2><table><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table></section>`;
+    };
+    const masterHtml = data.master
+      ? toTable([data.master], t('reportMaster'), '#2563eb')
+      : '';
+    const runCardHtml = data.runCard
+      ? toTable([data.runCard as Record<string, unknown>], 'RunCard', '#0891b2')
+      : '';
+    const modelHtml = data.modelMaster
+      ? toTable([data.modelMaster as Record<string, unknown>], t('sheetModelMaster'), '#9333ea')
+      : '';
+    const sectionsHtml = groupedSections
+      .map((s) => toTable(s.rows, s.label, '#059669'))
+      .join('');
+
+    const style = print
+      ? `@page { size: A4 landscape; margin: 10mm; }
+         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 0; color: #222; }
+         h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 6px; font-size: 18px; }
+         h2 { margin-top: 16px; padding-bottom: 3px; border-bottom: 1px solid #ddd; font-size: 13px; page-break-after: avoid; }
+         table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 6px; page-break-inside: auto; }
+         th, td { border: 1px solid #ccc; padding: 3px 5px; text-align: left; }
+         th { background: #eee; font-weight: 600; }
+         tr { page-break-inside: avoid; }
+         .meta { color: #666; font-size: 10px; margin-bottom: 12px; }`
+      : `body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; background: #f8f9fa; color: #222; }
+         h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 8px; }
+         h2 { margin-top: 30px; padding-bottom: 4px; border-bottom: 1px solid #ddd; font-size: 16px; }
+         table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; background: white; }
+         th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
+         th { background: #f0f0f0; font-weight: 600; }
+         tr:nth-child(even) td { background: #fafafa; }
+         .meta { color: #666; font-size: 12px; margin-bottom: 20px; }`;
+
+    return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"/><title>${t('reportTitle', { barcode: selectedBarcode })}</title>
+<style>${style}</style></head>
+<body>
+<h1>${t('reportTitle', { barcode: selectedBarcode })}</h1>
+<p class="meta">${t('reportMeta', { date: new Date().toLocaleString(), events: resultCount, sections: groupedSections.length })}</p>
+${masterHtml}${runCardHtml}${modelHtml}${sectionsHtml}
+</body></html>`;
+  }, [data, groupedSections, selectedBarcode, resultCount, t]);
+
+  /** HTML 다운로드 */
+  const handleExportHtml = useCallback(() => {
+    if (!hasExport) return;
+    const html = buildSectionHtml(false);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${t('fileNameBase')}_${selectedBarcode || 'data'}_${new Date().toISOString().slice(0, 10)}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [hasExport, buildSectionHtml, selectedBarcode, t]);
+
+  /** PDF 다운로드 (브라우저 인쇄 대화상자) */
+  const handleExportPdf = useCallback(() => {
+    if (!hasExport) return;
+    const printWin = window.open('', '_blank', 'width=1200,height=800');
+    if (!printWin) return;
+    printWin.document.write(buildSectionHtml(true));
+    printWin.document.close();
+    printWin.onload = () => {
+      printWin.focus();
+      printWin.print();
+    };
+  }, [hasExport, buildSectionHtml]);
+
+  return (
+    <div className="h-full flex flex-col bg-white dark:bg-gray-950 text-gray-900 dark:text-white overflow-hidden">
+
+      {/* 상단 바: 조회 모드 + 옵션 */}
+      <div className="shrink-0 flex items-center gap-3 px-5 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/80">
+        <button
+          onClick={() => setWizardOpen(true)}
+          className="px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors"
+        >
+          {currentSearch ? t('wizard.changeMode') : t('wizard.openBtn')}
+        </button>
+        {currentSearch && (
+          <span className="text-xs text-gray-600 dark:text-gray-300 truncate max-w-[480px]">
+            <span className="font-semibold text-gray-800 dark:text-gray-100">{t(`wizard.modes.${currentSearch.mode}.label`)}</span>
+            <span className="mx-1 text-gray-400">·</span>
+            <span className="font-mono text-gray-500 dark:text-gray-400">{currentSearch.summary}</span>
+          </span>
+        )}
+
+        <button
+          onClick={() => selectedBarcode && fetchTraceability(selectedBarcode)}
+          disabled={!selectedBarcode || loading}
+          className="px-4 py-1.5 rounded bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold
+                     disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          {t('queryTrace')}
+        </button>
+
+        {/* 뷰 모드 토글 */}
+        {data && (
+          <>
+            <div className="w-px h-6 bg-gray-300 dark:bg-gray-700" />
+            <div className="flex items-center gap-1 bg-gray-200 dark:bg-gray-700 rounded-lg p-0.5">
+              <button
+                onClick={() => setViewMode('process')}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                  viewMode === 'process'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                {t('viewProcess')}
+              </button>
+              <button
+                onClick={() => setViewMode('timeline')}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                  viewMode === 'timeline'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                {t('viewTimeline')}
+              </button>
+            </div>
+          </>
+        )}
+
+        <div className="ml-auto flex items-center gap-2">
+          {data && (
+            <span className="text-sm text-gray-500 dark:text-gray-400">{t('eventCount', { count: resultCount })}</span>
+          )}
+          {hasExport && (
+            <>
+              <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-1" />
+              <span className="text-xs text-gray-500 dark:text-gray-400">{t('exportLabel')}</span>
+              <button onClick={handleExportHtml}
+                className="px-3 py-1.5 rounded text-xs font-semibold bg-sky-500 hover:bg-sky-600 text-white transition-colors"
+                title={t('exportHtmlTitle')}>HTML</button>
+              <button onClick={handleExportExcel}
+                className="px-3 py-1.5 rounded text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+                title={t('exportExcelTitle')}>Excel</button>
+              <button onClick={handleExportPdf}
+                className="px-3 py-1.5 rounded text-xs font-semibold bg-rose-500 hover:bg-rose-600 text-white transition-colors"
+                title={t('exportPdfTitle')}>PDF</button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* 에러 바 */}
+      {error && (
+        <div className="shrink-0 px-6 py-2 bg-red-50 dark:bg-red-900/30 border-b border-red-300 dark:border-red-700 text-red-600 dark:text-red-300 text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* 메인: 사이드바 + 콘텐츠 */}
+      <div className="flex-1 flex min-h-0">
+        {/* 좌측 사이드바: 바코드 목록 */}
+        <aside className="w-72 shrink-0 border-r border-gray-200 dark:border-gray-700 flex flex-col
+                          bg-gray-50 dark:bg-gray-900">
+          {/* 찾기 */}
+          <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              placeholder={t('sidebarPlaceholder')}
+              className="w-full px-2.5 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600
+                         bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                         placeholder:text-gray-400 focus:outline-none focus:border-blue-500"
+            />
+            <div className="flex items-center justify-between mt-1.5 text-[10px] text-gray-400 dark:text-gray-500">
+              <span>{t('sidebarCount', { filtered: filteredBarcodes.length, total: barcodes.length })}</span>
+              {search && (
+                <button onClick={() => setSearch('')} className="text-blue-500 hover:text-blue-400">
+                  {t('resetFilter')}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* 목록 */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            {listLoading && (
+              <div className="flex items-center justify-center py-8">
+                <Spinner size="sm" label={t('loadingList')} />
+              </div>
+            )}
+            {!listLoading && barcodes.length === 0 && (
+              <div className="flex items-center justify-center py-8 px-3 text-xs text-gray-400 dark:text-gray-500 text-center">
+                {currentSearch ? t('wizard.noBarcodes') : t('wizard.openHint')}
+              </div>
+            )}
+            {filteredBarcodes.map((b) => (
+              <button
+                key={b.SERIAL_NO}
+                onClick={() => setSelectedBarcode(b.SERIAL_NO)}
+                className={`w-full text-left px-3 py-1 text-xs border-b border-gray-100 dark:border-gray-800
+                  transition-colors flex items-center gap-2 ${
+                    selectedBarcode === b.SERIAL_NO
+                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-l-2 border-l-blue-500'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/60'
+                  }`}
+              >
+                <span className="font-mono truncate flex-1">{b.SERIAL_NO}</span>
+                {b.PCB_ITEM && <span className="text-[10px] text-gray-400 dark:text-gray-500 shrink-0">{b.PCB_ITEM}</span>}
+              </button>
+            ))}
+          </div>
+
+        </aside>
+
+        {/* 중앙: 추적성 결과 */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-auto">
+          {loading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Spinner size="lg" vertical label={t('loadingTrace')} />
+            </div>
+          ) : data ? (
+            <div className="space-y-4 pb-4">
+              <TraceabilityMaster
+                master={data.master}
+                runCard={data.runCard}
+                modelMaster={data.modelMaster}
+              />
+              <TraceabilityTimeline events={data.timeline} queriedTables={data.queriedTables} viewMode={viewMode} />
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500 text-center px-6">
+              {barcodes.length > 0
+                ? t('selectBarcode')
+                : currentSearch ? t('wizard.noBarcodes') : t('wizard.openHint')}
+            </div>
+          )}
+        </div>
+
+        {/* 우측 사이드바: 추적 대상 테이블 체크박스 */}
+        {availableTables.length > 0 && (
+          <aside className="w-60 shrink-0 border-l border-gray-200 dark:border-gray-700 flex flex-col bg-gray-50 dark:bg-gray-900">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800/60">
+              <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                {t('traceTargets', { selected: selectedTables.size, total: availableTables.length })}
+              </span>
+              <label className="flex items-center gap-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={allChecked}
+                  onChange={() =>
+                    setSelectedTables(allChecked ? new Set() : new Set(availableTables))
+                  }
+                  className="w-3 h-3 accent-blue-500"
+                />
+                <span className="text-[10px] text-gray-600 dark:text-gray-400">{t('selectAllLabel')}</span>
+              </label>
+            </div>
+            <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1 min-h-0">
+              {availableTables.map((tbl) => (
+                <label key={tbl} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/60 px-1 py-0.5 rounded">
+                  <input
+                    type="checkbox"
+                    checked={selectedTables.has(tbl)}
+                    onChange={() => toggleTable(tbl)}
+                    className="w-3.5 h-3.5 accent-blue-500"
+                  />
+                  <span className="text-[11px] font-mono text-gray-700 dark:text-gray-300 truncate">
+                    {sectionLabel(tbl)}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </aside>
+        )}
+      </div>
+
+      {/* 바코드 조회 위자드 */}
+      <BarcodeSearchWizard
+        isOpen={isWizardOpen}
+        loading={listLoading}
+        onClose={() => setWizardOpen(false)}
+        onSingleSubmit={handleSingleSubmit}
+        onRepairSubmit={handleRepairSubmit}
+        onDateRangeSubmit={handleDateRangeSubmit}
+      />
+    </div>
+  );
+}

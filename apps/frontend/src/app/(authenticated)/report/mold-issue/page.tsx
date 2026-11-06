@@ -21,14 +21,15 @@ import { moldIssueColumns } from '../report-b-columns';
 import type { MoldIssueRow } from '../report-b-types';
 import MoldCodeField from '@/app/(authenticated)/mold/components/MoldCodeField';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 export default function MoldIssueReportPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(30));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [moldCode, setMoldCode] = useState('');
 

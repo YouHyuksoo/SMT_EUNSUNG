@@ -17,7 +17,9 @@ import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import type { MoldPriceRow } from '../../types';
+import MoldCodeField from '../../components/MoldCodeField';
 
+import { getTodayLocal } from '@/utils/date';
 export interface PriceForm {
   moldCode: string;
   supplierCode: string;
@@ -34,7 +36,7 @@ export interface PriceForm {
   priceChangeReason: string;
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getTodayLocal();
 
 export const emptyPriceForm = (): PriceForm => ({
   moldCode: '', supplierCode: '', dateset: today(), dateend: '',
@@ -104,7 +106,8 @@ export default function PriceFormPanel({ mode, initialForm, onClose, onSaved }: 
       toast.success(mode === 'create' ? '등록되었습니다.' : '수정되었습니다.');
       onSaved();
     } catch {
-      toast.error(mode === 'create' ? '같은 적용일의 단가가 이미 있습니다.' : '저장에 실패했습니다.');
+      // 원인(중복·시간초과 등)은 api 인터셉터의 오류 창이 보여 준다. 여기서 원인을 짐작해 적지 않는다.
+      toast.error('저장에 실패했습니다.');
     } finally {
       setBusy(false);
     }
@@ -122,8 +125,9 @@ export default function PriceFormPanel({ mode, initialForm, onClose, onSaved }: 
       <div className="flex-1 space-y-3 overflow-auto p-4">
         <label className="block text-sm">
           <span className="text-text-muted">S-PARTS 코드</span>
-          <Input value={form.moldCode} disabled={locked}
-            onChange={(e) => set('moldCode', e.target.value)} />
+          <MoldCodeField popupId="mold-search" returnKey="moldCode" label="S-PARTS 코드"
+            className="" value={form.moldCode} disabled={locked}
+            onChange={(v) => set('moldCode', v)} />
         </label>
         <label className="block text-sm">
           <span className="text-text-muted">공급처</span>
@@ -183,8 +187,8 @@ export default function PriceFormPanel({ mode, initialForm, onClose, onSaved }: 
         </label>
         <label className="block text-sm">
           <span className="text-text-muted">변경사유</span>
-          <Input value={form.priceChangeReason}
-            onChange={(e) => set('priceChangeReason', e.target.value)} />
+          <ComCodeSelect groupCode="PRICE CHANGE REASON" includeAll={false} placeholder="선택"
+            value={form.priceChangeReason} onChange={(v) => set('priceChangeReason', v)} />
         </label>
       </div>
 

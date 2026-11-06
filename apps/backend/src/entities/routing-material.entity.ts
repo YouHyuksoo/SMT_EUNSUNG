@@ -1,7 +1,7 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity({ name: 'IP_ROUTING_MATERIALS' })
-@Index('UK_IP_RM_CHILD', ['organizationId', 'routingCode', 'childItemCode'], { unique: true })
+@Index('UK_IP_RM_CHILD', ['organizationId', 'routingCode', 'itemCode', 'childItemCode'], { unique: true })
 export class RoutingMaterial {
   @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number', nullable: false })
   organizationId!: number;
@@ -11,6 +11,9 @@ export class RoutingMaterial {
 
   @PrimaryColumn({ name: 'PROCESS_SEQ', type: 'number', precision: 10, nullable: false })
   processSeq!: number;
+
+  @PrimaryColumn({ name: 'ITEM_CODE', type: 'varchar2', length: 20, nullable: false })
+  itemCode!: string;
 
   @PrimaryColumn({ name: 'CHILD_ITEM_CODE', type: 'varchar2', length: 20, nullable: false })
   childItemCode!: string;

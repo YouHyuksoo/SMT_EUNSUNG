@@ -38,3 +38,6 @@ export * from './production';
 
 // 모니터링 경고 건수 SQL(display · 대시보드 공용) 내보내기
 export * from './monitoring';
+
+// 기준정보 — 품목마스터(ID_ITEM) 컬럼 목록(백엔드 저장·검증 · 화면 공용)
+export * from './master';

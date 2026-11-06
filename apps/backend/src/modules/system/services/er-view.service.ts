@@ -10,6 +10,7 @@ import { appendFileSync, mkdirSync, writeFileSync } from 'fs';
 import path from 'path';
 import { DataSource } from 'typeorm';
 
+import { formatDate } from '@smt/shared';
 type ConstraintType = 'P' | 'U';
 type RelationshipType = 'PHYSICAL_FK' | 'INFERRED';
 type Confidence = 'HIGH' | 'MEDIUM' | 'LOW';
@@ -904,7 +905,7 @@ export class ErViewService {
 
   private writeMigrationFile(sql: string, name: string): string {
     const slug = name.toLowerCase().replace(/[^a-z0-9_]+/g, '_').slice(0, 48);
-    const fileName = `${new Date().toISOString().slice(0, 10)}_schema_governance_${Date.now()}_${slug}.sql`;
+    const fileName = `${formatDate(new Date())}_schema_governance_${Date.now()}_${slug}.sql`;
     const migrationsDir = this.backendMigrationsDir();
     mkdirSync(migrationsDir, { recursive: true });
     const filePath = path.join(migrationsDir, fileName);
@@ -936,7 +937,7 @@ export class ErViewService {
   private writeActionLog(entry: Record<string, unknown>) {
     const dir = path.join(process.cwd(), LOG_DIR_DISPLAY);
     mkdirSync(dir, { recursive: true });
-    const file = path.join(dir, `actions-${new Date().toISOString().slice(0, 7)}.jsonl`);
+    const file = path.join(dir, `actions-${formatDate(new Date()).slice(0, 7)}.jsonl`);
     appendFileSync(file, `${JSON.stringify({ actionId: `SGA-${Date.now()}`, executedAt: new Date().toISOString(), ...entry })}\n`, 'utf8');
   }
 }

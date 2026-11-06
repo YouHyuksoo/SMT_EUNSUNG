@@ -42,6 +42,7 @@ import type {
 } from '../reprint-msl-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
 import LineSelect from '@/components/shared/LineSelect';
+import ComCodeSelect from '@/components/shared/ComCodeSelect';
 
 type TabKey = 'inventory' | 'issued' | 'view' | 'history';
 
@@ -180,9 +181,10 @@ export default function MslCheckPage() {
           <Input aria-label="자재 바코드" placeholder="자재 바코드" value={barcode}
             className="w-64"
             onChange={(e) => setBarcode(e.target.value)} />
-          <Input aria-label="처리코드" placeholder="처리코드 (베이킹·폐기 등)"
+          <ComCodeSelect groupCode="MSL ACTION CODE" includeAll={false}
+            aria-label="처리코드" placeholder="처리코드 (베이킹·폐기 등)"
             value={actionCode} className="w-48"
-            onChange={(e) => setActionCode(e.target.value)} />
+            onChange={setActionCode} />
           <Input aria-label="비고" placeholder="비고" value={comments}
             className="w-64"
             onChange={(e) => setComments(e.target.value)} />

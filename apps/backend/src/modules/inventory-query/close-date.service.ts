@@ -19,6 +19,7 @@ import { namedBinds } from '../../common/utils/named-binds.util';
 import { affectedRows } from '../../common/utils/affected-rows.util';
 import { CLOSE_START_CONFIG, getCloseStartMonth } from './close-period';
 
+import { formatDate } from '@smt/shared';
 type Row = Record<string, unknown>;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -34,15 +35,14 @@ export interface ClosePeriodRow {
   lastCloseDate: string | null;
 }
 
+/** 'YYYY-MM-DD' 에 n일을 더한다 (달력 계산 — 시각은 쓰지 않는다) */
 const addDays = (ymd: string, n: number) => {
-  const d = new Date(`${ymd}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
+  const [y, m, d] = ymd.split('-').map(Number);
+  return formatDate(new Date(y, m - 1, d + n));
 };
-const monthOf = (yyyymm: string, n: number) => {
-  const d = new Date(Date.UTC(Number(yyyymm.slice(0, 4)), Number(yyyymm.slice(4, 6)) - 1 + n, 1));
-  return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
-};
+/** 'YYYYMM' 에 n달을 더한다 */
+const monthOf = (yyyymm: string, n: number) =>
+  formatDate(new Date(Number(yyyymm.slice(0, 4)), Number(yyyymm.slice(4, 6)) - 1 + n, 1), 'YYYYMM');
 const firstOf = (yyyymm: string) => `${yyyymm.slice(0, 4)}-${yyyymm.slice(4, 6)}-01`;
 
 /**

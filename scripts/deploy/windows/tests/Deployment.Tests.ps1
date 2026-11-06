@@ -402,6 +402,25 @@ exit $LASTEXITCODE
     Assert-Equal 3 @((Get-ChildItem -LiteralPath $releases -Directory | Where-Object { (Test-EunsungCommitSha $_.Name) -and (Test-Path -LiteralPath (Join-Path $_.FullName 'deployment.success.json')) })).Count
   }
 
+  Test-Case 'retention removes at most MaxRemovals releases per run, oldest first' {
+    $root = Join-Path $tempRoot 'retention-cap'
+    $releases = Join-Path $root 'releases'
+    New-Item -ItemType Directory -Force -Path $releases | Out-Null
+    $names = @(1..6 | ForEach-Object { '{0:x40}' -f $_ })
+    $names | ForEach-Object {
+      $name = $_
+      $path = Join-Path $releases $name
+      New-Item -ItemType Directory -Path $path | Out-Null
+      Set-Content -LiteralPath (Join-Path $path 'deployment.success.json') -Value ('{"commitSha":"' + $name + '"}') -Encoding UTF8
+      (Get-Item -LiteralPath $path).LastWriteTimeUtc = [datetime]::UtcNow.AddMinutes(-[int]::Parse($_, [Globalization.NumberStyles]::HexNumber))
+    }
+    # 현재 = 1번, 이전 성공 2개 유지 -> 정리 대상은 4·5·6번(4개)이지만 상한 1이면 가장 오래된 6번만 지운다.
+    Remove-EunsungOldSuccessfulReleases -ReleaseRoot $releases -CurrentRelease (Join-Path $releases $names[0]) -MaxRemovals 1
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $releases $names[5]))) 'oldest expired release must be removed'
+    Assert-True (Test-Path -LiteralPath (Join-Path $releases $names[4])) 'newer expired release must wait for the next run'
+    Assert-Equal 5 @((Get-ChildItem -LiteralPath $releases -Directory | Where-Object { Test-EunsungCommitSha $_.Name })).Count
+  }
+
   Test-Case 'retention retains malformed, commit-mismatched, and releaseDir-mismatched markers' {
     $root = Join-Path $tempRoot 'retention-invalid-markers'
     $releases = Join-Path $root 'releases'
@@ -589,6 +608,17 @@ exit $LASTEXITCODE
     Assert-True (-not ($script:pm2Calls | Where-Object { $_ -match '^start\s' }))
   }
 
+  Test-Case 'restored fork-mode app without instances matches a captured single instance' {
+    # pm2 resurrect 로 되살린 fork 모드 앱은 jlist 에 instances 가 없다 (2026-10-15 롤백 실측).
+    $captured = @([pscustomobject]@{ name='eunsung-frontend'; pid=111; pm2_env=[pscustomobject]@{ pm_cwd='C:\prior\frontend'; instances=1; exec_mode='fork_mode' } },
+                  [pscustomobject]@{ name='eunsung-backend'; pid=222; pm2_env=[pscustomobject]@{ pm_cwd='C:\prior\backend'; instances=1; exec_mode='fork_mode' } })
+    $restored = @([pscustomobject]@{ name='eunsung-frontend'; pid=333; pm2_env=[pscustomobject]@{ pm_cwd='C:\prior\frontend'; exec_mode='fork_mode' } },
+                  [pscustomobject]@{ name='eunsung-backend'; pid=444; pm2_env=[pscustomobject]@{ pm_cwd='C:\prior\backend'; exec_mode='fork_mode' } })
+    & (Get-Module EunsungDeployment) { param($c, $r) Assert-EunsungPm2DefinitionFidelity -CapturedApps $c -RestoredApps $r } $captured $restored
+    $cluster = @([pscustomobject]@{ name='eunsung-frontend'; pid=111; pm2_env=[pscustomobject]@{ instances=2; exec_mode='cluster_mode' } }, $captured[1])
+    Assert-Throws { & (Get-Module EunsungDeployment) { param($c, $r) Assert-EunsungPm2DefinitionFidelity -CapturedApps $c -RestoredApps $r } $cluster $restored } 'eunsung-frontend/instances'
+  }
+
   Test-Case 'rollback health failure is distinct and includes sanitized diagnostics' {
     $root = Join-Path $tempRoot 'rollback-fails'
     New-TestRelease -DeployRoot $root -Sha $shaA | Out-Null
@@ -700,6 +730,7 @@ exit $LASTEXITCODE
     $script:runtimeTouches = 0
     $script:buildExecutables = @()
     $script:buildArguments = @()
+    $script:buildEnvironments = @()
     $adapters = @{
       TestMode = $true
       AccessValidator = { $true }
@@ -707,6 +738,7 @@ exit $LASTEXITCODE
         param($FilePath, $Arguments, $WorkingDirectory, $Environment)
         $script:buildExecutables += [string]$FilePath
         $script:buildArguments += ,@($Arguments)
+        $script:buildEnvironments += ,$Environment
         if ($FilePath -match 'pm2') { $script:runtimeTouches++ }
         if ($Arguments -contains '--version') { return @{ ExitCode=0; Output='10.28.1' } }
         return @{ ExitCode=0; Output='' }
@@ -722,6 +754,11 @@ exit $LASTEXITCODE
     Assert-True (@($script:buildExecutables | Where-Object { $_ -match '(?i)corepack' }).Count -eq 0) 'build must not depend on corepack being present in noninteractive PATH'
     Assert-Equal '--version' ([string]$script:buildArguments[0][0])
     Assert-Equal 'install' ([string]$script:buildArguments[1][0])
+    # 설치가 느려지지 않게: 저장소는 릴리스와 같은 드라이브(배포 루트 아래), Chrome 다운로드는 건너뛴다.
+    $installEnv = $script:buildEnvironments[1]
+    Assert-True ($null -ne $installEnv) 'pnpm install must receive an explicit environment'
+    Assert-Equal ([IO.Path]::GetFullPath((Join-Path $root 'pnpm-store'))) ([string]$installEnv['npm_config_store_dir'])
+    Assert-Equal '1' ([string]$installEnv['PUPPETEER_SKIP_DOWNLOAD'])
     Assert-EunsungBuiltRelease -DeployRoot $root -ReleaseDir (Join-Path $root "releases/$shaA") -CommitSha $shaA -AccessValidator { $true }
   }
 

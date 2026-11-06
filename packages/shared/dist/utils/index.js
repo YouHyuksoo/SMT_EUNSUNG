@@ -22,3 +22,4 @@ __exportStar(require("./date"), exports);
 __exportStar(require("./numbering"), exports);
 __exportStar(require("./work-instruction-rules"), exports);
 __exportStar(require("./vendor-barcode-rules"), exports);
+__exportStar(require("./oracle-connect-string"), exports);

@@ -10,6 +10,7 @@
  *    LAST_MODIFY_BY = 'INV ADJUST' 로 구별한다 (wip-stocktake.service.ts 의 WIP_ADJUST_MARK).
  * 3. **생산투입의 LAST_MODIFY_BY 는 생산한 제품의 품목코드다.** 그래서 어느 제품을 만들며 썼는지 보여 준다.
  * 4. **공정재고 증감** = 입고 수량 − 출고 수량. 품목별 합계의 순증감도 같은 식이다.
+ *    공정간 이동(ENTER_BY = 'WS_MOVE')은 품목 합계로 0 이라 이 원장에서 뺀다 (공정재고조회 '공정 이동' 탭).
  * 5. 출고 원장은 한 달에 30만 건이 넘는다. 날짜(PK 첫 컬럼)로 반드시 좁히고, 건별 내역은
  *    품목을 안 주면 7일까지만 받는다. 품목별 합계는 1년까지.
  */
@@ -17,6 +18,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { namedBinds } from '../../common/utils/named-binds.util';
 import { WIP_ADJUST_MARK } from '../inventory-query/wip-stocktake.service';
+import { notWipMoveSql } from '../inventory-query/wip-bom';
 import { WipLedgerQueryDto } from './wip-ledger.dto';
 
 type Row = Record<string, unknown>;
@@ -43,7 +45,7 @@ export class WipLedgerService {
         FROM IM_ITEM_WORKSTAGE_RECEIPT r
        WHERE r.RECEIPT_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
          AND r.RECEIPT_DATE < TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
-         AND r.ORGANIZATION_ID = :organizationId ${item('r.ITEM_CODE')}
+         AND r.ORGANIZATION_ID = :organizationId ${item('r.ITEM_CODE')} AND ${notWipMoveSql('r.ENTER_BY')}
       UNION ALL
       SELECT CASE WHEN s.LAST_MODIFY_BY = '${WIP_ADJUST_MARK}' THEN 'A' ELSE 'I' END,
              s.ISSUE_DATE, s.ISSUE_SEQUENCE, s.ORGANIZATION_ID,
@@ -53,7 +55,7 @@ export class WipLedgerService {
         FROM IM_ITEM_WORKSTAGE_ISSUE s
        WHERE s.ISSUE_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
          AND s.ISSUE_DATE < TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
-         AND s.ORGANIZATION_ID = :organizationId ${item('s.ITEM_CODE')}`;
+         AND s.ORGANIZATION_ID = :organizationId ${item('s.ITEM_CODE')} AND ${notWipMoveSql('s.ENTER_BY')}`;
   }
 
   private validate(query: WipLedgerQueryDto, maxDays: number | null) {

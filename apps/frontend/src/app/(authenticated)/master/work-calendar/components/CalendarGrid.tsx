@@ -229,7 +229,7 @@ export default function CalendarGrid({
                 <span className="text-xs font-medium text-text dark:text-gray-200">{day}</span>
                 {info && (
                   <div className="mt-auto flex flex-col items-start gap-0.5">
-                    <ComCodeBadge groupCode="WORK_DAY_TYPE" code={info.dayType} />
+                    <ComCodeBadge groupCode="WORK DAY TYPE" code={info.dayType} />
                     {info.source === "LINE" && (
                       <span className="text-[9px] px-1 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
                         예외

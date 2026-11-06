@@ -4,7 +4,7 @@ sources:
   - apps/frontend/scripts/data/pb-screen-inventory.json
   - apps/frontend/scripts/data/pb-screen-exclusions.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: e72c84ab
+verifiedCommit: 09fb8e57
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -19,18 +19,18 @@ verifiedCommit: e72c84ab
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 174 |
-| 이관제외(사용자 결정) | 31 |
-| 미착수 | 44 |
+| 완료(개발됨, pbWindow 매핑) | 176 |
+| 이관제외(사용자 결정) | 30 |
+| 미착수 | 43 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 174개 / 웹 신규 29개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 176개 / 웹 신규 32개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
 | 대분류 | 코드 | 전체 | 완료 | 이관제외 | 미착수 | 윈도우미상 |
 |---|---|---:|---:|---:|---:|---:|
-| 기준정보 | `M_BASIS1` | 20 | 10 | 0 | 10 | 0 |
+| 기준정보 | `M_BASIS1` | 20 | 11 | 0 | 9 | 0 |
 | 설계 | `M_DESIGN` | 5 | 5 | 0 | 0 | 0 |
 | SMT | `M_SMT` | 9 | 9 | 0 | 0 | 0 |
 | 설비 | `M_JIG` | 19 | 10 | 0 | 7 | 2 |
@@ -49,7 +49,7 @@ verifiedCommit: e72c84ab
 | 리포트 | `M_REPORT` | 23 | 23 | 0 | 0 | 0 |
 | 승인 | `M_CONFIRM` | 6 | 4 | 2 | 0 | 0 |
 | 기본정보 | `M_MANAGE` | 10 | 4 | 5 | 1 | 0 |
-| 시스템 | `M_SYSTEM` | 76 | 8 | 24 | 20 | 24 |
+| 시스템 | `M_SYSTEM` | 76 | 9 | 23 | 20 | 24 |
 
 ## 화면 목록
 
@@ -70,9 +70,9 @@ verifiedCommit: e72c84ab
 | 131 | 모델별 ST관리 | `w_pln_product_model_st_master` | srw | 미착수 |  |  |
 | 132 | 생산월력 | `w_pln_product_calendar` | srw | 완료 | `MST_WORK_CALENDAR` | `/master/work-calendar` |
 | 133 | 생산라인보유공수관리 | `w_pln_line_capacity_master` | srw | 미착수 |  |  |
-| 134 | 제품별 라벨양식 관리 | `w_product_label_master` | srw | 완료 | `MST_LABEL` | `/master/label` |
+| 134 | 제품별 라벨양식 관리 | `w_product_label_master` | srw | 완료 | `MST_LABEL_FORM` | `/master/label-form` |
 | 135 | 문서관리 | `w_com_document_master` | srw | 미착수 |  |  |
-| 137 | 인터락조건관리 | `w_com_interlock_inspect_condition_master` | srw | 미착수 |  |  |
+| 137 | 인터락조건관리 | `w_com_interlock_inspect_condition_master` | srw | 완료 | `MST_INTERLOCK_CONDITION` | `/master/interlock-condition` |
 | 138 | QC 품질판정조건표 | `w_qc_led_inspect_condition_master` | srw | 미착수 |  |  |
 | 140 | 풀체크시간관리 | `w_com_full_check_time_master` | srw | 미착수 |  |  |
 | 142 | 자재구매단가 | `w_mat_buy_price_master` | srw | 완료 | `MST_PURCHASE_PRICE` | `/master/purchase-price` |
@@ -304,7 +304,7 @@ verifiedCommit: e72c84ab
 | 344 | └ SMT PICKUP 리포트 | `w_smt_pickup_rate_rpt` | srw | 완료 | `RPT_PICKUP_RATE` | `/report/pickup-rate` |
 | 346 | └ 생산계획리포트 | `w_pln_master_plan_rpt` | srw | 완료 | `RPT_MASTER_PLAN` | `/report/master-plan` |
 | 347 | └ 런카드리포트 | `w_product_run_card_rpt` | srw | 완료 | `RPT_RUN_CARD` | `/report/run-card` |
-| 348 | └ 제품 판매실적 | `w_prd_product_fg_issue_rpt` | srw | 완료 | `RPT_FG_ISSUE` | `/report/fg-issue` |
+| 348 | └ 제품 판매실적 | `w_prd_product_fg_issue_rpt` | srw | 완료 | `PRD_FG_ISSUE_QUERY` | `/product/fg-issue-query` |
 | 350 | └ 공정재공조회 | `w_product_workstage_stock_rpt` | srw | 완료 | `RPT_WORKSTAGE_STOCK` | `/report/workstage-stock` |
 | 352 | └ 공정매거진조회 | `w_product_workstage_magazine_stock_rpt` | srw | 완료 | `RPT_MAGAZINE_STOCK` | `/report/magazine-stock` |
 | 354 | └ S-PARTS입고리포트 | `w_mcn_mold_receipt_rpt` | srw | 완료 | `RPT_MOLD_RECEIPT` | `/report/mold-receipt` |
@@ -420,7 +420,7 @@ verifiedCommit: e72c84ab
 | 490 | SMT 파트라이브러리관리 | `w_smt_upload_partlib_master` | srw | 이관제외 |  | IB_MNT_PARTLIB_MASTER 0행 |
 | 492 | 메탈마스크텐션 수동 관리 | `w_mcn_jig_mask_check_master` | srw | 미착수 |  |  |
 | 493 | 픽스쳐검사관리 | `w_mcn_jig_fixture_check_master` | srw | 미착수 |  |  |
-| 495 | 제품납품계획 | `w_pln_product_delivery_master` | srw | 이관제외 |  | IP_PRODUCT_DELIVERY_MONTH_PLAN 0행 |
+| 495 | 제품납품계획 | `w_pln_product_delivery_master` | srw | 완료 | `PRD_SHIPPING_ORDER` | `/product/shipping-order` |
 | 496 | 포장바코드중복체크관리 | `w_pln_product_packing_dupulicate_check_master` | srw | 미착수 |  |  |
 | 498 | 반출송장 | `w_com_carrying_out_master` | srw | 이관제외 |  | 반출반입 업무는 이관 대상에서 제외 (사용자 지시) |
 | 499 | 반입송장 | `w_com_bring_in_master` | srw | 이관제외 |  | 반출반입 업무는 이관 대상에서 제외 (사용자 지시) |

@@ -21,6 +21,7 @@ import toast from 'react-hot-toast';
 import { Search } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import DataGrid from '@/components/data-grid/DataGrid';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { SmtModelSelect, SmtPcbItemSelect } from '../components/SmtSelects';
@@ -166,22 +167,15 @@ export default function SmtBomComparisonPage() {
         </Button>
       </header>
 
-      <div className="flex gap-1 border-b border-border">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 text-sm ${
-              tab === t.key
-                ? 'border-b-2 border-primary font-semibold text-text'
-                : 'text-text-muted'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <ScreenTabs
+        tabs={TABS.map((t) => ({
+          key: t.key,
+          label: t.label,
+          count: { group: rows.length, location: diffCount, explode: explodeRows.length }[t.key],
+        }))}
+        active={tab}
+        onChange={setTab}
+      />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">

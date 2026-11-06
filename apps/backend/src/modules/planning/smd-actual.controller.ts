@@ -82,7 +82,7 @@ export class SmdActualController {
 
   @Delete()
   @ApiOperation({ summary: '실적 한 건 삭제' })
-  async remove(@Body() dto: SmdActualKeyDto, @OrganizationId() organizationId: number) {
-    return ResponseUtil.success(await this.service.remove(dto, organizationId));
+  async remove(@Body() dto: SmdActualKeyDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(await this.service.remove(dto, organizationId, userId || DEFAULT_USER));
   }
 }

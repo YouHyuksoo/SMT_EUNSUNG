@@ -14,7 +14,7 @@ export const modelColumns: ColumnDef<MfsModelRow>[] = [
   { accessorKey: 'masterModelName', header: '마스터 모델명', size: 150 },
   { accessorKey: 'customerName', header: '고객사', size: 120 },
   { accessorKey: 'modelDivision', header: '모델구분', size: 90, cell: comCodeCell('MODEL DIVISION') },
-  { accessorKey: 'modelType', header: '모델유형', size: 90 },
+  { accessorKey: 'modelType', header: '모델유형', size: 90, cell: comCodeCell('MODEL TYPE') },
   { accessorKey: 'partNo', header: '고객 품번', size: 130 },
   { accessorKey: 'revision', header: '리비전', size: 70 },
   { accessorKey: 'modelSpec', header: '모델사양', size: 140 },

@@ -17,6 +17,8 @@ export class IqcTargetQueryDto {
   @IsOptional() @IsString() itemName?: string;
   @IsOptional() @IsString() itemBarcode?: string;
   @IsOptional() @IsString() receiptSlipNo?: string;
+  /** 공급처(협력업체) — 고르면 그 공급처만 */
+  @IsOptional() @IsString() supplierCode?: string;
   /** PB 는 이 조건을 = 로 걸었다(대기 목록). 비우면 'N'(입고대기) 이다. */
   @IsOptional() @IsString() receiptCompareYn?: string;
 
@@ -30,6 +32,8 @@ export class IqcHistoryQueryDto {
   @IsDateString() dateTo!: string;
   @IsOptional() @IsString() itemCode?: string;
   @IsOptional() @IsString() iqcInspectNo?: string;
+  /** 공급처(협력업체) — 고르면 그 공급처만 */
+  @IsOptional() @IsString() supplierCode?: string;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page = 1;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(5000) limit = 500;
 }

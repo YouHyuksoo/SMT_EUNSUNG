@@ -32,6 +32,7 @@ import {
 import { nsnpHistoryColumns, nsnpLineColumns } from '../query-columns';
 import type { NsnpHistoryRow, NsnpLineRow } from '../query-types';
 
+import { getTodayLocal } from '@/utils/date';
 type NsnpAction = 'lock' | 'unlock' | 'use' | 'noUse';
 
 const NSNP_LABEL: Record<NsnpAction, string> = {
@@ -44,7 +45,7 @@ const NSNP_LABEL: Record<NsnpAction, string> = {
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 export default function NsnpHistoryPage() {
@@ -53,7 +54,7 @@ export default function NsnpHistoryPage() {
   const [linesLoading, setLinesLoading] = useState(false);
 
   const [modelName, setModelName] = useState('');
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [history, setHistory] = useState<NsnpHistoryRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -100,7 +101,8 @@ export default function NsnpHistoryPage() {
   }, [selected, modelName, dateFrom, dateTo, mark]);
 
   useEffect(() => { void loadLines(); }, [loadLines]);
-  useEffect(() => { void search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // 처음 열 때와 왼쪽 라인을 바꿀 때마다 오른쪽 이력을 그 라인으로 다시 조회한다.
+  useEffect(() => { void search(); }, [selected?.lineCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const applyNsnp = useCallback(async (action: NsnpAction) => {
     setNsnpOpen(null);

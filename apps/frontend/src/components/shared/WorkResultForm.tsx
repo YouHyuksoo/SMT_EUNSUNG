@@ -14,14 +14,17 @@
  *    현장 모드는 이력을 다시 읽지 않고 onSaved()만 부른다 — 쓰는 쪽이 모달을 닫는다.
  * 4. fieldMode(현장 화면 전용): 신규 실적 폼을 펼친 채로 열어 탭을 한 번 줄이고,
  *    모달(max-h-75vh) 안에서 스크롤이 생기지 않도록 조밀한 열 배치를 쓴다.
- * 5. 처리구분이 '완료'가 되면 서버가 센서 누적 프로시저를 호출한다. 호출이 실패해도 실적은
+ * 5. 처리구분이 '완료'가 되면 서버가 공정재고 반영(조립라인)을 한다. 호출이 실패해도 실적은
  *    저장되므로, 미반영 실적은 처리구분을 빨간색으로 표기하고 [실적반영]으로 다시 시도한다.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
+import type { ColumnDef } from '@tanstack/react-table';
 import api from '@/services/api';
+import DataGrid from '@/components/data-grid/DataGrid';
 import NumberKeypadModal from './NumberKeypadModal';
+import { isSensorPending as sensorPending } from './sensorApply';
 
 /** 실적 등록에 필요한 작업지시 정보. 목록 행(RunRow)의 부분집합이다. */
 export interface WorkResultRun {
@@ -43,9 +46,35 @@ interface ResultRow {
   seqNo: string; machineCode: string; workstageCode: string; resultQty: number; workTime: number;
   workerCount: number; workerName: string; resultStatus: string; itemCode: string; modelName: string;
   defectQty: number; updatedAt: string;
-  /** 센서 누적 반영 여부. 진행(WIP)은 호출하지 않으므로 'N'이지만 실패가 아니다 */
+  /** 공정재고 반영 여부. 진행(WIP)은 반영하지 않으므로 'N'이지만 실패가 아니다 */
   sensorApplyYn?: string; sensorApplyMsg?: string | null;
 }
+
+/** 완료인데 공정재고에 아직 반영되지 않은 실적 — 처리구분을 빨간색으로 표기한다 */
+function isSensorPending(h: ResultRow) {
+  return sensorPending(h.resultStatus, h.sensorApplyYn);
+}
+
+/** 실적 이력 그리드 컬럼 — 처리구분 값은 완료/진행 이름으로 둬서 필터·내보내기에도 이름이 나온다 */
+const historyColumns: ColumnDef<ResultRow>[] = [
+  { accessorKey: 'seqNo', header: '일련', size: 60, meta: { align: 'center' },
+    cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
+  { id: 'item', header: '품번/품명', size: 240,
+    accessorFn: (h) => `${h.itemCode ?? ''} ${h.modelName ?? ''}`.trim(),
+    cell: ({ row }) => <><span className="font-mono">{row.original.itemCode}</span> {row.original.modelName}</> },
+  { accessorKey: 'resultQty', header: '실적수량', size: 90, meta: { align: 'right' },
+    cell: ({ row }) => <span className="font-mono">{row.original.resultQty?.toLocaleString()}</span> },
+  { id: 'resultStatus', header: '처리구분', size: 80, meta: { align: 'center' },
+    accessorFn: (h) => (h.resultStatus === 'DONE' ? '완료' : '진행'),
+    cell: ({ row }) => {
+      const h = row.original;
+      if (h.resultStatus !== 'DONE') return '진행';
+      return isSensorPending(h)
+        // 공정재고 미반영 — 빨간색으로 구분하고 사유는 title로 보여준다
+        ? <span className="text-red-600 font-semibold" title={h.sensorApplyMsg ?? '공정재고에 반영되지 않았습니다'}>완료</span>
+        : <span className="text-blue-600 font-semibold">완료</span>;
+    } },
+];
 
 interface ResultForm {
   seqNo: string | null; machineCode: string; machineName: string;
@@ -152,13 +181,8 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
   // 이미 저장된 상태가 '완료'인 실적만 잠금(수정불가).
   const readOnly = form?.savedStatus === 'DONE';
 
-  /** 완료인데 센서에 아직 반영되지 않은 실적 — 처리구분을 빨간색으로 표기한다 */
-  function isSensorPending(h: ResultRow) {
-    return h.resultStatus === 'DONE' && (h.sensorApplyYn ?? 'N') !== 'Y';
-  }
-
   // [실적반영]은 선택한 실적이 '완료 + 미반영'일 때만 누를 수 있다. 이미 반영된 건을 다시
-  // 부르면 센서 수량이 가산되므로 서버도 거부한다.
+  // 부르면 공정재고가 두 번 움직이므로 서버도 거부한다.
   const selectedRow = history.find((h) => h.seqNo === form?.seqNo);
   const canApplySensor = !!selectedRow && isSensorPending(selectedRow);
 
@@ -172,14 +196,14 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
         runNo: run.runNo, seqNo: selectedRow.seqNo,
       });
       const warning = res.data?.data?.sensorWarning as string | undefined;
-      if (warning) toast.error(`센서 반영 실패 — ${warning}`);
-      else toast.success('센서 실적에 반영되었습니다');
+      if (warning) toast.error(`공정재고 반영 실패 — ${warning}`);
+      else toast.success('공정재고에 반영되었습니다');
       await loadHistory();
       await onSaved?.();
     } catch (e: unknown) {
       const msg = e && typeof e === 'object' && 'response' in e
         ? (e as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
-      toast.error(msg || '센서 반영에 실패했습니다');
+      toast.error(msg || '공정재고 반영에 실패했습니다');
     } finally {
       setApplying(false);
     }
@@ -199,10 +223,10 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
       const res = form.seqNo
         ? await api.put('/oee/work-result/results', payload)
         : await api.post('/oee/work-result/results', payload);
-      // 처리구분을 '완료'로 저장하면 서버가 센서 누적 프로시저를 부른다. 실패해도 실적은
+      // 처리구분을 '완료'로 저장하면 서버가 공정재고에 반영한다. 실패해도 실적은
       // 저장되므로 경고만 띄우고, 미반영 상태는 이력의 처리구분 색으로 남는다.
       const warning = res.data?.data?.sensorWarning as string | undefined;
-      if (warning) toast.error(`실적은 저장됐지만 센서 반영에 실패했습니다 — ${warning}`);
+      if (warning) toast.error(`실적은 저장됐지만 공정재고 반영에 실패했습니다 — ${warning}`);
       else toast.success('실적이 저장되었습니다');
       // 현장 모드는 저장하면 바로 모달을 닫는다(onSaved가 닫는다).
       // 이력을 다시 읽거나 폼을 접으면 닫히기 직전에 이력 화면이 잠깐 비친다.
@@ -243,29 +267,21 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
             <button onClick={() => setForm(newResultForm())} className="text-xs border border-primary text-primary rounded px-2 py-1 hover:bg-surface flex items-center gap-1"><Plus className="w-3 h-3" />신규 실적</button>
           )}
         </div>
-        <div className={fieldMode && historyOpen ? 'max-h-[132px] overflow-y-auto border border-border rounded' : ''}>
-        <table className="w-full text-xs border border-border">
-          <thead><tr className="bg-surface text-text-muted"><th className="p-1.5 text-center">일련</th><th className="p-1.5 text-left">품번/품명</th><th className="p-1.5 text-right">실적수량</th><th className="p-1.5 text-center">처리구분</th></tr></thead>
-          <tbody>
-            {(fieldMode && !historyOpen ? history.slice(0, 1) : history).map((h) => (
-              <tr key={h.seqNo} onClick={() => selectHistory(h)} className={`border-t border-border cursor-pointer hover:bg-surface ${form?.seqNo === h.seqNo ? 'bg-primary/10' : ''}`}>
-                <td className="p-1.5 text-center font-mono">{h.seqNo}</td>
-                <td className="p-1.5"><span className="font-mono">{h.itemCode}</span> {h.modelName}</td>
-                <td className="p-1.5 text-right font-mono">{h.resultQty?.toLocaleString()}</td>
-                <td className="p-1.5 text-center">
-                  {h.resultStatus === 'DONE'
-                    ? isSensorPending(h)
-                      // 센서 미반영 — 빨간색으로 구분하고 사유는 title로 보여준다
-                      ? <span className="text-red-600 font-semibold" title={h.sensorApplyMsg ?? '센서 실적에 반영되지 않았습니다'}>완료</span>
-                      : <span className="text-blue-600 font-semibold">완료</span>
-                    : '진행'}
-                </td>
-              </tr>
-            ))}
-            {!history.length && <tr><td colSpan={4} className="p-3 text-center text-text-muted">등록된 실적이 없습니다. [신규 실적]으로 등록하세요.</td></tr>}
-          </tbody>
-        </table>
-        </div>
+        {/* 현장 모드에서 이전 이력을 펼치면 높이를 묶고 그리드 안에서 스크롤한다 */}
+        <DataGrid
+          data={fieldMode && !historyOpen ? history.slice(0, 1) : history}
+          columns={historyColumns}
+          onRowClick={selectHistory}
+          getRowId={(h) => String(h.seqNo)}
+          selectedRowId={form?.seqNo != null ? String(form.seqNo) : undefined}
+          maxHeight={fieldMode && historyOpen ? '132px' : undefined}
+          pageSize={1000}
+          enableColumnFilter={false}
+          enableColumnReordering={false}
+          enableFullscreen={false}
+          showFooter={false}
+          emptyMessage="등록된 실적이 없습니다. [신규 실적]으로 등록하세요."
+        />
       </div>
 
       {/* 실적 상세 입력 */}
@@ -274,10 +290,10 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold text-text">{form.seqNo ? `실적 상세 (일련 ${form.seqNo})` : '신규 실적'}</span>
-              {/* 센서 반영에 실패한 실적을 다시 프로시저로 넘긴다 — 선택한 실적에만 해당한다 */}
+              {/* 공정재고 반영에 실패한 실적을 다시 반영한다 — 선택한 실적에만 해당한다 */}
               {canApplySensor && (
                 <button type="button" onClick={applySensorNow} disabled={applying}
-                  title={selectedRow?.sensorApplyMsg ?? '센서 실적에 반영되지 않았습니다'}
+                  title={selectedRow?.sensorApplyMsg ?? '공정재고에 반영되지 않았습니다'}
                   className="text-xs rounded px-2 py-1 flex items-center gap-1 border border-red-500 text-red-600 hover:bg-red-50 disabled:opacity-50">
                   <RefreshCw className={`w-3 h-3 ${applying ? 'animate-spin' : ''}`} />실적반영
                 </button>

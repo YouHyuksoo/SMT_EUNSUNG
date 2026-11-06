@@ -1,10 +1,11 @@
-// 표준시간 관리 — 품목(모델)별 ST/CT/NT/TT 표준시간 마스터 (IP_PRODUCT_ST_MASTER)
+// 표준시간 관리 — 모델별 ST/CT/NT/TT 표준시간 마스터 (IP_PRODUCT_ST_MASTER)
+// 키: 모델명 + 설비코드 + 적용시작일 + 조직 (2026-10-13 품목코드 키에서 전환)
 import { Entity, PrimaryColumn, Column } from 'typeorm';
 
 @Entity({ name: 'IP_PRODUCT_ST_MASTER' })
 export class ProductStMaster {
-  @PrimaryColumn({ name: 'ITEM_CODE', length: 20 })
-  itemCode: string;
+  @PrimaryColumn({ name: 'MODEL_NAME', length: 100 })
+  modelName: string; // 모델명 (IP_PRODUCT_MODEL_MASTER.MODEL_NAME)
 
   @PrimaryColumn({ name: 'MACHINE_CODE', length: 30 })
   machineCode: string; // 설비코드 (IMCN_MACHINE.MACHINE_CODE) — 설비별 표준시간

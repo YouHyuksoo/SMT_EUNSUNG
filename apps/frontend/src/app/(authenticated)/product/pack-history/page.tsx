@@ -16,6 +16,7 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { History, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import BarcodeScanInput from '@/components/shared/BarcodeScanInput';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import {
@@ -33,8 +34,9 @@ export default function PackHistoryPage() {
   const [searched, setSearched] = useState(false);
   const { truncated, rowLimit, mark } = useTruncation();
 
-  const search = useCallback(async () => {
-    if (!serialNo.trim() && !packBarcode.trim()) {
+  const search = useCallback(async (scannedPid?: string) => {
+    const pid = scannedPid ?? serialNo;
+    if (!pid.trim() && !packBarcode.trim()) {
       toast.error('PID 나 박스 바코드 중 하나는 넣으세요.');
       return;
     }
@@ -42,7 +44,7 @@ export default function PackHistoryPage() {
     try {
       const r = await api.get('/product/pack/history', {
         params: {
-          serialNo: serialNo.trim() || undefined,
+          serialNo: pid.trim() || undefined,
           packBarcode: packBarcode.trim() || undefined,
         },
       });
@@ -73,16 +75,16 @@ export default function PackHistoryPage() {
           <span className="flex items-center gap-1 text-sm font-semibold text-text">
             <History className="h-4 w-4" />되짚을 대상
           </span>
-          <Input aria-label="PID" placeholder="PID" value={serialNo} className="w-64"
+          <BarcodeScanInput aria-label="PID" placeholder="PID 스캔" value={serialNo} className="w-64"
             autoFocus
-            onChange={(e) => setSerialNo(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
+            onChange={setSerialNo}
+            onScan={search} />
           <span className="text-text-muted">또는</span>
           <Input aria-label="박스 바코드" placeholder="박스 바코드" value={packBarcode}
             className="w-64"
             onChange={(e) => setPackBarcode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
-          <Button size="sm" onClick={search} disabled={loading}>
+          <Button size="sm" onClick={() => search()} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>
         </CardContent>

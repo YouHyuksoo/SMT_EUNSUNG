@@ -34,16 +34,11 @@ import type { PurchaseOrderGroupRow, PurchaseOrderRow } from '../purchase-column
 import PartSearchField from '@/components/shared/PartSearchField';
 
 const today = () => getTodayLocal();
-const monthsAgo = (n: number) => {
-  const d = new Date();
-  d.setMonth(d.getMonth() - n);
-  return getTodayLocal(d);
-};
 const apiMessage = (error: unknown) =>
   (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
 
 export default function PurchaseOrderPage() {
-  const [dateFrom, setDateFrom] = useState(monthsAgo(3));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [supplierCond, setSupplierCond] = useState('');
   const [itemCond, setItemCond] = useState('');

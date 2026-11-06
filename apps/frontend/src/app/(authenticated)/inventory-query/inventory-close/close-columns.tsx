@@ -3,6 +3,7 @@
  * @description 271 원자재 월마감 표 컬럼
  */
 import type { ColumnDef } from '@tanstack/react-table';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 export interface CloseLine {
   itemCode: string;
@@ -67,7 +68,7 @@ export const closeColumns: ColumnDef<CloseLine>[] = [
   { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'itemName', header: '품목명', size: 170 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
-  { accessorKey: 'lineType', header: '거래유형', size: 70 },
+  { accessorKey: 'lineType', header: '거래유형', size: 110, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'locationCode', header: '창고', size: 60 },
   num('openingQty', '기초수량', 100, 4),
   num('openingPrice', '기초단가', 80, 4),

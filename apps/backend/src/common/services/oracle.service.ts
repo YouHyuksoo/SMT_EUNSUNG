@@ -14,6 +14,7 @@
  *   );
  */
 
+import { buildOracleConnectString } from '@smt/shared';
 import {
   Injectable,
   Logger,
@@ -41,6 +42,9 @@ export const outNumberBind = () => ({ dir: oracledb.BIND_OUT, type: oracledb.NUM
 
 /** 긴 문자열(JSON 등)을 CLOB 으로 넘긴다 — VARCHAR2 한도(32KB)를 넘어도 된다. */
 export const clobBind = (val: string) => ({ val, type: oracledb.CLOB });
+
+/** 파일 내용(양식 파일·이미지 등)을 BLOB 으로 넘긴다. */
+export const blobBind = (val: Buffer) => ({ val, type: oracledb.DB_TYPE_BLOB });
 
 /** Oracle 식별자 화이트리스트 패턴 (패키지명/프로시저명 인젝션 방지) */
 const SAFE_IDENTIFIER = /^[A-Z][A-Z0-9_$#]{0,29}$/i;
@@ -87,16 +91,8 @@ export class OracleService implements OnModuleInit, OnModuleDestroy {
     const sid = this.configService.get<string>('ORACLE_SID');
     const serviceName = this.configService.get<string>('ORACLE_SERVICE_NAME');
 
-    let connectString: string;
-    if (sid) {
-      // SID 접속: TNS Descriptor 형식 사용
-      connectString =
-        `(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=${host})(PORT=${port}))` +
-        `(CONNECT_DATA=(SID=${sid})))`;
-    } else {
-      // SERVICE_NAME 접속: EZConnect 형식
-      connectString = `${host}:${port}/${serviceName || 'JSHNSMES'}`;
-    }
+    // ORACLE_HOST 에 쉼표로 주소를 여러 개 적으면 앞에서부터 차례로 접속한다.
+    const connectString = buildOracleConnectString({ host, port, sid, serviceName });
 
     this.pool = await oracledb.createPool({
       user: this.configService.get<string>('ORACLE_USER'),
@@ -359,6 +355,22 @@ export class OracleService implements OnModuleInit, OnModuleDestroy {
   private isPackageStateDiscarded(err: unknown): boolean {
     const msg = err instanceof Error ? err.message : String(err);
     return /ORA-0406[0-9]|ORA-04068/.test(msg);
+  }
+
+  /**
+   * 큰 SELECT — 한 번에 fetchArraySize 행씩 가져온다. DB 왕복이 느린 곳(실측 1.9초)에서 기본 100행씩이면
+   * 수만 행 조회가 수십 초 걸린다. 칼럼 별칭은 SQL 그대로 돌려준다 (camelCase 변환 없음).
+   */
+  async queryAll<T = OracleRow>(sql: string, binds: Record<string, unknown> = {}, fetchArraySize = 5000): Promise<T[]> {
+    const conn = await this.pool.getConnection();
+    try {
+      const result = await conn.execute<T>(sql, binds as oracledb.BindParameters, {
+        outFormat: oracledb.OUT_FORMAT_OBJECT, fetchArraySize, prefetchRows: fetchArraySize,
+      });
+      return result.rows ?? [];
+    } finally {
+      await conn.close();
+    }
   }
 
   /**

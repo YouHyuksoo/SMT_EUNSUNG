@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { Search, ShoppingCart } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -21,15 +22,11 @@ import { moldOrderColumns, moldOrderGroupColumns } from '../columns';
 import type { MoldOrderGroupRow, MoldOrderRow } from '../types';
 import OrderActionPanel from './components/OrderActionPanel';
 
+import { getTodayLocal } from '@/utils/date';
 type Mode = 'orders' | 'groups';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
-const monthAgo = () => {
-  const date = new Date();
-  date.setMonth(date.getMonth() - 1);
-  return isoDate(date);
-};
 
 export default function MoldOrderPage() {
   const [mode, setMode] = useState<Mode>('orders');
@@ -39,7 +36,7 @@ export default function MoldOrderPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const [dateFrom, setDateFrom] = useState(monthAgo);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [supplierCode, setSupplierCode] = useState('');
   const [moldCode, setMoldCode] = useState('');
@@ -100,9 +97,6 @@ export default function MoldOrderPage() {
             {searched ? `${shown}/${total}건` : '조회조건을 선택하세요'}
           </p>
         </div>
-        <Button size="sm" onClick={search} disabled={loading}>
-          <Search className="mr-1 h-4 w-4" />조회
-        </Button>
       </header>
 
       <Card padding="none">
@@ -114,29 +108,24 @@ export default function MoldOrderPage() {
           <MoldCodeField popupId="mold-search" returnKey="moldCode"
             label="S-PARTS 코드" placeholder="S-PARTS 코드"
             value={moldCode} onChange={setMoldCode} />
+          <Button size="sm" onClick={search} disabled={loading}>
+            <Search className="mr-1 h-4 w-4" />조회
+          </Button>
         </CardContent>
       </Card>
+
+      <ScreenTabs
+        tabs={[
+          { key: 'orders', label: '주문' },
+          { key: 'groups', label: '주문그룹 집계' },
+        ]}
+        active={mode}
+        onChange={changeMode}
+      />
 
       {mode === 'orders' && (
         <OrderActionPanel selected={selected} onChanged={search} />
       )}
-
-      <nav className="flex gap-1 border-b border-border" aria-label="조회 모드">
-        {([['orders', '주문'], ['groups', '주문그룹 집계']] as const).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => changeMode(key)}
-            className={`px-3 py-1.5 text-sm ${
-              mode === key
-                ? 'border-b-2 border-primary font-semibold text-text'
-                : 'text-text-muted'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">

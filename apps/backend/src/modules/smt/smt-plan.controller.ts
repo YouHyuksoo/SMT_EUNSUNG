@@ -8,6 +8,10 @@ import {
   SmtPlanDeployDto,
   SmtPlanQueryDto,
   SmtPlanSetActiveDto,
+  SmtPlanSummaryQueryDto,
+  SmtPlanScopeDto,
+  SmtPlanRunCardQueryDto,
+  SmtPlanLineOnOffDto,
 } from './smt-plan.dto';
 import { SmtPlanService } from './smt-plan.service';
 
@@ -32,6 +36,14 @@ export class SmtPlanController {
   })
   async findLineSummary(@OrganizationId() organizationId: number) {
     return ResponseUtil.success(await this.service.findLineSummary(organizationId));
+  }
+
+  @Get('summary')
+  @ApiOperation({
+    summary: '라인·모델·PCB면별 배포 요약 (PB d_smt_plandata_lst, 화면 오른쪽 위 Summary). 라인이나 모델 필수',
+  })
+  async findSummary(@Query() query: SmtPlanSummaryQueryDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.findSummary(query, organizationId));
   }
 
   @Post('deploy')
@@ -60,6 +72,38 @@ export class SmtPlanController {
     return ResponseUtil.success(
       await this.service.setActive(dto, organizationId, userId || DEFAULT_USER),
     );
+  }
+
+  @Get('layout-print')
+  @ApiOperation({ summary: '피더 레이아웃 출력 데이터 (PB d_smt_plandata_list_rpt, 읽기 전용)' })
+  async layoutPrint(@Query() query: SmtPlanScopeDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.findLayoutPrint(query, organizationId));
+  }
+
+  @Get('run-cards')
+  @ApiOperation({ summary: '라인 ON/OFF 할 런카드 후보 (그 라인·모델의 최근 60일)' })
+  async runCards(@Query() query: SmtPlanRunCardQueryDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.findRunCards(query, organizationId));
+  }
+
+  @Post('line-onoff')
+  @ApiOperation({
+    summary: '라인 ON/OFF (**쓰기**) — 현장 PDA 와 같은 P_CHECK_PDA_TB_INOUT_PS_USER 를 런카드로 부른다',
+  })
+  async lineOnOff(@Body() dto: SmtPlanLineOnOffDto, @UserId() userId?: string) {
+    return ResponseUtil.success(await this.service.lineOnOff(dto, userId || DEFAULT_USER));
+  }
+
+  @Put('restore')
+  @ApiOperation({
+    summary: 'Restore (**쓰기**) — 활성·CCS 미완료 행을 체크 완료로, 피더 자재 바코드를 체크이력에서 다시 채운다',
+  })
+  async restore(
+    @Body() dto: SmtPlanScopeDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(await this.service.restore(dto, organizationId, userId || DEFAULT_USER));
   }
 
   @Delete()

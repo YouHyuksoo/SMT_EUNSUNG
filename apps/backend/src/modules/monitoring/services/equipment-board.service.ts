@@ -11,7 +11,7 @@
  *    - UNUSED : IMCN_MACHINE.USE_STATUS 가 S/T/D (대시보드 getSummary 의 "미사용"과 같은 기준)
  *    - NORMAL : 그 외
  * 3. 가동 작업(runningJobs): 설비별 작업지시 데이터가 없어 "라인 단위"로만 연결한다.
- *    IP_PRODUCT_SENSOR_ACTUAL_TIME(SMD 센서 실적, 시간대 A~J 가 약 2시간 단위로 기록됨)에
+ *    생산실적(조립실적 뷰 IP_ASSEMBLY_RESULT_SENSOR_V — AOI 양품이 실시간으로 더해진다)에
  *    최근 LIVE_WINDOW_MIN 분 안에 기록(LAST_MODIFY_DATE)이 있는 라인을 "가동 중"으로 본다.
  *    라인마다 가장 최근에 기록된 모델 1건만 낸다.
  *    - planQty   : 같은 날짜·라인·모델의 IP_PRODUCT_SMD_PLAN.PLAN_QTY 합 (계획 없으면 0)
@@ -137,7 +137,7 @@ export class EquipmentBoardService {
          SELECT s.RECEIPT_DATE, s.LINE_CODE, s.MODEL_NAME,
                 SUM(NVL(s.PRODUCT_ACTUAL_QTY, 0)) AS good_qty,
                 MAX(s.LAST_MODIFY_DATE) AS last_at
-           FROM IP_PRODUCT_SENSOR_ACTUAL_TIME s
+           FROM IP_ASSEMBLY_RESULT_SENSOR_V s
           WHERE s.ORGANIZATION_ID = ${ORG}
             AND s.RECEIPT_DATE >= TRUNC(SYSDATE) - 1
           GROUP BY s.RECEIPT_DATE, s.LINE_CODE, s.MODEL_NAME

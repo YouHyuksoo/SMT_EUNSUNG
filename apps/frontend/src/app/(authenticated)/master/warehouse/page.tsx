@@ -11,7 +11,8 @@
  */
 import { useState, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Warehouse, MapPin } from 'lucide-react';
+import { Warehouse } from 'lucide-react';
+import ScreenTabs from '@/components/shared/ScreenTabs';
 import WarehouseList from './components/WarehouseList';
 import LocationList from './components/LocationList';
 
@@ -24,9 +25,9 @@ export default function WarehousePage() {
 
   // AI 채팅 페이지 도구(창고 등록 write 도구) 등록 — createWarehouse는 backend 실행
 
-  const tabs: { key: TabType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { key: 'warehouse', label: t('inventory.warehouse.title'), icon: Warehouse },
-    { key: 'location', label: t('inventory.location.title'), icon: MapPin },
+  const tabs: { key: TabType; label: string }[] = [
+    { key: 'warehouse', label: t('inventory.warehouse.title') },
+    { key: 'location', label: t('inventory.location.title') },
   ];
 
   return (
@@ -44,21 +45,8 @@ export default function WarehousePage() {
       </div>
 
       {/* 탭 네비게이션 */}
-      <div className="flex border-b border-border flex-shrink-0">
-        {tabs.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === key
-                ? 'border-primary text-primary'
-                : 'border-transparent text-text-muted hover:text-text hover:border-border'
-            }`}
-          >
-            <Icon className="w-4 h-4" />
-            {label}
-          </button>
-        ))}
+      <div className="flex-shrink-0">
+        <ScreenTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
       </div>
 
       {/* 탭 컨텐츠 */}

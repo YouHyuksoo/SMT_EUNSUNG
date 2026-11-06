@@ -29,24 +29,35 @@ export default function ScreenTabs<K extends string>({
   active: K;
   onChange: (key: K) => void;
 }) {
+  // 탭마다 위가 둥근 칸을 두고, 고른 탭은 위쪽 포인트 색 줄 + 바탕색으로 아래 줄과 이어 붙인다.
   return (
-    <div className="flex flex-wrap gap-1 border-b border-border">
-      {tabs.map((t) => (
-        <button
-          key={t.key}
-          type="button"
-          onClick={() => onChange(t.key)}
-          data-tooltip={t.tooltip}
-          className={`px-3 py-2 text-sm ${active === t.key
-            ? 'border-b-2 border-primary font-semibold text-text'
-            : 'text-text-muted hover:text-text'}`}
-        >
-          {t.label}
-          {(t.count ?? 0) > 0 && (
-            <span className="ml-1 text-xs text-text-muted">{t.count}</span>
-          )}
-        </button>
-      ))}
+    <div role="tablist" className="flex flex-wrap items-end gap-1 border-b border-border">
+      {tabs.map((t) => {
+        const selected = active === t.key;
+        return (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            onClick={() => onChange(t.key)}
+            data-tooltip={t.tooltip}
+            className={`-mb-px flex items-center gap-1.5 rounded-t-md border px-4 py-2 text-sm transition-colors ${selected
+              ? 'border-border border-t-2 border-t-primary border-b-background bg-background font-semibold text-primary'
+              : 'border-border/60 bg-surface text-text-muted hover:bg-primary/5 hover:text-text'}`}
+          >
+            {t.label}
+            {(t.count ?? 0) > 0 && (
+              <span className={`rounded-full px-1.5 text-[11px] leading-5 ${selected
+                ? 'bg-primary/10 text-primary'
+                : 'bg-border/60 text-text-muted'}`}
+              >
+                {t.count?.toLocaleString()}
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -33,12 +33,8 @@ import type {
   SolderStageCountRow,
 } from '../warehouse-types';
 
-const monthsAgo = (n: number) => {
-  const d = new Date();
-  d.setMonth(d.getMonth() - n);
-  return d.toISOString().slice(0, 10);
-};
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 const TYPE_OPTIONS = [
   { value: '', label: '종류: 전체' },
@@ -47,7 +43,7 @@ const TYPE_OPTIONS = [
 ];
 
 export default function SolderPage() {
-  const [dateFrom, setDateFrom] = useState(monthsAgo(3));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [solderLotNo, setSolderLotNo] = useState('');
   const [itemBarcode, setItemBarcode] = useState('');

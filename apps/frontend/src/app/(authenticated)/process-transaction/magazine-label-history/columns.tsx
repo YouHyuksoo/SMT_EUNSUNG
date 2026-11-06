@@ -16,7 +16,7 @@ const historyColumns: ColumnDef<MagazineLabelHistoryRow>[] = [
   { accessorKey: 'receiptDate', header: '수불일시', size: 165, cell: ctx => dateTime(ctx.getValue()) },
   { accessorKey: 'modelName', header: '모델명', size: 150 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 85 },
-  { accessorKey: 'pcbItem', header: 'PCB 구분', size: 95 },
+  { accessorKey: 'pcbItem', header: 'PCB 구분', size: 95, cell: comCodeCell('PCB ITEM') },
   { accessorKey: 'lotQty', header: '수량', size: 95, meta: { align: 'right' }, cell: ctx => qty(ctx.getValue()) },
   { accessorKey: 'badQty', header: '불량수량', size: 100, meta: { align: 'right' }, cell: ctx => qty(ctx.getValue()) },
   { accessorKey: 'transferMagazineLabelNo', header: '대체 매거진 라벨번호', size: 210 },
@@ -31,7 +31,7 @@ export function magazineLabelColumns(mode: MagazineLabelViewMode, matrixColumnKe
     { accessorKey: 'lineCode', header: '라인', size: 110, cell: ctx => ctx.row.original.lineName ?? ctx.getValue() ?? '' },
     { accessorKey: 'runNo', header: 'RUN NO', size: 145 },
     { accessorKey: 'modelName', header: '모델명', size: 150 },
-    { accessorKey: 'pcbItem', header: 'PCB 구분', size: 95 },
+    { accessorKey: 'pcbItem', header: 'PCB 구분', size: 95, cell: comCodeCell('PCB ITEM') },
     ...matrixColumnKeys.map(key => ({ accessorKey: key, header: key, size: 125, meta: { align: 'right' as const }, cell: (ctx: { getValue(): unknown }) => qty(ctx.getValue()) })),
     { accessorKey: 'lotQty', header: '합계', size: 105, meta: { align: 'right' }, cell: ctx => qty(ctx.getValue()) },
   ];

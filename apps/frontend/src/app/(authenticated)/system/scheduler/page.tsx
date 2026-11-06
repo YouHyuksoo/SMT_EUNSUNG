@@ -12,7 +12,8 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Timer, List, BarChart3 } from "lucide-react";
+import { Timer } from "lucide-react";
+import ScreenTabs from "@/components/shared/ScreenTabs";
 import SchedulerJobTab from "./components/SchedulerJobTab";
 import SchedulerLogTab from "./components/SchedulerLogTab";
 import SchedulerDashboardTab from "./components/SchedulerDashboardTab";
@@ -23,10 +24,10 @@ export default function SchedulerPage() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabValue>("jobs");
 
-  const tabs: { key: TabValue; label: string; icon: React.ReactNode }[] = [
-    { key: "jobs", label: t("system.scheduler.jobs", "작업 관리"), icon: <Timer className="w-4 h-4" /> },
-    { key: "logs", label: t("system.scheduler.logs", "실행 이력"), icon: <List className="w-4 h-4" /> },
-    { key: "dashboard", label: t("system.scheduler.dashboard", "대시보드"), icon: <BarChart3 className="w-4 h-4" /> },
+  const tabs: { key: TabValue; label: string }[] = [
+    { key: "jobs", label: t("system.scheduler.jobs", "작업 관리") },
+    { key: "logs", label: t("system.scheduler.logs", "실행 이력") },
+    { key: "dashboard", label: t("system.scheduler.dashboard", "대시보드") },
   ];
 
   return (
@@ -40,23 +41,8 @@ export default function SchedulerPage() {
       </div>
 
       {/* 탭 네비게이션 */}
-      <div className="border-b border-border flex-shrink-0">
-        <div className="flex gap-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.key
-                  ? "border-primary text-primary"
-                  : "border-transparent text-text-muted hover:text-text hover:border-border"
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      <div className="flex-shrink-0">
+        <ScreenTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
       </div>
 
       {/* 탭 컨텐츠 */}

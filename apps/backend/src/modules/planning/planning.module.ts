@@ -18,6 +18,7 @@
  * 확정처리가 같아서, 규칙을 두 곳에 복붙하면 한쪽만 고쳐지는 일이 생긴다.
  */
 import { Module } from '@nestjs/common';
+import { AssemblyResultModule } from '../assembly-result/assembly-result.module';
 import { KittingController } from './kitting.controller';
 import { KittingService } from './kitting.service';
 import { MasterPlanController } from './master-plan.controller';
@@ -31,6 +32,7 @@ import { SmdPlanBoardController } from './smd-plan-board.controller';
 import { SmdPlanBoardService } from './smd-plan-board.service';
 
 @Module({
+  imports: [AssemblyResultModule],
   controllers: [
     MasterPlanController,
     SmdPlanController,

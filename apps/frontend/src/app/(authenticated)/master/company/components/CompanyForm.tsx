@@ -14,7 +14,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { X, Plus, Trash2, MapPin } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Button, Input, ConfirmModal } from "@/components/ui";
+import DataGrid from "@/components/data-grid/DataGrid";
 import api from "@/services/api";
 import CellManagementSection from "./CellManagementSection";
 import { Company, Plant, getCompanyKey, getPlantKey, getPlantPath } from "../types";
@@ -76,6 +78,36 @@ export default function CompanyFormPanel({ editingCompany, onClose, onSave, anim
     onDirtyChange?.(dirty);
   }, [dirty, onDirtyChange]);
   useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
+
+  /** 사업장 목록 그리드 컬럼 */
+  const plantColumns = useMemo<ColumnDef<Plant, unknown>[]>(() => [
+    {
+      id: "actions",
+      header: t("common.actions"),
+      size: 50,
+      enableSorting: false,
+      meta: { align: "center", filterType: "none" },
+      cell: ({ row }) => (
+        <button onClick={(e) => { e.stopPropagation(); setDeletePlantTarget(row.original); }}
+          className="p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
+          <Trash2 className="w-3.5 h-3.5 text-red-500" />
+        </button>
+      ),
+    },
+    {
+      accessorKey: "plantCode",
+      header: t("master.company.plantCode", "사업장코드"),
+      size: 140,
+      meta: { filterType: "text" },
+      cell: ({ row }) => <span className="font-mono font-medium">{row.original.plantCode}</span>,
+    },
+    {
+      accessorKey: "plantName",
+      header: t("master.company.plantName", "사업장명"),
+      size: 220,
+      meta: { filterType: "text" },
+    },
+  ], [t]);
 
   /** 사업장 목록 조회 */
   const fetchPlants = useCallback(async () => {
@@ -253,37 +285,15 @@ export default function CompanyFormPanel({ editingCompany, onClose, onSave, anim
             )}
 
             {/* 사업장 목록 */}
-            {plants.length > 0 ? (
-              <div className="border border-border rounded-lg overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead className="bg-surface">
-                    <tr>
-                      <th className="text-left px-3 py-1.5 text-text-muted font-medium">{t("master.company.plantCode", "사업장코드")}</th>
-                      <th className="text-left px-3 py-1.5 text-text-muted font-medium">{t("master.company.plantName", "사업장명")}</th>
-                      <th className="w-10"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {plants.map((plant) => (
-                      <tr key={getPlantKey(plant)} className="border-t border-border hover:bg-surface/50">
-                        <td className="px-3 py-1.5 font-mono font-medium text-text">{plant.plantCode}</td>
-                        <td className="px-3 py-1.5 text-text">{plant.plantName}</td>
-                        <td className="px-3 py-1.5 text-center">
-                          <button onClick={() => setDeletePlantTarget(plant)}
-                            className="p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
-                            <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-4 text-text-muted bg-surface rounded-lg border border-dashed border-border">
-                {t("master.company.noPlant", "등록된 사업장이 없습니다.")}
-              </div>
-            )}
+            <DataGrid
+              data={plants}
+              columns={plantColumns}
+              emptyMessage={t("master.company.noPlant", "등록된 사업장이 없습니다.")}
+              getRowId={getPlantKey}
+              maxHeight="240px"
+              enableExport
+              exportFileName={t("master.company.plantSection", "사업장")}
+            />
           </div>
           <CellManagementSection onDirtyChange={setCellDirty} />
           </>

@@ -27,7 +27,7 @@
  * 6. **쓰기는 실행하지 않고 parse 로만 검증했다** (사용자 결정).
  */
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
 import { applyIssuePacking, likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
@@ -48,9 +48,24 @@ const SEQUENCES = {
   issueInvoice: 'SEQ_ISSUE_INVOICE_SEQUENCE',
 } as const;
 
+/**
+ * 출고구분 — 출고계정이 M001·M002 이고 '정상출고' 체크가 켜져 있으면 정상출고 'N',
+ * 그 밖은 기타출고 'E'. (재생출고 'R' 은 재생 재고에서만 나오는데 그 표가 0행이라 쓰지 않는다.)
+ */
+const NORMAL_ISSUE_ACCOUNTS = ['M001', 'M002'];
+const issueTypeOf = (issueAccount: string, normalIssue = true) =>
+  (normalIssue && NORMAL_ISSUE_ACCOUNTS.includes(issueAccount) ? 'N' : 'E');
+
+/**
+ * 기타출고로 들어간 원장 줄 — 작업지시·협력사롯트가 '*' 이고 바코드가 없다.
+ * 바코드 출고는 BARCODE 가, 공정 출고는 MFS 가 채워져 있어 빠진다 (실측).
+ * 기타출고를 취소한 역분개 줄도 같은 값을 복사하므로 함께 나온다.
+ */
+const ETC_ISSUE_CONDITION = `AND s.MFS = '*'
+          AND s.WORK_ORDER_NO = '*'
+          AND s.BARCODE IS NULL`;
+
 const FIXED = {
-  /** 'N' = 정상출고. PB 는 기타출고 'E'·재생출고 'R' 도 쓰지만 최근 1년 실데이터가 전부 'N' 이다. */
-  issueType: 'N',
   issueStatus: 'N',
   /** 취소로 만들어지는 행의 상태 */
   cancelStatus: 'C',
@@ -123,6 +138,7 @@ export class IssueManageService {
           AND NVL(s.WORKSTAGE_CODE, '*') LIKE :workstageCode ESCAPE '\\'
           AND NVL(s.INVOICE_NO, '*') LIKE :invoiceNo ESCAPE '\\'
           AND NVL(s.ISSUE_STATUS, '*') LIKE :issueStatus ESCAPE '\\'
+          ${query.etcOnly ? ETC_ISSUE_CONDITION : ''}
           AND s.ORGANIZATION_ID = :organizationId
         ORDER BY s.ISSUE_DATE DESC, s.ISSUE_SEQUENCE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
@@ -199,8 +215,8 @@ export class IssueManageService {
    * 기타출고 등록 (**쓰기**). PB 의 "선택한 재고를 출고 목록으로 옮기고 저장" 을
    * 한 번에 한다.
    *
-   * PB 가 요구하던 것을 그대로 요구한다: **라인·공정·설비를 반드시 고른다.**
-   * 세 값 중 하나라도 비면 PB 도 거절했다 (어디로 나갔는지 모르는 출고가 생긴다).
+   * **라인·공정·설비·출고계정을 반드시 고른다.** 하나라도 비면 거절한다
+   * (어디로·무슨 계정으로 나갔는지 모르는 출고가 생긴다).
    */
   async createEtcIssue(dto: EtcIssueCreateDto, organizationId: number, userId: string) {
     const qty = Number(dto.issueQty);
@@ -260,7 +276,7 @@ export class IssueManageService {
             -- 수량 부호가 출고(3)/반납(4)을 정한다 (PB 그대로).
             DECODE(SIGN(:issueQty), -1, '4', '3'),
             :issuePrice, :issueQty * :issuePrice,
-            '${FIXED.issueStatus}', '${FIXED.issueType}', :issueAccount,
+            '${FIXED.issueStatus}', :issueType, :issueAccount,
             :invoiceNo, '${FIXED.workOrderNo}', :comments,
             SYSDATE, :userId, SYSDATE, :userId)`,
         namedBinds({
@@ -279,7 +295,8 @@ export class IssueManageService {
           inventoryType: dto.inventoryType ?? null,
           issueQty,
           issuePrice: Number(dto.issuePrice ?? 0),
-          issueAccount: dto.issueAccount ?? null,
+          issueType: issueTypeOf(dto.issueAccount, dto.normalIssue ?? true),
+          issueAccount: dto.issueAccount,
           invoiceNo,
           comments: dto.comments ?? null,
           userId,
@@ -309,8 +326,10 @@ export class IssueManageService {
    * **원장을 지우지 않는다.** 원래 건을 'C' 로 바꾸고 부호를 뒤집은 행을 한 건 넣는다 —
    * 그래야 무엇이 언제 취소됐는지 이력에 남는다.
    */
-  async cancelIssue(dto: IssueCancelDto, organizationId: number, userId: string) {
-    return this.tx.run(async (qr) => {
+  async cancelIssue(dto: IssueCancelDto, organizationId: number, userId: string, outer?: QueryRunner) {
+    // outer 를 넘기면 그 트랜잭션 안에서 한다 — 238 자재바코드출고의 출고 취소가 바코드 원장
+    // 되돌리기와 한 트랜잭션으로 묶는다 (PB w_mat_issue_cancel_4_barcode_popup).
+    const work = async (qr: QueryRunner) => {
       // 취소할 건이 있고 아직 취소되지 않았는지 본다. PB 는 화면이 고른 행을 그대로
       // 믿었지만, 화면을 우회하면 이미 취소된 건을 또 취소해 원장이 두 번 뒤집힌다.
       const originals = (await qr.query(
@@ -471,6 +490,7 @@ export class IssueManageService {
           affectedRows(requestCleared) ?? 0,
         ),
       };
-    });
+    };
+    return outer ? work(outer) : this.tx.run(work);
   }
 }

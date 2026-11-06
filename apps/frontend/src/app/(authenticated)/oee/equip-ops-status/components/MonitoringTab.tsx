@@ -8,8 +8,10 @@
  */
 
 import { useMemo, useState } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
 import { Search, PauseCircle, Wrench } from 'lucide-react';
 import { Card, CardContent, Input, Select } from '@/components/ui';
+import DataGrid from '@/components/data-grid/DataGrid';
 import EquipDowntimePanel, { type DowntimeMachine } from '@/components/shared/EquipDowntimePanel';
 import { useEquipTypeOptions, useProcessOptions } from '@/hooks/useMasterOptions';
 import type { OpsMachine } from '../types';
@@ -48,6 +50,42 @@ export default function MonitoringTab({ machines, loading, onChanged }: Props) {
 
   const downCount = useMemo(() => machines.filter((m) => m.openDtSeq != null).length, [machines]);
 
+  const columns = useMemo<ColumnDef<OpsMachine>[]>(() => [
+    { accessorKey: 'machineCode', header: '설비코드', cell: ({ row }) => <span className="font-mono">{row.original.machineCode}</span> },
+    { id: 'machineName', header: '설비명', accessorFn: (m) => m.machineName ?? '-' },
+    { id: 'machineType', header: '유형', accessorFn: (m) => m.machineTypeName ?? m.machineType ?? '-', meta: { align: 'center' as const } },
+    { id: 'workstage', header: '적용공정', accessorFn: (m) => (m.workstageCode ? `${m.workstageCode} · ${m.workstageName ?? ''}` : '-') },
+    { id: 'modelName', header: '모델', accessorFn: (m) => m.modelName ?? '-', cell: ({ getValue }) => <span className="text-text-muted">{String(getValue())}</span> },
+    {
+      id: 'status',
+      header: '상태',
+      size: 96,
+      accessorFn: (m) => (m.openDtSeq != null ? '비가동' : '정상'),
+      meta: { align: 'center' as const, filterType: 'select' as const },
+      cell: ({ row }) => {
+        const down = row.original.openDtSeq != null;
+        return (
+          <span className={`px-2 py-0.5 rounded text-xs font-medium ${down ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'}`}>
+            {down ? '비가동' : '정상'}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      header: '비가동 처리',
+      size: 128,
+      enableSorting: false,
+      meta: { align: 'center' as const, filterType: 'none' as const },
+      cell: ({ row }) => (
+        <button onClick={(e) => { e.stopPropagation(); setPanelMachine(row.original); }}
+          className="text-xs border border-primary text-primary rounded px-2 py-1 hover:bg-surface inline-flex items-center gap-1">
+          <Wrench className="w-3 h-3" />비가동 관리
+        </button>
+      ),
+    },
+  ], []);
+
   // 패널이 열린 설비의 최신 상태 (목록 갱신 후에도 패널이 따라가도록)
   const panelTarget: DowntimeMachine | null = panelMachine
     ? { machineCode: panelMachine.machineCode, machineName: panelMachine.machineName, workstageCode: panelMachine.workstageCode }
@@ -81,48 +119,18 @@ export default function MonitoringTab({ machines, loading, onChanged }: Props) {
 
         {/* 목록 */}
         <Card className="flex-1 min-h-0 overflow-hidden" padding="none">
-          <CardContent className="h-full p-0 overflow-auto">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-surface text-text-muted text-xs z-10">
-                <tr>
-                  <th className="p-2 text-center font-medium">설비코드</th>
-                  <th className="p-2 text-center font-medium">설비명</th>
-                  <th className="p-2 text-center font-medium">유형</th>
-                  <th className="p-2 text-center font-medium">적용공정</th>
-                  <th className="p-2 text-center font-medium">모델</th>
-                  <th className="p-2 text-center font-medium w-24">상태</th>
-                  <th className="p-2 text-center font-medium w-32">비가동 처리</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((m) => {
-                  const down = m.openDtSeq != null;
-                  const selected = panelMachine?.machineCode === m.machineCode;
-                  return (
-                    <tr key={m.machineCode} className={`border-t border-border hover:bg-surface ${selected ? 'bg-primary/10' : ''}`}>
-                      <td className="p-2 font-mono">{m.machineCode}</td>
-                      <td className="p-2">{m.machineName ?? '-'}</td>
-                      <td className="p-2 text-center">{m.machineTypeName ?? m.machineType ?? '-'}</td>
-                      <td className="p-2">{m.workstageCode ? `${m.workstageCode} · ${m.workstageName ?? ''}` : '-'}</td>
-                      <td className="p-2 text-text-muted">{m.modelName ?? '-'}</td>
-                      <td className="p-2 text-center">
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${down ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'}`}>
-                          {down ? '비가동' : '정상'}
-                        </span>
-                      </td>
-                      <td className="p-2 text-center">
-                        <button onClick={() => setPanelMachine(m)}
-                          className="text-xs border border-primary text-primary rounded px-2 py-1 hover:bg-surface inline-flex items-center gap-1">
-                          <Wrench className="w-3 h-3" />비가동 관리
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {loading && <tr><td colSpan={7} className="p-8 text-center text-text-muted text-sm">조회 중…</td></tr>}
-                {!loading && !rows.length && <tr><td colSpan={7} className="p-8 text-center text-text-muted text-sm">조회 결과가 없습니다</td></tr>}
-              </tbody>
-            </table>
+          <CardContent className="h-full p-4">
+            <DataGrid
+              data={rows}
+              columns={columns}
+              isLoading={loading}
+              pageSize={200}
+              enableExport
+              exportFileName="설비운영현황"
+              getRowId={(m) => m.machineCode}
+              selectedRowId={panelMachine?.machineCode}
+              emptyMessage="조회 결과가 없습니다"
+            />
           </CardContent>
         </Card>
       </div>

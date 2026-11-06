@@ -23,14 +23,15 @@ import { solderInputHistoryColumns } from '../solder-columns';
 import type { SolderInputHistoryRow } from '../warehouse-types';
 import EquipSelect from '@/components/shared/EquipSelect';
 
+import { getTodayLocal } from '@/utils/date';
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 
 export default function SolderInputHistoryPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [solderLotNo, setSolderLotNo] = useState('');
   const [machineCode, setMachineCode] = useState('');

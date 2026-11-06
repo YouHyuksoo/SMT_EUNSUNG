@@ -185,7 +185,6 @@ describe('ProcessService equipment assignments', () => {
     processRepo.update.mockResolvedValue({ affected: 1 } as never);
 
     await target.update('W020', {
-      uphValue: 1200,
       badRateControl: 'Y',
       badMaxRate: 3.5,
       codeGroup: 'SMT',
@@ -194,7 +193,7 @@ describe('ProcessService equipment assignments', () => {
 
     expect(processRepo.update).toHaveBeenCalledWith(
       { processCode: 'W020', organizationId: 1 },
-      { uphValue: 1200, badRateControl: 'Y', badMaxRate: 3.5, codeGroup: 'SMT', startYn: 'Y' },
+      { badRateControl: 'Y', badMaxRate: 3.5, codeGroup: 'SMT', startYn: 'Y' },
     );
   });
 });

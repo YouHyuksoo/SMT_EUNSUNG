@@ -23,6 +23,7 @@ import ModelSearchField from '@/components/shared/ModelSearchField';
 import api from '@/services/api';
 import type { PlanRow } from '../../../production/planning-types';
 
+import { getTodayLocal } from '@/utils/date';
 interface PlanImportModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -33,11 +34,11 @@ interface PlanImportModalProps {
 }
 
 const ymd = (v: unknown) => (v ? String(v).slice(0, 10) : '');
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getTodayLocal();
 const plusDays = (d: string, n: number) => {
   const t = new Date(`${d}T00:00:00`);
   t.setDate(t.getDate() + n);
-  return t.toISOString().slice(0, 10);
+  return getTodayLocal(t);
 };
 const rowKey = (r: PlanRow) => `${r.planDate}|${r.planSequence}|${r.lineCode}`;
 

@@ -57,7 +57,7 @@ export default function CurrentInventoryPage() {
       <header className="flex items-center justify-between gap-4">
         <div>
           <h1 className="flex items-center gap-2 text-xl font-bold text-text">
-            <ClipboardList className="h-6 w-6 text-primary" />현재고조회
+            <ClipboardList className="h-6 w-6 text-primary" />자재현재고조회
           </h1>
           <p className="mt-1 text-sm text-text-muted">로케이션·품목별 자재 현재고 수량과 재고금액을 조회합니다 · {searched ? `${rows.length}/${total}건` : '조회조건을 입력하세요'}</p>
         </div>
@@ -77,7 +77,7 @@ export default function CurrentInventoryPage() {
       </Card>
       <div className="flex gap-4 text-sm text-text-muted"><span>현재고 합계: <strong className="text-text">{summary.qty.toLocaleString()}</strong></span><span>재고금액 합계: <strong className="text-text">{summary.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong></span></div>
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
-        <CardContent className="h-full p-3"><DataGrid data={rows} columns={currentInventoryColumns} isLoading={loading} pageSize={50} enableColumnFilter enableExport exportFileName="현재고조회" emptyMessage={searched ? '조회 결과가 없습니다.' : '조회 버튼을 눌러 현재고를 확인하세요.'} /></CardContent>
+        <CardContent className="h-full p-3"><DataGrid data={rows} columns={currentInventoryColumns} isLoading={loading} pageSize={50} enableColumnFilter enableExport exportFileName="자재현재고조회" emptyMessage={searched ? '조회 결과가 없습니다.' : '조회 버튼을 눌러 현재고를 확인하세요.'} /></CardContent>
       </Card>
     </main>
   );

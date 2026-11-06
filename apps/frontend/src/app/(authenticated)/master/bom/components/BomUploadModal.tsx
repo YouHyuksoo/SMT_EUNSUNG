@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, AlertTriangle, PencilLine, MinusCircle } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import { Button } from "@/components/ui";
+import DataGrid from "@/components/data-grid/DataGrid";
 import api from "@/services/api";
 
 interface UploadResult {
   inserted: number;
-  skipped: number;
-  errors: { row: number; message: string }[];
+  updated: number;
+  unchanged: number;
 }
 
 interface PreviewRow {
@@ -20,17 +22,24 @@ interface PreviewRow {
   validFrom: string | null;
   validTo: string | null;
   qtyPer: number | null;
-  revision: string;
-  status: "new" | "duplicate_db" | "duplicate_file" | "error";
+  revision: string | null;
+  seq: number;
+  processCode: string;
+  location: string | null;
+  /** new 신규 / update 기존 행 수정 / same 기존 행과 같음 / error 오류 */
+  status: "new" | "update" | "same" | "error";
   message?: string;
-  /** 업로드 시 들어갈 BOM 주인(최상위 제품) */
+  /** 수정 행에서 바뀌는 항목 */
+  changes?: string[];
+  /** 업로드 시 들어갈 BOM 주인(최상위 제품) — 신규 행만 */
   ownerItemCode?: string;
 }
 
 interface PreviewResult {
   rows: PreviewRow[];
-  duplicateCount: number;
   newCount: number;
+  updateCount: number;
+  sameCount: number;
   errorCount: number;
 }
 
@@ -44,9 +53,9 @@ type Stage = "idle" | "previewing" | "previewed" | "uploading" | "done";
 
 const STATUS_STYLES: Record<PreviewRow["status"], { bg: string; labelKey: string; labelFallback: string; icon: React.ReactNode }> = {
   new: { bg: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300", labelKey: "master.bom.uploadStatusNew", labelFallback: "신규", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
-  duplicate_db: { bg: "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300", labelKey: "master.bom.uploadStatusDuplicateDb", labelFallback: "DB중복", icon: <XCircle className="w-3.5 h-3.5" /> },
-  duplicate_file: { bg: "bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300", labelKey: "master.bom.uploadStatusDuplicateFile", labelFallback: "파일중복", icon: <XCircle className="w-3.5 h-3.5" /> },
-  error: { bg: "bg-gray-50 dark:bg-gray-900/20 text-gray-600 dark:text-gray-400", labelKey: "master.bom.uploadStatusError", labelFallback: "오류", icon: <AlertCircle className="w-3.5 h-3.5" /> },
+  update: { bg: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300", labelKey: "master.bom.uploadStatusUpdate", labelFallback: "수정", icon: <PencilLine className="w-3.5 h-3.5" /> },
+  same: { bg: "bg-gray-50 dark:bg-gray-900/20 text-gray-600 dark:text-gray-400", labelKey: "master.bom.uploadStatusSame", labelFallback: "변경없음", icon: <MinusCircle className="w-3.5 h-3.5" /> },
+  error: { bg: "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300", labelKey: "master.bom.uploadStatusError", labelFallback: "오류", icon: <AlertCircle className="w-3.5 h-3.5" /> },
 };
 
 export default function BomUploadModal({ isOpen, onClose, onComplete }: BomUploadModalProps) {
@@ -102,7 +111,7 @@ export default function BomUploadModal({ isOpen, onClose, onComplete }: BomUploa
   };
 
   const handleUpload = async () => {
-    if (!file || !preview || preview.duplicateCount > 0) return;
+    if (!file || !preview || preview.errorCount > 0) return;
     setStage("uploading");
     try {
       const formData = new FormData();
@@ -122,21 +131,114 @@ export default function BomUploadModal({ isOpen, onClose, onComplete }: BomUploa
     }
   };
 
-  const hasDuplicates = (preview?.duplicateCount ?? 0) > 0;
-  const canUpload = stage === "previewed" && !hasDuplicates && (preview?.errorCount ?? 0) < (preview?.rows.length ?? 0);
+  /** 미리보기 행 그리드 컬럼. 상태는 좁은 모달에서도 보이도록 행 번호 바로 뒤에 두고, 화면 라벨로 정렬·필터한다 */
+  const previewColumns = useMemo<ColumnDef<PreviewRow, unknown>[]>(() => [
+    {
+      accessorKey: "row",
+      header: t("master.bom.colRow", "행"),
+      size: 56,
+      meta: { align: "center", filterType: "number" },
+      cell: ({ row }) => <span className="font-mono text-text-muted">{row.original.row}</span>,
+    },
+    {
+      id: "status",
+      accessorFn: (r) => t(STATUS_STYLES[r.status].labelKey, STATUS_STYLES[r.status].labelFallback),
+      header: t("common.status", "상태"),
+      size: 90,
+      meta: { align: "center", filterType: "multi" },
+      cell: ({ row }) => {
+        const s = STATUS_STYLES[row.original.status];
+        return (
+          <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium ${s.bg}`} title={row.original.message}>
+            {s.icon}{t(s.labelKey, s.labelFallback)}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: "parentItemCode",
+      header: t("master.bom.colParentItem", "상위품목"),
+      size: 130,
+      meta: { filterType: "text" },
+      cell: ({ row }) => <span className="font-mono">{row.original.parentItemCode}</span>,
+    },
+    {
+      accessorKey: "childItemCode",
+      header: t("master.bom.colChildItem", "하위품목"),
+      size: 130,
+      meta: { filterType: "text" },
+      cell: ({ row }) => <span className="font-mono">{row.original.childItemCode}</span>,
+    },
+    {
+      accessorKey: "qtyPer",
+      header: t("master.bom.qtyPer", "소요량"),
+      size: 64,
+      meta: { align: "right", filterType: "number" },
+      cell: ({ row }) => row.original.qtyPer ?? "-",
+    },
+    {
+      accessorKey: "location",
+      header: t("master.bom.location", "로케이션"),
+      size: 160,
+      meta: { filterType: "text" },
+      cell: ({ row }) => <span className="font-mono truncate" title={row.original.location ?? ""}>{row.original.location || "-"}</span>,
+    },
+    {
+      id: "detail",
+      accessorFn: (r) => r.message ?? r.changes?.join(", ") ?? "",
+      header: t("master.bom.colDetail", "내용"),
+      size: 240,
+      meta: { filterType: "text" },
+      cell: ({ row }) => {
+        const r = row.original;
+        if (r.status === "error") return <span className="text-red-600 dark:text-red-400">{r.message}</span>;
+        if (r.status === "update") return <span className="text-blue-700 dark:text-blue-300" title={r.changes?.join("\n")}>{r.changes?.join(", ")}</span>;
+        return <span className="text-text-muted">-</span>;
+      },
+    },
+    {
+      accessorKey: "ownerItemCode",
+      header: t("master.bom.colOwnerItem", "소속 BOM"),
+      size: 130,
+      meta: { filterType: "text" },
+      cell: ({ row }) => (
+        <span className="font-mono text-text-muted" title={t("master.bom.colOwnerItemHint", "이 행이 등록될 BOM의 최상위 제품")}>
+          {row.original.ownerItemCode ?? "-"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "validFrom",
+      header: t("master.bom.colValidFrom", "적용일자"),
+      size: 96,
+      meta: { align: "center", filterType: "text" },
+      cell: ({ row }) => <span className="text-text-muted">{row.original.validFrom ?? "-"}</span>,
+    },
+    {
+      accessorKey: "validTo",
+      header: t("master.bom.colValidTo", "완료일자"),
+      size: 96,
+      meta: { align: "center", filterType: "text" },
+      cell: ({ row }) => <span className="text-text-muted">{row.original.validTo ?? "-"}</span>,
+    },
+  ], [t]);
+
+  const hasErrors = (preview?.errorCount ?? 0) > 0;
+  const saveCount = (preview?.newCount ?? 0) + (preview?.updateCount ?? 0);
+  const canUpload = stage === "previewed" && !hasErrors && saveCount > 0;
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
       title={t("master.bom.excelUploadTitle", "BOM 엑셀 업로드")}
-      size="xl"
+      size="2xl"
       footer={
         <>
-          {stage === "previewed" && !hasDuplicates && (
-            <Button size="sm" onClick={handleUpload} disabled={!canUpload} isLoading={false}>
+          {(stage === "previewed" || stage === "uploading") && (
+            <Button size="sm" onClick={handleUpload} disabled={!canUpload} isLoading={stage === "uploading"}>
               <Upload className="w-4 h-4 mr-1" />
-              {t("master.bom.uploadWithCount", "업로드")} ({preview?.newCount ?? 0}{t("common.count", "건")})
+              {t("master.bom.uploadWithCount", "업로드")} ({saveCount}{t("common.count", "건")})
             </Button>
           )}
           {stage === "done" ? (
@@ -158,6 +260,9 @@ export default function BomUploadModal({ isOpen, onClose, onComplete }: BomUploa
           className="block w-full text-sm text-text file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
         />
         <p className="text-xs text-text-muted mt-1">{t("master.bom.xlsxOnlyHint", ".xlsx 파일만 업로드 가능합니다")}</p>
+        <p className="text-xs text-text-muted mt-1">
+          {t("master.bom.uploadRuleHint", "같은 상위품목·하위품목·유효시작일 행이 있으면 바뀐 값만 수정하고, 없으면 추가합니다. 수정할 때 빈 칸은 기존 값을 그대로 둡니다. 내보내기 파일을 고쳐 그대로 올려도 됩니다.")}
+        </p>
       </div>
 
       {/* 로딩 */}
@@ -174,106 +279,50 @@ export default function BomUploadModal({ isOpen, onClose, onComplete }: BomUploa
           {/* 요약 배지 */}
           <div className="flex items-center gap-2 flex-wrap">
             <SummaryBadge label={t("master.bom.uploadStatusNew", "신규")} count={preview.newCount} color="emerald" />
-            <SummaryBadge label={t("master.bom.summaryDuplicate", "중복")} count={preview.duplicateCount} color="red" />
-            <SummaryBadge label={t("master.bom.uploadStatusError", "오류")} count={preview.errorCount} color="gray" />
+            <SummaryBadge label={t("master.bom.uploadStatusUpdate", "수정")} count={preview.updateCount} color="blue" />
+            <SummaryBadge label={t("master.bom.uploadStatusSame", "변경없음")} count={preview.sameCount} color="gray" />
+            <SummaryBadge label={t("master.bom.uploadStatusError", "오류")} count={preview.errorCount} color="red" />
           </div>
 
-          {/* 중복 경고 배너 */}
-          {hasDuplicates && (
+          {/* 오류 배너 — 오류 행이 있으면 아무것도 저장하지 않는다 */}
+          {hasErrors && (
             <div className="flex items-start gap-2 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2.5 text-sm text-red-700 dark:text-red-300">
               <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
               <div>
-                <span className="font-semibold">{t("master.bom.duplicateFoundWarning", { count: preview.duplicateCount, defaultValue: "중복 {{count}}건 발견 — 업로드할 수 없습니다." })}</span>
-                <p className="text-xs mt-0.5 opacity-80">{t("master.bom.duplicateFoundDetail", "동일한 상위품목+하위품목+적용일자 조합이 이미 존재합니다. 파일을 수정 후 다시 선택하세요.")}</p>
+                <span className="font-semibold">{t("master.bom.uploadErrorWarning", { count: preview.errorCount, defaultValue: "오류 {{count}}건 — 업로드할 수 없습니다." })}</span>
+                <p className="text-xs mt-0.5 opacity-80">{t("master.bom.uploadErrorDetail", "BOM 이 일부만 들어가지 않도록 오류가 하나라도 있으면 저장하지 않습니다. 내용 칸의 오류를 고친 뒤 파일을 다시 선택하세요.")}</p>
               </div>
             </div>
           )}
 
           {/* 행 목록 */}
-          <div className="border border-border rounded-lg overflow-hidden">
-            <div className="max-h-64 overflow-y-auto min-h-0">
-              <table className="w-full text-xs">
-                <thead className="sticky top-0 bg-surface dark:bg-gray-800 border-b border-border">
-                  <tr className="text-text-muted">
-                    <th className="px-2 py-2 text-center w-12">{t("master.bom.colRow", "행")}</th>
-                    <th className="px-2 py-2 text-left">{t("master.bom.colParentItem", "상위품목")}</th>
-                    <th className="px-2 py-2 text-left">{t("master.bom.colChildItem", "하위품목")}</th>
-                    <th className="px-2 py-2 text-left" title={t("master.bom.colOwnerItemHint", "이 행이 등록될 BOM의 최상위 제품")}>{t("master.bom.colOwnerItem", "소속 BOM")}</th>
-                    <th className="px-2 py-2 text-center w-24">{t("master.bom.colValidFrom", "적용일자")}</th>
-                    <th className="px-2 py-2 text-center w-24">{t("master.bom.colValidTo", "완료일자")}</th>
-                    <th className="px-2 py-2 text-center w-8">{t("common.quantity", "수량")}</th>
-                    <th className="px-2 py-2 text-center w-20">{t("common.status", "상태")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {preview.rows.map((r) => {
-                    const s = STATUS_STYLES[r.status];
-                    return (
-                      <tr key={r.row} className="border-t border-border/50">
-                        <td className="px-2 py-1.5 text-center font-mono text-text-muted">{r.row}</td>
-                        <td className="px-2 py-1.5 font-mono truncate max-w-[120px]" title={r.parentItemCode}>{r.parentItemCode}</td>
-                        <td className="px-2 py-1.5 font-mono truncate max-w-[120px]" title={r.childItemCode}>{r.childItemCode}</td>
-                        <td className="px-2 py-1.5 font-mono truncate max-w-[120px] text-text-muted" title={r.ownerItemCode}>{r.ownerItemCode ?? "-"}</td>
-                        <td className="px-2 py-1.5 text-center text-text-muted">{r.validFrom ?? "-"}</td>
-                        <td className="px-2 py-1.5 text-center text-text-muted">{r.validTo ?? "-"}</td>
-                        <td className="px-2 py-1.5 text-center">{r.qtyPer ?? "-"}</td>
-                        <td className="px-2 py-1.5 text-center">
-                          <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium ${s.bg}`} title={r.message}>
-                            {s.icon}{t(s.labelKey, s.labelFallback)}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <DataGrid
+            data={preview.rows}
+            columns={previewColumns}
+            getRowId={(r) => String(r.row)}
+            pageSize={500}
+            maxHeight="16rem"
+            enableFullscreen={false}
+          />
         </div>
       )}
 
       {/* 업로드 완료 결과 */}
       {stage === "done" && result && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-3">
-            <StatCard label={t("master.bom.resultInserted", "추가")} value={result.inserted} color="emerald" />
-            <StatCard label={t("master.bom.resultSkipped", "스킵")} value={result.skipped} color="amber" />
-            <StatCard label={t("master.bom.resultError", "에러")} value={result.errors.length} color="red" />
-          </div>
-          {result.errors.length > 0 && (
-            <div className="border border-red-200 dark:border-red-800 rounded overflow-hidden">
-              <div className="flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm font-medium">
-                <AlertCircle className="w-4 h-4" />{t("master.bom.errorDetail", "에러 상세")}
-              </div>
-              <div className="max-h-48 overflow-y-auto min-h-0">
-                <table className="w-full text-sm">
-                  <thead className="bg-surface sticky top-0">
-                    <tr>
-                      <th className="px-3 py-1.5 text-left text-text-muted font-medium w-20">{t("master.bom.colRow", "행")}</th>
-                      <th className="px-3 py-1.5 text-left text-text-muted font-medium">{t("master.bom.colMessage", "메시지")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.errors.map((err, i) => (
-                      <tr key={i} className="border-t border-border">
-                        <td className="px-3 py-1.5 font-mono">{err.row}</td>
-                        <td className="px-3 py-1.5 text-red-600 dark:text-red-400">{err.message}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+        <div className="grid grid-cols-3 gap-3">
+          <StatCard label={t("master.bom.resultInserted", "추가")} value={result.inserted} color="emerald" />
+          <StatCard label={t("master.bom.resultUpdated", "수정")} value={result.updated} color="blue" />
+          <StatCard label={t("master.bom.resultUnchanged", "변경없음")} value={result.unchanged} color="gray" />
         </div>
       )}
     </Modal>
   );
 }
 
-function SummaryBadge({ label, count, color }: { label: string; count: number; color: "emerald" | "red" | "gray" }) {
+function SummaryBadge({ label, count, color }: { label: string; count: number; color: "emerald" | "blue" | "red" | "gray" }) {
   const styles = {
     emerald: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+    blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
     red: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
     gray: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
   };
@@ -284,11 +333,11 @@ function SummaryBadge({ label, count, color }: { label: string; count: number; c
   );
 }
 
-function StatCard({ label, value, color }: { label: string; value: number; color: "emerald" | "amber" | "red" }) {
+function StatCard({ label, value, color }: { label: string; value: number; color: "emerald" | "blue" | "gray" }) {
   const styles = {
     emerald: "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
-    amber: "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
-    red: "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800",
+    blue: "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+    gray: "bg-gray-50 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-800",
   };
   return (
     <div className={`rounded border px-3 py-3 text-center ${styles[color]}`}>

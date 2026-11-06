@@ -10,16 +10,30 @@
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { Download, Upload } from 'lucide-react';
+import type { ColumnDef } from '@tanstack/react-table';
 import { Button, Modal } from '@/components/ui';
+import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
 import { apiMessage } from './stocktake';
+
+interface UploadError { row: number; value: string; reason: string }
 
 interface UploadResult {
   yyyymm: string;
   applied: number;
   updated: number;
-  errors: { row: number; value: string; reason: string }[];
+  errors: UploadError[];
 }
+
+/** 반영하지 못한 줄 그리드 컬럼 — 사유는 빨간색 */
+const errorColumns: ColumnDef<UploadError>[] = [
+  { accessorKey: 'row', header: '줄', size: 70, meta: { align: 'right' } },
+  { accessorKey: 'value', header: '값', size: 180 },
+  {
+    accessorKey: 'reason', header: '사유', size: 280,
+    cell: ({ getValue }) => <span className="text-red-500">{String(getValue() ?? '')}</span>,
+  },
+];
 
 interface Props {
   isOpen: boolean;
@@ -103,22 +117,8 @@ export default function StocktakeUploadModal({ isOpen, title, endpoint, template
               {result.errors.length ? ` · 반영 못 함 ${result.errors.length.toLocaleString()}줄` : ''}
             </p>
             {result.errors.length > 0 && (
-              <div className="max-h-60 overflow-auto rounded border border-border">
-                <table className="w-full text-xs">
-                  <thead className="sticky top-0 bg-surface">
-                    <tr><th className="px-2 py-1 text-left">줄</th><th className="px-2 py-1 text-left">값</th><th className="px-2 py-1 text-left">사유</th></tr>
-                  </thead>
-                  <tbody>
-                    {result.errors.map((e) => (
-                      <tr key={e.row} className="border-t border-border">
-                        <td className="px-2 py-1">{e.row}</td>
-                        <td className="px-2 py-1">{e.value}</td>
-                        <td className="px-2 py-1 text-red-500">{e.reason}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DataGrid data={result.errors} columns={errorColumns} maxHeight="240px" enableFullscreen={false}
+                enableExport exportFileName={`${title} 업로드 오류`} />
             )}
           </div>
         )}

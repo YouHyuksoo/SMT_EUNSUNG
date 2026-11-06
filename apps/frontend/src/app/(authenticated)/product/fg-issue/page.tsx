@@ -13,10 +13,14 @@
  *    현장은 이 목록에서 골라 바코드를 찍는다. 출하 이력과 거래처별 · 품목별 · 일자별
  *    합계는 제품출하조회(`/product/fg-issue-query`) 화면에서 본다.
  * 5. **기본 기간이 7일이다.** 재고일 기준으로 거른다.
+ * 6. **제품납품계획(출하지시)을 고르면** 출고한 박스가 그 지시에 쌓이고 고객은 지시의 고객으로 고정된다.
+ *    지시를 고르지 않으면 지금처럼 고객만 넣고 내보낸다. 취소는 박스 기록으로 지시를 찾아 되돌린다.
+ * 7. **선입선출**: 환경설정 `PRODUCT_FIFO_YN`(기본 Y, 관리자만 변경) 이 Y 면 먼저 들어온 같은 모델 박스가 남아 있을 때 출하가 막힌다.
+ *    막히면 먼저 내보낼 박스 목록이 위에 뜬다. 장기재고 기준일보다 오래된 박스는 판정에서 뺀다.
  */
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Search } from 'lucide-react';
+import { ClipboardList, ListOrdered, Search, X } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import { Button, Card, CardContent, Input } from '@/components/ui';
@@ -27,18 +31,22 @@ import {
   useTruncation,
 } from '../../report/components/TruncationNotice';
 import FgScanPanel from '../components/FgScanPanel';
+import ShippingOrderPickerModal from '../components/ShippingOrderPickerModal';
+import type { ShippingOrderRow } from '../shipping-order/types';
 import { fgIssuableColumns } from '../shipping-columns';
 import type { FgIssuableRow } from '../shipping-columns';
 
-const today = () => new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-};
+/** 307 선입선출 설정 (GET /product/fg/fifo-config) */
+interface FgFifoConfig {
+  enabled: boolean;
+  days: number;
+}
+
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 export default function FgIssuePage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [barcode, setBarcode] = useState('');
   const [modelName, setModelName] = useState('');
@@ -46,6 +54,46 @@ export default function FgIssuePage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const { truncated, rowLimit, mark } = useTruncation();
+  const [shipOrder, setShipOrder] = useState<ShippingOrderRow | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [fifoConfig, setFifoConfig] = useState<FgFifoConfig | null>(null);
+  const [fifo, setFifo] = useState<{ barcode: string; rows: FgIssuableRow[] } | null>(null);
+
+  useEffect(() => {
+    api.get('/product/fg/fifo-config')
+      .then((r) => setFifoConfig(r.data?.data ?? null))
+      .catch(() => setFifoConfig(null));
+  }, []);
+
+  /** 선입선출로 막히면 먼저 내보낼 박스를 읽어 위에 띄운다 */
+  const showFifo = useCallback(async (scanned: string, message: string | undefined) => {
+    if (!message?.startsWith('선입선출')) return;
+    try {
+      const r = await api.get('/product/fg/fifo', { params: { barcode: scanned } });
+      setFifo({ barcode: scanned, rows: r.data?.data?.rows ?? [] });
+    } catch {
+      // 거절 사유는 이미 토스트로 보였다. 목록만 못 띄운다.
+    }
+  }, []);
+
+  /** 출고 뒤 고른 지시의 잔량을 다시 읽는다. 다 차면 선택을 푼다. */
+  const refreshOrder = useCallback(async () => {
+    if (!shipOrder) return;
+    try {
+      const r = await api.get('/product/shipping-orders', {
+        params: { dateFrom: shipOrder.planDate, dateTo: shipOrder.planDate },
+      });
+      const next = (r.data?.data as ShippingOrderRow[] | undefined)?.find((o) => o.shipOrderNo === shipOrder.shipOrderNo) ?? null;
+      if (next && next.planStatus === 'C') {
+        toast.success(`제품납품계획 ${next.shipOrderNo} 출고가 끝났습니다.`);
+        setShipOrder(null);
+      } else {
+        setShipOrder(next);
+      }
+    } catch {
+      // 잔량 표시만 못 바꾼다. 출고 자체는 이미 끝났다.
+    }
+  }, [shipOrder]);
 
   const search = useCallback(async () => {
     setLoading(true);
@@ -84,11 +132,52 @@ export default function FgIssuePage() {
           {searched
             ? `출하가능 ${count.toLocaleString()}건 · 수량 ${total.toLocaleString()}`
             : '조회하세요'}
+          {fifoConfig && (
+            <span data-tooltip="관리자가 환경설정 PRODUCT_FIFO_YN 에서 켜고 끈다">
+              {' · '}선입선출 {fifoConfig.enabled ? `사용 (최근 ${fifoConfig.days}일 입고분 기준)` : '미사용'}
+            </span>
+          )}
         </p>
       </header>
 
       <FgScanPanel endpoint="/product/fg/issue" title="제품 출하"
-        withQty={false} withCustomer storageKey="mes-fg-issue-location" onDone={search} />
+        withQty={false} withCustomer storageKey="mes-fg-issue-location"
+        onDone={async () => { setFifo(null); await refreshOrder(); await search(); }}
+        onError={showFifo}
+        extraBody={shipOrder ? { shipOrderNo: shipOrder.shipOrderNo } : undefined}
+        fixedCustomerCode={shipOrder?.customerCode ?? undefined}
+        headerSlot={shipOrder ? (
+          <span className="flex items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 text-sm">
+            <span className="font-mono font-semibold text-text">{shipOrder.shipOrderNo}</span>
+            <span className="text-text">{shipOrder.modelName}</span>
+            <span className="text-text-muted">잔량 {Number(shipOrder.remainQty).toLocaleString()}</span>
+            <button type="button" aria-label="제품납품계획 선택 해제" onClick={() => setShipOrder(null)}
+              className="text-text-muted hover:text-text"><X className="h-4 w-4" /></button>
+          </span>
+        ) : (
+          <Button size="sm" variant="secondary" onClick={() => setPickerOpen(true)}>
+            <ClipboardList className="mr-1 h-4 w-4" />제품납품계획 선택
+          </Button>
+        )} />
+      <ShippingOrderPickerModal isOpen={pickerOpen} onClose={() => setPickerOpen(false)}
+        onPick={(o) => { setShipOrder(o); setPickerOpen(false); }} />
+
+      {fifo && (
+        <Card className="shrink-0" padding="none">
+          <div className="flex items-center justify-between border-b border-border px-3 py-2">
+            <span className="flex items-center gap-1 text-sm font-semibold text-text">
+              <ListOrdered className="h-4 w-4" />
+              먼저 출하할 박스 — <span className="font-mono">{fifo.barcode}</span> 보다 먼저 들어온 같은 모델 {fifo.rows.length.toLocaleString()}건
+            </span>
+            <button type="button" aria-label="먼저 출하할 박스 닫기" onClick={() => setFifo(null)}
+              className="text-text-muted hover:text-text"><X className="h-4 w-4" /></button>
+          </div>
+          <CardContent className="p-3">
+            <DataGrid data={fifo.rows} columns={fgIssuableColumns} pageSize={10} maxHeight="240px"
+              emptyMessage="먼저 출하할 박스가 없습니다. 다시 찍어 보세요." />
+          </CardContent>
+        </Card>
+      )}
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">

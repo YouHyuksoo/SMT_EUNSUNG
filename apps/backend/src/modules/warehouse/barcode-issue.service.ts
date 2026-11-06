@@ -23,22 +23,26 @@
  *    세 갈래 모두 **베이킹 중인 릴은 뺀다** (`BAKING_START_DATE` 는 있고
  *    `BAKING_END_DATE` 는 없는 것) — 꺼낼 수 없는 릴이라 순서를 막으면 안 된다.
  * 5. **옮기지 않은 것** (실측 근거):
- *      · **FIFO 강제통과 비밀번호** — `ISYS_CONFIG.FIFO_ISSUE_PASSWORD='0402'` 로
- *        평문 4자리를 넣으면 FIFO 거절을 뚫을 수 있었다. 원장 쓰기 게이트를 평문
- *        비밀번호로 여는 장치는 옮기지 않는다. FIFO 위반은 거절로 둔다 —
- *        강제 출고가 업무상 필요하면 권한으로 다뤄야 한다.
- *      · `rb_request` 자재요청 모드 — `IM_ITEM_REQUEST` 가 **7행**이고
- *        `dw_3.update()` 는 갱신 가능한 열이 없어 무동작이다.
- *      · `rb_issue_plan` 출고계획 모드 — `ID_ENG_BOM_TEMP`(3,360,611행)를 읽는데
- *        선두 인덱스가 `SESSION_ID` 인 **세션 임시표**다. 웹이 PB 세션의 행을 읽을
- *        방법이 없다.
- *      · `rb_smt_bom_report` — 인쇄용 DataWindow.
- *      · 반품 3모드(`rb_compare_return`·`rb_mass_return`·
- *        `rb_mass_reball_wait_return`) — 250 출고바코드반품에서 다뤘다.
- *      · 협력사 바코드 대조 — `ISYS_CONFIG` 에 `MATERIAL_ISSUE_COMPARE_YN` 이
- *        **없어서** PB 에서도 안 탄다 (237 의 `RECEIPT_VENDOR_INFO_CHECK` 와 같은 유형).
+ *      · `rb_request` 자재요청 모드(출고구분 R) — 전체 기간 출고 0건이고
+ *        `IM_ITEM_REQUEST` 가 7행이다.
+ *      · `rb_smt_bom_report` — 인쇄용 DataWindow. 목록은 출고 BOM 탭이 보여준다.
+ *      · `rb_compare_return`(Monitoring) — 생산계획(dw_9) 조회 화면이다.
+ *      · 반품 2모드(`rb_mass_return`·`rb_mass_reball_wait_return`) — 250 출고바코드반품에서 다뤘다.
  *      · `dw_5.update()` · `dw_9` 피딩수량 — 앞은 갱신 대상이 없고, 뒤는
  *        피딩 계획이라 이 화면의 업무가 아니다.
+ * 5-0. **옵션은 PB Option·Process 묶음을 전부 옮겼다.**
+ *      · 기본값은 PB `f_config_setup` 처럼 ISYS_CONFIG 값, 없으면 PB NVL 기본값이다(`getOptions`).
+ *        `MATERIAL_ISSUE_COMPARE_YN` 은 표에 없어 **기본 Y — 원라벨 대조가 켜져 있다**
+ *        (최근 30일 P 출고의 86% 가 원라벨을 찍었고 14% 가 -NB 였다).
+ *      · 잠금 옵션(FIFO 끔 · Model Not Check · No Origin Barcode)은 PB 처럼
+ *        `ISYS_CONFIG.FIFO_ISSUE_PASSWORD` 비밀번호가 맞아야 쓴다. 판정·출고 때마다 서버가 다시 맞춘다.
+ *      · MSL 시간은 PB 에서 잠긴 칸이라 설정값을 따른다. IQC 는 품목 검사규칙으로 자동이다.
+ * 5-1. **출고 형태 (PB Category 라디오)** — 출고구분(ISSUE_DIVISION)과 BOM 대조 목록을 정한다.
+ *      · P PCB Assy 출고 (`rb_issue_plan`, PB 기본값) — 전체 출고의 대부분(188만 건, 119개 모델/90일).
+ *        제품 모델 품목을 `PKG_DESIGN.BOM_QUERY` 로 풀어 찍은 자재가 있는지 본다.
+ *      · K SMT 출고 (`rb_kitting`) — SMT 모델·라인·TOP/BOTTOM 피더 BOM 으로 대조하고
+ *        맞은 줄의 피더 위치를 출고 원장에 남긴다. 전체 기간 20건뿐이다.
+ *      최근 30일 P 출고 1만여 건을 이 목록으로 다시 대조하면 99.9% 이상 통과한다 (실측).
  * 6. **PB 결함 하나는 경고로만 옮겼다.** 불량재고(창고 M02) 검사가 PB 에서
  *    `count(*)` 를 `lvi_count` 에 넣고 **`lvi_bad_count`** 를 보는데 그 변수는
  *    대입되는 곳이 없다 — 항상 0 이라 **한 번도 걸린 적이 없다.** 지금 거절로 켜면
@@ -56,12 +60,18 @@ import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
+import { OracleService } from '../../common/services/oracle.service';
+import { IssueManageService } from './issue-manage.service';
 import {
+  BarcodeIssueCancelDto,
+  BarcodeIssueReturnDto,
+  BarcodeIssueReturnLookupDto,
   BarcodeIssueDto,
   BarcodeIssueHistoryQueryDto,
   BarcodeIssueScanDto,
   BarcodeIssueWaitingQueryDto,
-  KittingBomQueryDto,
+  IssueBomQueryDto,
+  IssueMode,
 } from './warehouse.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
 import { namedBinds } from '../../common/utils/named-binds.util';
@@ -81,9 +91,132 @@ const FIXED = {
   workOrderNo: '*',
   parentItemCode: '*',
   closeYn: 'N',
-  /** 키팅 모드의 출고구분 (PB `LVS_ISSUE_DIVISION = 'K'`) */
-  issueDivisionKitting: 'K',
 } as const;
+
+/**
+ * P(PCB Assy) 출고 BOM — PB `d_des_bom_query_4_issue_plan_check_lst` + `f_set_replace_item_4_issue_bom_query`.
+ *
+ * `PKG_DESIGN.BOM_QUERY` 가 설계BOM 을 ID_ENG_BOM_TEMP 에 풀고 세션ID(:sid)를 돌려준다.
+ * 조건은 PB 그대로다 — 첫 단계(BOM_LEVEL 1) 제외, 라인유형 M·S 제외, 상위 품목 ITEM_CLASS 가 있는 것.
+ * 대체품(ID_ITEM_REPLACE)은 PB 처럼 같은 목록에 'REPLACE' 로 붙인다 — 대체품으로 찍어도 통과한다.
+ */
+const PLAN_BOM_SQL = `
+  WITH bom AS (
+    SELECT t.PARENT_ITEM_CODE, t.CHILD_ITEM_CODE, t.ITEM_UNIT_QTY, t.WORKSTAGE_CODE,
+           t.LINE_TYPE, t.SORT_ORDER, t.ORGANIZATION_ID
+      FROM ID_ENG_BOM_TEMP t, ID_ITEM a
+     WHERE t.PARENT_ITEM_CODE = a.ITEM_CODE (+)
+       AND t.ORGANIZATION_ID = a.ORGANIZATION_ID (+)
+       AND t.SESSION_ID = :sid
+       AND t.ORGANIZATION_ID = :org
+       AND t.BOM_LEVEL <> 1
+       AND t.LINE_TYPE NOT IN ('M', 'S')
+       AND a.ITEM_CLASS LIKE '%'
+  ), list AS (
+    SELECT 'BOM' AS div, b.PARENT_ITEM_CODE, b.CHILD_ITEM_CODE AS item_code, NULL AS replace_for,
+           b.ITEM_UNIT_QTY, b.WORKSTAGE_CODE, b.LINE_TYPE, b.SORT_ORDER, 0 AS sub_order, b.ORGANIZATION_ID
+      FROM bom b
+    UNION ALL
+    SELECT 'REPLACE', b.PARENT_ITEM_CODE, r.REPLACE_ITEM_CODE, b.CHILD_ITEM_CODE,
+           r.ITEM_UNIT_QTY, r.WORKSTAGE_CODE, b.LINE_TYPE, b.SORT_ORDER, 1, b.ORGANIZATION_ID
+      FROM bom b
+      JOIN ID_ITEM_REPLACE r
+        ON r.PARENT_ITEM_CODE = b.PARENT_ITEM_CODE
+       AND r.CHILD_ITEM_CODE = b.CHILD_ITEM_CODE
+       AND r.ORGANIZATION_ID = b.ORGANIZATION_ID
+       AND r.DATESET <= TRUNC(SYSDATE)
+       AND r.DATEEND >= TRUNC(SYSDATE)
+  )
+  SELECT l.div                       AS "div",
+         l.PARENT_ITEM_CODE          AS "parentItemCode",
+         l.item_code                 AS "itemCode",
+         i.ITEM_NAME                 AS "itemName",
+         i.ITEM_SPEC                 AS "itemSpec",
+         l.replace_for               AS "replaceFor",
+         l.ITEM_UNIT_QTY             AS "bomQty",
+         l.WORKSTAGE_CODE            AS "workstageCode",
+         NULL                        AS "pcbItem",
+         NULL                        AS "feederLocationCode",
+         F_GET_MAT_INVENTORY_QTY(l.item_code, l.LINE_TYPE, l.ORGANIZATION_ID) AS "inventoryQty"
+    FROM list l
+    LEFT JOIN ID_ITEM i ON i.ITEM_CODE = l.item_code AND i.ORGANIZATION_ID = l.ORGANIZATION_ID
+   ORDER BY l.SORT_ORDER, l.sub_order, l.item_code`;
+
+/**
+ * K(SMT) 출고 BOM — PB `d_des_smt_bom_4_item_kitting_lst2` (피더 BOM + 대체품).
+ * PB 의 재고 열(Include Inventory)과 계획수량 열(Plan Qty)은 쓰지 않아 뺐다.
+ */
+const KITTING_BOM_SQL = `
+  SELECT 'BOM'                       AS "div",
+         a.PARENT_ITEM_CODE          AS "parentItemCode",
+         a.CHILD_ITEM_CODE           AS "itemCode",
+         b.ITEM_NAME                 AS "itemName",
+         b.ITEM_SPEC                 AS "itemSpec",
+         NULL                        AS "replaceFor",
+         SUM(a.ITEM_UNIT_QTY)        AS "bomQty",
+         NULL                        AS "workstageCode",
+         a.PCB_ITEM                  AS "pcbItem",
+         a.LOCATION_CODE             AS "feederLocationCode",
+         NULL                        AS "inventoryQty",
+         a.TABLE_ID                  AS "tableId",
+         SUM(F_GET_SHAFT_FEEDING_QTY(a.LINE_CODE, a.PARENT_ITEM_CODE, a.LOCATION_CODE, a.PCB_ITEM, a.FEEDER_SHAFT)) AS "feedingQty",
+         SUM(F_GET_FEEDER_ACTUAL_QTY(a.LINE_CODE, a.PARENT_ITEM_CODE, a.LOCATION_CODE, a.PCB_ITEM)) AS "actualQty",
+         SUM(F_GET_UNFEEDING_QTY(a.LINE_CODE, a.PARENT_ITEM_CODE, a.CHILD_ITEM_CODE, a.LOCATION_CODE, a.FEEDER_SHAFT)) AS "unfeedingQty",
+         b.LOCATION_ADDRESS          AS "locationAddress",
+         F_GET_MODEL_ST(a.PARENT_ITEM_CODE, a.LINE_CODE, 'A', a.ORGANIZATION_ID) AS "stValue"
+    FROM ID_ENG_BOM_SMT a, ID_ITEM b
+   WHERE a.CHILD_ITEM_CODE = b.ITEM_CODE (+)
+     AND a.ORGANIZATION_ID = b.ORGANIZATION_ID (+)
+     AND a.SMT_MODEL_NAME = :modelName
+     AND a.LINE_CODE = :lineCode
+     AND a.DATESET <= SYSDATE
+     AND NVL(a.DATEEND, TO_DATE('99991231', 'YYYYMMDD')) >= SYSDATE
+     AND a.PCB_ITEM LIKE :topBottom
+     AND a.ORGANIZATION_ID = :org
+   GROUP BY a.PARENT_ITEM_CODE, a.CHILD_ITEM_CODE, b.ITEM_NAME, b.ITEM_SPEC, a.LINE_CODE,
+            a.TABLE_ID, a.LOCATION_CODE, a.PCB_ITEM, a.FEEDER_SHAFT, a.ORGANIZATION_ID, b.LOCATION_ADDRESS
+  UNION ALL
+  SELECT 'REPLACE', a.PARENT_ITEM_CODE, a.REPLACE_ITEM_CODE, b.ITEM_NAME, b.ITEM_SPEC,
+         a.CHILD_ITEM_CODE, SUM(a.ITEM_UNIT_QTY), NULL, a.PCB_ITEM, NULL,
+         NULL,
+         a.TABLE_ID, 0, 0, 0, b.LOCATION_ADDRESS, 0
+    FROM ID_ENG_BOM_SMT_REPLACE a, ID_ITEM b
+   WHERE a.REPLACE_ITEM_CODE = b.ITEM_CODE (+)
+     AND a.ORGANIZATION_ID = b.ORGANIZATION_ID (+)
+     AND a.PARENT_ITEM_CODE = :modelName
+     AND a.LINE_CODE = :lineCode
+     AND a.DATESET <= SYSDATE
+     AND NVL(a.DATEEND, TO_DATE('99991231', 'YYYYMMDD')) >= SYSDATE
+     AND a.PCB_ITEM LIKE :topBottom
+     AND a.ORGANIZATION_ID = :org
+   GROUP BY a.PARENT_ITEM_CODE, a.REPLACE_ITEM_CODE, a.CHILD_ITEM_CODE, b.ITEM_NAME,
+            b.ITEM_SPEC, a.TABLE_ID, a.PCB_ITEM, a.ORGANIZATION_ID, b.LOCATION_ADDRESS
+   ORDER BY 10, 3`;
+
+/** 라벨유형 → 창고 (PB: R 리볼대기 M06 · B 벌크 M05 · 그 밖 양산 M01). */
+const labelLocation = (labelType: string) => (labelType === 'R' ? 'M06' : labelType === 'B' ? 'M05' : 'M01');
+
+/** 출고 BOM 한 줄 (P·K 공통 모양). */
+export interface IssueBomRow {
+  div: 'BOM' | 'REPLACE';
+  parentItemCode: string | null;
+  itemCode: string;
+  itemName: string | null;
+  itemSpec: string | null;
+  replaceFor: string | null;
+  bomQty: number | null;
+  workstageCode: string | null;
+  pcbItem: string | null;
+  feederLocationCode: string | null;
+  inventoryQty: number | null;
+  /** K 만 — 피더 테이블 · 공급/실적/미공급 수량 · 보관위치 · ST */
+  tableId?: string | null;
+  feedingQty?: number | null;
+  actualQty?: number | null;
+  unfeedingQty?: number | null;
+  locationAddress?: string | null;
+  stValue?: number | null;
+}
 
 /** 한 건의 검사 결과. */
 export interface ScanCheck {
@@ -100,6 +233,8 @@ export class BarcodeIssueService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly tx: TransactionService,
+    private readonly oracle: OracleService,
+    private readonly issueManage: IssueManageService,
   ) {}
 
   // ───────────────────────────────── 조회
@@ -227,56 +362,45 @@ export class BarcodeIssueService {
   }
 
   /**
-   * 키팅 BOM (PB `d_des_smt_bom_4_item_kitting_lst2`).
+   * 출고 BOM — 출고 형태별로 찍은 자재를 대조하는 목록 (PB dw_5 · dw_1).
    *
-   * 모델에 들어가는 자재 목록이다. 대체품(`ID_ENG_BOM_SMT_REPLACE`)을 함께 낸다 —
-   * 대체품으로 찍어도 통과해야 하기 때문이다.
+   * P 는 `PKG_DESIGN.BOM_QUERY` 로 제품 모델의 설계BOM 을 푼다. 전개 함수가
+   * ID_ENG_BOM_TEMP 에 INSERT 하므로 **출고 트랜잭션 밖의 별도 커넥션**에서 부르고
+   * 반납 때 롤백한다(`callFunctionReturningCursor`) — 임시행이 남지 않고, 패키지 예외부의
+   * ROLLBACK 이 출고 쓰기를 지우지도 않는다.
    */
-  async findKittingBom(query: KittingBomQueryDto, organizationId: number) {
-    const rows = (await this.dataSource.query(
-      `SELECT b.MODEL_NAME                AS "modelName",
-              b.PARENT_ITEM_CODE          AS "parentItemCode",
-              b.CHILD_ITEM_CODE           AS "itemCode",
-              i.ITEM_NAME                 AS "itemName",
-              i.ITEM_SPEC                 AS "itemSpec",
-              i.ITEM_CLASS                AS "itemClass",
-              b.ITEM_UNIT_QTY             AS "bomQty",
-              b.LINE_CODE                 AS "lineCode",
-              b.WORKSTAGE_CODE            AS "workstageCode",
-              -- 피더 위치는 LOCATION_CODE 다. LOCATION_INFO 에는 회로 기호가
-              -- 함께 들어 있어(R2016,R2022 처럼) 화면이 같이 보여준다.
-              b.LOCATION_CODE             AS "feederLocationCode",
-              b.LOCATION_INFO             AS "locationInfo",
-              b.FEEDER_SHAFT              AS "feederShaft",
-              b.PCB_ITEM                  AS "pcbItem",
-              b.MARKING_NO                AS "markingNo",
-              b.VERSION                   AS "bomVersion",
-              -- 대체품이 있으면 함께 본다 (대체품으로 찍어도 통과한다).
-              ( SELECT LISTAGG(r.REPLACE_ITEM_CODE, ', ')
-                         WITHIN GROUP (ORDER BY r.REPLACE_ITEM_CODE)
-                  FROM ID_ENG_BOM_SMT_REPLACE r
-                 WHERE r.PARENT_ITEM_CODE = b.PARENT_ITEM_CODE
-                   AND r.CHILD_ITEM_CODE = b.CHILD_ITEM_CODE
-                   AND r.ORGANIZATION_ID = b.ORGANIZATION_ID ) AS "replaceItems"
-         FROM ID_ENG_BOM_SMT b
-         LEFT JOIN ID_ITEM i
-                ON i.ITEM_CODE = b.CHILD_ITEM_CODE
-               AND i.ORGANIZATION_ID = b.ORGANIZATION_ID
-        WHERE b.MODEL_NAME = :modelName
-          AND NVL(b.LINE_CODE, '*') LIKE :lineCode ESCAPE '\\'
-          -- BOM 에도 유효기간이 있다. 빼면 지나간 판번이 함께 나온다.
-          AND b.DATESET <= TRUNC(SYSDATE)
-          AND b.DATEEND >= TRUNC(SYSDATE)
-          AND b.ORGANIZATION_ID = :organizationId
-        ORDER BY b.WORKSTAGE_CODE, b.LOCATION_CODE, b.CHILD_ITEM_CODE
-        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      namedBinds({
-        modelName: query.modelName,
-        lineCode: likePrefix(query.lineCode),
-        organizationId,
-      }),
-    )) as Row[];
-    return limited(rows);
+  async findIssueBom(query: IssueBomQueryDto, organizationId: number): Promise<IssueBomRow[]> {
+    const modelName = query.modelName.trim();
+    if (query.issueMode === 'K') {
+      if (!query.lineCode?.trim()) return [];
+      return (await this.dataSource.query(KITTING_BOM_SQL, namedBinds({
+        modelName,
+        lineCode: query.lineCode.trim(),
+        topBottom: query.topBottom?.trim() || '%',
+        org: organizationId,
+      }))) as IssueBomRow[];
+    }
+
+    // PB uo_set_model_name_dynamic — 유효한 제품 모델의 품목코드로 BOM 을 푼다.
+    // 모델명 하나에 유효 품목은 하나다 (실측 251개 모델 중 중복 0).
+    const model = ((await this.dataSource.query(
+      `SELECT ITEM_CODE AS "itemCode"
+         FROM IP_PRODUCT_MODEL_MASTER
+        WHERE MODEL_NAME = :modelName
+          AND ORGANIZATION_ID = :org
+          AND DATEEND >= TRUNC(SYSDATE)
+          AND ROWNUM = 1`,
+      namedBinds({ modelName, org: organizationId }),
+    )) as Row[])[0];
+    const parent = (model?.itemCode as string | undefined) ?? '';
+    if (!parent) return [];
+
+    const { rows, sessionId } = await this.oracle.callFunctionReturningCursor(
+      'PKG_DESIGN.BOM_QUERY(:parent, TRUNC(SYSDATE), :org)',
+      PLAN_BOM_SQL,
+      { parent, org: organizationId },
+    );
+    return sessionId > 0 ? (rows as unknown as IssueBomRow[]) : [];
   }
 
   /**
@@ -327,6 +451,97 @@ export class BarcodeIssueService {
     return limited(rows);
   }
 
+  // ───────────────────────────────── 옵션 기본값 · 잠금
+
+  /**
+   * 출고 옵션 기본값 — PB `f_config_setup` 이 ISYS_CONFIG 를 읽고 **없으면 NVL 기본값**을 쓴다.
+   * 그래서 `MATERIAL_ISSUE_COMPARE_YN` 이 표에 없으면 원라벨 대조가 **켜진다**(기본 Y).
+   */
+  async getOptions(organizationId: number) {
+    void organizationId;
+    const rows = (await this.dataSource.query(
+      `SELECT CONFIG_NAME AS "name", CONFIG_VALUE AS "value"
+         FROM ISYS_CONFIG
+        WHERE CONFIG_NAME IN ('MATERIAL_FIFO_YN', 'MATERIAL_ISSUE_COMPARE_YN', 'MSL_TIME_CHECK_YN',
+                              'LIFE_CYCLE_CHECK_YN', 'ISSUE_BY_FEEDER', 'LONG_TERM_INVENTORY')`,
+    )) as Row[];
+    const v = (name: string, fallback: 'Y' | 'N') =>
+      String(rows.find((r) => r.name === name)?.value ?? fallback) === 'Y';
+    return {
+      materialFifo: v('MATERIAL_FIFO_YN', 'N'),
+      issueCompare: v('MATERIAL_ISSUE_COMPARE_YN', 'Y'),
+      mslTimeCheck: v('MSL_TIME_CHECK_YN', 'Y'),
+      lifeCycleCheck: v('LIFE_CYCLE_CHECK_YN', 'N'),
+      issueByFeeder: v('ISSUE_BY_FEEDER', 'N'),
+      longTermInventory: v('LONG_TERM_INVENTORY', 'N'),
+    };
+  }
+
+  /** 라인의 생산유형 (PB: PDA 로 고른 IP_PRODUCT_LINE.PRODUCTION_TYPE → Inv Type 기본값). */
+  private async lineProductionType(lineCode: string | undefined, organizationId: number) {
+    if (!lineCode?.trim()) return null;
+    const rows = (await this.dataSource.query(
+      `SELECT PRODUCTION_TYPE AS "type" FROM IP_PRODUCT_LINE
+        WHERE LINE_CODE = :lineCode AND ORGANIZATION_ID = :organizationId`,
+      namedBinds({ lineCode: lineCode.trim(), organizationId }),
+    )) as Row[];
+    const t = String(rows[0]?.type ?? '');
+    return t && t !== '*' ? t : null;
+  }
+
+  /**
+   * 라인을 고르면 PB 가 채우던 값 — 생산유형(Inv Type) · SMT 공정 · 그 라인에 걸린 생산계획 모델·면.
+   */
+  async getLineDefaults(lineCode: string, organizationId: number) {
+    const productionType = await this.lineProductionType(lineCode, organizationId);
+    const ws = (await this.dataSource.query(
+      `SELECT MAX(WORKSTAGE_CODE) AS "code" FROM IP_PRODUCT_WORKSTAGE
+        WHERE WORKSTAGE_TYPE = 'S' AND ORGANIZATION_ID = :organizationId`,
+      namedBinds({ organizationId }),
+    )) as Row[];
+    const plan = (await this.dataSource.query(
+      `SELECT SMT_MODEL_NAME AS "modelName", PCB_ITEM AS "pcbItem"
+         FROM IB_PRODUCT_PLANDATA
+        WHERE LINE_CODE = :lineCode AND ACTIVE_YN = 'Y' AND ORGANIZATION_ID = :organizationId
+          AND ROWNUM = 1`,
+      namedBinds({ lineCode, organizationId }),
+    )) as Row[];
+    return {
+      productionType,
+      workstageCode: (ws[0]?.code as string) ?? null,
+      planModelName: (plan[0]?.modelName as string) ?? null,
+      planPcbItem: (plan[0]?.pcbItem as string) ?? null,
+    };
+  }
+
+  /** 런카드 번호(9자리)로 모델을 찾는다 — PB sle_model_suffix modified. */
+  async getRunCardModel(runNo: string, organizationId: number) {
+    const rows = (await this.dataSource.query(
+      `SELECT MODEL_NAME AS "modelName" FROM IP_PRODUCT_RUN_CARD
+        WHERE RUN_NO = :runNo AND ORGANIZATION_ID = :organizationId AND ROWNUM = 1`,
+      namedBinds({ runNo: runNo.trim(), organizationId }),
+    )) as Row[];
+    return { modelName: (rows[0]?.modelName as string) ?? null };
+  }
+
+  /** 잠금 옵션 비밀번호 — PB w_lock_by_config('FIFO_ISSUE_PASSWORD'). 값은 화면에 내보내지 않는다. */
+  private async passwordMatches(password: string | undefined) {
+    if (!password) return false;
+    const rows = (await this.dataSource.query(
+      `SELECT CONFIG_VALUE AS "value" FROM ISYS_CONFIG WHERE CONFIG_NAME = 'FIFO_ISSUE_PASSWORD'`,
+    )) as Row[];
+    const value = rows[0]?.value as string | undefined;
+    return value !== undefined && value !== null && password === value;
+  }
+
+  /** 잠금 해제 확인 (화면의 '?' 버튼). 맞으면 그 비밀번호를 판정·출고 요청에 실어 보낸다. */
+  async verifyUnlock(password: string) {
+    if (!(await this.passwordMatches(password))) {
+      throw new BadRequestException('비밀번호가 맞지 않습니다.');
+    }
+    return { unlocked: true };
+  }
+
   // ───────────────────────────────── 스캔 판정 (읽기)
 
   /**
@@ -350,13 +565,28 @@ export class BarcodeIssueService {
      * 부르거나 시험 하네스)에서 `undefined` 가 그대로 넘어와 **안전한 기본값이
      * 꺼진다.** PB 체크박스 기본값(FIFO·MSL·PCB 코팅 ON)을 서비스가 보장한다.
      */
+    const config = await this.getOptions(organizationId);
     const on = {
-      fifo: dto.checkFifo ?? true,
-      mslTime: dto.checkMslTime ?? true,
+      // FIFO 는 잠금 옵션이다 — 끄려면 비밀번호가 맞아야 한다 (아래 unlock 검사).
+      fifo: dto.checkFifo ?? config.materialFifo,
+      // MSL 은 PB 에서 잠긴 칸(설정값)이다. 화면이 끄지 못한다.
+      mslTime: config.mslTimeCheck,
       pcbCoating: dto.checkPcbCoating ?? true,
-      longTerm: dto.checkLongTermInventory ?? false,
-      lifeCycle: dto.checkLifeCycle ?? false,
+      longTerm: dto.checkLongTermInventory ?? config.longTermInventory,
+      lifeCycle: dto.checkLifeCycle ?? config.lifeCycleCheck,
     };
+
+    // 잠금 옵션(PB '?' 버튼 + w_lock_by_config)을 쓰면 비밀번호를 서버에서 다시 맞춘다.
+    const lockedUsed = [
+      !on.fifo && config.materialFifo ? 'FIFO 끔' : null,
+      dto.modelNotCheck ? 'Model Not Check' : null,
+      dto.noOriginBarcode ? 'No Origin Barcode' : null,
+    ].filter((v): v is string => v !== null);
+    if (lockedUsed.length > 0) {
+      const ok = await this.passwordMatches(dto.unlockPassword);
+      add('unlock', '잠금 옵션', ok ? 'warn' : 'reject',
+        ok ? `${lockedUsed.join(' · ')} (비밀번호 확인)` : `${lockedUsed.join(' · ')} — 비밀번호가 맞지 않습니다.`);
+    }
 
     if (!dto.lineCode?.trim()) add('line', '라인', 'reject', '라인을 고르세요.');
     else add('line', '라인', 'pass', dto.lineCode);
@@ -386,9 +616,54 @@ export class BarcodeIssueService {
         barcode: (parsed.clean as string) ?? dto.barcode,
         itemCode: itemCode || null, lotNo: lotNo || null,
         item: null, barcodeRow: null, checks,
+        issueMode: dto.issueMode ?? 'P', feederLocationCode: null as string | null,
+        supplierBarcode: null as string | null, inventoryType: null as string | null, locationCode: 'M01',
         issuable: false, reason: firstReject()?.detail ?? null,
       };
     }
+
+    // ②-1 사전 검사 — PB 가 바코드를 찍은 직후(sle_our_barcode modified) 출고 함수보다 먼저 본다.
+    const inventoryType = dto.inventoryType?.trim()
+      || (await this.lineProductionType(dto.lineCode, organizationId)) || 'P';
+    const pre = ((await this.dataSource.query(
+      `SELECT ( SELECT MIN(m.INSPECT_RULE) FROM IM_ITEM_MASTER m
+                 WHERE m.ITEM_CODE = :itemCode AND m.ORGANIZATION_ID = :organizationId ) AS "inspectRule",
+              ( SELECT COUNT(*) FROM IM_ITEM_RECEIPT_BARCODE r
+                 WHERE r.LOT_NO = :lotNo AND r.INSPECT_RESULT = 'P'
+                   AND r.ORGANIZATION_ID = :organizationId )                         AS "iqcPassCount",
+              ( SELECT COUNT(*) FROM IM_ITEM_BAKING_MASTER k
+                 WHERE k.ITEM_BARCODE LIKE :barcode AND k.OUTPUT_SCAN_DATE IS NULL ) AS "chamberCount",
+              ( SELECT MAX(F_GET_MACHINE_NAME(k.CHAMBER_CODE)) FROM IM_ITEM_BAKING_MASTER k
+                 WHERE k.ITEM_BARCODE LIKE :barcode AND k.OUTPUT_SCAN_DATE IS NULL ) AS "chamberName",
+              -- 재고 행이 불량 창고(M02)에 있나. PB 는 롯트로 한 행을 읽는다.
+              ( SELECT MAX(CASE WHEN v.LOCATION_CODE = 'M02' THEN 'M02' ELSE v.LOCATION_CODE END)
+                  FROM IM_ITEM_INVENTORY v
+                 WHERE v.MATERIAL_MFS = :lotNo AND v.ORGANIZATION_ID = :organizationId
+                   AND v.LOCATION_CODE = 'M02' )                                    AS "inventoryLocation",
+              ( SELECT MAX(v.INVENTORY_TYPE) FROM IM_ITEM_INVENTORY v
+                 WHERE v.MATERIAL_MFS = :lotNo AND v.ORGANIZATION_ID = :organizationId ) AS "stockInventoryType"
+         FROM DUAL`,
+      namedBinds({ itemCode, lotNo, organizationId, barcode: dto.barcode.trim() }),
+    )) as Row[])[0] ?? {};
+
+    // IQC — 품목 검사규칙이 무검사(P)가 아니면 IQC 합격 이력이 있어야 한다 (PB cbx_iqc_check 자동).
+    const iqcRequired = String(pre.inspectRule ?? '') !== 'P';
+    if (!iqcRequired) add('iqc', 'IQC', 'skip', '무검사 품목');
+    else {
+      const passed = Number(pre.iqcPassCount ?? 0) > 0;
+      add('iqc', 'IQC', passed ? 'pass' : 'reject', passed ? undefined : 'IQC 불합격이거나 판정 이력이 없습니다.');
+    }
+    // 베이킹·진공·제습 챔버에 들어가 아직 나오지 않은 릴
+    add('chamber', '챔버 보관', Number(pre.chamberCount ?? 0) > 0 ? 'reject' : 'pass',
+      Number(pre.chamberCount ?? 0) > 0 ? `${pre.chamberName ?? '챔버'}에 미출고 된 자재입니다.` : undefined);
+    // 불량 창고(M02)에 있는 롯트
+    add('badLocation', '불량 창고', String(pre.inventoryLocation ?? '') === 'M02' ? 'reject' : 'pass',
+      String(pre.inventoryLocation ?? '') === 'M02' ? '불량품으로 등록 된 자재입니다.' : undefined);
+    // 생산 유형(Inv Type) ↔ 재고 유형
+    const stockType = String(pre.stockInventoryType ?? '');
+    const typeMismatch = (stockType === 'S' && inventoryType !== 'S') || (stockType === 'P' && inventoryType === 'S');
+    add('inventoryType', '생산·재고 유형', typeMismatch ? 'reject' : 'pass',
+      typeMismatch ? `생산 유형(${inventoryType})과 재고 유형(${stockType})이 일치하지 않습니다.` : `${inventoryType}`);
 
     // ③ 한 번에 필요한 사실을 모은다 — 품목 기준정보 · 보류 · 바코드 원장 · 수명.
     const facts = ((await this.dataSource.query(
@@ -450,6 +725,8 @@ export class BarcodeIssueService {
       return {
         barcode: (parsed.clean as string) ?? dto.barcode, itemCode, lotNo,
         item: null, barcodeRow: null, checks,
+        issueMode: dto.issueMode ?? 'P', feederLocationCode: null as string | null,
+        supplierBarcode: null as string | null, inventoryType: null as string | null, locationCode: 'M01',
         issuable: false, reason: firstReject()?.detail ?? null,
       };
     }
@@ -510,6 +787,30 @@ export class BarcodeIssueService {
       String(facts.barcodeHoldYn) === 'Y' ? 'reject' : 'pass',
       String(facts.barcodeHoldYn) === 'Y' ? '보류된 바코드입니다.' : undefined);
 
+    // 원라벨(거래처 바코드) — No Origin Barcode 면 찍은 값 뒤에 '-NB' 를 붙인다 (PB 그대로).
+    const supplierRaw = dto.noOriginBarcode
+      ? `${(dto.supplierBarcode?.trim() || dto.barcode.trim())}-NB`
+      : (dto.supplierBarcode?.trim() ?? '');
+    let supplierBarcode: string | null = null;
+    if (!supplierRaw) {
+      add('origin', '원라벨', 'reject', '원라벨(거래처 바코드)을 먼저 찍으세요.');
+    } else {
+      const sup = ((await this.dataSource.query(
+        `SELECT F_GET_PREPARE_SUPPLIER_BARCODE(:supplier)                         AS "clean",
+                F_GET_ITEM_CODE_FROM_BARCODE(F_GET_PREPARE_SUPPLIER_BARCODE(:supplier)) AS "itemCode"
+           FROM DUAL`,
+        namedBinds({ supplier: supplierRaw }),
+      )) as Row[])[0] ?? {};
+      supplierBarcode = (sup.clean as string) || supplierRaw;
+      const ours = (parsed.clean as string) ?? dto.barcode;
+      if (config.issueCompare && supplierBarcode === ours) {
+        add('origin', '원라벨', 'reject', '같은 바코드를 원라벨 칸에 찍으면 안 됩니다.');
+      } else if (config.issueCompare
+        && !supplierBarcode.includes(itemCode) && !String(sup.itemCode ?? '').includes(itemCode)) {
+        add('origin', '원라벨', 'reject', `원라벨 품목이 일치하지 않습니다 (${supplierBarcode}).`);
+      } else add('origin', '원라벨', 'pass', supplierBarcode);
+    }
+
     if (!ledger) {
       add('ledger', '바코드 원장', 'reject', `발행 이력이 없는 바코드입니다: ${itemCode}-${lotNo}`);
     } else {
@@ -552,7 +853,7 @@ export class BarcodeIssueService {
     else if (rejectedAlready || !ledger) add('fifo', 'FIFO 선입선출', 'skip');
     else {
       fifoCount = await this.countFifoViolations(
-        { itemCode, lotNo, itemClass, ledger, moqQty: Number(facts.moqQty ?? 0) },
+        { itemCode, lotNo, itemClass, ledger, moqQty: Number(facts.moqQty ?? 0), inventoryType },
         organizationId,
       );
       add('fifo', 'FIFO 선입선출', fifoCount > 0 ? 'reject' : 'pass',
@@ -567,6 +868,32 @@ export class BarcodeIssueService {
       const recent = Number(facts.recentInventoryCount ?? 0);
       add('longTerm', '장기재고', recent > 0 ? 'pass' : 'reject',
         recent > 0 ? undefined : '12개월이 넘은 재고입니다. 품질 확인을 받으세요.');
+    }
+
+    // BOM 대조 — 출고 형태별 목록에 찍은 자재가 있어야 한다 (PB 장기재고 다음, MSL 앞).
+    // P 는 제품 모델 설계BOM, K 는 SMT 모델·라인·TOP/BOTTOM 피더 BOM. 대체품도 통과한다.
+    // 'Model Not Check'(잠금 옵션)면 P 의 BOM 대조를 건너뛴다 (PB cbx_model_not_check).
+    const mode: IssueMode = dto.issueMode ?? 'P';
+    let bomMatch: IssueBomRow | null = null;
+    if (firstReject() !== null) add('bom', 'BOM 대조', 'skip');
+    else if (mode === 'P' && dto.modelNotCheck) add('bom', 'BOM 대조', 'skip', 'Model Not Check');
+    else {
+      const bom = await this.findIssueBom({
+        issueMode: mode, modelName: dto.modelName, lineCode: dto.lineCode, topBottom: dto.topBottom,
+      }, organizationId);
+      bomMatch = bom.find((r) => r.itemCode === itemCode && r.div === 'BOM')
+        ?? bom.find((r) => r.itemCode === itemCode) ?? null;
+      if (bom.length === 0) {
+        add('bom', 'BOM 대조', 'reject', mode === 'P'
+          ? `모델 ${dto.modelName} 의 설계BOM 이 없습니다.`
+          : `모델 ${dto.modelName} · 라인 ${dto.lineCode} 의 피더 BOM 이 없습니다.`);
+      } else if (!bomMatch) {
+        add('bom', 'BOM 대조', 'reject', `${itemCode} 는 ${dto.modelName} BOM 에 없는 자재입니다.`);
+      } else {
+        add('bom', 'BOM 대조', 'pass', bomMatch.div === 'REPLACE'
+          ? `대체품 (${bomMatch.replaceFor} 대신)`
+          : (bomMatch.feederLocationCode ? `피더 ${bomMatch.feederLocationCode}` : undefined));
+      }
     }
 
     // MSL 시간 (등급 3 이상만)
@@ -604,6 +931,13 @@ export class BarcodeIssueService {
       barcodeRow: ledger,
       checks,
       fifoCount,
+      issueMode: mode,
+      // K 는 맞은 피더 BOM 줄의 피더 위치를 쓴다 (PB dw_1.location_code). P 는 없다.
+      feederLocationCode: bomMatch?.feederLocationCode ?? null,
+      supplierBarcode,
+      inventoryType,
+      // 출고 원장의 창고는 라벨유형으로 정한다 (PB: R 리볼대기 M06 · B 벌크 M05 · 그 밖 양산 M01).
+      locationCode: labelLocation(String(ledger?.labelType ?? 'N')),
       issuable: reject === null,
       reason: reject?.detail ?? null,
     };
@@ -616,11 +950,10 @@ export class BarcodeIssueService {
    * 표를 다 세지 않는다.
    */
   private async countFifoViolations(
-    ctx: { itemCode: string; lotNo: string; itemClass: string; ledger: Row; moqQty: number },
+    ctx: { itemCode: string; lotNo: string; itemClass: string; ledger: Row; moqQty: number; inventoryType: string },
     organizationId: number,
   ): Promise<number> {
-    const { itemCode, lotNo, itemClass, ledger, moqQty } = ctx;
-    const inventoryType = (ledger.inventoryType as string) ?? null;
+    const { itemCode, lotNo, itemClass, ledger, moqQty, inventoryType } = ctx;
 
     /** 세 갈래가 공유하는 조건. */
     const common = `AND NVL(b.RECEIPT_COMPARE_YN, 'N') = 'Y'
@@ -732,9 +1065,9 @@ export class BarcodeIssueService {
         namedBinds({
           userId,
           lineCode: dto.lineCode.trim(),
-          modelName: dto.modelName ?? null,
+          modelName: dto.modelName.trim(),
           workstageCode: dto.workstageCode.trim(),
-          feederLocationCode: dto.feederLocationCode ?? null,
+          feederLocationCode: verdict.feederLocationCode,
           lotNo: verdict.lotNo,
           itemCode: verdict.itemCode,
           organizationId,
@@ -777,8 +1110,8 @@ export class BarcodeIssueService {
         namedBinds({
           itemCode: verdict.itemCode,
           organizationId,
-          mfs: dto.mfs ?? null,
-          locationCode: dto.locationCode ?? null,
+          mfs: dto.mfs?.trim() || null,
+          locationCode: verdict.locationCode,
           lineCode: dto.lineCode.trim(),
           workstageCode: dto.workstageCode.trim(),
           issueQty,
@@ -788,12 +1121,12 @@ export class BarcodeIssueService {
           receiptSlipNo: (ledger.receiptSlipNo as string) ?? null,
           lotNo: verdict.lotNo,
           barcode: verdict.barcode,
-          supplierBarcode: dto.supplierBarcode ?? null,
-          feederLocationCode: dto.feederLocationCode ?? null,
-          // 키팅 모드면 'K' 다 (PB `LVS_ISSUE_DIVISION`).
-          issueDivision: dto.kitting ? FIXED.issueDivisionKitting : (dto.issueDivision ?? null),
-          modelName: dto.modelName ?? null,
-          inventoryType: (ledger.inventoryType as string) ?? null,
+          supplierBarcode: verdict.supplierBarcode,
+          feederLocationCode: verdict.feederLocationCode,
+          // 출고 형태가 곧 출고구분이다 (PB `LVS_ISSUE_DIVISION` P·K).
+          issueDivision: verdict.issueMode,
+          modelName: dto.modelName.trim(),
+          inventoryType: verdict.inventoryType,
         }),
       );
 
@@ -804,12 +1137,355 @@ export class BarcodeIssueService {
         issueQty,
         lineCode: dto.lineCode.trim(),
         workstageCode: dto.workstageCode.trim(),
-        modelName: dto.modelName ?? null,
-        issueDivision: dto.kitting ? FIXED.issueDivisionKitting : (dto.issueDivision ?? null),
+        modelName: dto.modelName.trim(),
+        issueDivision: verdict.issueMode,
+        feederLocationCode: verdict.feederLocationCode,
         warnings: verdict.checks.filter((c) => c.result === 'warn'),
         barcodeRows,
         issueRows: Number(affectedRows(inserted) ?? 0),
       };
+    });
+  }
+
+  // ───────────────────────────────── 출고반품 (PB Process · Mass Issue Return 묶음)
+
+  /**
+   * 반품할 바코드를 풀어 본다 (읽기 전용) — PB `sle_our_barcode_return` modified 이벤트.
+   *
+   *   · 폐기된 라벨 · 챔버(베이킹/진공/제습)에 들어가 있는 릴은 막는다.
+   *   · Mass Return: 라벨유형으로 창고를 정한다 (N 양산 M01 · R 리볼 M06 · B 벌크 M05).
+   *     Bad 면 불량 창고 M02, N·R 라벨은 현장불량 라인 28 로 간다.
+   *   · 양품 Mass Return 은 전표·출고 이력이 있어야 하고, 라인은 그 롯트가 마지막으로
+   *     나간 라인이다 (Line Manual Check 면 입력한 라인).
+   */
+  async lookupReturn(dto: BarcodeIssueReturnLookupDto, organizationId: number) {
+    const barcode = dto.barcode.trim();
+    const bad = dto.bad ?? false;
+    const fail = (reason: string, extra: Record<string, unknown> = {}) => ({
+      itemCode: null, lotNo: null, barcodeRow: null, labelType: null, locationCode: null,
+      lineCode: null, currentQty: null, returnable: false, reason, ...extra,
+    });
+    if (barcode.length < 7) return fail('바코드 형식이 올바르지 않습니다.');
+
+    const parsed = ((await this.dataSource.query(
+      `SELECT F_GET_ITEM_CODE_FROM_BARCODE(:barcode) AS "itemCode",
+              F_GET_LOT_NO_FROM_BARCODE(:barcode)    AS "lotNo"
+         FROM DUAL`,
+      namedBinds({ barcode }),
+    )) as Row[])[0] ?? {};
+    const itemCode = (parsed.itemCode as string) || '';
+    const lotNo = (parsed.lotNo as string) || '';
+    if (!itemCode) return fail('품목 마스터에 없는 바코드입니다.');
+    const item = ((await this.dataSource.query(
+      `SELECT ITEM_NAME AS "itemName", ITEM_SPEC AS "itemSpec",
+              CASE WHEN DATESET <= TRUNC(SYSDATE) AND DATEEND >= TRUNC(SYSDATE) THEN 'Y' ELSE 'N' END AS "validYn"
+         FROM ID_ITEM WHERE ITEM_CODE = :itemCode AND ORGANIZATION_ID = :organizationId`,
+      namedBinds({ itemCode, organizationId }),
+    )) as Row[])[0];
+    if (!item || String(item.validYn) !== 'Y') return fail(`품목 마스터에 없는 품목입니다: ${itemCode}`, { itemCode });
+    if (!lotNo) return fail('롯트번호가 올바르지 않습니다.', { itemCode });
+
+    const row = ((await this.dataSource.query(
+      `SELECT b.RECEIPT_SLIP_NO                     AS "receiptSlipNo",
+              NVL(b.ISSUE_COMPARE_YN, 'N')          AS "issueCompareYn",
+              NVL(b.ISSUE_RETURN_YN, 'N')           AS "issueReturnYn",
+              NVL(b.LABEL_TYPE, 'N')                AS "labelType",
+              DECODE(NVL(b.NEW_SCAN_QTY, 0), 0, b.SCAN_QTY, b.NEW_SCAN_QTY) AS "currentQty",
+              b.INVENTORY_TYPE                      AS "inventoryType",
+              NVL(b.REEL_DESTROY_YN, 'N')           AS "reelDestroyYn",
+              b.ITEM_BARCODE                        AS "itemBarcode"
+         FROM IM_ITEM_RECEIPT_BARCODE b
+        WHERE b.ITEM_CODE = :itemCode AND b.LOT_NO = :lotNo AND b.ORGANIZATION_ID = :organizationId`,
+      namedBinds({ itemCode, lotNo, organizationId }),
+    )) as Row[])[0] ?? null;
+    const base = {
+      itemCode, lotNo,
+      barcodeRow: row ? { ...row, itemName: item.itemName, itemSpec: item.itemSpec } : null,
+      currentQty: row ? Number(row.currentQty ?? 0) : null,
+    };
+    if (row && String(row.reelDestroyYn) !== 'N') {
+      return fail(`이미 폐기된 라벨입니다 (${row.reelDestroyYn}).`, base);
+    }
+    const chamber = ((await this.dataSource.query(
+      `SELECT COUNT(*) AS "cnt",
+              DECODE(MAX(CHAMBER_TYPE), 'B', '베이킹', 'V', '진공포장', 'D', '제습함', MAX(CHAMBER_TYPE)) AS "type"
+         FROM IM_ITEM_BAKING_MASTER
+        WHERE LOT_NO = :lotNo AND INPUT_SCAN_DATE IS NOT NULL AND OUTPUT_SCAN_DATE IS NULL`,
+      namedBinds({ lotNo }),
+    )) as Row[])[0] ?? {};
+    if (Number(chamber.cnt ?? 0) > 0) return fail(`${chamber.type} 위치에 입고 중입니다.`, base);
+
+    const labelType = String(row?.labelType ?? 'N') || 'N';
+    if (!['N', 'R', 'B'].includes(labelType)) {
+      return fail(`선택 유형이 잘못 되었습니다 (라벨유형 ${labelType}).`, { ...base, labelType });
+    }
+    const locationCode = bad ? 'M02' : labelLocation(labelType);
+    let lineCode: string | null = bad && labelType !== 'B' ? '28' : null;
+
+    if (!bad) {
+      if (!row?.receiptSlipNo) return fail('바코드 정보가 생성되어 있지 않습니다.', { ...base, labelType, locationCode });
+      if (String(row.issueCompareYn) !== 'Y') {
+        return fail('이미 반품된 자재이거나 출고 이력이 없습니다.', { ...base, labelType, locationCode });
+      }
+      if (dto.lineManual) lineCode = dto.lineCode?.trim() || null;
+      else {
+        const last = (await this.dataSource.query(
+          `SELECT MAX(s.LINE_CODE) AS "lineCode"
+             FROM IM_ITEM_ISSUE s
+            WHERE s.ITEM_CODE = :itemCode AND s.MATERIAL_MFS = :lotNo
+              AND s.ISSUE_DEFICIT = '3' AND s.ISSUE_ACCOUNT <> 'M009'
+              AND s.ENTER_DATE = ( SELECT MAX(x.ENTER_DATE) FROM IM_ITEM_ISSUE x
+                                    WHERE x.ITEM_CODE = :itemCode AND x.MATERIAL_MFS = :lotNo
+                                      AND x.ISSUE_DEFICIT = '3' AND x.ISSUE_ACCOUNT <> 'M009' )`,
+          namedBinds({ itemCode, lotNo }),
+        )) as Row[];
+        const found = String(last[0]?.lineCode ?? '');
+        if (!found || found === '*' || found === '%') {
+          return fail(`${itemCode} ${lotNo} 의 최종 라인을 알 수 없습니다. Line Manual Check 로 넣으세요.`,
+            { ...base, labelType, locationCode });
+        }
+        lineCode = found;
+      }
+    } else if (!lineCode) lineCode = dto.lineCode?.trim() || null;
+
+    return {
+      ...base, labelType, locationCode, lineCode,
+      returnable: Boolean(lineCode),
+      reason: lineCode ? null : '라인이 올바르지 않습니다.',
+    };
+  }
+
+  /**
+   * 출고반품 (**쓰기**) — PB `sle_return_qty` modified 이벤트.
+   *
+   *   양품 Mass Return: ① 바코드 원장을 되돌리고(수량·바코드 재생성) ② 마이너스 출고
+   *   ③ 로스(반품 수량 − 반품 전 릴 수량)를 남긴다. 새 라벨을 붙인다 (Auto Print).
+   *   Bad: 원장은 그대로 두고 불량 창고(M02)로 마이너스 출고만 넣는다. 롯트 자리에
+   *   품목코드, 바코드는 `품목-YYMMDD+순번-수량`, 전표는 Invoice(비우면 채번) — PB 그대로.
+   *
+   * 판정은 `lookupReturn` 을 다시 불러서 한다. 쓰기는 한 트랜잭션이다.
+   */
+  async returnBarcode(dto: BarcodeIssueReturnDto, organizationId: number, userId: string) {
+    const qty = Number(dto.returnQty);
+    if (!Number.isFinite(qty) || qty <= 0) throw new BadRequestException('반품 수량이 올바르지 않습니다.');
+    const look = await this.lookupReturn(dto, organizationId);
+    if (!look.returnable || !look.itemCode || !look.lineCode) {
+      throw new BadRequestException(look.reason ?? '반품할 수 없는 바코드입니다.');
+    }
+    const info = look.barcodeRow as Row;
+    const bad = dto.bad ?? false;
+    const itemCode = look.itemCode;
+    const lineCode = look.lineCode;
+    const modelName = dto.modelName?.trim() || null;
+    const inventoryType = (info?.inventoryType as string) ?? null;
+
+    return this.tx.run(async (qr) => {
+      if (!bad) {
+        const lotNo = look.lotNo as string;
+        const updated = await qr.query(
+          `UPDATE IM_ITEM_RECEIPT_BARCODE
+              SET ISSUE_COMPARE_YN        = 'N',
+                  ISSUE_COMPARE_DATE      = NULL,
+                  ISSUE_COMPARE_BY        = NULL,
+                  SUPPLIER_BARCODE        = '*',
+                  ISSUE_RETURN_YN         = 'Y',
+                  ISSUE_RETURN_DATE       = SYSDATE,
+                  SCAN_QTY                = :qty,
+                  LAST_SCAN_QTY           = SCAN_QTY,
+                  LAST_ISSUE_COMPARE_DATE = ISSUE_COMPARE_DATE,
+                  LAST_ISSUE_COMPARE_BY   = ISSUE_COMPARE_BY,
+                  ITEM_BARCODE            = :itemCode || '-' || :lotNo || '-' || :qty,
+                  FEEDING_YN              = 'N',
+                  NEW_SCAN_QTY            = 0,
+                  LAST_MODIFY_BY          = :userId,
+                  LAST_MODIFY_DATE        = SYSDATE
+            WHERE ITEM_CODE = :itemCode AND LOT_NO = :lotNo AND ORGANIZATION_ID = :organizationId
+              AND NVL(ISSUE_COMPARE_YN, 'N') = 'Y'`,
+          namedBinds({ qty, itemCode, lotNo, userId, organizationId }),
+        );
+        if (Number(affectedRows(updated) ?? 0) !== 1) {
+          throw new BadRequestException('반품 대상이 아닙니다 (이미 반품됐거나 출고되지 않은 바코드).');
+        }
+        const issued = await qr.query(
+          `INSERT INTO IM_ITEM_ISSUE
+             (ITEM_CODE, ISSUE_DATE, ISSUE_SEQUENCE, ORGANIZATION_ID, MFS, LOCATION_CODE, ITEM_TYPE,
+              LINE_CODE, WORKSTAGE_CODE, ISSUE_DEFICIT, ISSUE_QTY, ISSUE_STATUS, ISSUE_AMT, ISSUE_ACCOUNT,
+              LINE_TYPE, COMMENTS, ISSUE_PRICE, VIRTUAL_RECEIPT_YN, ISSUE_TYPE, SUPPLIER_CODE, WORK_ORDER_NO,
+              ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, MACHINE_CODE, INVOICE_NO, MADE_BY,
+              PARENT_ITEM_CODE, MATERIAL_MFS, CLOSE_YN, BARCODE, MODEL_NAME, INVENTORY_TYPE, MSL_PASSED_TIME)
+           VALUES
+             (:itemCode, TRUNC(SYSDATE), SEQ_MAT_ISSUE.NEXTVAL, :organizationId, '*', :locationCode, 'T',
+              :lineCode, '*', 4, :qty * -1, 'N', 0, 'M001',
+              F_GET_LINE_TYPE_FROM_ITEM(:itemCode, :organizationId), NULL, 0, NULL, 'N', '*', '*',
+              SYSDATE, :userId, SYSDATE, :userId, '*', :slipNo, NULL,
+              '*', :lotNo, 'N', :barcode, :modelName, :inventoryType, F_GET_MSL_PASSED_TIME(:barcode))`,
+          namedBinds({
+            itemCode, organizationId, locationCode: look.locationCode, lineCode, qty, userId,
+            slipNo: (info.receiptSlipNo as string) ?? null, lotNo, barcode: dto.barcode.trim(),
+            modelName, inventoryType,
+          }),
+        );
+        // 로스 = 반품 수량 − 반품 전 릴 수량 (PB: lvl_issue_qty - lvl_new_scan_qty)
+        const before = Number(look.currentQty ?? 0);
+        const loss = await qr.query(
+          `INSERT INTO IM_ITEM_ISSUE_LOSS
+             (ISSUE_DATE, ISSUE_SEQUENCE, ITEM_CODE, MATERIAL_MFS, MODEL_NAME, LINE_CODE, ISSUE_QTY,
+              ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, ORGANIZATION_ID, SCAN_QTY)
+           VALUES
+             (SYSDATE, SEQ_MAT_ISSUE.NEXTVAL, :itemCode, :lotNo, :modelName, :lineCode, :lossQty,
+              SYSDATE, :userId, SYSDATE, :userId, :organizationId, :before)`,
+          namedBinds({ itemCode, lotNo, modelName, lineCode, lossQty: qty - before, userId, organizationId, before }),
+        );
+        return {
+          bad, itemCode, lotNo, lineCode, locationCode: look.locationCode, returnQty: qty,
+          lossQty: qty - before, previousQty: before,
+          newBarcode: `${itemCode}-${lotNo}-${qty}`,
+          receiptSlipNo: (info.receiptSlipNo as string) ?? null,
+          issueRows: Number(affectedRows(issued) ?? 0), lossRows: Number(affectedRows(loss) ?? 0),
+        };
+      }
+
+      // Bad — 불량 창고로 마이너스 출고만 넣는다 (원장은 그대로).
+      const seqRow = ((await qr.query(
+        `SELECT SEQ_MATERIAL_BARCODE.NEXTVAL AS "seq", TO_CHAR(SYSDATE, 'YYMMDD') AS "ymd" FROM DUAL`,
+      )) as Row[])[0];
+      const seq = Number(seqRow.seq);
+      const slipNo = dto.invoiceNo?.trim() || String(seq);
+      const newBarcode = `${itemCode}-${seqRow.ymd}${String(seq).padStart(5, '0')}-${qty}`;
+      const labelType = String(look.labelType ?? 'N');
+      const issued = await qr.query(
+        `INSERT INTO IM_ITEM_ISSUE
+           (ITEM_CODE, ISSUE_DATE, ISSUE_SEQUENCE, ORGANIZATION_ID, MFS, LOCATION_CODE, ITEM_TYPE,
+            LINE_CODE, WORKSTAGE_CODE, ISSUE_DEFICIT, ISSUE_QTY, ISSUE_STATUS, ISSUE_AMT, ISSUE_ACCOUNT,
+            LINE_TYPE, COMMENTS, ISSUE_PRICE, VIRTUAL_RECEIPT_YN, ISSUE_TYPE, SUPPLIER_CODE, WORK_ORDER_NO,
+            ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, MACHINE_CODE, INVOICE_NO, MADE_BY,
+            PARENT_ITEM_CODE, MATERIAL_MFS, CLOSE_YN, BARCODE, MODEL_NAME, INVENTORY_TYPE)
+         VALUES
+           (:itemCode, TRUNC(SYSDATE), SEQ_MAT_ISSUE.NEXTVAL, :organizationId, '*', :locationCode, 'T',
+            :lineCode, '*', 4, :qty * -1, 'N', 0, 'M001',
+            F_GET_LINE_TYPE_FROM_ITEM(:itemCode, :organizationId), :labelType, 0, NULL, :labelType, '*', '*',
+            SYSDATE, :userId, SYSDATE, :userId, '*', NVL(:slipNo, :itemCode), NULL,
+            '*', :itemCode, 'N', :newBarcode, :modelName, :inventoryType)`,
+        namedBinds({
+          itemCode, organizationId, locationCode: look.locationCode, lineCode, qty, labelType,
+          userId, slipNo, newBarcode, modelName, inventoryType,
+        }),
+      );
+      return {
+        bad, itemCode, lotNo: itemCode, lineCode, locationCode: look.locationCode, returnQty: qty,
+        lossQty: 0, previousQty: Number(look.currentQty ?? 0), newBarcode, receiptSlipNo: slipNo,
+        issueRows: Number(affectedRows(issued) ?? 0), lossRows: 0,
+      };
+    });
+  }
+
+  /**
+   * 반품 뒤 붙일 릴 라벨 내용 — PB `d_mat_receipt_lot_barcode_rpt` (Auto Print).
+   */
+  async findReelLabel(itemCode: string, lotNo: string, organizationId: number) {
+    return (await this.dataSource.query(
+      `SELECT b.ITEM_CODE                AS "itemCode",
+              b.ITEM_BARCODE             AS "itemBarcode",
+              b.LOT_NO                   AS "lotNo",
+              b.SCAN_QTY                 AS "scanQty",
+              i.ITEM_NAME                AS "itemName",
+              i.ITEM_SPEC                AS "itemSpec",
+              i.MSL_LEVEL                AS "mslLevel",
+              i.LOCATION_ADDRESS         AS "locationAddress",
+              b.SUPPLIER_CODE            AS "supplierCode",
+              b.LABEL_TYPE               AS "labelType",
+              b.RECEIPT_TYPE             AS "receiptType",
+              TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI') AS "printDate"
+         FROM IM_ITEM_RECEIPT_BARCODE b
+         LEFT JOIN ID_ITEM i ON i.ITEM_CODE = b.ITEM_CODE AND i.ORGANIZATION_ID = b.ORGANIZATION_ID
+        WHERE b.ITEM_CODE = :itemCode AND b.LOT_NO = :lotNo
+          AND NVL(b.BARCODE_STATUS, '*') <> 'C' AND b.ORGANIZATION_ID = :organizationId`,
+      namedBinds({ itemCode, lotNo, organizationId }),
+    )) as Row[];
+  }
+
+  // ───────────────────────────────── 출고 취소 (PB Cancel Issue → w_mat_issue_cancel_4_barcode_popup)
+
+  /**
+   * 취소할 출고를 찾는다 (읽기 전용). 출고된(ISSUE_COMPARE_YN='Y') 바코드여야 하고,
+   * 취소 대상은 그 롯트의 가장 늦게 등록된 살아 있는 출고(ISSUE_DEFICIT 3 · 'C' 아님)다 — PB 그대로.
+   */
+  async lookupCancel(dto: BarcodeIssueCancelDto, organizationId: number) {
+    const barcode = dto.barcode.trim();
+    const parsed = ((await this.dataSource.query(
+      `SELECT F_GET_ITEM_CODE_FROM_BARCODE(:barcode) AS "itemCode",
+              F_GET_LOT_NO_FROM_BARCODE(:barcode)    AS "lotNo"
+         FROM DUAL`,
+      namedBinds({ barcode }),
+    )) as Row[])[0] ?? {};
+    const itemCode = (parsed.itemCode as string) || '';
+    const lotNo = (parsed.lotNo as string) || '';
+    const fail = (reason: string) => ({ itemCode: itemCode || null, lotNo: lotNo || null, issue: null, cancelable: false, reason });
+    if (!itemCode) return fail('품목을 찾을 수 없는 바코드입니다.');
+    if (!lotNo) return fail('롯트번호가 올바르지 않습니다.');
+
+    const issued = ((await this.dataSource.query(
+      `SELECT COUNT(*) AS "cnt" FROM IM_ITEM_RECEIPT_BARCODE
+        WHERE ITEM_CODE = :itemCode AND LOT_NO = :lotNo AND ISSUE_COMPARE_YN = 'Y'
+          AND ORGANIZATION_ID = :organizationId`,
+      namedBinds({ itemCode, lotNo, organizationId }),
+    )) as Row[])[0];
+    if (Number(issued?.cnt ?? 0) === 0) return fail('출고된 바코드가 아닙니다.');
+
+    const issue = ((await this.dataSource.query(
+      `SELECT TO_CHAR(s.ISSUE_DATE, 'YYYY-MM-DD') AS "issueDate",
+              s.ISSUE_SEQUENCE                    AS "issueSequence",
+              s.ISSUE_QTY                         AS "issueQty",
+              s.LINE_CODE                         AS "lineCode",
+              s.WORKSTAGE_CODE                    AS "workstageCode",
+              s.MODEL_NAME                        AS "modelName",
+              s.ISSUE_DIVISION                    AS "issueDivision",
+              TO_CHAR(s.ENTER_DATE, 'YYYY-MM-DD HH24:MI:SS') AS "enterDate",
+              s.ENTER_BY                          AS "enterBy",
+              i.ITEM_NAME                         AS "itemName"
+         FROM IM_ITEM_ISSUE s
+         LEFT JOIN ID_ITEM i ON i.ITEM_CODE = s.ITEM_CODE AND i.ORGANIZATION_ID = s.ORGANIZATION_ID
+        WHERE s.MATERIAL_MFS = :lotNo AND s.ITEM_CODE = :itemCode
+          AND s.ISSUE_STATUS <> 'C' AND s.ISSUE_DEFICIT = '3'
+          AND s.ENTER_DATE = ( SELECT MAX(x.ENTER_DATE) FROM IM_ITEM_ISSUE x
+                                WHERE x.MATERIAL_MFS = :lotNo AND x.ITEM_CODE = :itemCode
+                                  AND x.ISSUE_STATUS <> 'C' AND x.ISSUE_DEFICIT = '3'
+                                  AND x.ORGANIZATION_ID = :organizationId )
+          AND s.ORGANIZATION_ID = :organizationId
+          AND ROWNUM = 1`,
+      namedBinds({ itemCode, lotNo, organizationId }),
+    )) as Row[])[0] ?? null;
+    if (!issue) return fail('취소할 출고 이력이 없습니다.');
+    return { itemCode, lotNo, issue, cancelable: true, reason: null };
+  }
+
+  /**
+   * 출고 취소 (**쓰기**) — 한 트랜잭션: ① 바코드 원장을 출고 전으로 (ISSUE_COMPARE_YN 'N' ·
+   * 반품표시 'Y', PB 그대로) ② 그 출고를 역분개 (258 출고취소와 같은 `cancelIssue`).
+   */
+  async cancelBarcode(dto: BarcodeIssueCancelDto, organizationId: number, userId: string) {
+    const look = await this.lookupCancel(dto, organizationId);
+    if (!look.cancelable || !look.issue) throw new BadRequestException(look.reason ?? '취소할 수 없는 바코드입니다.');
+    const issue = look.issue as Row;
+    return this.tx.run(async (qr) => {
+      const updated = await qr.query(
+        `UPDATE IM_ITEM_RECEIPT_BARCODE
+            SET ISSUE_COMPARE_YN = 'N', ISSUE_COMPARE_DATE = NULL, ISSUE_RETURN_YN = 'Y',
+                LAST_MODIFY_BY = :userId, LAST_MODIFY_DATE = SYSDATE
+          WHERE ITEM_CODE = :itemCode AND LOT_NO = :lotNo AND ISSUE_COMPARE_YN = 'Y'
+            AND ORGANIZATION_ID = :organizationId`,
+        namedBinds({ userId, itemCode: look.itemCode, lotNo: look.lotNo, organizationId }),
+      );
+      if (Number(affectedRows(updated) ?? 0) !== 1) {
+        throw new BadRequestException('출고된 바코드가 아닙니다 (이미 취소·반품된 바코드).');
+      }
+      const today = ((await qr.query(`SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD') AS "d" FROM DUAL`)) as Row[])[0].d as string;
+      const canceled = await this.issueManage.cancelIssue({
+        issueDate: issue.issueDate as string,
+        issueSequence: Number(issue.issueSequence),
+        cancelDate: today,
+      }, organizationId, userId, qr);
+      return { barcode: dto.barcode.trim(), itemCode: look.itemCode, lotNo: look.lotNo, ...canceled };
     });
   }
 }

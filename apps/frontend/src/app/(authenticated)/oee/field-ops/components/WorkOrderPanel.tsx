@@ -22,8 +22,8 @@ interface RunRow extends WorkResultRun {
 }
 
 interface Props {
-  /** 조회 범위. 라인 모드면 lineCode, 설비 모드면 machineCode가 채워진다 */
-  scope: { lineCode?: string; machineCode?: string } | null;
+  /** 조회 범위. SMT 는 lineCode, 후공정은 workstageCode(+excludeSmt), 둘 다 없는 설비는 machineCode */
+  scope: { lineCode?: string; machineCode?: string; workstageCode?: string; excludeSmt?: 'Y' } | null;
   /** 실적 폼의 작업자 기본값 (상단에서 고른 작업자 이름) */
   workerName: string;
 }

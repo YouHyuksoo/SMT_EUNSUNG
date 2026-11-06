@@ -30,7 +30,7 @@ export class ProcessMaster {
   @Column({ name: 'WORKSTAGE_NAME', length: 100 })
   processName: string;
 
-  /** 공정유형: I=일반공정 L=최종공정 Q=검사공정 (ISYS_BASECODE 'WORKSTAGE TYPE') */
+  /** 공정유형: I=제조공정 L=최종공정 Q=검사공정 (ISYS_BASECODE 'WORKSTAGE TYPE') */
   @Column({ name: 'WORKSTAGE_TYPE', length: 1, default: 'I' })
   processType: string;
 

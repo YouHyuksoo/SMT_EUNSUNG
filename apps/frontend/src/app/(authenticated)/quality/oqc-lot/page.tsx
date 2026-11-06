@@ -27,13 +27,9 @@ import {
   type OqcLotRow,
 } from '../notify-columns';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const isoDate = (date: Date) => getTodayLocal(date);
 const today = () => isoDate(new Date());
-const weekAgo = () => {
-  const date = new Date();
-  date.setDate(date.getDate() - 7);
-  return isoDate(date);
-};
 
 export default function OqcLotPage() {
   const scanRef = useRef<HTMLInputElement>(null);
@@ -42,7 +38,7 @@ export default function OqcLotPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const [dateFrom, setDateFrom] = useState(weekAgo);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [packBarcode, setPackBarcode] = useState('');
   const [modelName, setModelName] = useState('');

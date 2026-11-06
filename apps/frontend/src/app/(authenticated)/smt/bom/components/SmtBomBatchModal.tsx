@@ -17,6 +17,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Button, Input, Modal } from '@/components/ui';
+import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import api from '@/services/api';
 import { SmtModelSelect, SmtPcbItemSelect } from '../../components/SmtSelects';
 
@@ -118,11 +119,11 @@ export default function SmtBomBatchModal({
             <div className="grid grid-cols-2 gap-3">
               <label className="block text-sm">
                 <span className="text-text-muted">라인 1</span>
-                <Input value={lineCode1} onChange={(e) => setLineCode1(e.target.value)} />
+                <ProdLineSelect value={lineCode1} onChange={setLineCode1} fullWidth />
               </label>
               <label className="block text-sm">
                 <span className="text-text-muted">라인 2</span>
-                <Input value={lineCode2} onChange={(e) => setLineCode2(e.target.value)} />
+                <ProdLineSelect value={lineCode2} onChange={setLineCode2} fullWidth />
               </label>
             </div>
           </>
@@ -159,7 +160,7 @@ export default function SmtBomBatchModal({
             <div className="grid grid-cols-2 gap-3">
               <label className="block text-sm">
                 <span className="text-text-muted">라인코드</span>
-                <Input value={lineCode} onChange={(e) => setLineCode(e.target.value)} />
+                <ProdLineSelect value={lineCode} onChange={setLineCode} fullWidth />
               </label>
               <label className="block text-sm">
                 <span className="text-text-muted">PCB 면 (비우면 양면)</span>

@@ -44,3 +44,5 @@ __exportStar(require("./warehouse"), exports);
 __exportStar(require("./production"), exports);
 // 모니터링 경고 건수 SQL(display · 대시보드 공용) 내보내기
 __exportStar(require("./monitoring"), exports);
+// 기준정보 — 품목마스터(ID_ITEM) 컬럼 목록(백엔드 저장·검증 · 화면 공용)
+__exportStar(require("./master"), exports);

@@ -13,6 +13,7 @@ import { ResponseUtil } from '../../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ROW_LIMIT } from '../../../shared/row-limit';
 import {
+  FgFifoQueryDto,
   FgIssuableQueryDto,
   FgIssueDto,
   FgIssueQueryDto,
@@ -21,6 +22,7 @@ import {
   FgModelReceiptDto,
   FgReceiptDto,
   FgReceiptQueryDto,
+  FgReceiptSummaryQueryDto,
 } from '../dto/product-fg.dto';
 import {
   PackCompleteDto,
@@ -82,6 +84,18 @@ export class ProductPackController {
     return paged(await this.service.findPackHistory(query, organizationId));
   }
 
+  @Get('box-label')
+  @ApiOperation({
+    summary: '299 박스라벨 출력 데이터 (읽기 전용) — 모델 박스 양식(.btw)과 V1~V20 값.'
+      + ' 화면이 작업자 PC 의 Print Agent 로 넘겨 BarTender 로 찍는다.',
+  })
+  async boxLabel(
+    @Query() query: PackCompleteDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(await this.service.getBoxLabel(query.packBarcode, organizationId));
+  }
+
   @Post()
   @ApiOperation({
     summary: '299 박스 바코드 생성 (**쓰기**). 번호는 DB 함수'
@@ -141,7 +155,7 @@ export class ProductPackController {
 
   @Post('reprint')
   @ApiOperation({
-    summary: '299 재출력 횟수를 올린다 (**쓰기**). 인쇄 자체는 옮기지 않았다.',
+    summary: '299 재출력 횟수를 올린다 (**쓰기**). 출력은 화면이 box-label → Print Agent 로 한다.',
   })
   async reprint(
     @Body() dto: PackCompleteDto,
@@ -181,6 +195,24 @@ export class ProductFgController {
     return paged(await this.service.findReceipts(query, organizationId));
   }
 
+  @Get('receipts/summary')
+  @ApiOperation({ summary: '제품입고조회 합계. groupBy = item(품목별) · date(일자별).' })
+  async receiptSummary(
+    @Query() query: FgReceiptSummaryQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findReceiptSummary(query, organizationId));
+  }
+
+  @Get('receipts/crosstab')
+  @ApiOperation({ summary: '제품입고조회 일자 × 모델 원자료. 피벗은 화면에서 한다.' })
+  async receiptCrosstab(
+    @Query() query: FgReceiptQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findReceiptCrosstab(query, organizationId));
+  }
+
   @Get('issues')
   @ApiOperation({ summary: '307·308 제품출하 이력. 취소분은 수량이 음수로 나온다.' })
   async issues(
@@ -199,6 +231,18 @@ export class ProductFgController {
     return paged(await this.service.findIssueSummary(query, organizationId));
   }
 
+  @Get('issues/crosstab')
+  @ApiOperation({
+    summary: '제품출하조회 일자 × 모델 원자료 (일자·모델·고객·위치별 순출하수량).'
+      + ' 열 집합이 기간에 따라 달라지므로 피벗은 화면에서 한다.',
+  })
+  async issueCrosstab(
+    @Query() query: FgIssueQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findIssueCrosstab(query, organizationId));
+  }
+
   @Get('issuable')
   @ApiOperation({
     summary: '307 출하할 수 있는 제품재고. PB 고정조건(파렛트 미적재 · 제품창고 P01)을'
@@ -209,6 +253,21 @@ export class ProductFgController {
     @OrganizationId() organizationId: number,
   ) {
     return paged(await this.service.findIssuable(query, organizationId));
+  }
+
+  @Get('fifo-config')
+  @ApiOperation({ summary: '307 제품 선입선출 설정 — ISYS_CONFIG.PRODUCT_FIFO_YN · 판정 범위(PRODUCT_DEAD_STOCK_DAYS)' })
+  async fifoConfig(@OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.findFifoConfig(organizationId));
+  }
+
+  @Get('fifo')
+  @ApiOperation({ summary: '307 제품 선입선출 — 이 박스보다 먼저 들어와 남아 있는 같은 모델 박스' })
+  async fifo(
+    @Query() query: FgFifoQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(await this.service.findFifo(query, organizationId));
   }
 
   @Post('receipt')
@@ -243,8 +302,9 @@ export class ProductFgController {
   async issue(
     @Body() dto: FgIssueDto,
     @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
   ) {
-    return ResponseUtil.success(await this.service.issue(dto, organizationId));
+    return ResponseUtil.success(await this.service.issue(dto, organizationId, userId));
   }
 
   @Post('model-issue')

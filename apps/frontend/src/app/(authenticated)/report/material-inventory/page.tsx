@@ -40,7 +40,8 @@ import type {
 } from '../report-b-types';
 import PartSearchField from '@/components/shared/PartSearchField';
 
-const today = () => new Date().toISOString().slice(0, 10);
+import { getTodayLocal } from '@/utils/date';
+const today = () => getTodayLocal();
 
 type Tab = 'detail' | 'summary' | 'daily' | 'disused';
 
