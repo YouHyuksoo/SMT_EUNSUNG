@@ -178,6 +178,12 @@ export class WorkResultController {
     return { ok: true };
   }
 
+  /** 품목의 라우팅 공정 흐름 (앞·뒤 공정 표시용) */
+  @Get('routing-flow')
+  async routingFlow(@Query('itemCode') itemCode: string, @OrganizationId() organizationId?: number) {
+    return await this.service.routingFlow(itemCode, organizationId);
+  }
+
   /** 부적합 유형 (WQC) */
   @Get('bad-reasons')
   async badReasons(@OrganizationId() organizationId?: number) {

@@ -613,6 +613,26 @@ export class WorkResultService {
     });
   }
 
+  /**
+   * 품목의 라우팅 공정 흐름 — 품목(ID_ITEM.ROUTING_CODE)이 문 라우팅의 공정을 순서대로 준다.
+   * 화면이 "어디서 와서 어디로 가는지"를 보여주는 데 쓴다. 라우팅이 없으면 빈 목록이다.
+   */
+  async routingFlow(itemCode: string, organizationId?: number) {
+    const organization = this.requireOrganization(organizationId);
+    const rows = await this.q<{ routingCode: string; seq: number; workstageCode: string; workstageName: string | null; executionType: string | null }>(
+      `SELECT p.ROUTING_CODE AS "routingCode", p.PROCESS_SEQ AS "seq", p.WORKSTAGE_CODE AS "workstageCode",
+              (SELECT MAX(w.WORKSTAGE_NAME) FROM IP_PRODUCT_WORKSTAGE w
+                WHERE w.WORKSTAGE_CODE = p.WORKSTAGE_CODE AND w.ORGANIZATION_ID = p.ORGANIZATION_ID) AS "workstageName",
+              p.EXECUTION_TYPE AS "executionType"
+         FROM ID_ITEM i
+         JOIN IP_ROUTING_PROCESSES p ON p.ROUTING_CODE = i.ROUTING_CODE AND p.ORGANIZATION_ID = i.ORGANIZATION_ID
+        WHERE i.ITEM_CODE = :1 AND i.ORGANIZATION_ID = :2 AND NVL(p.USE_YN, 'Y') = 'Y'
+        ORDER BY p.PROCESS_SEQ`,
+      [itemCode, organization],
+    );
+    return { routingCode: rows[0]?.routingCode ?? null, steps: rows };
+  }
+
   /** 부적합 유형 (ISYS_CODE_MASTER WQC BAD REASON CODE) */
   badReasons(organizationId?: number) {
     const organization = this.requireOrganization(organizationId);
