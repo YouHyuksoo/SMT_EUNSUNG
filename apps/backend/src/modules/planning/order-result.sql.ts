@@ -12,12 +12,24 @@
  * 4. 공정 통과 이력은 실적이 아니다 (설계 docs/specs/2026-10-14-production-order-and-shipping-order-design.md).
  */
 
-/** 런카드(alias)가 제품생산계획에서 내려간 후공정 지시인가 */
+/** 계획 없이 실적을 넣는 화면(생산실적 계획 없음)이 만드는 런카드의 COMMENTS 표시 */
+export const FREE_RUN_MARK = '[실적계획]';
+
+/** 완제품 실적 공정 — 조립라인의 포장 공정(W220) 실적만 완제품이다. 그 밖의 공정 실적은 반제품 재공 이동이다. */
+export const FINISHED_WORKSTAGE = 'W220';
+
+/**
+ * 런카드(alias)가 현황판·대시보드의 완제품(후공정) 지시인가.
+ * 제품생산계획에서 내려간 지시(LOT_NO = 계획 MFS)이거나, 계획 없이 실적 화면이 만든 포장 공정(W220) 지시다.
+ * 계획 없는 화면의 포장 외 공정(코팅·라우터 등) 실적은 반제품이라 여기서 세지 않는다 (완제품 이중 집계 방지).
+ * 계획 없는 지시는 LOT_NO 가 자기 RUN_NO 라 계획과 맞지 않지만, 계획수량을 실적 합계로 맞추므로 지시로 센다.
+ */
 export const MI_ORDER_EXISTS = (alias: string): string =>
-  `EXISTS (SELECT 1 FROM IP_PRODUCT_MI_PLAN mip
+  `(EXISTS (SELECT 1 FROM IP_PRODUCT_MI_PLAN mip
             WHERE mip.MFS = ${alias}.LOT_NO
               AND mip.MFS <> '*'
-              AND mip.ORGANIZATION_ID = ${alias}.ORGANIZATION_ID)`;
+              AND mip.ORGANIZATION_ID = ${alias}.ORGANIZATION_ID)
+    OR (${alias}.COMMENTS = '${FREE_RUN_MARK}' AND ${alias}.WORKSTAGE_CODE = '${FINISHED_WORKSTAGE}'))`;
 
 /** 후공정 지시의 확정 실적 행. 날짜 조건은 쓰는 쪽이 ENTER_DATE(실적 시각)로 붙인다. */
 export const MI_ORDER_RESULTS_SQL = `

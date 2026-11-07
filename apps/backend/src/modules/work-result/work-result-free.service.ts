@@ -12,7 +12,8 @@ import { DataSource } from 'typeorm';
 import { FreeResultCancelDto, FreeResultCreateDto } from './work-result-free.dto';
 import { WorkResultService } from './work-result.service';
 
-export const FREE_RUN_MARK = '[실적계획]';
+import { FREE_RUN_MARK } from '../planning/order-result.sql';
+export { FREE_RUN_MARK };
 const DEFAULT_SHIFT = 'A';
 const DEFAULT_USER = 'ADMIN';
 /** 2층 조립 후공정이 쓰는 작업시간 구간 종류 (SMT 는 SMTWORKTIME) */
