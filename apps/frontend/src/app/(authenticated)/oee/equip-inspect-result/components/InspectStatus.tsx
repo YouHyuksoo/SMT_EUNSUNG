@@ -61,6 +61,8 @@ export default function InspectStatus({ run, history, onCancel }: Props) {
   const rows = useMemo(() => [...history].sort((a, b) => b.seqNo - a.seqNo), [history]);
 
   const columns = useMemo<ColumnDef<InspectHistoryRow>[]>(() => [
+    { id: 'timeZone', header: '구간', size: 60, accessorFn: (h) => h.timeZone ?? '',
+      cell: ({ row }) => <span className="font-mono">{row.original.timeZone ?? '-'}</span> },
     { id: 'enteredAt', header: '등록시각', size: 140, accessorFn: (h) => h.enteredAt ?? '',
       cell: ({ row }) => <span className="font-mono">{row.original.enteredAt?.slice(5) ?? '-'}</span> },
     { id: 'verdict', header: '판정', size: 80, meta: { align: 'center' }, accessorFn: (h) => VERDICT_LABEL[h.inspectResult],

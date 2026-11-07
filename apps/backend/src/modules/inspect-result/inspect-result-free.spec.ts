@@ -10,7 +10,7 @@ import type { InspectResultService } from './inspect-result.service';
 
 const dto: FreeInspectCreateDto = {
   lineCode: 'L2', machineCode: 'ES-Q01', modelName: 'MODEL-A', itemCode: 'ITEM-A',
-  inspectResult: 'P', inspectQty: 10, inspectorName: '홍길동',
+  timeZone: 'B', inspectResult: 'P', inspectQty: 10, inspectorName: '홍길동',
 };
 
 function build(queryImpl: (sql: string, params?: unknown[]) => unknown) {
@@ -34,19 +34,26 @@ describe('InspectResultFreeController', () => {
 
 describe('InspectResultFreeService', () => {
   it('rejects a machine that is not an inspection (Q) process before creating any run card', async () => {
-    const { service, query, create } = build((sql) => (sql.includes('FROM IMCN_MACHINE') ? [{ workstageCode: 'W1', stageType: 'A' }] : []));
+    const { service, query, create } = build((sql) => (sql.includes('FROM ICOM_WORKTIME_RANGES') ? [{ code: 'B' }] : sql.includes('FROM IMCN_MACHINE') ? [{ workstageCode: 'W1', stageType: 'A' }] : []));
     await expect(service.createResult(dto, 7)).rejects.toBeInstanceOf(BadRequestException);
     expect(create).not.toHaveBeenCalled();
     expect(query.mock.calls.some((c) => String(c[0]).includes('INSERT INTO IP_PRODUCT_RUN_CARD'))).toBe(false);
   });
 
+  it('rejects a time zone that is not registered in the work time ranges before saving anything', async () => {
+    const { service, create } = build((sql) => (sql.includes('FROM ICOM_WORKTIME_RANGES') ? [{ code: 'A' }] : []));
+    await expect(service.createResult({ ...dto, timeZone: 'J' }, 7)).rejects.toBeInstanceOf(BadRequestException);
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it('rejects an unknown machine', async () => {
-    const { service } = build(() => []);
+    const { service } = build((sql) => (sql.includes('FROM ICOM_WORKTIME_RANGES') ? [{ code: 'B' }] : []));
     await expect(service.createResult(dto, 7)).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('creates the run card once, saves through InspectResultService and syncs the plan quantity', async () => {
     const { service, query, create } = build((sql) => {
+      if (sql.includes('FROM ICOM_WORKTIME_RANGES')) return [{ code: 'A' }, { code: 'B' }];
       if (sql.includes('FROM IMCN_MACHINE')) return [{ workstageCode: 'WQ', stageType: 'Q' }];
       if (sql.includes('FROM IP_PRODUCT_MODEL_MASTER')) return [{ revision: '01' }];
       if (sql.includes('SELECT MIN(RUN_NO)')) return [{ runNo: null }];
@@ -58,12 +65,13 @@ describe('InspectResultFreeService', () => {
     const insert = query.mock.calls.find((c) => String(c[0]).includes('INSERT INTO IP_PRODUCT_RUN_CARD'));
     expect(insert?.[1]).toContain(FREE_INSPECT_RUN_MARK);
     expect(insert?.[1]).toContain('WQ');
-    expect(create).toHaveBeenCalledWith(expect.objectContaining({ runNo: 'R1', machineCode: 'ES-Q01', inspectQty: 10 }), 7, 'u1');
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ runNo: 'R1', machineCode: 'ES-Q01', inspectQty: 10, timeZone: 'B' }), 7, 'u1');
     expect(query.mock.calls.some((c) => String(c[0]).includes('UPDATE IP_PRODUCT_RUN_CARD'))).toBe(true);
   });
 
   it('removes the empty run card it just created when the inspection save fails', async () => {
     const { service, query, create } = build((sql) => {
+      if (sql.includes('FROM ICOM_WORKTIME_RANGES')) return [{ code: 'A' }, { code: 'B' }];
       if (sql.includes('FROM IMCN_MACHINE')) return [{ workstageCode: 'WQ', stageType: 'Q' }];
       if (sql.includes('FROM IP_PRODUCT_MODEL_MASTER')) return [{ revision: '01' }];
       if (sql.includes('SELECT MIN(RUN_NO)')) return [{ runNo: null }];

@@ -3,6 +3,7 @@
 //   작업지시(IP_PRODUCT_RUN_CARD)는 업무일 · 라인 · 검사공정 · 모델당 하나를 서버가 만든다 (COMMENTS = FREE_INSPECT_RUN_MARK).
 //   계획수량(LOT_SIZE)은 취소 제외 검사수량 합계다(최소 1, 컬럼 제약). 저장·취소 때마다 다시 맞춘다.
 //   검사실적 저장·취소는 InspectResultService 를 그대로 쓴다 — 판정·불량원인 규칙이 한 곳에 있다.
+//   타임구간(A~J)은 작업시간 관리(ICOM_WORKTIME_RANGES)의 구간이고 IQ_EQUIP_INSPECT_RESULT.TIME_ZONE 에 저장된다.
 //   생산 화면(WorkResultFreeService)이 만든 지시는 COMMENTS 표시가 달라 서로 건드리지 않는다.
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -13,6 +14,8 @@ import { InspectResultService } from './inspect-result.service';
 export const FREE_INSPECT_RUN_MARK = '[검사실적계획]';
 const DEFAULT_SHIFT = 'A';
 const DEFAULT_USER = 'ADMIN';
+/** 2층 조립 후공정이 쓰는 작업시간 구간 종류 (생산실적(계획 없음)과 같다) */
+const WORKTIME_RANGE_TYPE = 'WORKTIME';
 
 @Injectable()
 export class InspectResultFreeService {
@@ -62,6 +65,12 @@ export class InspectResultFreeService {
   async createResult(dto: FreeInspectCreateDto, organizationId?: number, userId?: string) {
     const org = this.requireOrganization(organizationId);
     const user = userId ?? DEFAULT_USER;
+
+    const zones = (await this.dataSource.manager.query(
+      `SELECT WORK_TYPE AS "code" FROM ICOM_WORKTIME_RANGES WHERE RANGE_TYPE = :1 AND ORGANIZATION_ID = :2`,
+      [WORKTIME_RANGE_TYPE, org],
+    )) as Array<{ code: string }>;
+    if (!zones.some((z) => z.code === dto.timeZone)) throw new BadRequestException('작업시간 관리에 등록되지 않은 타임구간입니다');
 
     // 공정은 설비의 공정(검사공정 Q)으로 정한다 — 지시를 만들기 전에 막아 빈 지시를 남기지 않는다
     const machine = (await this.dataSource.manager.query(
@@ -120,7 +129,7 @@ export class InspectResultFreeService {
       const saved = await this.inspect.create(
         {
           runNo, machineCode: dto.machineCode, inspectResult: dto.inspectResult, inspectQty: dto.inspectQty,
-          badReasonCode: dto.badReasonCode, inspectorName: dto.inspectorName,
+          badReasonCode: dto.badReasonCode, inspectorName: dto.inspectorName, timeZone: dto.timeZone,
         },
         org, userId,
       );

@@ -32,6 +32,8 @@ export interface InspectHistoryRow {
   inspectorName: string | null;
   /** DONE | CANCEL */
   resultStatus: string;
+  /** 타임구간 A~J — 계획 없는 검사실적 화면에서 넣은 건만 있다 */
+  timeZone?: string | null;
   /** 'YYYY-MM-DD HH24:MI:SS' */
   enteredAt: string | null;
   /** 오늘 업무일 등록이면 'Y' — 취소 가능 */

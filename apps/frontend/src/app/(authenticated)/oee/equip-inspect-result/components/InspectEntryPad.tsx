@@ -24,9 +24,11 @@ interface Props {
   badReasons: BadReason[];
   onSave: (v: { verdict: 'P' | 'R'; qty: number; badReasonCode: string | null }) => Promise<boolean>;
   onBlocked: () => void;
+  /** 입력판 아래에 끼우는 추가 영역(타임구간 선택 등) */
+  extra?: React.ReactNode;
 }
 
-export default function InspectEntryPad({ disabledReason, subtitle, badReasons, onSave, onBlocked }: Props) {
+export default function InspectEntryPad({ disabledReason, subtitle, badReasons, onSave, onBlocked, extra }: Props) {
   const [verdict, setVerdict] = useState<'P' | 'R'>('P');
   const [qty, setQty] = useState('0');
   const [reason, setReason] = useState<BadReason | null>(null);
@@ -114,6 +116,8 @@ export default function InspectEntryPad({ disabledReason, subtitle, badReasons, 
           </button>
         ))}
       </div>
+
+      {extra}
 
       <button type="button" onClick={() => void save()} disabled={!disabledReason && !canSave}
         className={`h-14 rounded-xl bg-primary text-white text-lg font-bold hover:bg-primary/90 disabled:opacity-40 ${disabledReason ? 'opacity-50' : ''}`}>

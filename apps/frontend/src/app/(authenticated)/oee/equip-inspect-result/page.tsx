@@ -36,6 +36,7 @@ import { businessDate } from '../equip-work-result/_lib/kpi';
 import type { RunRow } from '../equip-work-result/_lib/types';
 import InspectScopeModal from './components/InspectScopeModal';
 import InspectStatus from './components/InspectStatus';
+import RoutingFlow from '../equip-work-result/components/RoutingFlow';
 import InspectEntryPad, { type BadReason } from './components/InspectEntryPad';
 import {
   loadInspector, loadRunNo, loadScope, saveInspector, saveRunNo, saveScope,
@@ -239,18 +240,21 @@ export default function EquipInspectResultPage() {
 
       {/* 본문: 검사 현황 · 검사실적 입력 · 레일 */}
       <div className="flex-1 min-h-0 flex gap-3">
-        {run ? (
-          <InspectStatus run={run} history={history} onCancel={cancelInspect} />
-        ) : (
-          <section className="flex-1 min-h-0 rounded-xl border border-dashed border-slate-400 dark:border-slate-500 bg-surface flex flex-col items-center justify-center gap-3 text-text-muted">
-            <ClipboardList className="w-10 h-10" />
-            <p className="text-sm">{scope ? '작업지시를 선택하면 검사 현황이 여기에 보입니다.' : '라인·공정·설비를 먼저 선택하세요.'}</p>
-            <button type="button" onClick={() => (scope ? setRunOpen(true) : setScopeOpen(true))}
-              className="h-11 px-5 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90">
-              {scope ? '작업지시 선택' : '라인 선택'}
-            </button>
-          </section>
-        )}
+        <div className="flex-1 min-w-0 min-h-0 flex flex-col gap-3">
+          <RoutingFlow itemCode={run?.itemCode} workstageCode={machine?.workstageCode ?? scope?.workstageCode} />
+          {run ? (
+            <InspectStatus run={run} history={history} onCancel={cancelInspect} />
+          ) : (
+            <section className="flex-1 min-h-0 rounded-xl border border-dashed border-slate-400 dark:border-slate-500 bg-surface flex flex-col items-center justify-center gap-3 text-text-muted">
+              <ClipboardList className="w-10 h-10" />
+              <p className="text-sm">{scope ? '작업지시를 선택하면 검사 현황이 여기에 보입니다.' : '라인·공정·설비를 먼저 선택하세요.'}</p>
+              <button type="button" onClick={() => (scope ? setRunOpen(true) : setScopeOpen(true))}
+                className="h-11 px-5 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90">
+                {scope ? '작업지시 선택' : '라인 선택'}
+              </button>
+            </section>
+          )}
+        </div>
 
         {/* 입력판 + 그 아래 비가동 이력 */}
         <div className="w-[300px] flex-shrink-0 min-h-0 flex flex-col gap-3 overflow-y-auto">

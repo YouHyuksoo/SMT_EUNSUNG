@@ -7,6 +7,7 @@
 //   INSPECT_RESULT = P=합격, R=불합격
 //   BAD_REASON_CODE= 불합격이면 필수(WQC BAD REASON CODE), 합격이면 NULL — 테이블 CHECK 도 같다
 //   RESULT_STATUS  = DONE=확정, CANCEL=취소 (오늘 업무일 건만 취소)
+//   TIME_ZONE      = 타임구간 A~J (계획 없는 검사실적 화면만 채운다, migrations/2026-11-05_iq_equip_inspect_result_time_zone.sql)
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { InspectResultCancelDto, InspectResultCreateDto } from './inspect-result.dto';
@@ -41,7 +42,7 @@ export class InspectResultService {
               (SELECT MAX(NVL(c.CODE_MEAN_KOR, c.CODE_MEAN_ENG)) FROM ISYS_CODE_MASTER c
                 WHERE c.CODE_TYPE='WQC BAD REASON CODE' AND c.CODE_NAME=ir.BAD_REASON_CODE
                   AND c.ORGANIZATION_ID=ir.ORGANIZATION_ID) AS "badReasonName",
-              ir.INSPECTOR_NAME AS "inspectorName", ir.RESULT_STATUS AS "resultStatus",
+              ir.INSPECTOR_NAME AS "inspectorName", ir.RESULT_STATUS AS "resultStatus", ir.TIME_ZONE AS "timeZone",
               TO_CHAR(ir.ENTER_DATE,'YYYY-MM-DD HH24:MI:SS') AS "enteredAt",
               CASE WHEN F_GET_WORK_ACTUAL_DATE(ir.ENTER_DATE,'A') = F_GET_WORK_ACTUAL_DATE(SYSDATE,'A')
                    THEN 'Y' ELSE 'N' END AS "today"
@@ -101,11 +102,11 @@ export class InspectResultService {
       await mgr.query(
         `INSERT INTO IQ_EQUIP_INSPECT_RESULT
            (RUN_NO, SEQ_NO, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE,
-            INSPECT_RESULT, INSPECT_QTY, BAD_REASON_CODE, INSPECTOR_NAME, RESULT_STATUS, ENTER_BY, ENTER_DATE)
-         VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,'DONE',:10,SYSDATE)`,
+            INSPECT_RESULT, INSPECT_QTY, BAD_REASON_CODE, INSPECTOR_NAME, RESULT_STATUS, TIME_ZONE, ENTER_BY, ENTER_DATE)
+         VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,'DONE',:10,:11,SYSDATE)`,
         [
           dto.runNo, seqNo, organization, dto.machineCode, machine.workstageCode,
-          dto.inspectResult, dto.inspectQty, badReason ?? null, dto.inspectorName?.trim() || null, user,
+          dto.inspectResult, dto.inspectQty, badReason ?? null, dto.inspectorName?.trim() || null, dto.timeZone ?? null, user,
         ],
       );
       return { runNo: dto.runNo, seqNo };

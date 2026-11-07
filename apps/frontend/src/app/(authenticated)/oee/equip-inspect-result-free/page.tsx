@@ -29,13 +29,15 @@ import { businessDate } from '../equip-work-result/_lib/kpi';
 import type { RunRow } from '../equip-work-result/_lib/types';
 import InspectScopeModal from '../equip-inspect-result/components/InspectScopeModal';
 import InspectStatus from '../equip-inspect-result/components/InspectStatus';
+import RoutingFlow from '../equip-work-result/components/RoutingFlow';
 import InspectEntryPad, { type BadReason } from '../equip-inspect-result/components/InspectEntryPad';
 import {
   loadInspector, loadScope, saveInspector, saveScope,
   type InspectHistoryRow, type Inspector, type Scope,
 } from '../equip-inspect-result/_lib/inspect';
 import ModelPickerModal from '../equip-work-result-free/components/ModelPickerModal';
-import type { FreeRunRow, ModelRow } from '../equip-work-result-free/_lib/types';
+import TimeZonePicker from '../equip-work-result-free/components/TimeZonePicker';
+import type { FreeRunRow, ModelRow, TimeZoneRow } from '../equip-work-result-free/_lib/types';
 
 const MODEL_KEY = 'oee:equip-inspect-result-free:model';
 
@@ -80,6 +82,9 @@ export default function EquipInspectResultFreePage() {
   const [model, setModel] = useState<ModelRow | null>(null);
   const [freeRuns, setFreeRuns] = useState<FreeRunRow[]>([]);
   const [history, setHistory] = useState<InspectHistoryRow[]>([]);
+  const [zones, setZones] = useState<TimeZoneRow[]>([]);
+  const [currentZone, setCurrentZone] = useState<string | null>(null);
+  const [timeZone, setTimeZone] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [booted, setBooted] = useState(false);
 
@@ -108,8 +113,20 @@ export default function EquipInspectResultFreePage() {
     } catch { toast.error('라인 목록 조회에 실패했습니다'); }
   }, []);
 
+  // 타임구간(작업시간 관리) — 처음에는 지금 시각이 속한 구간을 고른다
+  const loadZones = useCallback(async () => {
+    try {
+      const res = await api.get('/oee/work-result-free/time-zones');
+      const d = res.data?.data as { list?: TimeZoneRow[]; current?: string | null } | undefined;
+      setZones(d?.list ?? []);
+      setCurrentZone(d?.current ?? null);
+      setTimeZone((prev) => prev ?? d?.current ?? null);
+    } catch { toast.error('타임구간 조회에 실패했습니다'); }
+  }, []);
+
   useEffect(() => {
     void (async () => {
+      await loadZones();
       await loadLines();
       try {
         const res = await api.get('/oee/work-result/bad-reasons');
@@ -124,7 +141,7 @@ export default function EquipInspectResultFreePage() {
       if (!saved) setScopeOpen(true);
       setBooted(true);
     })();
-  }, [loadLines, loadMachines]);
+  }, [loadZones, loadLines, loadMachines]);
 
   useEffect(() => {
     if (!scopeOpen) return;
@@ -207,7 +224,8 @@ export default function EquipInspectResultFreePage() {
     if (!scope || !machine) { toast('라인·공정·설비를 먼저 선택하세요'); setScopeOpen(true); return; }
     if (!machine.workstageCode) { toast.error('설비에 공정이 지정되지 않아 검사실적을 저장할 수 없습니다'); return; }
     if (!model) { toast('모델을 먼저 선택하세요'); setModelOpen(true); return; }
-    if (!inspector) { setInspectorNotice('검사실적을 넣으려면 검사자를 먼저 선택하세요.'); setInspectorOpen(true); }
+    if (!inspector) { setInspectorNotice('검사실적을 넣으려면 검사자를 먼저 선택하세요.'); setInspectorOpen(true); return; }
+    if (!timeZone) { toast('타임구간을 선택하세요'); void loadZones(); }
   }
 
   const entryBlocked = !scope ? '라인·공정·설비를 먼저 선택하세요'
@@ -215,14 +233,15 @@ export default function EquipInspectResultFreePage() {
     : !machine.workstageCode ? '설비에 공정이 지정되지 않아 검사실적을 저장할 수 없습니다'
     : !model ? '모델을 먼저 선택하세요'
     : !inspector ? '검사자를 먼저 선택하세요'
+    : !timeZone ? '타임구간을 선택하세요'
     : null;
 
   async function saveInspect(v: { verdict: 'P' | 'R'; qty: number; badReasonCode: string | null }) {
-    if (!scope || !machine || !model || !inspector) return false;
+    if (!scope || !machine || !model || !inspector || !timeZone) return false;
     try {
       await api.post('/oee/inspect-result-free/results', {
         lineCode: scope.lineCode, machineCode: machine.machineCode,
-        modelName: model.modelName, itemCode: model.itemCode,
+        modelName: model.modelName, itemCode: model.itemCode, timeZone,
         inspectResult: v.verdict, inspectQty: v.qty,
         badReasonCode: v.badReasonCode ?? undefined, inspectorName: inspector.name,
       }, { skipSuccessToast: true });
@@ -286,30 +305,34 @@ export default function EquipInspectResultFreePage() {
 
       {/* 본문: 검사 현황 · 검사실적 입력 · 레일 */}
       <div className="flex-1 min-h-0 flex gap-3">
-        {run ? (
-          <InspectStatus run={run} history={history} onCancel={cancelInspect} />
-        ) : (
-          <section className="flex-1 min-h-0 rounded-xl border border-dashed border-slate-400 dark:border-slate-500 bg-surface flex flex-col items-center justify-center gap-3 text-text-muted">
-            <ClipboardList className="w-10 h-10" />
-            <p className="text-sm">
-              {!scope ? '라인·공정·설비를 먼저 선택하세요.'
-                : !model ? '모델을 선택하세요.'
-                : '오늘 이 모델의 검사실적이 아직 없습니다. 첫 검사실적을 저장하면 계획이 만들어집니다.'}
-            </p>
-            {(!scope || !model) && (
-              <button type="button" onClick={() => (scope ? setModelOpen(true) : setScopeOpen(true))}
-                className="h-11 px-5 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90">
-                {scope ? '모델 선택' : '라인 선택'}
-              </button>
-            )}
-          </section>
-        )}
+        <div className="flex-1 min-w-0 min-h-0 flex flex-col gap-3">
+          <RoutingFlow itemCode={run?.itemCode ?? model?.itemCode} workstageCode={machine?.workstageCode ?? scope?.workstageCode} />
+          {run ? (
+            <InspectStatus run={run} history={history} onCancel={cancelInspect} />
+          ) : (
+            <section className="flex-1 min-h-0 rounded-xl border border-dashed border-slate-400 dark:border-slate-500 bg-surface flex flex-col items-center justify-center gap-3 text-text-muted">
+              <ClipboardList className="w-10 h-10" />
+              <p className="text-sm">
+                {!scope ? '라인·공정·설비를 먼저 선택하세요.'
+                  : !model ? '모델을 선택하세요.'
+                  : '오늘 이 모델의 검사실적이 아직 없습니다. 첫 검사실적을 저장하면 계획이 만들어집니다.'}
+              </p>
+              {(!scope || !model) && (
+                <button type="button" onClick={() => (scope ? setModelOpen(true) : setScopeOpen(true))}
+                  className="h-11 px-5 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90">
+                  {scope ? '모델 선택' : '라인 선택'}
+                </button>
+              )}
+            </section>
+          )}
+        </div>
 
         {/* 입력판 + 그 아래 비가동 이력 */}
         <div className="w-[300px] flex-shrink-0 min-h-0 flex flex-col gap-3 overflow-y-auto">
           <InspectEntryPad disabledReason={entryBlocked} badReasons={badReasons}
             subtitle={[machine?.machineCode, model?.modelName].filter(Boolean).join(' · ')}
-            onSave={saveInspect} onBlocked={guideBlocked} />
+            onSave={saveInspect} onBlocked={guideBlocked}
+            extra={<TimeZonePicker zones={zones} value={timeZone} current={currentZone} onChange={setTimeZone} />} />
           <EquipDowntimeHistory machineCode={machine?.machineCode ?? ''} refreshKey={machine?.openDtSeq ?? null} />
         </div>
 

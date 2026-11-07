@@ -28,6 +28,7 @@ import ScopeModal from '../equip-work-result/components/ScopeModal';
 import DefectModal from '../equip-work-result/components/DefectModal';
 import WorkerModal, { type Worker } from '../equip-work-result/components/WorkerModal';
 import ProductionStatus from '../equip-work-result/components/ProductionStatus';
+import RoutingFlow from '../equip-work-result/components/RoutingFlow';
 import EntryPad from '../equip-work-result/components/EntryPad';
 import { lineLabel, type Scope } from '../equip-work-result/_lib/scope';
 import { businessDate } from '../equip-work-result/_lib/kpi';
@@ -310,24 +311,27 @@ export default function EquipWorkResultFreePage() {
 
       {/* 본문: 생산 현황 · 실적 입력 · 레일 */}
       <div className="flex-1 min-h-0 flex gap-3">
-        {run ? (
-          <ProductionStatus run={run} history={history} now={now} onCancel={cancelResult} />
-        ) : (
-          <section className="flex-1 min-h-0 rounded-xl border border-dashed border-slate-400 dark:border-slate-500 bg-surface flex flex-col items-center justify-center gap-3 text-text-muted">
-            <ClipboardList className="w-10 h-10" />
-            <p className="text-sm">
-              {!scope ? '라인·공정·설비를 먼저 선택하세요.'
-                : !model ? '모델을 선택하세요.'
-                : '오늘 이 모델의 실적이 아직 없습니다. 첫 실적을 저장하면 계획이 만들어집니다.'}
-            </p>
-            {(!scope || !model) && (
-              <button type="button" onClick={() => (scope ? setModelOpen(true) : setScopeOpen(true))}
-                className="h-11 px-5 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90">
-                {scope ? '모델 선택' : '라인 선택'}
-              </button>
-            )}
-          </section>
-        )}
+        <div className="flex-1 min-w-0 min-h-0 flex flex-col gap-3">
+          <RoutingFlow itemCode={run?.itemCode ?? model?.itemCode} workstageCode={machine?.workstageCode ?? scope?.workstageCode} />
+          {run ? (
+            <ProductionStatus run={run} history={history} now={now} onCancel={cancelResult} />
+          ) : (
+            <section className="flex-1 min-h-0 rounded-xl border border-dashed border-slate-400 dark:border-slate-500 bg-surface flex flex-col items-center justify-center gap-3 text-text-muted">
+              <ClipboardList className="w-10 h-10" />
+              <p className="text-sm">
+                {!scope ? '라인·공정·설비를 먼저 선택하세요.'
+                  : !model ? '모델을 선택하세요.'
+                  : '오늘 이 모델의 실적이 아직 없습니다. 첫 실적을 저장하면 계획이 만들어집니다.'}
+              </p>
+              {(!scope || !model) && (
+                <button type="button" onClick={() => (scope ? setModelOpen(true) : setScopeOpen(true))}
+                  className="h-11 px-5 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90">
+                  {scope ? '모델 선택' : '라인 선택'}
+                </button>
+              )}
+            </section>
+          )}
+        </div>
 
         <EntryPad disabledReason={entryBlocked}
           subtitle={[machine?.machineCode, model?.modelName].filter(Boolean).join(' · ')}
